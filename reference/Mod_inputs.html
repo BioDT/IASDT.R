@@ -102,17 +102,18 @@ to disk as an <code>*.RData</code> file.</p>
 <span>  env_file <span class="op">=</span> <span class="st">".env"</span>,</span>
 <span>  GPP <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  GPP_dists <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  GPP_save <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  GPP_plot <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  min_LF <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  max_LF <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  alphapw <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>Prior <span class="op">=</span> <span class="cn">NULL</span>, Min <span class="op">=</span> <span class="fl">20</span>, Max <span class="op">=</span> <span class="fl">1200</span>, Samples <span class="op">=</span> <span class="fl">200</span><span class="op">)</span>,</span>
+<span>  alphapw <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>Prior <span class="op">=</span> <span class="cn">NULL</span>, Min <span class="op">=</span> <span class="fl">20</span>, Max <span class="op">=</span> <span class="fl">1300</span>, Samples <span class="op">=</span> <span class="fl">150</span><span class="op">)</span>,</span>
 <span>  bio_variables <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bio3"</span>, <span class="st">"bio4"</span>, <span class="st">"bio11"</span>, <span class="st">"bio18"</span>, <span class="st">"bio19"</span>, <span class="st">"npp"</span><span class="op">)</span>,</span>
-<span>  quadratic_variables <span class="op">=</span> <span class="va">bio_variables</span>,</span>
+<span>  quadratic_variables <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">bio_variables</span>, <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">soil_as_predictor</span>, <span class="st">"soil"</span>, <span class="cn">NULL</span><span class="op">)</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">wetness_as_predictor</span>, <span class="st">"wetness"</span>, <span class="cn">NULL</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  efforts_as_predictor <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  road_rail_as_predictor <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  habitat_as_predictor <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  river_as_predictor <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  river_as_predictor <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  soil_as_predictor <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  wetness_as_predictor <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  n_species_per_grid <span class="op">=</span> <span class="fl">0L</span>,</span>
 <span>  exclude_cultivated <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  exclude_0_habitat <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -122,6 +123,7 @@ to disk as an <code>*.RData</code> file.</p>
 <span>  CV_n_columns <span class="op">=</span> <span class="fl">2L</span>,</span>
 <span>  CV_plot <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  CV_SAC <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  CV_fit <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>CV_type <span class="op">=</span> <span class="cn">NULL</span>, CV_fold <span class="op">=</span> <span class="cn">NULL</span>, inherit_dir <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span>,</span>
 <span>  use_phylo_tree <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  no_phylo_tree <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  overwrite_rds <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -210,15 +212,6 @@ value is used for both <code>knotDist</code> and <code>minKnotDist</code> in
 <a href="https://rdrr.io/pkg/Hmsc/man/constructKnots.html" class="external-link">Hmsc::constructKnots</a>.</p></dd>
 
 
-<dt id="arg-gpp-save">GPP_save<a class="anchor" aria-label="anchor" href="#arg-gpp-save"></a></dt>
-<dd><p>Logical. Whether <code>RData</code> file. Default: <code>TRUE</code>.</p></dd>
-
-
-<dt id="arg-gpp-plot">GPP_plot<a class="anchor" aria-label="anchor" href="#arg-gpp-plot"></a></dt>
-<dd><p>Logical. Whether to plot the coordinates of the sampling
-units and the knots in a pdf file. Default: <code>TRUE</code>.</p></dd>
-
-
 <dt id="arg-min-lf-max-lf">min_LF, max_LF<a class="anchor" aria-label="anchor" href="#arg-min-lf-max-lf"></a></dt>
 <dd><p>Integer. Minimum and maximum number of latent factors to
 be used. Both default to <code>NULL</code> which means that the number of latent
@@ -227,7 +220,7 @@ respective values will be used as arguments to <a href="https://rdrr.io/pkg/Hmsc
 
 
 <dt id="arg-alphapw">alphapw<a class="anchor" aria-label="anchor" href="#arg-alphapw"></a></dt>
-<dd><p>Prior for the alpha parameter. Defaults to a list with <code>Prior = NULL</code>, <code>Min = 20</code>, <code>Max = 1200</code>, and <code>Samples = 200</code>. If <code>alphapw</code> is
+<dd><p>Prior for the alpha parameter. Defaults to a list with <code>Prior = NULL</code>, <code>Min = 20</code>, <code>Max = 1300</code>, and <code>Samples = 150</code>. If <code>alphapw</code> is
 <code>NULL</code> or a list with all <code>NULL</code> list items, the default prior will be
 used. If <code>Prior</code> is a matrix, it will be used as the prior. If <code>Prior = NULL</code>, the prior will be generated using <code>Min</code>, <code>Max</code>, and <code>Samples</code>. <code>Min</code>
 and <code>Max</code> are the minimum and maximum values of the alpha parameter (in
@@ -238,13 +231,13 @@ kilometre). <code>Samples</code> is the number of samples to be used in the prio
 <dd><p>Character vector. Variables from CHELSA (bioclimatic
 variables (bio1-bio19) and additional predictors (e.g., Net Primary
 Productivity, npp)) to be used in the model. By default, six ecologically
-relevant and minimally correlated variables are selected: c("bio3", "bio4",
-"bio11", "bio18", "bio19", "npp").</p></dd>
+relevant and minimally correlated variables are selected: <code>c("bio3", "bio4", "bio11", "bio18", "bio19", "npp")</code>.</p></dd>
 
 
 <dt id="arg-quadratic-variables">quadratic_variables<a class="anchor" aria-label="anchor" href="#arg-quadratic-variables"></a></dt>
 <dd><p>Character vector for variables for which quadratic
-terms are used. Defaults to all variables of the <code>bio_variables</code>. If
+terms are used. Defaults to all variables of the <code>bio_variables</code> in
+addition to soil bulk density and topographic wetness index (if used). If
 <code>quadratic_variables</code> is <code>NULL</code>, no quadratic terms will be used.</p></dd>
 
 
@@ -270,7 +263,19 @@ not equals to <code>0</code>.</p></dd>
 <dt id="arg-river-as-predictor">river_as_predictor<a class="anchor" aria-label="anchor" href="#arg-river-as-predictor"></a></dt>
 <dd><p>Logical. Whether to include the (log<sub>10</sub>)
 total length of rivers per grid cell as predictor to the model. Default:
-<code>TRUE</code>. See <a href="River_Length.html">river_length</a> for more details.</p></dd>
+<code>FALSE</code>. See <a href="River_Length.html">river_length</a> for more details.</p></dd>
+
+
+<dt id="arg-soil-as-predictor">soil_as_predictor<a class="anchor" aria-label="anchor" href="#arg-soil-as-predictor"></a></dt>
+<dd><p>Logical. Whether to include soil bulk density at
+depth of 15-30 cm as predictor to the model. Default: <code>TRUE</code>. See
+<a href="soil_density_process.html">soil_density_process</a>.</p></dd>
+
+
+<dt id="arg-wetness-as-predictor">wetness_as_predictor<a class="anchor" aria-label="anchor" href="#arg-wetness-as-predictor"></a></dt>
+<dd><p>Logical. Whether to include topographic wetness
+index as predictor to the model. Default: <code>TRUE</code>. See
+<a href="wetness_index_process.html">wetness_index_process</a>.</p></dd>
 
 
 <dt id="arg-n-species-per-grid">n_species_per_grid<a class="anchor" aria-label="anchor" href="#arg-n-species-per-grid"></a></dt>
@@ -319,6 +324,23 @@ folds.</p></dd>
 <dt id="arg-cv-sac">CV_SAC<a class="anchor" aria-label="anchor" href="#arg-cv-sac"></a></dt>
 <dd><p>Logical. Whether to use the spatial autocorrelation to
 determine the block size. Defaults to <code>FALSE</code>,</p></dd>
+
+
+<dt id="arg-cv-fit">CV_fit<a class="anchor" aria-label="anchor" href="#arg-cv-fit"></a></dt>
+<dd><p>A list with three elements determining if the current model is
+for a specific cross-validation fold or for full dataset.</p><ul><li><p><code>CV_type</code> (character): the type of cross-validation to use. Valid
+options are "CV_Dist", "CV_Large", and "CV_SAC". Default: <code>NULL</code>, which
+means fit models on the full dataset. This can not be <code>NULL</code> if <code>CV_fold</code>
+is provided.</p></li>
+<li><p><code>CV_fold</code> (integer): the ID of the cross-validation fold to fit.
+For example, <code>CV_Fold = 4</code> means use the fourth fold for testing. Default:
+<code>NULL</code> which means no cross-validation is performed. This can not be <code>NULL</code>
+if <code>CV_type</code> is provided.</p></li>
+<li><p><code>inherit_dir</code> (character): the name of the directory (without its
+parents) to inherit (copy) species and cross-validation data from. Defaults
+to <code>NULL</code>, which means that a data on species and cross-validation will be
+calculated.</p></li>
+</ul></dd>
 
 
 <dt id="arg-use-phylo-tree-no-phylo-tree">use_phylo_tree, no_phylo_tree<a class="anchor" aria-label="anchor" href="#arg-use-phylo-tree-no-phylo-tree"></a></dt>
@@ -437,9 +459,8 @@ saving to RDS file. Default: <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-precision">precision<a class="anchor" aria-label="anchor" href="#arg-precision"></a></dt>
-<dd><p>Integer (either 32 or 64). Defines the floating-point
-precision mode for <code>Hmsc-HPC</code> sampling (–fp 32 or –fp 64). The default is
-64, which is the default precision in <code>Hmsc-HPC</code>.</p></dd>
+<dd><p>Integer. Must be either 32 or 64 (default). Defines the
+floating-point precision mode for <code>Hmsc-HPC</code> sampling (–fp 32 or –fp 64).</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

@@ -67,7 +67,7 @@ avoid overlap.</p>
 <span>  jitter_distance <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>  min_LF <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  max_LF <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  alphapw <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>Prior <span class="op">=</span> <span class="cn">NULL</span>, Min <span class="op">=</span> <span class="fl">20</span>, Max <span class="op">=</span> <span class="fl">1200</span>, Samples <span class="op">=</span> <span class="fl">200</span><span class="op">)</span></span>
+<span>  alphapw <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>Prior <span class="op">=</span> <span class="cn">NULL</span>, Min <span class="op">=</span> <span class="fl">20</span>, Max <span class="op">=</span> <span class="fl">1200</span>, Samples <span class="op">=</span> <span class="fl">150</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -81,14 +81,14 @@ coordinates of sampling units.</p></dd>
 
 
 <dt id="arg-min-distance">min_distance<a class="anchor" aria-label="anchor" href="#arg-min-distance"></a></dt>
-<dd><p>Numeric. Minimum distance between knots
-in meters. This distance is used for both <code>knotDist</code> and <code>minKnotDist</code>
-parameters of the <a href="https://rdrr.io/pkg/Hmsc/man/constructKnots.html" class="external-link">Hmsc::constructKnots</a> function.</p></dd>
+<dd><p>Numeric. Minimum distance between knots in meters. This
+distance is used for both <code>knotDist</code> and <code>minKnotDist</code> parameters of the
+<a href="https://rdrr.io/pkg/Hmsc/man/constructKnots.html" class="external-link">Hmsc::constructKnots</a> function.</p></dd>
 
 
 <dt id="arg-jitter-distance">jitter_distance<a class="anchor" aria-label="anchor" href="#arg-jitter-distance"></a></dt>
-<dd><p>Numeric. The jitter distance applied to
-overlapping coordinates to avoid exact duplicates. Defaults to 100 meters.</p></dd>
+<dd><p>Numeric. The jitter distance applied to overlapping
+coordinates to avoid exact duplicates. Defaults to 100 meters.</p></dd>
 
 
 <dt id="arg-min-lf-max-lf">min_LF, max_LF<a class="anchor" aria-label="anchor" href="#arg-min-lf-max-lf"></a></dt>
@@ -99,7 +99,7 @@ respective values will be used as arguments to <a href="https://rdrr.io/pkg/Hmsc
 
 
 <dt id="arg-alphapw">alphapw<a class="anchor" aria-label="anchor" href="#arg-alphapw"></a></dt>
-<dd><p>Prior for the alpha parameter. Defaults to a list with <code>Prior = NULL</code>, <code>Min = 20</code>, <code>Max = 1200</code>, and <code>Samples = 200</code>. If <code>alphapw</code> is
+<dd><p>Prior for the alpha parameter. Defaults to a list with <code>Prior = NULL</code>, <code>Min = 20</code>, <code>Max = 1300</code>, and <code>Samples = 150</code>. If <code>alphapw</code> is
 <code>NULL</code> or a list with all <code>NULL</code> list items, the default prior will be
 used. If <code>Prior</code> is a matrix, it will be used as the prior. If <code>Prior = NULL</code>, the prior will be generated using <code>Min</code>, <code>Max</code>, and <code>Samples</code>. <code>Min</code>
 and <code>Max</code> are the minimum and maximum values of the alpha parameter (in
@@ -108,8 +108,9 @@ kilometre). <code>Samples</code> is the number of samples to be used in the prio
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>An object suitable for specifying the random level in HMSC GPP
-models. This object contains the prepared knot locations.</p>
+    <p>An object of class <code>HmscRandomLevel</code>, suitable for specifying the
+random level in HMSC GPP models. This object contains the prepared knot
+locations.</p>
     </div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>

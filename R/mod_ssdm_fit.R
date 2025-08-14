@@ -165,15 +165,6 @@ fit_sdm_models <- function(
 
   # |||||||||||||||||||||||||||||||||||||||||||
 
-  # Environment file
-  if (!fs::file_exists(env_file)) {
-    ecokit::stop_ctx(
-      "Error: Environment file is invalid or does not exist.",
-      env_file = env_file, include_backtrace = TRUE)
-  }
-
-  # |||||||||||||||||||||||||||||||||||||||||||
-
   # hab_abb
   hab_abb <- .validate_hab_abb(as.character(hab_abb))
 
@@ -276,6 +267,12 @@ fit_sdm_models <- function(
   # Environment variables ------
 
   ecokit::cat_time("Environment variables")
+
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Environment file is not found or invalid.", env_file = env_file)
+  }
+
   env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
     "path_grid", "DP_R_Grid_processed", TRUE, FALSE)

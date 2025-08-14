@@ -144,10 +144,9 @@ predict_maps <- function(
 
   rm(AllArgs, envir = environment())
 
-  if (!file.exists(env_file)) {
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
     ecokit::stop_ctx(
-      "Error: Environment file is invalid or does not exist.",
-      env_file = env_file, include_backtrace = TRUE)
+      "Environment file is not found or invalid.", env_file = env_file)
   }
 
   # # ..................................................................... ###

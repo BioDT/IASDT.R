@@ -36,12 +36,6 @@ mod_SLURM_refit <- function(
 
   # # ..................................................................... ###
 
-  if (!file.exists(env_file)) {
-    ecokit::stop_ctx(
-      "Path to environment variables was not found", env_file = env_file,
-      include_backtrace = TRUE)
-  }
-
   if (is.null(job_name)) {
     job_name <- paste0(basename(model_dir), "_RF")
   }
@@ -66,6 +60,11 @@ mod_SLURM_refit <- function(
   ecokit::check_args(
     args_all = AllArgs, args_to_check = "cat_job_info", args_type = "logical")
   rm(AllArgs, envir = environment())
+
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Environment file is not found or invalid.", env_file = env_file)
+  }
 
   # # ..................................................................... ###
 

@@ -112,10 +112,9 @@ CHELSA_process <- function(
   # Environment variables -----
   ecokit::cat_time("Environment variables")
 
-  if (!file.exists(env_file)) {
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
     ecokit::stop_ctx(
-      "Path to environment variables was not found", env_file = env_file,
-      include_backtrace = TRUE)
+      "Environment file is not found or invalid.", env_file = env_file)
   }
 
   EnvVars2Read <- tibble::tribble(

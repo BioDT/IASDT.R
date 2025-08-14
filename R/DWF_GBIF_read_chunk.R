@@ -70,6 +70,12 @@ GBIF_read_chunk <- function(
   # # ..................................................................... ###
 
   # Environment variables
+
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Environment file is not found or invalid.", env_file = env_file)
+  }
+
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
     "CLC_Tif", "DP_R_CLC_tif", FALSE, TRUE,

@@ -226,10 +226,9 @@ mod_postprocess_1_CPU <- function(
   LF_n_cores <- .validate_n_cores(LF_n_cores)
   n_cores_VP <- .validate_n_cores(n_cores_VP)
 
-  if (!file.exists(env_file)) {
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
     ecokit::stop_ctx(
-      "Error: Environment file is invalid or does not exist.",
-      env_file = env_file, include_backtrace = TRUE)
+      "Environment file is not found or invalid.", env_file = env_file)
   }
 
   if (!dir.exists(model_dir)) {
@@ -540,6 +539,12 @@ mod_prepare_TF <- function(
   }
 
   # # Load environment variables, for project ID
+
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Environment file is not found or invalid.", env_file = env_file)
+  }
+
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
     "ProjectID", "DP_R_LUMI_gpu", FALSE, FALSE,
@@ -939,10 +944,9 @@ mod_postprocess_2_CPU <- function(
       "LF_n_cores", "RC_n_cores"))
   rm(AllArgs, envir = environment())
 
-  if (!file.exists(env_file)) {
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
     ecokit::stop_ctx(
-      "Error: Environment file is invalid or does not exist.",
-      env_file = env_file, include_backtrace = TRUE)
+      "Environment file is not found or invalid.", env_file = env_file)
   }
 
   if (!dir.exists(model_dir)) {

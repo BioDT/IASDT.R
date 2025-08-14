@@ -49,6 +49,11 @@ variance_partitioning_plot <- function(
 
   ecokit::cat_time("Loading species info")
 
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Environment file is not found or invalid.", env_file = env_file)
+  }
+
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
     "TaxaInfoFile", "DP_R_Taxa_info_rdata", FALSE, TRUE)
@@ -169,8 +174,8 @@ variance_partitioning_plot <- function(
   ## Plotting data ----
 
   VarPar_DF <- tidyr::pivot_longer(
-      data = VarPar$vals, cols = -Variable,
-      names_to = "Species", values_to = "VP_Value") %>%
+    data = VarPar$vals, cols = -Variable,
+    names_to = "Species", values_to = "VP_Value") %>%
     dplyr::left_join(SpList, by = "Species")
 
   # Calculate mean Variance partitioning per variable and prepare labels for the
@@ -384,8 +389,8 @@ variance_partitioning_plot <- function(
   }
 
   VarPar_DF_Raw <- tidyr::pivot_longer(
-      data = VarPar$vals, cols = -Variable,
-      names_to = "Species", values_to = "VP_Value") %>%
+    data = VarPar$vals, cols = -Variable,
+    names_to = "Species", values_to = "VP_Value") %>%
     dplyr::left_join(Model_Eval, by = "Species") %>%
     dplyr::mutate(VP_Value = VP_Value * TjurR2)
 

@@ -73,10 +73,9 @@ mod_SLURM <- function(
   # # Load environment variables
   # # |||||||||||||||||||||||||||||||||||
 
-  if (!file.exists(env_file)) {
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
     ecokit::stop_ctx(
-      "Environment file not found", env_file = env_file,
-      include_backtrace = TRUE)
+      "Environment file is not found or invalid.", env_file = env_file)
   }
 
   EnvVars2Read <- tibble::tribble(
@@ -99,7 +98,7 @@ mod_SLURM <- function(
 
   # character arguments
   CharArgs <- c(
-    "model_dir", "job_name", "env_file", "job_runtime", "memory_per_cpu",
+    "model_dir", "job_name", "job_runtime", "memory_per_cpu",
     "HPC_partition", "path_Hmsc", "ProjNum", "Path_GPU_Check",
     "command_prefix", "SLURM_prefix")
   ecokit::check_args(

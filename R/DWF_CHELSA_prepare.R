@@ -33,6 +33,11 @@ CHELSA_prepare <- function(
 
   rm(AllArgs, envir = environment())
 
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Environment file is not found or invalid.", env_file = env_file)
+  }
+
   strategy <- .validate_strategy(strategy)
   if (strategy == "sequential") n_cores <- 1L
   n_cores <- .validate_n_cores(n_cores)

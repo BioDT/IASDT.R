@@ -290,6 +290,11 @@ mod_prepare_HPC <- function(
   ecokit::cat_time(
     "Load and check environment variables", verbose = verbose_progress)
 
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Environment file is not found or invalid.", env_file = env_file)
+  }
+
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
     "TaxaInfoFile", "DP_R_Taxa_info", FALSE, TRUE,
@@ -375,26 +380,20 @@ mod_prepare_HPC <- function(
 
   # Validate CV_fit_type and CV_fit_fold
   if (!is.null(CV_fit_type) && !is.null(CV_fit_fold)) {
-    valid_cv_types <- c("CV_Dist", "CV_Large", "CV_SAC")
-    if (length(CV_fit_type) != 1L || !is.character(CV_fit_type) ||
-        !nzchar(CV_fit_type)) {
-      ecokit::stop_ctx(
-        "`CV_fit_type` must be a single character string",
-        CV_fit = CV_fit, include_backtrace = TRUE)
-    }
 
-    if (!CV_fit_type %in% valid_cv_types) {
-      ecokit::stop_ctx(
-        "Invalid `CV_fit_type` value",
-        CV_fit = CV_fit, valid_cv_types = valid_cv_types,
-        include_backtrace = TRUE)
-    }
+    CV_fit_type <- .validate_cv_name(CV_fit_type)
 
     if (is.null(CV_fit_fold) || !is.numeric(CV_fit_fold) ||
         length(CV_fit_fold) != 1L || CV_fit_fold < 1L) {
       ecokit::stop_ctx(
         "`CV_fit_fold` must be a single positive integer",
         CV_fit = CV_fit, include_backtrace = TRUE)
+    }
+
+    if (CV_fit_fold > CV_n_folds) {
+      ecokit::stop_ctx(
+        "`CV_fit_fold` must be <= CV_n_folds",
+        CV_fit = CV_fit, CV_n_folds = CV_n_folds, include_backtrace = TRUE)
     }
 
     # Flag for filtering data based on this cross-validation
@@ -851,13 +850,13 @@ mod_prepare_HPC <- function(
 
     n_species_all <- c(
       stats::setNames(
-        calculate_n_species_raster(DT_testing),
-        paste0("**Testing data** --- fold ", CV_fit_fold)),
-      stats::setNames(
         calculate_n_species_raster(DT_All),
         paste0(
           "**Training data** --- folds ",
-          toString(setdiff(seq_len(CV_n_folds), CV_fit_fold)))))
+          toString(setdiff(seq_len(CV_n_folds), CV_fit_fold)))),
+      stats::setNames(
+        calculate_n_species_raster(DT_testing),
+        paste0("**Testing data** --- fold ", CV_fit_fold)))
 
     # cross-validation folds as sf
     cv_blocks <- fs::path(path_model, "CV_data.RData")
@@ -872,8 +871,7 @@ mod_prepare_HPC <- function(
 
     n_species_plot <- ggplot2::ggplot() +
       ggplot2::geom_sf(
-        data = EU_Bound, fill = "gray98",
-        colour = "black", linewidth = 0.15) +
+        data = EU_Bound, fill = "gray98", colour = "black", linewidth = 0.15) +
       tidyterra::geom_spatraster(data = n_species_all) +
       ggplot2::facet_wrap(~lyr) +
       ggplot2::geom_sf(

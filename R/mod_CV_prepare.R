@@ -61,18 +61,11 @@ mod_CV_prepare <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Path_Grid <- EU_Bound <- NULL
 
-  if (is.null(input_data) || is.null(env_file) ||
-      is.null(out_path) || is.null(x_vars)) {
+  if (is.null(input_data) || is.null(out_path) || is.null(x_vars)) {
     ecokit::stop_ctx(
-      "`input_data`, `env_file`, `out_path`, and `x_vars` can not be empty",
-      input_data = input_data, env_file = env_file, out_path = out_path,
+      "`input_data`, `out_path`, and `x_vars` can not be empty",
+      input_data = input_data, out_path = out_path,
       x_vars = x_vars, include_backtrace = TRUE)
-  }
-
-  if (!file.exists(env_file)) {
-    ecokit::stop_ctx(
-      "Path to environment variables does not exist ", env_file = env_file,
-      include_backtrace = TRUE)
   }
 
   AllVars <- c("x", "y", x_vars)
@@ -90,6 +83,11 @@ mod_CV_prepare <- function(
   # # |||||||||||||||||||||||||||||||||||
   # # Reference grid -----
   # # |||||||||||||||||||||||||||||||||||
+
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Environment file is not found or invalid.", env_file = env_file)
+  }
 
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,

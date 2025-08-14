@@ -107,6 +107,11 @@ mod_CV_fit <- function(
       include_backtrace = TRUE)
   }
 
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Environment file is not found or invalid.", env_file = env_file)
+  }
+
   rm(AllArgs, NullVarsNames, NullVars, envir = environment())
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

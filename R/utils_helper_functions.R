@@ -77,3 +77,28 @@
 
   tolower(hab_abb)
 }
+
+
+# # ..................................................................... ###
+
+#' @keywords internal
+#' @noRd
+
+.validate_cv_name <- function(cv_name) {
+
+  if (is.null(cv_name)) ecokit::stop_ctx("cv_name cannot be NULL")
+
+  if (!is.character(cv_name) || length(cv_name) != 1L || !nzchar(cv_name)) {
+    ecokit::stop_ctx(
+      "cv_name must be a character of length 1",
+      cv_name = cv_name, class_cv_name = class(cv_name))
+  }
+
+  valid_cv_names <- c("CV_Dist", "CV_Large", "CV_SAC")
+  if (!cv_name %in% valid_cv_names) {
+    ecokit::stop_ctx(
+      "Invalid cv_name", cv_name = cv_name, valid_cv_names = valid_cv_names)
+  }
+
+  cv_name
+}

@@ -52,24 +52,11 @@ predict_maps_CV <- function(
 
   rm(AllArgs, envir = environment())
 
+  CV_name <- .validate_cv_name(CV_name)
   n_cores <- .validate_n_cores(n_cores)
   LF_n_cores <- .validate_n_cores(LF_n_cores)
   strategy <- .validate_strategy(strategy)
   if (strategy == "sequential") n_cores <- LF_n_cores <- 1L
-
-  if (!CV_name %in% c("CV_Dist", "CV_Large", "CV_SAC")) {
-    ecokit::stop_ctx(
-      paste0(
-        "Invalid value for CV_name argument.\nValid values are: CV_Dist, ",
-        "CV_Large, or CV_SAC"),
-      CV_name = CV_name, include_backtrace = TRUE)
-  }
-
-  if (!file.exists(env_file)) {
-    ecokit::stop_ctx(
-      "Environment file is invalid or does not exist.", env_file = env_file,
-      include_backtrace = TRUE)
-  }
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -77,6 +64,11 @@ predict_maps_CV <- function(
   # Environment variables ------
 
   ecokit::cat_time("Environment variables")
+
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Environment file is not found or invalid.", env_file = env_file)
+  }
 
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,

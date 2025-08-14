@@ -30,6 +30,11 @@ EASIN_taxonomy <- function(
 
   # Environment variables ----
 
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Environment file is not found or invalid.", env_file = env_file)
+  }
+
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
     "EASIN_URL", "DP_R_EASIN_taxa_url", FALSE, FALSE)

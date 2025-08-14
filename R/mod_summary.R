@@ -25,7 +25,7 @@
 #' @name mod_summary
 
 mod_summary <- function(
-  path_coda = NULL, env_file = ".env", return_data = FALSE) {
+    path_coda = NULL, env_file = ".env", return_data = FALSE) {
 
   # # ..................................................................... ###
 
@@ -36,12 +36,6 @@ mod_summary <- function(
   if (is.null(path_coda)) {
     ecokit::stop_ctx(
       "`path_coda` cannot be empty", path_coda = path_coda,
-      include_backtrace = TRUE)
-  }
-
-  if (!file.exists(env_file)) {
-    ecokit::stop_ctx(
-      "Environment file not found", env_file = env_file,
       include_backtrace = TRUE)
   }
 
@@ -58,6 +52,11 @@ mod_summary <- function(
   # Prepare Species list -----
   ecokit::cat_time("Prepare Species list")
 
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Environment file is not found or invalid.", env_file = env_file)
+  }
+
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
     "TaxaInfoFile", "DP_R_Taxa_info", FALSE, TRUE)
@@ -70,7 +69,7 @@ mod_summary <- function(
 
   # DataPrep helper function -------
   DataPrep <- function(DT) {
-      as.data.frame(DT) %>%
+    as.data.frame(DT) %>%
       tibble::rownames_to_column(var = "VarSp") %>%
       tibble::as_tibble() %>%
       dplyr::rename(

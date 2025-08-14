@@ -76,6 +76,11 @@ plot_gelman <- function(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c("beta", "rho", "omega", "alpha", "return_plots"))
 
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Environment file is not found or invalid.", env_file = env_file)
+  }
+
   rm(AllArgs, envir = environment())
 
   # # ..................................................................... ###
@@ -359,6 +364,11 @@ plot_gelman_beta <- function(
       "`coda_object` has to be of class mcmc.list",
       coda_object = coda_object, class_coda_object = class(coda_object),
       include_backtrace = TRUE)
+  }
+
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Environment file is not found or invalid.", env_file = env_file)
   }
 
   # # ..................................................................... ###

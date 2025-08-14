@@ -9,7 +9,7 @@
 #' @export
 
 efforts_split <- function(
-  path_zip = NULL, env_file = ".env", chunk_size = 100000L) {
+    path_zip = NULL, env_file = ".env", chunk_size = 100000L) {
 
   # # ..................................................................... ###
 
@@ -29,7 +29,7 @@ efforts_split <- function(
   # Check if `path_zip` is a character of length 1 and not empty. Also Check
   # if file exists
   if (!is.character(path_zip) || length(path_zip) != 1 || path_zip == "" ||
-    is.null(path_zip)) {
+      is.null(path_zip)) {
     ecokit::stop_ctx(
       "`path_zip` must be a character of length 1 and not empty.",
       path_zip = path_zip, include_backtrace = TRUE)
@@ -57,6 +57,12 @@ efforts_split <- function(
   # # ..................................................................... ###
 
   # Environment variables ----
+
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Environment file is not found or invalid.", env_file = env_file)
+  }
+
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
     "Path_Interim", "DP_R_Efforts_interim", FALSE, FALSE)

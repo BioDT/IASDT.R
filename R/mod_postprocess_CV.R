@@ -56,12 +56,6 @@ mod_postprocess_CV_1_CPU <- function(
   n_cores <- .validate_n_cores(n_cores)
   LF_n_cores <- .validate_n_cores(LF_n_cores)
 
-  if (!file.exists(env_file)) {
-    ecokit::stop_ctx(
-      "Error: Environment file is invalid or does not exist.",
-      env_file = env_file, include_backtrace = TRUE)
-  }
-
   if (!dir.exists(model_dir)) {
     ecokit::stop_ctx(
       "Model directory is invalid or does not exist.", model_dir = model_dir,
@@ -80,6 +74,12 @@ mod_postprocess_CV_1_CPU <- function(
   # ****************************************************************
 
   # # Load environment variables, for project ID
+
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Environment file is not found or invalid.", env_file = env_file)
+  }
+
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
     "ProjectID", "DP_R_LUMI_gpu", FALSE, FALSE)
@@ -111,7 +111,7 @@ mod_postprocess_CV_1_CPU <- function(
   }
 
   Path_LF_SLURM <- fs::path(Path_TF, "LF_SLURM.slurm")
-  path_out <- fs::path(Path_Log, "%x-%A-%a.out")      # nolint: object_name_linter
+  path_out <- fs::path(Path_Log, "%x-%A-%a.out")   # nolint: object_name_linter
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -381,31 +381,10 @@ mod_postprocess_CV_2_CPU <- function(
     args_to_check = c("n_cores", "LF_n_cores"))
   rm(AllArgs, envir = environment())
 
-  if (n_cores <= 0) {
-    ecokit::stop_ctx(
-      "`n_cores` must be a positive integer.", n_cores = n_cores,
-      include_backtrace = TRUE)
-  }
-  if (LF_n_cores <= 0) {
-    ecokit::stop_ctx(
-      "`LF_n_cores` must be a positive integer.", LF_n_cores = LF_n_cores,
-      include_backtrace = TRUE)
-  }
-
-  if (strategy == "sequential") {
-    n_cores <- LF_n_cores <- 1L
-  }
-  if (length(strategy) != 1L) {
-    ecokit::stop_ctx(
-      "`strategy` must be a character vector of length 1",
-      strategy = strategy, length_strategy = length(strategy))
-  }
-  valid_strategy <- c(
-    "sequential", "multisession", "multicore",
-    "cluster")
-  if (!strategy %in% valid_strategy) {
-    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
-  }
+  strategy <- .validate_strategy(strategy)
+  if (strategy == "sequential") n_cores <- LF_n_cores <- 1L
+  n_cores <- .validate_n_cores(n_cores)
+  LF_n_cores <- .validate_n_cores(LF_n_cores)
 
   valid_CVs <- c("CV_Dist", "CV_Large", "CV_SAC")
   if (!all(CV_names %in% valid_CVs)) {
@@ -414,6 +393,11 @@ mod_postprocess_CV_2_CPU <- function(
         "Invalid value for CV_names argument. Valid values ",
         "are: 'CV_Dist', 'CV_Large', or `CV_SAC`"),
       CV_names = CV_names, include_backtrace = TRUE)
+  }
+
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Environment file is not found or invalid.", env_file = env_file)
   }
 
   # # ..................................................................... ###

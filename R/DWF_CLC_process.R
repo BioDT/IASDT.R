@@ -46,23 +46,11 @@ CLC_process <- function(
     Path_Grid_Ref <- km <- Majority <- Path_CLC_tif <- Path_CLC_CW <-
     EU_Bound <- Value <- Country <- Country2 <- NULL
 
-  if (is.null(env_file)) {
-    ecokit::stop_ctx(
-      "env_file can not be empty", env_file = env_file,
-      include_backtrace = TRUE)
-  }
-
   if (!is.numeric(min_land_percent) ||
       !dplyr::between(min_land_percent, 0, 100)) {
     ecokit::stop_ctx(
       "`min_land_percent` must be a numeric value between 0 and 100.",
       min_land_percent = min_land_percent, include_backtrace = TRUE)
-  }
-
-  if (!file.exists(env_file)) {
-    ecokit::stop_ctx(
-      "Path to environment variables was not found", env_file = env_file,
-      include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -78,6 +66,11 @@ CLC_process <- function(
   # # ||||||||||||||||||||||||||||||||||||||||||||
 
   ecokit::cat_time("Environment variables")
+
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Environment file is not found or invalid.", env_file = env_file)
+  }
 
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,

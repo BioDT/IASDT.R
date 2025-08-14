@@ -53,8 +53,10 @@ soil_density_process <- function(
   # # ..................................................................... ###
 
   # Environment variables -----
-  if (!fs::file_exists(env_file)) {
-    ecokit::stop_ctx("Environment file does not exist", env_file = env_file)
+
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Environment file is not found or invalid.", env_file = env_file)
   }
 
   EnvVars2Read <- tibble::tribble(

@@ -54,6 +54,11 @@ mod_prepare_data <- function(
   ecokit::cat_time(
     "Reading/checking environment variables", verbose = verbose_progress)
 
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Environment file is not found or invalid.", env_file = env_file)
+  }
+
   # Input data paths - these are read from the .env file
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,

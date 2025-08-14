@@ -104,7 +104,7 @@ to disk as an <code>*.RData</code> file.</p>
 <span>  GPP_dists <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  min_LF <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  max_LF <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  alphapw <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>Prior <span class="op">=</span> <span class="cn">NULL</span>, Min <span class="op">=</span> <span class="fl">20</span>, Max <span class="op">=</span> <span class="fl">1300</span>, Samples <span class="op">=</span> <span class="fl">150</span><span class="op">)</span>,</span>
+<span>  alphapw <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>Prior <span class="op">=</span> <span class="cn">NULL</span>, Min <span class="op">=</span> <span class="fl">150</span>, Max <span class="op">=</span> <span class="fl">1500</span>, Samples <span class="op">=</span> <span class="fl">101</span><span class="op">)</span>,</span>
 <span>  efforts_as_predictor <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  road_rail_as_predictor <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  habitat_as_predictor <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -112,8 +112,7 @@ to disk as an <code>*.RData</code> file.</p>
 <span>  soil_as_predictor <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  wetness_as_predictor <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  bio_variables <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bio3"</span>, <span class="st">"bio4"</span>, <span class="st">"bio11"</span>, <span class="st">"bio18"</span>, <span class="st">"bio19"</span>, <span class="st">"npp"</span><span class="op">)</span>,</span>
-<span>  quadratic_variables <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">bio_variables</span>, <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">soil_as_predictor</span>, <span class="st">"soil"</span>, <span class="cn">NULL</span><span class="op">)</span>,</span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">wetness_as_predictor</span>, <span class="st">"wetness"</span>, <span class="cn">NULL</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  quadratic_variables <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bio4"</span>, <span class="st">"bio11"</span><span class="op">)</span>,</span>
 <span>  n_species_per_grid <span class="op">=</span> <span class="fl">0L</span>,</span>
 <span>  exclude_cultivated <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  exclude_0_habitat <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -219,11 +218,12 @@ respective values will be used as arguments to <a href="https://rdrr.io/pkg/Hmsc
 
 
 <dt id="arg-alphapw">alphapw<a class="anchor" aria-label="anchor" href="#arg-alphapw"></a></dt>
-<dd><p>Prior for the alpha parameter. Defaults to a list with <code>Prior = NULL</code>, <code>Min = 20</code>, <code>Max = 1300</code>, and <code>Samples = 150</code>. If <code>alphapw</code> is
+<dd><p>Prior for the alpha parameter. Defaults to a list with <code>Prior = NULL</code>, <code>Min = 150</code>, <code>Max = 1500</code>, and <code>Samples = 101</code>. If <code>alphapw</code> is
 <code>NULL</code> or a list with all <code>NULL</code> list items, the default prior will be
-used. If <code>Prior</code> is a matrix, it will be used as the prior. If <code>Prior = NULL</code>, the prior will be generated using <code>Min</code>, <code>Max</code>, and <code>Samples</code>. <code>Min</code>
-and <code>Max</code> are the minimum and maximum values of the alpha parameter (in
-kilometre). <code>Samples</code> is the number of samples to be used in the prior.</p></dd>
+used. If <code>Prior</code> is a matrix, it will be used as the prior. If <code>Prior = NULL</code>, the prior will be generated using the minimum and maximum values of
+the alpha parameter (<code>min</code> and <code>max</code>, respectively; in kilometre) and  the
+number of samples (<code>Samples</code>). Defaults to a prior with 101 samples ranging
+from 150 to 1500 km, with the first value in the second column set to 0.5.</p></dd>
 
 
 <dt id="arg-efforts-as-predictor">efforts_as_predictor<a class="anchor" aria-label="anchor" href="#arg-efforts-as-predictor"></a></dt>
@@ -272,9 +272,8 @@ relevant and minimally correlated variables are selected: <code>c("bio3", "bio4"
 
 <dt id="arg-quadratic-variables">quadratic_variables<a class="anchor" aria-label="anchor" href="#arg-quadratic-variables"></a></dt>
 <dd><p>Character vector for variables for which quadratic
-terms are used. Defaults to all variables of the <code>bio_variables</code> in
-addition to soil bulk density and topographic wetness index (if used). If
-<code>quadratic_variables</code> is <code>NULL</code>, no quadratic terms will be used.</p></dd>
+terms are used. Defaults to <code>c("bio4", "bio11")</code>. If <code>quadratic_variables</code>
+is <code>NULL</code>, no quadratic terms will be used.</p></dd>
 
 
 <dt id="arg-n-species-per-grid">n_species_per_grid<a class="anchor" aria-label="anchor" href="#arg-n-species-per-grid"></a></dt>

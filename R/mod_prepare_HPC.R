@@ -276,8 +276,9 @@ mod_prepare_HPC <- function(
   Path_Python <- fs::path(path_Hmsc, "Scripts", "python.exe")
 
   ecokit::info_chunk(
-    "Preparing data for Hmsc-HPC models", line_char = "=",
-    verbose = verbose_progress)
+    paste0("Preparing data for Hmsc-HPC models - ", directory_name),
+    line_char = "=", verbose = verbose_progress, cat_bold = TRUE,
+    line_char_rep = 70, cat_red = TRUE)
 
   # # |||||||||||||||||||||||||||||||||||
   # Load/check environment variables -----

@@ -16,7 +16,7 @@ mod_prepare_HPC(
   GPP_dists = NULL,
   min_LF = NULL,
   max_LF = NULL,
-  alphapw = list(Prior = NULL, Min = 20, Max = 1300, Samples = 150),
+  alphapw = list(Prior = NULL, Min = 150, Max = 1500, Samples = 101),
   efforts_as_predictor = TRUE,
   road_rail_as_predictor = TRUE,
   habitat_as_predictor = TRUE,
@@ -24,8 +24,7 @@ mod_prepare_HPC(
   soil_as_predictor = TRUE,
   wetness_as_predictor = TRUE,
   bio_variables = c("bio3", "bio4", "bio11", "bio18", "bio19", "npp"),
-  quadratic_variables = c(bio_variables, ifelse(soil_as_predictor, "soil", NULL),
-    ifelse(wetness_as_predictor, "wetness", NULL)),
+  quadratic_variables = c("bio4", "bio11"),
   n_species_per_grid = 0L,
   exclude_cultivated = TRUE,
   exclude_0_habitat = TRUE,
@@ -110,11 +109,12 @@ be used. Both default to \code{NULL} which means that the number of latent
 factors will be estimated from the data. If either is provided, the
 respective values will be used as arguments to \link[Hmsc:setPriors]{Hmsc::setPriors}.}
 
-\item{alphapw}{Prior for the alpha parameter. Defaults to a list with \code{Prior = NULL}, \code{Min = 20}, \code{Max = 1300}, and \code{Samples = 150}. If \code{alphapw} is
+\item{alphapw}{Prior for the alpha parameter. Defaults to a list with \code{Prior = NULL}, \code{Min = 150}, \code{Max = 1500}, and \code{Samples = 101}. If \code{alphapw} is
 \code{NULL} or a list with all \code{NULL} list items, the default prior will be
-used. If \code{Prior} is a matrix, it will be used as the prior. If \code{Prior = NULL}, the prior will be generated using \code{Min}, \code{Max}, and \code{Samples}. \code{Min}
-and \code{Max} are the minimum and maximum values of the alpha parameter (in
-kilometre). \code{Samples} is the number of samples to be used in the prior.}
+used. If \code{Prior} is a matrix, it will be used as the prior. If \code{Prior = NULL}, the prior will be generated using the minimum and maximum values of
+the alpha parameter (\code{min} and \code{max}, respectively; in kilometre) and  the
+number of samples (\code{Samples}). Defaults to a prior with 101 samples ranging
+from 150 to 1500 km, with the first value in the second column set to 0.5.}
 
 \item{efforts_as_predictor}{Logical. Whether to include the
 (log\if{html}{\out{<sub>}}10\if{html}{\out{</sub>}}) sampling efforts as predictor to the model. Default:
@@ -147,9 +147,8 @@ Productivity, npp)) to be used in the model. By default, six ecologically
 relevant and minimally correlated variables are selected: \code{c("bio3", "bio4", "bio11", "bio18", "bio19", "npp")}.}
 
 \item{quadratic_variables}{Character vector for variables for which quadratic
-terms are used. Defaults to all variables of the \code{bio_variables} in
-addition to soil bulk density and topographic wetness index (if used). If
-\code{quadratic_variables} is \code{NULL}, no quadratic terms will be used.}
+terms are used. Defaults to \code{c("bio4", "bio11")}. If \code{quadratic_variables}
+is \code{NULL}, no quadratic terms will be used.}
 
 \item{n_species_per_grid}{Integer. Minimum number of species required for a
 grid cell to be included in the analysis. This filtering occurs after

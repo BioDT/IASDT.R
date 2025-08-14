@@ -472,7 +472,7 @@ IAS_distribution <- function(
   # number of grid cells per biogeographical regions
 
   BioReg_R <- fs::path(Path_BioReg, "BioReg_R.RData")
-  if (isFALSE(ecokit::check_rdata(BioReg_R))) {
+  if (isFALSE(ecokit::check_data(BioReg_R, warning = FALSE))) {
     ecokit::stop_ctx(
       "Required file for biogeographical regions does not exist",
       BioReg_R = BioReg_R, include_backtrace = TRUE)

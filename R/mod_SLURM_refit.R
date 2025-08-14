@@ -17,7 +17,7 @@ mod_SLURM_refit <- function(
 
   # # ..................................................................... ###
 
-  NullVarsNames <- c("model_dir", "memory_per_cpu", "job_runtime", "path_Hmsc")
+  NullVarsNames <- c("model_dir", "path_Hmsc")
   NullVars <- which(purrr::map_lgl(.x = NullVarsNames, .f = ~ is.null(get(.x))))
 
   if (length(NullVars) > 0) {
@@ -51,8 +51,8 @@ mod_SLURM_refit <- function(
   ecokit::check_args(
     args_all = AllArgs, args_type = "character",
     args_to_check = c(
-      "HPC_partition", "env_file", "job_runtime", "job_name", "memory_per_cpu",
-      "model_dir", "path_Hmsc", "SLURM_prefix", "refit_prefix"))
+      "HPC_partition", "job_name", "model_dir", "path_Hmsc", "SLURM_prefix",
+      "refit_prefix"))
   ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c(
@@ -65,6 +65,10 @@ mod_SLURM_refit <- function(
     ecokit::stop_ctx(
       "Environment file is not found or invalid.", env_file = env_file)
   }
+
+  # Validate memory_per_cpu and job_runtime
+  memory_per_cpu <- .validate_slurm_ram(memory_per_cpu)
+  job_runtime <- .validate_slurm_runtime(job_runtime)
 
   # # ..................................................................... ###
 

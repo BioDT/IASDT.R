@@ -987,8 +987,10 @@ prepare_input_data <- function(
       magrittr::extract2("All")
 
     # Calculating the sum of road and railway intensity
+    # add 1 (older versions 0.1) to get log for 0 values
+    # [only for # rivers/roads/efforts, not hab/rivers]
     r_road_rail <- (r_roads + r_railways) %>%
-      magrittr::add(0.1) %>%
+      magrittr::add(1) %>%
       log10() %>%
       stats::setNames("RoadRailLog")
 
@@ -1040,9 +1042,11 @@ prepare_input_data <- function(
         include_backtrace = TRUE)
     }
 
+    # add 1 (older versions 0.1) to get log for 0 values
+    # [only for rivers/roads/efforts, not hab/rivers]
     r_efforts <- ecokit::load_as(r_efforts, unwrap_r = TRUE) %>%
       magrittr::extract2("NObs") %>%
-      magrittr::add(0.1) %>%
+      magrittr::add(1) %>%
       log10() %>%
       stats::setNames("EffortsLog")
 

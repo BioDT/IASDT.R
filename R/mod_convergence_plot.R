@@ -560,7 +560,7 @@ convergence_plot <- function(
         VarDesc = stringr::str_glue(
           "<span style='color:blue;'><b>\\
           {stringr::str_to_sentence(VarDesc)}</b></span>"),
-        VarDesc = paste0(VarDesc, " (log<sub>10</sub>(x + 0.1))")) %>%
+        VarDesc = paste0(VarDesc, " (log<sub>10</sub>)")) %>%
       dplyr::bind_rows(Intercept, .)
 
     VarsDesc <- tibble::tribble(

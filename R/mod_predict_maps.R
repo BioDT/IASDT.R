@@ -384,8 +384,10 @@ predict_maps <- function(
       magrittr::extract2("All")
 
     # Calculating the sum of road and railway intensity
+    # add 1 (older versions 0.1) to get log for 0 values [only for
+    # rivers/roads/efforts, not hab/rivers]
     R_RoadRail <- (R_Roads + R_Railways) %>%
-      magrittr::add(0.1) %>%
+      magrittr::add(1) %>%
       log10() %>%
       stats::setNames("RoadRailLog")
 
@@ -418,8 +420,7 @@ predict_maps <- function(
     # predictions.
     R_Hab_Mask <- terra::classify(R_Hab, cbind(0, NA), others = 1)
 
-    R_Hab <- log10(R_Hab + 0.1) %>%
-      stats::setNames("HabLog")
+    R_Hab <- stats::setNames(log10(R_Hab + 0.1), "HabLog")
 
     StaticPredictors <- c(StaticPredictors, R_Hab)
     rm(R_Hab, envir = environment())
@@ -440,12 +441,13 @@ predict_maps <- function(
         include_backtrace = TRUE)
     }
 
+    # add 1 (older versions 0.1) to get log for 0 values
+    # [only for rivers/roads/efforts, not hab/rivers]
     R_Efforts <- ecokit::load_as(R_Efforts, unwrap_r = TRUE) %>%
       magrittr::extract2("NObs") %>%
-      magrittr::add(0.1) %>%
+      magrittr::add(1) %>%
       log10() %>%
       stats::setNames("EffortsLog")
-
 
     if (clamp_pred) {
 

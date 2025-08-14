@@ -54,9 +54,8 @@
 #'   relevant and minimally correlated variables are selected: `c("bio3",
 #'   "bio4", "bio11", "bio18", "bio19", "npp")`.
 #' @param quadratic_variables Character vector for variables for which quadratic
-#'   terms are used. Defaults to all variables of the `bio_variables` in
-#'   addition to soil bulk density and topographic wetness index (if used). If
-#'   `quadratic_variables` is `NULL`, no quadratic terms will be used.
+#'   terms are used. Defaults to `c("bio4", "bio11")`. If `quadratic_variables`
+#'   is `NULL`, no quadratic terms will be used.
 #' @param n_species_per_grid Integer. Minimum number of species required for a
 #'   grid cell to be included in the analysis. This filtering occurs after
 #'   applying `min_efforts_n_species` (sampling effort thresholds),
@@ -179,15 +178,12 @@ mod_prepare_HPC <- function(
     hab_abb = NULL, directory_name = NULL,
     min_efforts_n_species = 100L, n_pres_per_species = 80L, env_file = ".env",
     GPP = TRUE, GPP_dists = NULL, min_LF = NULL, max_LF = NULL,
-    alphapw = list(Prior = NULL, Min = 20, Max = 1300, Samples = 150),
+    alphapw = list(Prior = NULL, Min = 150, Max = 1500, Samples = 101),
     efforts_as_predictor = TRUE, road_rail_as_predictor = TRUE,
     habitat_as_predictor = TRUE, river_as_predictor = FALSE,
     soil_as_predictor = TRUE, wetness_as_predictor = TRUE,
     bio_variables = c("bio3", "bio4", "bio11", "bio18", "bio19", "npp"),
-    quadratic_variables = c(
-      bio_variables,
-      ifelse(soil_as_predictor, "soil", NULL),
-      ifelse(wetness_as_predictor, "wetness", NULL)),
+    quadratic_variables = c("bio4", "bio11"),
     n_species_per_grid = 0L, exclude_cultivated = TRUE,
     exclude_0_habitat = TRUE, CV_n_folds = 4L, CV_n_grids = 20L,
     CV_n_rows = 2L, CV_n_columns = 2L, CV_SAC = FALSE,
@@ -275,7 +271,7 @@ mod_prepare_HPC <- function(
     M_Name_Fit <- Chain <- Post_Missing <- Command_HPC <- Command_WS <-
     Post_Path <- Path_ModProg <- TaxaInfoFile <- Path_Grid <- EU_Bound <-
     Path_PA <- NAME_ENGL <- NSp <- Species_File <- File <- ias_id <-
-    PA <- PA_model <- PA_file <- PA_model_file <- path_model <- NULL
+    PA_file <- PA_model_file <- path_model <- NULL
 
   Path_Python <- fs::path(path_Hmsc, "Scripts", "python.exe")
 
@@ -344,7 +340,8 @@ mod_prepare_HPC <- function(
     if (!fs::dir_exists(CV_fit_inherit)) {
       ecokit::stop_ctx(
         "Directory to inherit data from does not exist",
-        CV_fit = CV_fit, include_backtrace = TRUE)
+        CV_fit = CV_fit, CV_fit_inherit = CV_fit_inherit,
+        include_backtrace = TRUE)
     }
 
     # Validate files existence in the inherited directory
@@ -360,6 +357,14 @@ mod_prepare_HPC <- function(
             CV_fit = CV_fit, rdata_files = list_rdata, include_backtrace = TRUE)
         }
       })
+
+    if (is.null(CV_fit_type) || is.null(CV_fit_fold)) {
+      ecokit::stop_ctx(
+        paste0(
+          "`CV_fit$CV_type` and `CV_fit$CV_fold` can not be NULL",
+          "if `CV_fit$inherit_dir` is provided"),
+        CV_fit = CV_fit, include_backtrace = TRUE)
+    }
   }
 
   # CV_fit_type and CV_fit_fold must be consistent
@@ -480,6 +485,10 @@ mod_prepare_HPC <- function(
     ecokit::check_args(
       args_all = AllArgs, args_type = "character",
       args_to_check = c("memory_per_cpu", "job_runtime"))
+
+    # Validate memory_per_cpu and job_runtime
+    memory_per_cpu <- .validate_slurm_ram(memory_per_cpu)
+    job_runtime <- .validate_slurm_runtime(job_runtime)
   }
 
   # Phylogenetic tree options
@@ -557,6 +566,15 @@ mod_prepare_HPC <- function(
   if (soil_as_predictor) XVars <- c(XVars, "soil")
   if (wetness_as_predictor) XVars <- c(XVars, "wetness")
   if (hab_abb != "0" && habitat_as_predictor) XVars <- c(XVars, "HabLog")
+
+  # Check quadratic variables
+  if (!is.null(quadratic_variables) && !all(quadratic_variables %in% XVars)) {
+    ecokit::stop_ctx(
+      "Some quadratic variables are not in the predictor variables",
+      missing_vars = quadratic_variables[!quadratic_variables %in% XVars],
+      quadratic_variables = quadratic_variables, XVars = XVars,
+      include_backtrace = TRUE)
+  }
 
   # # ..................................................................... ###
 
@@ -655,7 +673,7 @@ mod_prepare_HPC <- function(
           dplyr::select(., tidyselect::starts_with("Sp_")),
           na.rm = TRUE),
         NSp = as.integer(NSp)) %>%
-      dplyr::select("x", "y", "NSp") %>%
+      dplyr::select(tidyselect::all_of(c("x", "y", "NSp"))) %>%
       sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
       terra::rasterize(
         y = ecokit::load_as(Path_GridR, unwrap_r = TRUE), field = "NSp") %>%
@@ -918,7 +936,8 @@ mod_prepare_HPC <- function(
   # cross-validation data to be saved
   DT_CV <- DT_All %>%
     dplyr::select(
-      "CellNum", "CellCode", "Country", tidyselect::starts_with("CV"))
+      tidyselect::all_of(c("CellNum", "CellCode", "Country")),
+      tidyselect::starts_with("CV"))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -1058,7 +1077,7 @@ mod_prepare_HPC <- function(
       "Spatial info and random effect", verbose = verbose_progress)
     studyDesign <- data.frame(sample = as.factor(seq_len(nrow(DT_x))))
 
-    DT_xy <- as.matrix(dplyr::select(DT_All, x, y))
+    DT_xy <- as.matrix(dplyr::select(DT_All, tidyselect::all_of(c("x", "y"))))
     rownames(DT_xy) <- studyDesign$sample
 
     # Prepare GPP knots
@@ -1261,7 +1280,7 @@ mod_prepare_HPC <- function(
             PathOut <- fs::path(
               path_model, paste0("InitMod_", .x, ".RData"))
 
-            InitModExists <- ecokit::check_data(PathOut)
+            InitModExists <- ecokit::check_data(PathOut, warning = FALSE)
 
             if (isFALSE(InitModExists)) {
               if (endsWith(.x, "_Tree")) {
@@ -1330,7 +1349,7 @@ mod_prepare_HPC <- function(
     }
 
     if (isFALSE(overwrite_rds) && file.exists(CurrPath) &&
-        ecokit::check_data(CurrPath)) {
+        ecokit::check_data(CurrPath, warning = FALSE)) {
       return(invisible(NULL))
     }
 
@@ -1350,7 +1369,8 @@ mod_prepare_HPC <- function(
 
       saveRDS(Model, file = CurrPath)
 
-      if (file.exists(CurrPath) && ecokit::check_rds(CurrPath)) {
+      if (file.exists(CurrPath) &&
+          ecokit::check_data(CurrPath, warning = FALSE)) {
         break
       }
     }
@@ -1643,15 +1663,23 @@ mod_prepare_HPC <- function(
 
   # Save PA maps to disk ------
 
+  # Save all data without cross-validation
+
   if (is.null(CV_fit_inherit) && (is.null(CV_fit_fold) || CV_fit_fold == 1)) {
 
     ecokit::cat_time("Save PA maps to disk", verbose = verbose_progress)
 
+    # coordinates for all grid cells used in any models (for cross-validated
+    # models, this includes coordinates for all training and testing sites)
+    xy_all <- fs::path(path_model, "ModDT.RData") %>%
+      ecokit::load_as() %>%
+      dplyr::select(tidyselect::all_of(c("x", "y")))
+
     # Mask layer for grid cells used in the models
-    Model_Mask <- ecokit::load_as(Path_GridR, unwrap_r = TRUE) %>% # nolint: object_name_linter
-      terra::rasterize(DT_xy, .)
+    model_mask <- ecokit::load_as(Path_GridR, unwrap_r = TRUE) %>%
+      terra::rasterize(xy_all, .)
     # Whether to use masked (exclude_cultivated) or full PA
-    PA_Layer <- dplyr::if_else(exclude_cultivated, "PA_Masked", "PA")      # nolint: object_name_linter
+    PA_layer <- dplyr::if_else(exclude_cultivated, "PA_Masked", "PA")
 
     ecokit::cat_time(
       "Processing and exporting maps as tif files", level = 1L,
@@ -1670,14 +1698,14 @@ mod_prepare_HPC <- function(
             PA_file <- fs::path(Path_Dist, paste0(.y, "_full.tif"))
             # Load PA map
             PA <- ecokit::load_as(.x, unwrap_r = TRUE) %>%
-              magrittr::extract2(PA_Layer)
+              magrittr::extract2(PA_layer)
             # Save PA map
             terra::writeRaster(PA, PA_file, overwrite = TRUE)
 
             # Path for storing PA map - only in modelling grid cells
             PA_model_file <- fs::path(Path_Dist, paste0(.y, "_model.tif"))
             # mask PA map to modelling grid cells
-            PA_model <- terra::mask(PA, Model_Mask)
+            PA_model <- terra::mask(PA, model_mask)
             # Save masked PA map
             terra::writeRaster(PA_model, PA_model_file, overwrite = TRUE)
 
@@ -1688,10 +1716,11 @@ mod_prepare_HPC <- function(
               PA_model_file = PA_model_file)
           })) %>%
       tidyr::unnest(cols = "Map_Sp") %>%
-      dplyr::select(-Species_File, -File)
+      dplyr::select(-tidyselect::all_of(c("Species_File", "File")))
 
     ecokit::cat_time(
-      "Calculate species richness - full", level = 1L, verbose = verbose_progress)
+      "Calculate species richness - full", level = 1L,
+      verbose = verbose_progress)
     SR_file <- fs::path(Path_Dist, "SR_full.tif")
     SR <- purrr::map(Mod_PA$PA, terra::unwrap) %>%
       terra::rast() %>%
@@ -1714,14 +1743,15 @@ mod_prepare_HPC <- function(
       terra::unwrap(SR_model), SR_model_file) %>%
       dplyr::bind_rows(Mod_PA)
 
-    ecokit::cat_time("Save maps as RData", level = 1L, verbose = verbose_progress)
+    ecokit::cat_time(
+      "Save maps as RData", level = 1L, verbose = verbose_progress)
     ecokit::save_as(
       object = Mod_PA, object_name = "PA_with_maps",
       out_path = fs::path(Path_Dist, "PA_with_maps.RData"))
 
     ecokit::cat_time(
       "Save maps without maps as RData", level = 1L, verbose = verbose_progress)
-    Mod_PA <- dplyr::select(Mod_PA, -PA, -PA_model)
+    Mod_PA <- dplyr::select(Mod_PA, -tidyselect::all_of(c("PA", "PA_model")))
     ecokit::save_as(
       object = Mod_PA, object_name = "PA",
       out_path = fs::path(Path_Dist, "PA.RData"))
@@ -1743,17 +1773,18 @@ mod_prepare_HPC <- function(
     # Path of the tar file
     tar_file <- fs::path(Path_Dist, "PA_maps.tar")
     # list of files to tar
-    Files2Tar <- c(      # nolint: object_name_linter
-      Mod_PA$PA_file, Mod_PA$PA_model_file,
-      fs::path(Path_Dist, "PA.txt")) %>%
+    files_to_tar <- c(
+      Mod_PA$PA_file, Mod_PA$PA_model_file, fs::path(Path_Dist, "PA.txt")) %>%
       basename() %>%
       paste(collapse = " ")
     tar_command <- stringr::str_glue(
-      'tar -cf "{tar_file}" -C "{Path_Dist}" {Files2Tar}')
+      'tar -cf "{tar_file}" -C "{Path_Dist}" {files_to_tar}')
     invisible(system(tar_command))
 
     # Change the permission of the tar file
     Sys.chmod(tar_file, "755", use_umask = FALSE)
+
+    rm(files_to_tar, model_mask, PA_layer, envir = environment())
 
   }
 

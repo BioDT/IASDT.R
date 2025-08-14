@@ -148,8 +148,7 @@ mod_prepare_data <- function(
     }
 
     # Log of habitat coverage
-    R_HabLog <- log10(R_Hab + 0.1) %>%
-      stats::setNames("HabLog")
+    R_HabLog <- stats::setNames(log10(R_Hab + 0.1), "HabLog")
   }
 
   # # ..................................................................... ###
@@ -377,8 +376,9 @@ mod_prepare_data <- function(
     terra::mask(EffortsMask)
 
   # Log of road intensity
-  R_RoadIntLog <- log10(R_RoadInt + 0.1) %>%
-    stats::setNames("RoadIntLog")
+  # add 1 (older versions 0.1) to get log for 0 values
+  # [only for rivers/roads/efforts, not hab/rivers]
+  R_RoadIntLog <- stats::setNames(log10(R_RoadInt + 1), "RoadIntLog")
 
   # # ||||||||||||||||||||||||||||||||||||||||||
 
@@ -398,8 +398,9 @@ mod_prepare_data <- function(
     stats::setNames("RailInt")
 
   # Log of railway intensity
-  R_RailIntLog <- log10(R_RailInt + 0.1) %>%
-    stats::setNames("RailIntLog")
+  # add 1 (older versions 0.1) to get log for 0 values
+  # [only for rivers/roads/efforts, not hab/rivers]
+  R_RailIntLog <- stats::setNames(log10(R_RailInt + 1), "RailIntLog")
 
   # # ||||||||||||||||||||||||||||||||||||||||||
 
@@ -407,7 +408,9 @@ mod_prepare_data <- function(
   ecokit::cat_time(
     "Merging Railway + road intensity", level = 2L, verbose = verbose_progress)
   R_RoadRail <- stats::setNames((R_RoadInt + R_RailInt), "RoadRail")
-  R_RoadRailLog <- stats::setNames(log10(R_RoadRail + 0.1), "RoadRailLog")
+  # add 1 (older versions 0.1) to get log for 0 values
+  # [only for rivers/roads/efforts, not hab/rivers]
+  R_RoadRailLog <- stats::setNames(log10(R_RoadRail + 1), "RoadRailLog")
 
   # # ..................................................................... ###
 
@@ -418,8 +421,9 @@ mod_prepare_data <- function(
     magrittr::extract2("NObs") %>%
     terra::mask(EffortsMask) %>%
     stats::setNames("Efforts")
-  R_EffortsLog <- log10(R_Efforts + 0.1) %>%
-    stats::setNames("EffortsLog")
+  # add 1 (older versions 0.1) to get log for 0 values
+  # [only for rivers/roads/efforts, not hab/rivers]
+  R_EffortsLog <- stats::setNames(log10(R_Efforts + 1), "EffortsLog")
 
   # # ..................................................................... ###
 
@@ -436,8 +440,7 @@ mod_prepare_data <- function(
     magrittr::extract2("STRAHLER_5") %>%
     terra::mask(EffortsMask) %>%
     stats::setNames("Rivers")
-  R_RiversLog <- log10(R_Rivers + 0.1) %>%
-    stats::setNames("RiversLog")
+  R_RiversLog <- stats::setNames(log10(R_Rivers + 0.1), "RiversLog")
 
   # # ..................................................................... ###
 

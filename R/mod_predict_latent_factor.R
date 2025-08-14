@@ -991,7 +991,7 @@ run_crossprod_solve <- function(
       if (!inherits(result, "error") || length(result) != 0 ||
           result == "Done") {
         # Check the integrity of the file
-        success <- ecokit::check_data(path_out)
+        success <- ecokit::check_data(path_out, warning = FALSE)
       }
       attempt <- attempt + 1
     }

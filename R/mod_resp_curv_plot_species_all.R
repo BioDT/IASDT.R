@@ -153,8 +153,8 @@ resp_curv_plot_species_all <- function(
             Variable == "bio19" ~ "precipitation of coldest quarter",
             Variable == "npp" ~ "net primary productivity",
             Variable == "RiversLog" ~ " (log<sub>10</sub>(x + 0.1))",
-            Variable == "RoadRailLog" ~ " (log<sub>10</sub>(x + 0.1))",
-            Variable == "EffortsLog" ~ " (log<sub>10</sub>(x + 0.1))",
+            Variable == "RoadRailLog" ~ " (log<sub>10</sub>(x + 1))",
+            Variable == "EffortsLog" ~ " (log<sub>10</sub>(x + 1))",
             Variable == "HabLog" ~ " (log<sub>10</sub>(x + 0.1))",
             .default = Variable),
           VarDesc2 = paste0(

@@ -20,12 +20,13 @@
 #'   factors will be estimated from the data. If either is provided, the
 #'   respective values will be used as arguments to [Hmsc::setPriors].
 #' @param alphapw Prior for the alpha parameter. Defaults to a list with `Prior
-#'   = NULL`, `Min = 20`, `Max = 1300`, and `Samples = 150`. If `alphapw` is
+#'   = NULL`, `Min = 150`, `Max = 1500`, and `Samples = 101`. If `alphapw` is
 #'   `NULL` or a list with all `NULL` list items, the default prior will be
 #'   used. If `Prior` is a matrix, it will be used as the prior. If `Prior =
-#'   NULL`, the prior will be generated using `Min`, `Max`, and `Samples`. `Min`
-#'   and `Max` are the minimum and maximum values of the alpha parameter (in
-#'   kilometre). `Samples` is the number of samples to be used in the prior.
+#'   NULL`, the prior will be generated using the minimum and maximum values of
+#'   the alpha parameter (`min` and `max`, respectively; in kilometre) and  the
+#'   number of samples (`Samples`). Defaults to a prior with 101 samples ranging
+#'   from 150 to 1500 km, with the first value in the second column set to 0.5.
 #'
 #' @name prepare_knots
 #' @author Ahmed El-Gabbas
@@ -37,7 +38,7 @@
 prepare_knots <- function(
     coordinates = NULL, min_distance = NULL, jitter_distance = 100,
     min_LF = NULL, max_LF = NULL,
-    alphapw = list(Prior = NULL, Min = 20, Max = 1200, Samples = 150)) {
+    alphapw = list(Prior = NULL, Min = 150, Max = 1500, Samples = 101)) {
 
   # # ..................................................................... ###
 

@@ -151,9 +151,9 @@ resp_curv_plot_SR <- function(
     "bio19", "Bio19", "Precipitation of coldest quarter",
     "npp", "NPP", "net primary productivity",
     "RiversLog", "River length", "log10(x + 0.1)",
-    "RoadRailLog", "Road + Rail intensity", "log10(x + 0.1)",
+    "RoadRailLog", "Road + Rail intensity", "log10(x + 1)",
     "HabLog", "% habitat coverage", "log10(x + 0.1)",
-    "EffortsLog", "Sampling efforts", "log10(x + 0.1)") %>%
+    "EffortsLog", "Sampling efforts", "log10(x + 1)") %>%
     dplyr::mutate(
       Variable2 = paste0(
         "<span style='font-size: 10pt;'><b>", Var2, "</b></span>",

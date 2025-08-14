@@ -10,7 +10,7 @@ prepare_knots(
   jitter_distance = 100,
   min_LF = NULL,
   max_LF = NULL,
-  alphapw = list(Prior = NULL, Min = 20, Max = 1200, Samples = 150)
+  alphapw = list(Prior = NULL, Min = 150, Max = 1500, Samples = 101)
 )
 }
 \arguments{
@@ -29,11 +29,12 @@ be used. Both default to \code{NULL} which means that the number of latent
 factors will be estimated from the data. If either is provided, the
 respective values will be used as arguments to \link[Hmsc:setPriors]{Hmsc::setPriors}.}
 
-\item{alphapw}{Prior for the alpha parameter. Defaults to a list with \code{Prior = NULL}, \code{Min = 20}, \code{Max = 1300}, and \code{Samples = 150}. If \code{alphapw} is
+\item{alphapw}{Prior for the alpha parameter. Defaults to a list with \code{Prior = NULL}, \code{Min = 150}, \code{Max = 1500}, and \code{Samples = 101}. If \code{alphapw} is
 \code{NULL} or a list with all \code{NULL} list items, the default prior will be
-used. If \code{Prior} is a matrix, it will be used as the prior. If \code{Prior = NULL}, the prior will be generated using \code{Min}, \code{Max}, and \code{Samples}. \code{Min}
-and \code{Max} are the minimum and maximum values of the alpha parameter (in
-kilometre). \code{Samples} is the number of samples to be used in the prior.}
+used. If \code{Prior} is a matrix, it will be used as the prior. If \code{Prior = NULL}, the prior will be generated using the minimum and maximum values of
+the alpha parameter (\code{min} and \code{max}, respectively; in kilometre) and  the
+number of samples (\code{Samples}). Defaults to a prior with 101 samples ranging
+from 150 to 1500 km, with the first value in the second column set to 0.5.}
 }
 \value{
 An object of class \code{HmscRandomLevel}, suitable for specifying the

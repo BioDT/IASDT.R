@@ -199,9 +199,7 @@ mod_postprocess_1_CPU <- function(
 
   ecokit::check_args(
     args_all = AllArgs, args_type = "character",
-    args_to_check = c(
-      "hab_abb", "env_file", "model_dir", "use_trees", "path_Hmsc",
-      "strategy", "job_runtime"))
+    args_to_check = c("model_dir", "use_trees", "path_Hmsc"))
 
   ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
@@ -252,6 +250,10 @@ mod_postprocess_1_CPU <- function(
         "are: 'CV_Dist', 'CV_Large', or `CV_SAC`"),
       CV_name = CV_name, include_backtrace = TRUE)
   }
+
+  # Validate memory_per_cpu
+  memory_per_cpu <- .validate_slurm_ram(memory_per_cpu)
+  job_runtime <- .validate_slurm_runtime(job_runtime)
 
   # ****************************************************************
 

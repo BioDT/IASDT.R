@@ -210,7 +210,7 @@ mod_merge_chains <- function(
 
               if (isFALSE(fs::file_exists(y))) {
                 return(TRUE)
-              } else if (ecokit::check_rds(y)) {
+              } else if (ecokit::check_data(y, warning = FALSE)) {
                 return(FALSE)
               } else {
                 fs::file_delete(y)
@@ -652,7 +652,7 @@ mod_merge_chains_CV <- function(
 
               if (isFALSE(fs::file_exists(y))) {
                 return(TRUE)
-              } else if (ecokit::check_rds(y)) {
+              } else if (ecokit::check_data(y, warning = FALSE)) {
                 return(FALSE)
               } else {
                 fs::file_delete(y)

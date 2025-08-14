@@ -65,8 +65,7 @@ mod_CV_fit <- function(
   # Check input parameters -----
   ecokit::cat_time("Check input parameters")
 
-  NullVarsNames <- c(
-    "path_model", "path_Hmsc", "memory_per_cpu", "job_runtime", "env_file")
+  NullVarsNames <- c("path_model", "path_Hmsc")
   NullVars <- which(purrr::map_lgl(.x = NullVarsNames, .f = ~ is.null(get(.x))))
 
   if (length(NullVars) > 0) {
@@ -84,16 +83,14 @@ mod_CV_fit <- function(
     stats::setNames(AllArgs)
 
   # character arguments
-  CharArgs <- c(
-    "path_model", "job_name", "env_file",
-    "job_runtime", "memory_per_cpu", "path_Hmsc")
   ecokit::check_args(
-    args_all = AllArgs, args_to_check = CharArgs, args_type = "character")
+    args_all = AllArgs, args_type = "character",
+    args_to_check = c("path_model", "job_name", "path_Hmsc"))
 
   # numeric arguments
-  NumericArgs <- c("gpus_per_node", "cpus_per_task", "ntasks")
   ecokit::check_args(
-    args_all = AllArgs, args_to_check = NumericArgs, args_type = "numeric")
+    args_all = AllArgs, args_type = "numeric",
+    args_to_check = c("gpus_per_node", "cpus_per_task", "ntasks"))
 
   if (!(precision %in% c(32, 64))) {
     ecokit::stop_ctx(
@@ -113,6 +110,12 @@ mod_CV_fit <- function(
   }
 
   rm(AllArgs, NullVarsNames, NullVars, envir = environment())
+
+  if (SLURM_prepare) {
+    # Validate memory_per_cpu
+    memory_per_cpu <- .validate_slurm_ram(memory_per_cpu)
+    job_runtime <- .validate_slurm_runtime(job_runtime)
+  }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

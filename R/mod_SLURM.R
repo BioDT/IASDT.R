@@ -58,16 +58,16 @@ mod_SLURM <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   ProjNum <- Path_GPU_Check <- NULL
 
-  if (is.null(model_dir) || is.null(job_name) || is.null(memory_per_cpu) ||
-      is.null(job_runtime) || is.null(path_Hmsc)) {
+  if (is.null(model_dir) || is.null(job_name) || is.null(path_Hmsc)) {
     ecokit::stop_ctx(
-      paste0(
-        "`model_dir`, `job_name`, `memory_per_cpu`, `job_runtime`, ",
-        "and `path_Hmsc` ", "cannot be empty"),
+      "`model_dir`, `job_name`, and `path_Hmsc` cannot be empty",
       model_dir = model_dir, job_name = job_name,
-      memory_per_cpu = memory_per_cpu, job_runtime = job_runtime,
       path_Hmsc = path_Hmsc, include_backtrace = TRUE)
   }
+
+  # Validate memory_per_cpu and job_runtime
+  memory_per_cpu <- .validate_slurm_ram(memory_per_cpu)
+  job_runtime <- .validate_slurm_runtime(job_runtime)
 
   # # |||||||||||||||||||||||||||||||||||
   # # Load environment variables
@@ -98,9 +98,8 @@ mod_SLURM <- function(
 
   # character arguments
   CharArgs <- c(
-    "model_dir", "job_name", "job_runtime", "memory_per_cpu",
-    "HPC_partition", "path_Hmsc", "ProjNum", "Path_GPU_Check",
-    "command_prefix", "SLURM_prefix")
+    "model_dir", "job_name", "HPC_partition", "path_Hmsc",
+    "ProjNum", "Path_GPU_Check", "command_prefix", "SLURM_prefix")
   ecokit::check_args(
     args_all = AllArgs, args_to_check = CharArgs, args_type = "character")
 

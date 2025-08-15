@@ -1290,9 +1290,14 @@ mod_prepare_HPC <- function(
                 Tree <- NULL
               }
 
+              n_samples <- nrow(DT_y)
+              studyDesign <- data.frame(sample = as.factor(seq_len(n_samples)))
+              rL <- Hmsc::HmscRandomLevel(units = studyDesign$sample)
+
               InitModel <- Hmsc::Hmsc(
                 Y = DT_y, XFormula = Form_x, XData = DT_x,
-                distr = "probit", phyloTree = Tree)
+                distr = "probit", phyloTree = Tree,
+                studyDesign = studyDesign, ranLevels = list(sample = rL))
 
               ecokit::save_as(
                 object = InitModel, object_name = paste0("InitMod_", .x),

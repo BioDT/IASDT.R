@@ -93,7 +93,8 @@ cross-validated models. See details for more information.</p>
 <span>  width_omega <span class="op">=</span> <span class="fl">26</span>,</span>
 <span>  height_omega <span class="op">=</span> <span class="fl">22.5</span>,</span>
 <span>  width_beta <span class="op">=</span> <span class="fl">25</span>,</span>
-<span>  height_beta <span class="op">=</span> <span class="fl">35</span></span>
+<span>  height_beta <span class="op">=</span> <span class="fl">35</span>,</span>
+<span>  spatial_model <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">mod_prepare_TF</span><span class="op">(</span></span>
@@ -253,8 +254,10 @@ parameter transformation. Defaults to 100.</p></dd>
 
 
 <dt id="arg-cv-name">CV_name<a class="anchor" aria-label="anchor" href="#arg-cv-name"></a></dt>
-<dd><p>Character. Cross-validation strategy. Valid values are
-<code>CV_Dist</code>, <code>CV_Large</code>, or <code>CV_SAC</code>.</p></dd>
+<dd><p><code>NULL</code> or character vector. Column name(s) in the model input
+data to be used to cross-validate the models (see <a href="Mod_inputs.html">mod_prepare_data</a> and
+<a href="mod_CV_prepare.html">mod_CV_prepare</a>). If <code>CV_name = NULL</code>, no cross-validation data
+preparation is done. See <a href="Mod_CV_Fit.html">mod_CV_fit</a> for valid options.</p></dd>
 
 
 <dt id="arg-n-grid">n_grid<a class="anchor" aria-label="anchor" href="#arg-n-grid"></a></dt>
@@ -313,6 +316,11 @@ partitioning. Defaults to 10L.</p></dd>
 <dd><p>Integer. The width and
 height of the generated heatmaps of the Omega and Beta parameters in
 centimetres.</p></dd>
+
+
+<dt id="arg-spatial-model">spatial_model<a class="anchor" aria-label="anchor" href="#arg-spatial-model"></a></dt>
+<dd><p>Logical. Whether the model is spatial (<code>TRUE</code>) or not
+(<code>FALSE</code>). Defaults to <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-process-vp">process_VP<a class="anchor" aria-label="anchor" href="#arg-process-vp"></a></dt>

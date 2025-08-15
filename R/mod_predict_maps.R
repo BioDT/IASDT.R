@@ -158,10 +158,10 @@ predict_maps <- function(
     time_period <- climate_scenario <- Path_CHELSA <- row_id <-
     Path_CLC <- ias_id <- taxon_name <- ClimateModel <- ClimateScenario <-
     Name <- File_Pred_sf <- class <- order <- family <- species_name <-
-    tif_path_mean <- tif_path_cov <- tif_path_sd <- Clamp <-
+    tif_path_mean <- tif_path_cov <- tif_path_sd <- Clamp <- Path_Wetness <-
     Train <- Ensemble_File <- Ensemble_Maps <- tifs <- layer_name <-
     TimePeriod <- File_Pred_summary <- Ensemble_DT <- Dir_Ensemble <-
-    File_Pred_R <- tif_path_anomaly <- Path_Rivers <- NULL
+    File_Pred_R <- tif_path_anomaly <- Path_Rivers <- Path_Soil <- NULL
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -195,9 +195,11 @@ predict_maps <- function(
     "Prediction_Summary_Shiny.txt")
 
   # Check if the prediction summary is already available on disk
-  if (all(file.exists(
-    Path_Summary_RData, Path_Summary_txt,
-    Path_Summary_RData_Shiny, Path_Summary_txt_Shiny))) {
+  if (all(
+    fs::file_exists(
+      c(
+        Path_Summary_RData, Path_Summary_txt,
+        Path_Summary_RData_Shiny, Path_Summary_txt_Shiny)))) {
     ecokit::cat_time(
       paste0(
         "All model predictions and prediction summary are already available ",
@@ -216,7 +218,7 @@ predict_maps <- function(
     }
     if (length(fix_efforts) != 1) {
       ecokit::stop_ctx(
-        "`fix_efforts` must be a vector or length 1.",
+        "`fix_efforts` must be of length 1.",
         fix_efforts = fix_efforts, include_backtrace = TRUE)
     }
 
@@ -229,7 +231,7 @@ predict_maps <- function(
     if (length(fix_rivers) != 1) {
       # Check if fix_rivers is a vector or length 1
       ecokit::stop_ctx(
-        "`fix_rivers` must be a vector or length 1.", fix_rivers = fix_rivers,
+        "`fix_rivers` must be of length 1.", fix_rivers = fix_rivers,
         include_backtrace = TRUE)
     }
 
@@ -252,6 +254,8 @@ predict_maps <- function(
     "Path_Bias", "DP_R_Efforts_processed", TRUE, FALSE,
     "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
     "Path_Rivers", "DP_R_Rivers_processed", TRUE, FALSE,
+    "Path_Wetness", "DP_R_wetness_processed", FALSE, TRUE,
+    "Path_Soil", "DP_R_soil_density", FALSE, TRUE,
     "Path_CHELSA", "DP_R_CHELSA_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
@@ -278,7 +282,7 @@ predict_maps <- function(
 
   ecokit::cat_time("Reference grid", level = 1L)
   Path_GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
-  if (!file.exists(Path_GridR)) {
+  if (!fs::file_exists(Path_GridR)) {
     ecokit::stop_ctx(
       "Path for the Europe boundaries does not exist", Path_GridR = Path_GridR,
       include_backtrace = TRUE)
@@ -290,7 +294,7 @@ predict_maps <- function(
 
   ecokit::cat_time("Model object", level = 1L)
 
-  if (is.null(path_model) || !file.exists(path_model)) {
+  if (is.null(path_model) || !fs::file_exists(path_model)) {
     ecokit::stop_ctx(
       "Model path is NULL or does not exist ", path_model = path_model,
       include_backtrace = TRUE)
@@ -314,10 +318,18 @@ predict_maps <- function(
     stringr::str_subset(names(Model$XData), ., negate = FALSE)
 
   # Coordinates of the model sampling units
-  Model_Coords <- as.data.frame(Model$rL$sample$s) %>%
-    tibble::tibble() %>%
-    sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
-    dplyr::mutate(Train = TRUE)
+  if (is.null(Model$rL)) {
+    suppressWarnings({
+      Model_Coords <- tibble::tibble(x = numeric(0L), y = numeric(0L)) %>%
+        sf::st_as_sf(coords = c("x", "y"), crs = 3035L) %>%
+        dplyr::mutate(Train = logical(0L))
+    })
+  } else {
+    Model_Coords <- as.data.frame(Model$rL$sample$s) %>%
+      tibble::tibble() %>%
+      sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
+      dplyr::mutate(Train = TRUE)
+  }
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
 
@@ -326,9 +338,9 @@ predict_maps <- function(
   ecokit::cat_time("CHELSA data", level = 1L)
 
   Path_CHELSA <- fs::path(Path_CHELSA, "CHELSA_Processed_DT.RData")
-  if (!file.exists(Path_CHELSA)) {
+  if (!fs::file_exists(Path_CHELSA)) {
     ecokit::stop_ctx(
-      "Processed CHLESA data can not be found", Path_CHELSA = Path_CHELSA,
+      "Processed CHELSA data can not be found", Path_CHELSA = Path_CHELSA,
       include_backtrace = TRUE)
   }
 
@@ -366,7 +378,7 @@ predict_maps <- function(
     ecokit::cat_time("Road and railway intensity", level = 1L)
 
     R_Railways <- fs::path(Path_Rail, "Railways_Length.RData")
-    if (!file.exists(R_Railways)) {
+    if (!fs::file_exists(R_Railways)) {
       ecokit::stop_ctx(
         "Railways data does not exist", R_Railways = R_Railways,
         include_backtrace = TRUE)
@@ -375,7 +387,7 @@ predict_maps <- function(
       magrittr::extract2("rail")
 
     R_Roads <- fs::path(Path_Roads, "Road_Length.RData")
-    if (!file.exists(R_Roads)) {
+    if (!fs::file_exists(R_Roads)) {
       ecokit::stop_ctx(
         "Roads data does not exist", R_Roads = R_Roads,
         include_backtrace = TRUE)
@@ -407,7 +419,7 @@ predict_maps <- function(
     ecokit::cat_time("Habitat information", level = 1L)
     R_Hab <- fs::path(
       Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
-    if (!file.exists(R_Hab)) {
+    if (!fs::file_exists(R_Hab)) {
       ecokit::stop_ctx(
         "Habitat data does not exist", R_Hab = R_Hab, include_backtrace = TRUE)
     }
@@ -435,7 +447,7 @@ predict_maps <- function(
     ecokit::cat_time("Sampling efforts", level = 1L)
 
     R_Efforts <- fs::path(Path_Bias, "Efforts_SummaryR.RData")
-    if (!file.exists(R_Efforts)) {
+    if (!fs::file_exists(R_Efforts)) {
       ecokit::stop_ctx(
         "Sampling efforts data does not exist", R_Efforts = R_Efforts,
         include_backtrace = TRUE)
@@ -576,7 +588,7 @@ predict_maps <- function(
     ecokit::cat_time("River length", level = 1L)
 
     R_Rivers <- fs::path(Path_Rivers, "River_Lengths.RData")
-    if (!file.exists(R_Rivers)) {
+    if (!fs::file_exists(R_Rivers)) {
       ecokit::stop_ctx(
         "River length data does not exist", R_Rivers = R_Rivers,
         include_backtrace = TRUE)
@@ -711,6 +723,50 @@ predict_maps <- function(
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
 
+  ## Soil bulk density -----
+
+  if ("soil" %in% other_variables) {
+
+    ecokit::cat_time("Soil bulk density", level = 1L)
+
+    R_Soil <- fs::path(Path_Soil, "soil_density.RData")
+    if (!fs::file_exists(R_Soil)) {
+      ecokit::stop_ctx(
+        "Soil bulk density data does not exist", R_Soil = R_Soil,
+        include_backtrace = TRUE)
+    }
+
+    R_Soil <- ecokit::load_as(R_Soil, unwrap_r = TRUE) %>%
+      magrittr::extract2("bdod_5_15_mean") %>%
+      stats::setNames("soil")
+
+    StaticPredictors <- c(StaticPredictors, R_Soil)
+    rm(R_Soil, envir = environment())
+  }
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
+
+  ## Topographic wetness index -----
+
+  if ("wetness" %in% other_variables) {
+
+    ecokit::cat_time("Topographic wetness index", level = 1L)
+
+    R_wetness <- fs::path(Path_Wetness, "wetness_index.RData")
+    if (!fs::file_exists(R_wetness)) {
+      ecokit::stop_ctx(
+        "Wetness data does not exist", R_wetness = R_wetness,
+        include_backtrace = TRUE)
+    }
+    R_wetness <- ecokit::load_as(R_wetness, unwrap_r = TRUE) %>%
+      stats::setNames("wetness")
+
+    StaticPredictors <- c(StaticPredictors, R_wetness)
+    rm(R_wetness, envir = environment())
+  }
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
+
   ## Merge static predictors -----
   ecokit::cat_time("Merge static predictors", level = 1L)
 
@@ -731,7 +787,7 @@ predict_maps <- function(
 
   Path_Test_LF <- fs::path(Path_Prediction1, "Test_LF.qs2")
 
-  if (!file.exists(Path_Test_LF) && pred_new_sites) {
+  if (!fs::file_exists(Path_Test_LF) && pred_new_sites) {
 
     ecokit::cat_time(
       "Preparing input data for predicting latent factor", level = 1L)
@@ -810,7 +866,7 @@ predict_maps <- function(
 
 
   if (LF_only) {
-    return(invisible())
+    return(invisible(NULL))
   }
 
   # # ..................................................................... ###
@@ -897,7 +953,7 @@ predict_maps <- function(
     # ______________________________________________
 
     # Making predictions if not already processed ----
-    OutMissing <- file.exists(
+    OutMissing <- fs::file_exists(
       c(Path_Prediction_R, Path_Prediction_sf, Path_Prediction_summary)) %>%
       all() %>%
       isFALSE()
@@ -908,7 +964,7 @@ predict_maps <- function(
       Model <- ecokit::load_as(path_model)
 
       # Skip predictions if the predictions as sf object is already on disk
-      if (file.exists(Path_Prediction_sf)) {
+      if (fs::file_exists(Path_Prediction_sf)) {
 
         ecokit::cat_time("Loading predictions `sf` from disk", level = 1L)
         Prediction_sf <- ecokit::load_as(Path_Prediction_sf)
@@ -968,7 +1024,7 @@ predict_maps <- function(
         Path_Current_Train <- fs::path(
           Path_Prediction, paste0("Prediction_", Option_Name, "_Train.qs2"))
 
-        if (file.exists(Path_Current_Train)) {
+        if (fs::file_exists(Path_Current_Train)) {
 
           ecokit::cat_time("Loading predictions from disk", level = 2L)
           Preds_ModFitSites <- tibble::tibble(Pred_Path = Path_Current_Train)
@@ -1000,7 +1056,7 @@ predict_maps <- function(
           Path_Current_Test <- fs::path(
             Path_Prediction, paste0("Prediction_", Option_Name, "_Test.qs2"))
 
-          if (file.exists(Path_Current_Test)) {
+          if (fs::file_exists(Path_Current_Test)) {
 
             ecokit::cat_time("Loading predictions from disk", level = 2L)
             Preds_NewSites <- tibble::tibble(Pred_Path = Path_Current_Test)
@@ -1230,7 +1286,7 @@ predict_maps <- function(
       Prediction2 = purrr::map(
         .x = File_Pred_summary,
         .f = ~ {
-          if (!file.exists(.x)) {
+          if (!fs::file_exists(.x)) {
             warning("File not found: ", .x, call. = FALSE)
             return(NULL)
           }

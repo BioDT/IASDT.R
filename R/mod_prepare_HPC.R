@@ -500,7 +500,7 @@ mod_prepare_HPC <- function(
       include_backtrace = TRUE)
   }
 
-  NumArgsInvalid <- purrr::map_lgl(.x = NumericArgs, .f = ~all(get(.x) < 1))
+  NumArgsInvalid <- purrr::map_lgl(.x = NumericArgs, .f = ~ all(get(.x) < 1))
   if (any(NumArgsInvalid)) {
     ecokit::stop_ctx(
       "Some parameter(s) can not be < 1",

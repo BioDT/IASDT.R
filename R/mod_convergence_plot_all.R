@@ -19,8 +19,8 @@
 #' @name convergence_plot_all
 #' @inheritParams convergence_plots
 #' @author Ahmed El-Gabbas
-#' @return The function does not return anything but saves a series of
-#'   diagnostic plots in the specified path.
+#' @return The function returns `invisible(NULL)` and does not return any
+#'   value, but saves a series of diagnostic plots in the specified path.
 #' @export
 
 convergence_plot_all <- function(
@@ -31,20 +31,19 @@ convergence_plot_all <- function(
 
   .start_time <- lubridate::now(tzone = "CET")
 
-  if (is.null(model_dir) || is.null(n_cores)) {
+  if (is.null(model_dir)) {
     ecokit::stop_ctx(
-      "`model_dir` and `n_cores` must not be NULL",
-      model_dir = model_dir, n_cores = n_cores, include_backtrace = TRUE)
+      "`model_dir` must not be NULL",
+      model_dir = model_dir, include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  GPP_Thin <- M_Name_Fit <- Tree <- rL <-
-    M_thin <- M_samples <- Omega_Gelman <- Omega_ESS <- Beta_Gelman <-
-    Beta_ESS <- ESS2 <- Path_Trace_Rho <- Rho <- Path_Trace_Alpha <-
-    Path_Trace_Rho <- NULL
+  GPP_Thin <- M_Name_Fit <- rL <- M_thin <- M_samples <- Omega_Gelman <-
+    Omega_ESS <- Beta_Gelman <- Beta_ESS <- ESS2 <- Path_Trace_Rho <- Rho <-
+    Path_Trace_Alpha <- Path_Trace_Rho <- NULL
 
   # # ..................................................................... ###
 
@@ -59,8 +58,7 @@ convergence_plot_all <- function(
     args_all = AllArgs, args_type = "character",
     args_to_check = c("model_dir", "margin_type", "strategy"))
   ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric",
-    args_to_check = c("n_omega", "n_cores"))
+    args_all = AllArgs, args_type = "numeric", args_to_check = "n_omega")
   rm(AllArgs, envir = environment())
 
   if (length(margin_type) != 1) {
@@ -142,18 +140,23 @@ convergence_plot_all <- function(
       Obj_Alpha <- paste0(M_Name_Fit, "_TraceAlpha")
       Path_Trace_Alpha <- fs::path(Path_ConvDT, paste0(Obj_Alpha, ".RData"))
 
-      Obj_Beta_Omega <- paste0(M_Name_Fit, "_Beta_Omega")
-      Path_Beta_Omega <- fs::path(Path_ConvDT, paste0(Obj_Beta_Omega, ".RData"))
+      Obj_Beta <- paste0(M_Name_Fit, "_Beta")
+      Path_Beta <- fs::path(Path_ConvDT, paste0(Obj_Beta, ".RData"))
 
+      Obj_Omega <- paste0(M_Name_Fit, "_Omega")
+      Path_Omega <- fs::path(Path_ConvDT, paste0(Obj_Omega, ".RData"))
 
       if ((Tree == "Tree" && !file.exists(Path_Trace_Rho)) ||
-          !file.exists(Path_Trace_Alpha) || !file.exists(Path_Beta_Omega)) {
+          !file.exists(Path_Trace_Alpha) || !file.exists(Path_Beta) ||
+          !file.exists(Path_Omega)) {
         Model_Obj <- ecokit::load_as(Path_FittedMod)
         Coda_Obj <- ecokit::load_as(path_coda)
       }
 
+      names_coda <- names(Coda_Obj)
+
       # Rho -----
-      if (!file.exists(Path_Trace_Rho)) {
+      if (!file.exists(Path_Trace_Rho) && ("Rho" %in% names_coda)) {
         if (Tree == "Tree") {
           RhoTitle <- stringr::str_remove_all(
             string = basename(path_coda), pattern = "_Tree|_Coda|.RData$|.qs2")
@@ -169,12 +172,14 @@ convergence_plot_all <- function(
           rm(PlotObj_Rho, envir = environment())
 
         } else {
-          Path_Trace_Rho <- NULL
+          Path_Trace_Rho <- NA_character_
         }
+      } else {
+        Path_Trace_Rho <- NA_character_
       }
 
       # Alpha -----
-      if (!file.exists(Path_Trace_Alpha)) {
+      if (!file.exists(Path_Trace_Alpha) && ("Alpha" %in% names_coda)) {
         PlotObj_Alpha <- IASDT.R::convergence_alpha(
           posterior = Coda_Obj, model_object = Model_Obj,
           title = stringr::str_remove_all(
@@ -186,24 +191,22 @@ convergence_plot_all <- function(
           out_path = Path_Trace_Alpha)
 
         rm(PlotObj_Alpha, Model_Obj, envir = environment())
+      } else {
+        Path_Trace_Alpha <- NA_character_
       }
 
-      # Beta + Omega -----
-      if (file.exists(Path_Beta_Omega)) {
-        Beta_Omega <- ecokit::load_as(Path_Beta_Omega)
-        Beta_Gelman <- Beta_Omega$Beta_Gelman
-        Beta_ESS <- Beta_Omega$Beta_ESS
-        Omega_ESS <- Beta_Omega$Omega_ESS
-        Omega_Gelman <- Beta_Omega$Omega_Gelman
-        rm(Beta_Omega, envir = environment())
+
+      # Beta -----
+      if (file.exists(Path_Beta)) {
+
+        Beta_conv <- ecokit::load_as(Path_Beta)
+        Beta_Gelman <- Beta_conv$Beta_Gelman
+        Beta_ESS <- Beta_conv$Beta_ESS
+        rm(Beta_conv, envir = environment())
 
       } else {
 
         Beta <- magrittr::extract2(Coda_Obj, "Beta")
-        Omega <- magrittr::extract2(Coda_Obj, "Omega") %>%
-          magrittr::extract2(1)
-
-        rm(Coda_Obj, envir = environment())
 
         # BETA - effectiveSize
         Beta_ESS <- coda::effectiveSize(Beta)
@@ -215,25 +218,48 @@ convergence_plot_all <- function(
           dplyr::pull(1) %>%
           magrittr::set_names(NULL)
 
-        # OMEGA - effectiveSize
-        Omega_ESS <- coda::effectiveSize(Omega)
-
-        # OMEGA - gelman.diag
-        sel <- sample.int(n = dim(Omega[[1]])[2], size = n_omega)  # nolint: object_use_linter
-
-        Omega_Gelman <- purrr::map(.x = Omega, .f = ~ .x[, sel]) %>%
-          coda::gelman.diag(multivariate = FALSE) %>%
-          magrittr::extract2("psrf") %>%
-          as.data.frame() %>%
-          dplyr::pull(1) %>%
-          magrittr::set_names(NULL)
-
-        Beta_Omega <- list(
-          Beta_Gelman = Beta_Gelman, Beta_ESS = Beta_ESS,
-          Omega_Gelman = Omega_Gelman, Omega_ESS = Omega_ESS)
-        save(Beta_Omega, file = Path_Beta_Omega)
-        rm(Beta_Omega, envir = environment())
+        Beta_conv <- list(Beta_Gelman = Beta_Gelman, Beta_ESS = Beta_ESS)
+        save(Beta_conv, file = Path_Beta)
+        rm(Beta_conv, Beta, envir = environment())
       }
+
+      # Omega -----
+
+      if ("Omega" %in% names_coda) {
+
+        if (file.exists(Path_Omega)) {
+          Omega_conv <- ecokit::load_as(Path_Omega)
+          Omega_ESS <- Omega_conv$Omega_ESS
+          Omega_Gelman <- Omega_conv$Omega_Gelman
+          rm(Omega_conv, envir = environment())
+
+        } else {
+          Omega <- magrittr::extract2(Coda_Obj, "Omega") %>%
+            magrittr::extract2(1)
+
+          # OMEGA - effectiveSize
+          Omega_ESS <- coda::effectiveSize(Omega)
+
+          # OMEGA - gelman.diag
+          sel <- sample.int(
+            n = dim(Omega[[1]])[2], size = min(n_omega, dim(Omega[[1]])[2]))
+          Omega_Gelman <- purrr::map(.x = Omega, .f = ~ .x[, sel]) %>%
+            coda::gelman.diag(multivariate = FALSE) %>%
+            magrittr::extract2("psrf") %>%
+            as.data.frame() %>%
+            dplyr::pull(1) %>%
+            magrittr::set_names(NULL)
+
+          Omega_conv <- list(Omega_Gelman = Omega_Gelman, Omega_ESS = Omega_ESS)
+          save(Omega_conv, file = Path_Omega)
+          rm(sel, Omega_conv, Omega, envir = environment())
+        }
+
+      } else {
+        Omega_Gelman <- Omega_ESS <- data.frame()
+      }
+      rm(Coda_Obj, envir = environment())
+
     }
 
     invisible(gc())
@@ -260,13 +286,13 @@ convergence_plot_all <- function(
   } else {
 
     ecokit::cat_time("Processing convergence data", level = 1L)
-
+    n_cores <- min(n_cores, nrow(Model_Info))
     if (n_cores == 1) {
       future::plan("sequential", gc = TRUE)
     } else {
       ecokit::set_parallel(
-        n_cores = n_cores, level = 2L, future_max_size = 800L,
-        strategy = strategy)
+        n_cores = n_cores, level = 2L,
+        future_max_size = 800L, strategy = strategy)
       withr::defer(future::plan("sequential", gc = TRUE))
     }
 
@@ -287,9 +313,7 @@ convergence_plot_all <- function(
       dplyr::select(tidyselect::all_of(c("M_Name_Fit", "Plots"))) %>%
       tidyr::unnest_wider("Plots") %>%
       # arrange data alphanumerically by model name
-      dplyr::arrange(gtools::mixedorder(M_Name_Fit)) %>%
-      # discard non existed data
-      dplyr::filter(!is.na(Path_Trace_Alpha))
+      dplyr::arrange(gtools::mixedorder(M_Name_Fit))
 
     save(
       Convergence_DT,
@@ -328,24 +352,34 @@ convergence_plot_all <- function(
   # # ..................................................................... ###
 
   # Alpha - trace plots ------
-  ecokit::cat_time("Alpha - trace plots", level = 2L)
+  if (!all(is.na(Convergence_DT$Path_Trace_Alpha))) {
+    Convergence_DT_alpha <- dplyr::filter(
+      Convergence_DT, !is.na(Path_Trace_Alpha))
 
-  grDevices::cairo_pdf(
-    filename = fs::path(Path_Convergence_All, "TracePlots_Alpha.pdf"),
-    width = 18, height = 12, onefile = TRUE)
-  purrr::walk(
-    .x = Convergence_DT$Path_Trace_Alpha,
-    .f = purrr::safely(~{
-      gridExtra::grid.arrange(ecokit::load_as(.x)[[1]])
-    }))
-  grDevices::dev.off()
+    ecokit::cat_time("Alpha - trace plots", level = 2L)
+    grDevices::cairo_pdf(
+      filename = fs::path(Path_Convergence_All, "TracePlots_Alpha.pdf"),
+      width = 18, height = 12, onefile = TRUE)
+    purrr::walk(
+      .x = Convergence_DT_alpha$Path_Trace_Alpha,
+      .f = purrr::safely(~{
+        gridExtra::grid.arrange(ecokit::load_as(.x)[[1]])
+      }))
+    grDevices::dev.off()
+
+    rm(Convergence_DT_alpha, envir = environment())
+  }
 
   # # ..................................................................... ###
 
   # Rho - trace plots ------
   ecokit::cat_time("Rho - trace plots", level = 2L)
 
-  layout_matrix <- matrix(seq_len(2 * 2), nrow = 2, byrow = TRUE)
+  if (nrow(Convergence_DT) > 1) {
+    layout_matrix <- matrix(seq_len(2 * 2), nrow = 2, byrow = TRUE)
+  } else {
+    layout_matrix <- matrix(1)
+  }
 
   Plot <- Convergence_DT %>%
     dplyr::filter(stringr::str_detect(M_Name_Fit, "_Tree_")) %>%
@@ -373,42 +407,122 @@ convergence_plot_all <- function(
 
   # # ..................................................................... ###
 
-  # Omega - Gelman convergence ------
-  ecokit::cat_time("Omega - Gelman convergence", level = 2L)
+  if (!all(is.na(Convergence_DT$Omega_Gelman))) {
 
-  Plot_Path <- fs::path(
-    Path_Convergence_All, paste0("Convergence_Omega_Gelman.pdf"))
+    # Omega - Gelman convergence ------
+    ecokit::cat_time("Omega - Gelman convergence", level = 2L)
 
-  Plot_Title <- paste0(
-    "Gelman convergence diagnostic --- Omega (", n_omega, " samples)")
+    Plot_Path <- fs::path(
+      Path_Convergence_All, paste0("Convergence_Omega_Gelman.pdf"))
 
-  Plot <- dplyr::left_join(Convergence_DT, Model_Info, by = "M_Name_Fit") %>%
-    dplyr::select(rL, Tree, M_thin, M_samples, Omega_Gelman) %>%
-    dplyr::mutate(
-      GPP_Thin = paste0("GPP", rL, " | Th", M_thin),
-      GPP_Thin = factor(
-        GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
-    tidyr::unnest("Omega_Gelman") %>%
-    ggplot2::ggplot(ggplot2::aes(GPP_Thin, Omega_Gelman)) +
-    ggplot2::geom_violin() +
-    ggplot2::scale_y_log10() +
-    ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
-    ggplot2::labs(title = Plot_Title) +
-    ggplot2::xlab(NULL) +
-    ggplot2::ylab(
-      "Gelman and Rubin's convergence diagnostic (log<sub>10</sub>)") +
-    ggplot2::coord_flip(expand = FALSE) +
-    Theme
+    Plot_Title <- paste0(
+      "Gelman convergence diagnostic --- Omega (", n_omega, " samples)")
 
-  # Suppress the following message: Scale for y is already present. Adding
-  # another scale for y, which will replace the existing scale.
-  suppressMessages(suppressWarnings({
-    Plot2 <- Plot +
+    Plot <- dplyr::left_join(Convergence_DT, Model_Info, by = "M_Name_Fit") %>%
+      dplyr::select(
+        tidyselect::any_of(
+          c("rL", "Tree", "M_thin", "M_samples", "Omega_Gelman"))) %>%
+      # Add rL as NA if not present
+      dplyr::mutate(
+        rL = dplyr::coalesce(rL, NA_real_),
+        GPP_Thin = dplyr::if_else(
+          is.na(rL),
+          paste0("non-spatial | Th", M_thin),
+          paste0("GPP", rL, " | Th", M_thin)),
+        GPP_Thin = factor(
+          GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
+      tidyr::unnest("Omega_Gelman") %>%
+      ggplot2::ggplot(ggplot2::aes(GPP_Thin, Omega_Gelman)) +
+      ggplot2::geom_violin() +
+      ggplot2::scale_y_log10() +
+      ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
+      ggplot2::labs(title = Plot_Title) +
+      ggplot2::xlab(NULL) +
       ggplot2::ylab(
-        paste0(
-          "Gelman and Rubin's convergence diagnostic ",
-          "<sub>(only values between 0.9 and 1.1)</sub>")) +
-      ggplot2::ylim(c(0.9, 1.1)) +
+        "Gelman and Rubin's convergence diagnostic (log<sub>10</sub>)") +
+      ggplot2::coord_flip(expand = FALSE) +
+      Theme
+
+    # Suppress the following message: Scale for y is already present. Adding
+    # another scale for y, which will replace the existing scale.
+    ecokit::quietly({
+      Plot2 <- Plot +
+        ggplot2::ylab(
+          paste0(
+            "Gelman and Rubin's convergence diagnostic ",
+            "<sub>(only values between 0.9 and 1.1)</sub>")) +
+        ggplot2::ylim(c(0.9, 1.1)) +
+        Theme
+
+      # Using ggplot2::ggsave directly does not show non-ascii characters
+      # correctly
+      grDevices::cairo_pdf(
+        filename = Plot_Path, width = 18, height = 12, onefile = TRUE)
+      print(Plot)
+      print(Plot2)
+      grDevices::dev.off()
+
+    },
+    "rows containing non-finite outside")
+
+    # # .................................................................. ###
+
+    # Omega - Effective sample size -----
+    ecokit::cat_time("Omega - Effective sample size", level = 2L)
+
+    Plot_Path <- fs::path(
+      Path_Convergence_All, paste0("Convergence_Omega_ESS.pdf"))
+
+    Plot_Title <- paste0(
+      "Effective sample size --- Omega (", n_omega, " samples)")
+
+    Plot <- Convergence_DT %>%
+      dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
+      dplyr::select(
+        tidyselect::any_of(
+          c("rL", "Tree", "M_thin", "M_samples", "Omega_ESS"))) %>%
+      # Add rL as NA if not present
+      dplyr::mutate(
+        rL = dplyr::coalesce(rL, NA_real_),
+        GPP_Thin = dplyr::if_else(
+          is.na(rL),
+          paste0("non-spatial | Th", M_thin),
+          paste0("GPP", rL, " | Th", M_thin)),
+        GPP_Thin = factor(
+          GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
+      tidyr::unnest("Omega_ESS") %>%
+      ggplot2::ggplot(ggplot2::aes(GPP_Thin, Omega_ESS)) +
+      ggplot2::geom_violin() +
+      ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
+      ggplot2::labs(title = Plot_Title) +
+      ggplot2::xlab(NULL) +
+      ggplot2::ylab(paste0("Effective sample size (", NChains, " chains)")) +
+      ggplot2::coord_flip(expand = FALSE) +
+      Theme
+
+    Plot2 <- Convergence_DT %>%
+      dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
+      dplyr::select(
+        tidyselect::any_of(
+          c("rL", "Tree", "M_thin", "M_samples", "Omega_ESS"))) %>%
+      # Add rL as NA if not present
+      dplyr::mutate(
+        rL = dplyr::coalesce(rL, NA_real_),
+        GPP_Thin = dplyr::if_else(
+          is.na(rL),
+          paste0("non-spatial | Th", M_thin),
+          paste0("GPP", rL, " | Th", M_thin)),
+        GPP_Thin = factor(
+          GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
+      tidyr::unnest("Omega_ESS") %>%
+      dplyr::mutate(ESS2 = (100 * Omega_ESS / (M_samples * NChains))) %>%
+      ggplot2::ggplot(ggplot2::aes(GPP_Thin, ESS2)) +
+      ggplot2::geom_violin() +
+      ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
+      ggplot2::labs(title = Plot_Title) +
+      ggplot2::xlab(NULL) +
+      ggplot2::ylab("Mean effective sample size (%)") +
+      ggplot2::coord_flip(expand = FALSE) +
       Theme
 
     # Using ggplot2::ggsave directly does not show non-ascii characters
@@ -418,62 +532,7 @@ convergence_plot_all <- function(
     print(Plot)
     print(Plot2)
     grDevices::dev.off()
-
-  }))
-
-  # # ..................................................................... ###
-
-  # Omega - Effective sample size -----
-  ecokit::cat_time("Omega - Effective sample size", level = 2L)
-
-  Plot_Path <- fs::path(
-    Path_Convergence_All, paste0("Convergence_Omega_ESS.pdf"))
-
-  Plot_Title <- paste0(
-    "Effective sample size --- Omega (", n_omega, " samples)")
-
-  Plot <- Convergence_DT %>%
-    dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
-    dplyr::select(rL, Tree, M_thin, M_samples, Omega_ESS) %>%
-    dplyr::mutate(
-      GPP_Thin = paste0("GPP", rL, " | Th", M_thin),
-      GPP_Thin = factor(
-        GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
-    tidyr::unnest("Omega_ESS") %>%
-    ggplot2::ggplot(ggplot2::aes(GPP_Thin, Omega_ESS)) +
-    ggplot2::geom_violin() +
-    ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
-    ggplot2::labs(title = Plot_Title) +
-    ggplot2::xlab(NULL) +
-    ggplot2::ylab(paste0("Effective sample size (", NChains, " chains)")) +
-    ggplot2::coord_flip(expand = FALSE) +
-    Theme
-
-  Plot2 <- Convergence_DT %>%
-    dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
-    dplyr::select(rL, Tree, M_thin, M_samples, Omega_ESS) %>%
-    dplyr::mutate(
-      GPP_Thin = paste0("GPP", rL, " | Th", M_thin),
-      GPP_Thin = factor(
-        GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
-    tidyr::unnest("Omega_ESS") %>%
-    dplyr::mutate(ESS2 = (100 * Omega_ESS / (M_samples * NChains))) %>%
-    ggplot2::ggplot(ggplot2::aes(GPP_Thin, ESS2)) +
-    ggplot2::geom_violin() +
-    ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
-    ggplot2::labs(title = Plot_Title) +
-    ggplot2::xlab(NULL) +
-    ggplot2::ylab("Mean effective sample size (%)") +
-    ggplot2::coord_flip(expand = FALSE) +
-    Theme
-
-  # Using ggplot2::ggsave directly does not show non-ascii characters
-  # correctly
-  grDevices::cairo_pdf(
-    filename = Plot_Path, width = 18, height = 12, onefile = TRUE)
-  print(Plot)
-  print(Plot2)
-  grDevices::dev.off()
+  }
 
   # # ..................................................................... ###
 
@@ -487,9 +546,16 @@ convergence_plot_all <- function(
 
   Plot <- Convergence_DT %>%
     dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
-    dplyr::select(rL, Tree, M_thin, M_samples, Beta_Gelman) %>%
+    dplyr::select(
+      tidyselect::any_of(
+        c("rL", "Tree", "M_thin", "M_samples", "Beta_Gelman"))) %>%
+    # Add rL as NA if not present
     dplyr::mutate(
-      GPP_Thin = paste0("GPP", rL, " | Th", M_thin),
+      rL = dplyr::coalesce(rL, NA_real_),
+      GPP_Thin = dplyr::if_else(
+        is.na(rL),
+        paste0("non-spatial | Th", M_thin),
+        paste0("GPP", rL, " | Th", M_thin)),
       GPP_Thin = factor(
         GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
     tidyr::unnest("Beta_Gelman") %>%
@@ -522,6 +588,25 @@ convergence_plot_all <- function(
     grDevices::dev.off()
   }))
 
+  ecokit::quietly({
+    Plot2 <- Plot +
+      ggplot2::ylab(
+        paste0(
+          "Gelman and Rubin's convergence diagnostic ",
+          "<sub>(only values between 0.9 and 1.1)</sub>")) +
+      ggplot2::ylim(c(0.9, 1.1)) +
+      Theme
+
+    # Using ggplot2::ggsave directly does not show non-ascii characters
+    # correctly
+    grDevices::cairo_pdf(
+      filename = Plot_Path, width = 18, height = 12, onefile = TRUE)
+    print(Plot)
+    print(Plot2)
+    grDevices::dev.off()
+  },
+  "rows containing non-finite outside", "is already present")
+
   # # ..................................................................... ###
 
   # Beta - Effective sample size -----
@@ -533,9 +618,16 @@ convergence_plot_all <- function(
 
   Plot <- Convergence_DT %>%
     dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
-    dplyr::select(rL, Tree, M_thin, M_samples, Beta_ESS) %>%
+    dplyr::select(
+      tidyselect::any_of(
+        c("rL", "Tree", "M_thin", "M_samples", "Beta_ESS"))) %>%
+    # Add rL as NA if not present
     dplyr::mutate(
-      GPP_Thin = paste0("GPP", rL, " | Th", M_thin),
+      rL = dplyr::coalesce(rL, NA_real_),
+      GPP_Thin = dplyr::if_else(
+        is.na(rL),
+        paste0("non-spatial | Th", M_thin),
+        paste0("GPP", rL, " | Th", M_thin)),
       GPP_Thin = factor(
         GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
     tidyr::unnest("Beta_ESS") %>%
@@ -550,9 +642,16 @@ convergence_plot_all <- function(
 
   Plot2 <- Convergence_DT %>%
     dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
-    dplyr::select(rL, Tree, M_thin, M_samples, Beta_ESS) %>%
+    dplyr::select(
+      tidyselect::any_of(
+        c("rL", "Tree", "M_thin", "M_samples", "Beta_ESS"))) %>%
+    # Add rL as NA if not present
     dplyr::mutate(
-      GPP_Thin = paste0("GPP", rL, " | Th", M_thin),
+      rL = dplyr::coalesce(rL, NA_real_),
+      GPP_Thin = dplyr::if_else(
+        is.na(rL),
+        paste0("non-spatial | Th", M_thin),
+        paste0("GPP", rL, " | Th", M_thin)),
       GPP_Thin = factor(
         GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
     tidyr::unnest("Beta_ESS") %>%

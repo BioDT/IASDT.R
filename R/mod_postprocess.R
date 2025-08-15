@@ -24,6 +24,10 @@
 #' @param strategy Character. The parallel processing strategy to use. Valid
 #'   options are "sequential", "multisession" (default), "multicore", and
 #'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
+#' @param CV_name `NULL` or character vector. Column name(s) in the model input
+#'   data to be used to cross-validate the models (see [mod_prepare_data] and
+#'   [mod_CV_prepare]). If `CV_name = NULL`, no cross-validation data
+#'   preparation is done. See [mod_CV_fit] for valid options.
 #' @param n_batch_files Integer. Number of output batch files to create. Must be
 #'   less than or equal to the maximum job limit of the HPC environment.
 #' @param working_directory Character. Optionally sets the working directory in
@@ -41,6 +45,8 @@
 #' @param width_omega,height_omega,width_beta,height_beta Integer. The width and
 #'   height of the generated heatmaps of the Omega and Beta parameters in
 #'   centimetres.
+#' @param spatial_model Logical. Whether the model is spatial (`TRUE`) or not
+#'   (`FALSE`). Defaults to `TRUE`.
 #' @param RC_prepare Logical. Whether to prepare the data for response curve
 #'   prediction (using [resp_curv_prepare_data]). Defaults to `TRUE`.
 #' @param RC_plot Logical. Whether to plot the response curves as JPEG files
@@ -184,9 +190,12 @@ mod_postprocess_1_CPU <- function(
     use_TF = TRUE, TF_use_single = FALSE, LF_n_cores = n_cores,
     LF_temp_cleanup = TRUE, LF_check = FALSE, temp_cleanup = TRUE,
     TF_environ = NULL, pred_new_sites = TRUE, n_cores_VP = 10L,
-    width_omega = 26, height_omega = 22.5, width_beta = 25, height_beta = 35) {
+    width_omega = 26, height_omega = 22.5, width_beta = 25, height_beta = 35,
+    spatial_model = TRUE) {
 
   .start_time <- lubridate::now(tzone = "CET")
+
+  species_name <- non_focal_variables <- NULL
 
   # ****************************************************************
 
@@ -243,7 +252,8 @@ mod_postprocess_1_CPU <- function(
       use_trees = use_trees, include_backtrace = TRUE)
   }
 
-  if (!all(CV_name %in% c("CV_Dist", "CV_Large", "CV_SAC"))) {
+  if (!is.null(CV_name) &&
+      !all(CV_name %in% c("CV_Dist", "CV_Large", "CV_SAC"))) {
     ecokit::stop_ctx(
       paste0(
         "Invalid value for CV_name argument. Valid values ",
@@ -329,22 +339,33 @@ mod_postprocess_1_CPU <- function(
     "Path of selected model", level = 1L, line_char = "+", line_char_rep = 60L,
     cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
-  path_model <- fs::path(
-    model_dir, "Model_Fitted",
-    paste0(
-      "GPP", GPP_dist, "_", use_trees, "_samp", MCMC_n_samples, "_th",
-      MCMC_thin, "_Model.qs2"))
+  path_model <- fs::dir_ls(
+    fs::path(model_dir, "Model_Fitted"),
+    regexp = paste0(
+      ".+", use_trees, "_samp", MCMC_n_samples, "_th", MCMC_thin, "_Model.qs2"))
+  if (length(path_model) > 1) {
+    path_model <- stringr::str_subset(path_model, paste0("^GPP", GPP_dist))
+  }
+  if (length(path_model) == 0) {
+    ecokit::stop_ctx("`path_model` is of length 0")
+  }
 
-  path_coda <- fs::path(
-    model_dir, "Model_Coda",
-    paste0(
-      "GPP", GPP_dist, "_", use_trees, "_samp", MCMC_n_samples, "_th",
-      MCMC_thin, "_Coda.qs2"))
+  path_coda <- fs::dir_ls(
+    fs::path(model_dir, "Model_Coda"),
+    regexp = paste0(
+      ".+", use_trees, "_samp", MCMC_n_samples, "_th", MCMC_thin, "_Coda.qs2"))
+  if (length(path_coda) > 1) {
+    path_coda <- stringr::str_subset(
+      path_coda, paste0("^GPP", GPP_dist))
+  }
+  if (length(path_coda) == 0) {
+    ecokit::stop_ctx("`path_coda` is of length 0")
+  }
 
   cat(
     paste0("path_model:\n\t", path_model, "\nPath_Coda:\n\t", path_coda, "\n"))
 
-  if (!all(file.exists(path_model, path_coda))) {
+  if (!all(fs::file_exists(c(path_model, path_coda)))) {
     ecokit::stop_ctx(
       "Selected model files not found",
       path_model = path_model, path_coda = path_coda, include_backtrace = TRUE)
@@ -420,51 +441,190 @@ mod_postprocess_1_CPU <- function(
 
   # Prepare input data for cross-validation -------
 
-  ecokit::info_chunk(
-    "Prepare input data for cross-validation", level = 1L, line_char = "+",
-    line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
+  if (!is.null(CV_name)) {
+    ecokit::info_chunk(
+      "Prepare input data for cross-validation", level = 1L, line_char = "+",
+      line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
+      cat_timestamp = FALSE)
 
-  IASDT.R::mod_CV_fit(
-    path_model = path_model, CV_name = CV_name, env_file = env_file,
-    job_name = paste0("CV_", hab_abb), memory_per_cpu = memory_per_cpu,
-    job_runtime = job_runtime, path_Hmsc = path_Hmsc)
+    IASDT.R::mod_CV_fit(
+      path_model = path_model, CV_name = CV_name, env_file = env_file,
+      job_name = paste0("CV_", hab_abb), memory_per_cpu = memory_per_cpu,
+      job_runtime = job_runtime, path_Hmsc = path_Hmsc)
 
-  invisible(gc())
-
-  # ****************************************************************
-
-  # latent factors of the response curves -------
-  ecokit::info_chunk(
-    "Prepare scripts for predicting latent factors of the response curves",
-    line_char = "+", line_char_rep = 90L, cat_red = TRUE, cat_bold = TRUE,
-    cat_timestamp = FALSE, level = 1L)
-
-  IASDT.R::resp_curv_prepare_data(
-    path_model = path_model, n_grid = n_grid, n_cores = n_cores,
-    strategy = strategy, use_TF = use_TF, TF_environ = TF_environ,
-    TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
-    LF_temp_cleanup = LF_temp_cleanup, LF_check = LF_check,
-    temp_dir = temp_dir, temp_cleanup = temp_cleanup, verbose = TRUE,
-    LF_commands_only = TRUE)
-
-  invisible(gc())
+    invisible(gc())
+  }
 
   # ****************************************************************
 
-  # latent factors for new sampling units -------
+  if (spatial_model) {
 
-  ecokit::info_chunk(
-    "Prepare scripts for predicting latent factors for new sampling units",
-    line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
-    cat_timestamp = FALSE, level = 1L)
+    # latent factors of the response curves -------
+    ecokit::info_chunk(
+      "Prepare scripts for predicting latent factors of the response curves",
+      line_char = "+", line_char_rep = 90L, cat_red = TRUE, cat_bold = TRUE,
+      cat_timestamp = FALSE, level = 1L)
 
-  IASDT.R::predict_maps(
-    path_model = path_model, hab_abb = hab_abb, env_file = env_file,
-    n_cores = n_cores, strategy = strategy, clamp_pred = FALSE,
-    pred_new_sites = pred_new_sites, use_TF = use_TF, TF_environ = TF_environ,
-    temp_dir = temp_dir, temp_cleanup = temp_cleanup,
-    TF_use_single = TF_use_single, LF_n_cores = LF_n_cores, LF_check = LF_check,
-    LF_temp_cleanup = LF_temp_cleanup, LF_only = TRUE, LF_commands_only = TRUE)
+    IASDT.R::resp_curv_prepare_data(
+      path_model = path_model, n_grid = n_grid, n_cores = n_cores,
+      strategy = strategy, use_TF = use_TF, TF_environ = TF_environ,
+      TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
+      LF_temp_cleanup = LF_temp_cleanup, LF_check = LF_check,
+      temp_dir = temp_dir, temp_cleanup = temp_cleanup, verbose = TRUE,
+      LF_commands_only = TRUE)
+
+    invisible(gc())
+
+    # ****************************************************************
+
+    # latent factors for new sampling units -------
+
+    ecokit::info_chunk(
+      "Prepare scripts for predicting latent factors for new sampling units",
+      line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
+      cat_timestamp = FALSE, level = 1L)
+
+    IASDT.R::predict_maps(
+      path_model = path_model, hab_abb = hab_abb, env_file = env_file,
+      n_cores = n_cores, strategy = strategy, clamp_pred = FALSE,
+      pred_new_sites = pred_new_sites, use_TF = use_TF, TF_environ = TF_environ,
+      temp_dir = temp_dir, temp_cleanup = temp_cleanup,
+      TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
+      LF_check = LF_check, LF_temp_cleanup = LF_temp_cleanup, LF_only = TRUE,
+      LF_commands_only = TRUE)
+
+  } else {
+
+    # Response curves -------
+
+    ecokit::info_chunk(
+      "Prepare response curve data", line_char = "+", line_char_rep = 90L,
+      cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE, level = 1L)
+
+    rc_dir <- fs::path(
+      dirname(dirname(path_model)), "Model_Postprocessing", "RespCurv_DT")
+    fs::dir_create(rc_dir)
+    path_rc_data <- fs::path(rc_dir, "response_curve_data.qs2")
+    path_observed_data <- fs::path(rc_dir, "observed_data.qs2")
+
+    if (!ecokit::check_data(path_observed_data, warning = FALSE)) {
+      Model <- ecokit::load_as(path_model)
+      model_vars <- names(Model$XData)
+      observed_data <- dplyr::bind_cols(
+        x_value = Model$XData, Model$Y,
+        species_richness = rowSums(Model$Y)) %>%
+        tidyr::pivot_longer(
+          cols = -tidyselect::all_of(model_vars), names_to = "species_name",
+          values_to = "observed_value") %>%
+        dplyr::select("species_name", tidyselect::everything()) %>%
+        dplyr::arrange(species_name)
+
+      ecokit::save_as(object = observed_data, out_path = path_observed_data)
+      rm(Model, observed_data, envir = environment())
+      invisible(gc())
+    }
+
+    if (!ecokit::check_data(path_rc_data, warning = FALSE)) {
+      Model <- ecokit::load_as(path_model)
+      model_vars <- names(Model$XData)
+      rm(Model, envir = environment())
+
+      response_curve_data <- tidyr::expand_grid(
+        variable = model_vars, non_focal_variables = c(1, 2))
+
+      # Prepare working in parallel
+      if (n_cores == 1) {
+        future::plan("sequential", gc = TRUE)
+      } else {
+        ecokit::set_parallel(
+          n_cores = min(n_cores, nrow(response_curve_data)), level = 2L,
+          strategy = strategy, cat_timestamp = FALSE, future_max_size = 1500L)
+        withr::defer(future::plan("sequential", gc = TRUE))
+      }
+
+      response_curve_data2 <- future.apply::future_lapply(
+        X = seq_len(nrow(response_curve_data)),
+        FUN = function(x) {
+
+          Model <- ecokit::load_as(path_model)
+          variable <- response_curve_data$variable[x]
+          nfv <- response_curve_data$non_focal_variables[x]
+
+          Gradient <- Hmsc::constructGradient(
+            hM = Model, focalVariable = variable,
+            non.focalVariables = nfv, ngrid  = 50)
+          pred <- stats::predict(
+            object = Model, XData = Gradient$XDataNew,
+            studyDesign = Gradient$studyDesignNew,
+            ranLevels = Gradient$rLNew, expected = TRUE) %>%
+            abind::abind(along = 3)
+          x_vals <- Gradient$XDataNew[, variable]
+          rm(Model, Gradient, envir = environment())
+
+          pred_mean <- apply(pred, c(1, 2), mean)
+          rich_array <- apply(pred, 3, rowSums)
+          rich_mean <- rowMeans(rich_array)
+          pred_mean <- cbind(pred_mean, species_richness = rich_mean)
+
+          pred_sd <- apply(pred, c(1, 2), stats::sd)
+          rich_sd <- apply(rich_array, 1, stats::sd)
+          pred_sd <- cbind(pred_sd, species_richness = rich_sd)
+
+          pred_mean_plus  <- pred_mean + pred_sd
+          pred_mean_minus <- pred_mean - pred_sd
+
+          pred_mean <- tibble::as_tibble(pred_mean) %>%
+            dplyr::mutate(x_value = x_vals, .before = 1) %>%
+            tidyr::pivot_longer(
+              cols = -"x_value", names_to = "species_name",
+              values_to = "mean")
+          pred_mean_plus <- tibble::as_tibble(pred_mean_plus) %>%
+            dplyr::mutate(x_value = x_vals, .before = 1) %>%
+            tidyr::pivot_longer(
+              cols = -"x_value", names_to = "species_name",
+              values_to = "mean_plus_sd")
+          pred_mean_minus <- tibble::as_tibble(pred_mean_minus) %>%
+            dplyr::mutate(x_value = x_vals, .before = 1) %>%
+            tidyr::pivot_longer(
+              cols = -"x_value", names_to = "species_name",
+              values_to = "mean_minus_sd")
+
+          col_order <- c(
+            "species_name", "variable", "non_focal_variables", "x_value")
+          rc_data <- dplyr::left_join(
+            pred_mean, pred_mean_plus, by = c("x_value", "species_name")) %>%
+            dplyr::left_join(
+              pred_mean_minus, by = c("x_value", "species_name")) %>%
+            dplyr::mutate(
+              variable = variable, non_focal_variables = as.integer(nfv)) %>%
+            dplyr::select(
+              tidyselect::all_of(col_order), tidyselect::everything()) %>%
+            dplyr::arrange(species_name, variable, non_focal_variables)
+
+          rc_data
+
+        },
+        future.seed = TRUE,
+        future.globals = c("response_curve_data", "path_model"),
+        future.packages = c(
+          "Hmsc", "dplyr", "magrittr", "Hmsc", "abind", "tibble",
+          "tidyr", "ecokit", "tidyselect"))
+
+      if (n_cores > 1) {
+        ecokit::set_parallel(
+          stop_cluster = TRUE, level = 2L, cat_timestamp = FALSE)
+        future::plan("sequential", gc = TRUE)
+      }
+
+      response_curve_data <- dplyr::bind_rows(response_curve_data2)
+      ecokit::save_as(object = response_curve_data, out_path = path_rc_data)
+      rm(response_curve_data, envir = environment())
+      invisible(gc())
+    }
+
+    # Predictions -------
+
+  }
 
   # ****************************************************************
 
@@ -764,7 +924,7 @@ mod_prepare_TF <- function(
           paste0(
             "TF_Chunk_",
             stringr::str_pad(
-              .x, pad = "0", width = nchar(n_batch_files)), ".txt"))
+              .x, width = nchar(n_batch_files), pad = "0"), ".txt"))
 
         readr::write_lines(x = BasicCommands, file = File, append = FALSE)
         readr::write_lines(
@@ -1038,22 +1198,33 @@ mod_postprocess_2_CPU <- function(
     "Path of selected model", level = 1L, line_char = "+", line_char_rep = 60L,
     cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
-  path_model <- fs::path(
-    model_dir, "Model_Fitted",
-    paste0(
-      "GPP", GPP_dist, "_", use_trees, "_samp", MCMC_n_samples, "_th",
-      MCMC_thin, "_Model.qs2"))
+  path_model <- fs::dir_ls(
+    fs::path(model_dir, "Model_Fitted"),
+    regexp = paste0(
+      ".+", use_trees, "_samp", MCMC_n_samples, "_th", MCMC_thin, "_Model.qs2"))
+  if (length(path_model) > 1) {
+    path_model <- stringr::str_subset(path_model, paste0("^GPP", GPP_dist))
+  }
+  if (length(path_model) == 0) {
+    ecokit::stop_ctx("`path_model` is of length 0")
+  }
 
-  path_coda <- fs::path(
-    model_dir, "Model_Coda",
-    paste0(
-      "GPP", GPP_dist, "_", use_trees, "_samp", MCMC_n_samples, "_th",
-      MCMC_thin, "_Coda.qs2"))
+  path_coda <- fs::dir_ls(
+    fs::path(model_dir, "Model_Coda"),
+    regexp = paste0(
+      ".+", use_trees, "_samp", MCMC_n_samples, "_th", MCMC_thin, "_Coda.qs2"))
+  if (length(path_coda) > 1) {
+    path_coda <- stringr::str_subset(
+      path_coda, paste0("^GPP", GPP_dist))
+  }
+  if (length(path_coda) == 0) {
+    ecokit::stop_ctx("`path_coda` is of length 0")
+  }
 
   cat(
     paste0("path_model:\n\t", path_model, "\nPath_Coda:\n\t", path_coda, "\n"))
 
-  if (!all(file.exists(path_model, path_coda))) {
+  if (!all(fs::file_exists(c(path_model, path_coda)))) {
     ecokit::stop_ctx(
       "Selected model files not found",
       path_model = path_model, path_coda = path_coda, include_backtrace = TRUE)

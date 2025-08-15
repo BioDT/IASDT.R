@@ -137,15 +137,29 @@ mod_heatmap_beta <- function(
     stringr::str_replace_all(", degree = 2, raw = TRUE\\)", "_") %>%
     stringr::str_replace_all("_1", "\n(L)") %>%
     stringr::str_replace_all("_2", "\n(Q)")
+  var_order <- c(1, 1 + gtools::mixedorder(CovNames[-1]))
+  CovNames <- CovNames[var_order]
+
   ColNames <- dplyr::case_when(
-    CovNames == "(Intercept)" ~ "\n\nIntercept\n",
-    CovNames == "EffortsLog" ~ "\n\nSampling\nefforts",
-    CovNames == "RoadRailLog" ~ "\n\n\nRoad &\nRail\nintensity",
-    CovNames == "RiversLog" ~ "\n\nRiver\nlength",
-    CovNames == "HabLog" ~ "\n\nHabitat\ncoverage",
-    .default = paste0("\n\n", CovNames))
-  SupportMatrix <- (post$support > support_level) %>%
-    magrittr::add(post$support < (1 - support_level)) %>%
+    CovNames == "(Intercept)" ~ "Intercept",
+    CovNames == "EffortsLog" ~ "Sampling\nefforts",
+    CovNames == "RoadRailLog" ~ "Road &\nRail\nintensity",
+    CovNames == "RiversLog" ~ "River\nlength",
+    CovNames == "HabLog" ~ "Habitat\ncoverage",
+    CovNames == "soil" ~ "Soil\nbulk\ndensity",
+    CovNames == "wetness" ~ "Topographic\nwetness\nindex",
+    .default = CovNames) %>%
+    paste0("\n\n\n", .)
+  # Pad each string at the end so each has max_newlines
+  n_newlines <- stringr::str_count(ColNames, "\n")
+  ColNames <- paste0(
+    ColNames, stringr::str_dup("\n", max(n_newlines) - n_newlines))
+
+  post_support <- post$support[var_order, ]
+  post_mean <- post$mean[var_order, ]
+
+  SupportMatrix <- (post_support > support_level) %>%
+    magrittr::add(post_support < (1 - support_level)) %>%
     magrittr::is_greater_than(0)
 
   # Legend colours
@@ -155,14 +169,14 @@ mod_heatmap_beta <- function(
     c("#E6FFFF", "#91D8F7", "#4682B4", "#083D77", "#001F3F"))(100) %>%
     rev()
 
-  rm(Model, envir = environment())
+  rm(Model, post, envir = environment())
 
   # # ..................................................................... ###
 
   # Support ------
   ecokit::cat_time("1. support", level = 1L)
 
-  Plot_SupportD <- (SupportMatrix * (2 * post$support - 1)) %>%
+  Plot_SupportD <- (SupportMatrix * (2 * post_support - 1)) %>%
     t() %>%
     as.data.frame() %>%
     replace(., . == 0, NA_real_)
@@ -226,7 +240,7 @@ mod_heatmap_beta <- function(
     '<span style="font-size: 12pt"><b>Beta</b></span>',
     '<br><span style="font-size: 9pt">(sign)</span>')
 
-  Plot_SignD <- (SupportMatrix * sign(post$mean)) %>%
+  Plot_SignD <- (SupportMatrix * sign(post_mean)) %>%
     sign(x = .) %>%
     t() %>%
     as.data.frame() %>%
@@ -270,7 +284,7 @@ mod_heatmap_beta <- function(
   # Mean -----
   ecokit::cat_time("3. mean", level = 1L)
 
-  Plot_MeanD <- (SupportMatrix * post$mean) %>%
+  Plot_MeanD <- (SupportMatrix * post_mean) %>%
     t() %>%
     as.data.frame() %>%
     replace(., . == 0, NA_real_)
@@ -427,6 +441,11 @@ mod_heatmap_omega <- function(
 
   Model <- ecokit::load_as(path_model)
 
+  if (length(Model$rLNames) == 0) {
+    ecokit::cat_time("There is no Omega parameters in this model")
+    return(invisible(NULL))
+  }
+
   # # ..................................................................... ###
 
   # Plot phylogenetic tree -----
@@ -469,21 +488,23 @@ mod_heatmap_omega <- function(
   ecokit::cat_time("Compute associations")
 
   post <- Hmsc::computeAssociations(Model)[[1]]
-  rm(Model, envir = environment())
+  post_support <- post$support
+  post_mean <- post$mean
+  rm(Model, post, envir = environment())
 
   # # ..................................................................... ###
 
   # Sign ------
   ecokit::cat_time("1. sign", level = 1L)
 
-  Support <- (post$support > support_level) %>%
-    magrittr::add(post$support < (1 - support_level)) %>%
+  Support <- (post_support > support_level) %>%
+    magrittr::add(post_support < (1 - support_level)) %>%
     magrittr::is_greater_than(0)
   # remove prefix "Sp_" from co-occurrence labels
   dimnames(Support)[[2]] <- dimnames(Support)[[1]] <- stringr::str_remove(
     dimnames(Support)[[1]], "^Sp_")
 
-  PostMean <- post$mean
+  PostMean <- post_mean
   PostMean[!Support] <- NA_real_
   # remove prefix "Sp_" from co-occurrence labels
   dimnames(PostMean)[[2]] <- dimnames(PostMean)[[1]] <- stringr::str_remove(
@@ -499,7 +520,8 @@ mod_heatmap_omega <- function(
     sign(PostMean) %>%
       as.data.frame() %>%
       dplyr::mutate_all(as.character) %>%
-      # replace diagonals with NA
+      # Replace diagonal elements (self-associations) with NA for clarity in
+      # the heatmap
       replace(., col(.) == row(.), NA_character_) %>%
       replace(., . == "1", PosSign) %>%
       replace(., . == "-1", NegSign) %>%

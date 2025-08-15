@@ -179,8 +179,8 @@ convergence_alpha <- function(
 
       # Pre-calculate smoothed lines
       summary_data <- PlotDT %>%
-        group_by(Chain) %>%
-        mutate(Smoothed = pmax(predict(loess(Value ~ Iter)), 0))
+        dplyr::group_by(Chain) %>%
+        dplyr::mutate(Smoothed = pmax(predict(loess(Value ~ Iter)), 0))
 
       Plot <- ggplot2::ggplot(
         data = PlotDT,

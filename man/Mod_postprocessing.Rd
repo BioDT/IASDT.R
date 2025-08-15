@@ -38,7 +38,8 @@ mod_postprocess_1_CPU(
   width_omega = 26,
   height_omega = 22.5,
   width_beta = 25,
-  height_beta = 35
+  height_beta = 35,
+  spatial_model = TRUE
 )
 
 mod_prepare_TF(
@@ -167,8 +168,10 @@ MCMC samples of the selected model.}
 \item{n_omega}{Integer. The number of species to be sampled for the \code{Omega}
 parameter transformation. Defaults to 100.}
 
-\item{CV_name}{Character. Cross-validation strategy. Valid values are
-\code{CV_Dist}, \code{CV_Large}, or \code{CV_SAC}.}
+\item{CV_name}{\code{NULL} or character vector. Column name(s) in the model input
+data to be used to cross-validate the models (see \link{mod_prepare_data} and
+\link{mod_CV_prepare}). If \code{CV_name = NULL}, no cross-validation data
+preparation is done. See \link{mod_CV_fit} for valid options.}
 
 \item{n_grid}{Integer. Number of points along the gradient for continuous
 focal variables. Higher values result in smoother curves. Default: 50. See
@@ -205,6 +208,9 @@ partitioning. Defaults to 10L.}
 \item{width_omega, height_omega, width_beta, height_beta}{Integer. The width and
 height of the generated heatmaps of the Omega and Beta parameters in
 centimetres.}
+
+\item{spatial_model}{Logical. Whether the model is spatial (\code{TRUE}) or not
+(\code{FALSE}). Defaults to \code{TRUE}.}
 
 \item{process_VP}{Logical. Whether to prepares batch scripts for variance
 partitioning GPU computations on GPUs. Defaults to \code{TRUE}.}

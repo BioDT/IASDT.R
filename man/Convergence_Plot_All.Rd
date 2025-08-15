@@ -30,8 +30,8 @@ options are "sequential", "multisession" (default), "multicore", and
 plot. Valid options are "histogram" (default) or "density".}
 }
 \value{
-The function does not return anything but saves a series of
-diagnostic plots in the specified path.
+The function returns \code{invisible(NULL)} and does not return any
+value, but saves a series of diagnostic plots in the specified path.
 }
 \description{
 This function generates and saves a series of diagnostic plots to assess the

@@ -110,6 +110,7 @@ plot_gelman <- function(
     coda_object <- path_coda
     rm(path_coda, envir = environment())
   }
+  names_coda <- names(coda_object)
 
   # # ..................................................................... ###
 
@@ -120,7 +121,7 @@ plot_gelman <- function(
 
   # alpha -----
 
-  if (alpha) {
+  if (alpha && ("Alpha" %in% names_coda)) {
     ecokit::cat_time("alpha")
     PlotObj_Alpha <- plot_gelman_alpha(
       coda_object = coda_object$Alpha[[1]], plotting_alpha = plotting_alpha)
@@ -145,7 +146,7 @@ plot_gelman <- function(
 
   # omega -----
 
-  if (omega) {
+  if (omega && ("Omega" %in% names_coda)) {
     ecokit::cat_time("omega")
     PlotObj_Omega <- IASDT.R::plot_gelman_omega(
       coda_object = coda_object$Omega[[1]], n_omega = n_omega,
@@ -158,7 +159,7 @@ plot_gelman <- function(
 
   # rho -----
 
-  if (rho && ("Rho" %in% names(coda_object))) {
+  if (rho && ("Rho" %in% names_coda)) {
     ecokit::cat_time("rho")
     PlotObj_Rho <- IASDT.R::plot_gelman_rho(coda_object$Rho)
   } else {
@@ -494,11 +495,12 @@ plot_gelman_omega <- function(
       include_backtrace = TRUE)
   }
 
-  if (!is.numeric(n_omega) || n_omega <= 0) {
+  if (!is.numeric(n_omega) || n_omega <= 0 || n_omega != as.integer(n_omega)) {
     ecokit::stop_ctx(
       "`n_omega` must be a positive integer.", n_omega = n_omega,
       include_backtrace = TRUE)
   }
+  n_omega <- as.integer(n_omega)
 
   if (!inherits(coda_object, "mcmc.list")) {
     ecokit::stop_ctx(

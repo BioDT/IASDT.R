@@ -127,6 +127,8 @@ resp_curv_plot_species_all <- function(
             Variable == "EffortsLog" ~ "Sampling efforts",
             Variable == "RiversLog" ~ "River length",
             Variable == "HabLog" ~ "% habitat coverage",
+            Variable == "soil" ~ "Soil density",
+            Variable == "wetness" ~ "Wetness index",
             .default = Variable),
           VarDesc = paste0(
             "<span style='font-size: 10pt;'><b>", VarDesc, "</b></span>"),
@@ -155,6 +157,8 @@ resp_curv_plot_species_all <- function(
             Variable == "RiversLog" ~ " (log<sub>10</sub>(x + 0.1))",
             Variable == "RoadRailLog" ~ " (log<sub>10</sub>(x + 1))",
             Variable == "EffortsLog" ~ " (log<sub>10</sub>(x + 1))",
+            Variable == "soil" ~ "Soil bulk density",
+            Variable == "wetness" ~ "Topographic wetness index",
             Variable == "HabLog" ~ " (log<sub>10</sub>(x + 0.1))",
             .default = Variable),
           VarDesc2 = paste0(

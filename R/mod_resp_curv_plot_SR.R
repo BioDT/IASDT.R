@@ -149,6 +149,8 @@ resp_curv_plot_SR <- function(
     "bio17", "Bio17", "Precipitation of driest quarter",
     "bio18", "Bio18", "Monthly precipitation amount of the warmest quarter",
     "bio19", "Bio19", "Precipitation of coldest quarter",
+    "soil", "soil density", "Soil bulk density",
+    "wetness", "Wetness index", "Topographic wetness index",
     "npp", "NPP", "net primary productivity",
     "RiversLog", "River length", "log10(x + 0.1)",
     "RoadRailLog", "Road + Rail intensity", "log10(x + 1)",
@@ -195,6 +197,8 @@ resp_curv_plot_SR <- function(
             Variable == "RoadRailLog" ~ "Road + Rail intensity",
             Variable == "EffortsLog" ~ "Sampling efforts",
             Variable == "RiversLog" ~ "River length",
+            Variable == "soil" ~ "Soil density",
+            Variable == "wetness" ~ "Wetness index",
             .default = Variable)
 
           # faceting labels

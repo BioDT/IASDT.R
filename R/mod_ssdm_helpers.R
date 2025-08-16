@@ -458,11 +458,11 @@ prepare_input_data <- function(
     climate_models = "all", climate_scenarios = "all",
     climate_periods = "all", n_cores = 8) {
 
-  Name <- TimePeriod <- ClimateScenario <- ClimateModel <- pred_df <-
-    FilePath <- path_rail <- path_roads <- path_clc <- path_bias <- cv <-
-    path_rivers <- path_chelsa <- cv_fold <- . <- pred_data <- quadratic <-
+  Name <- TimePeriod <- ClimateScenario <- ClimateModel <- pred_df <- cv <-
+    CellCode <- FilePath <- path_rail <- path_roads <- path_clc <- path_bias <-
+    path_rivers <- path_chelsa <- pred_data <- quadratic <- CellNum <-
     variable <- climate_name <- species_name <- valid_species <- data_path <-
-    NULL
+    path_wetness <- path_soil <- NULL
 
   # # ..................................................................... ###
 
@@ -483,7 +483,6 @@ prepare_input_data <- function(
   ecokit::check_args(
     args_all = all_args, args_type = "numeric", args_to_check = "n_cores")
   rm(all_args, envir = environment())
-
 
   # |||||||||||||||||||||||||||||||||||||||||||
 
@@ -586,6 +585,8 @@ prepare_input_data <- function(
     "path_clc", "DP_R_CLC_processed", TRUE, FALSE,
     "path_bias", "DP_R_Efforts_processed", TRUE, FALSE,
     "path_rivers", "DP_R_Rivers_processed", TRUE, FALSE,
+    "path_soil", "DP_R_soil_density", TRUE, FALSE,
+    "path_wetness", "DP_R_wetness_processed", TRUE, FALSE,
     "path_chelsa", "DP_R_CHELSA_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
@@ -628,43 +629,56 @@ prepare_input_data <- function(
 
   # Loading model data ----
 
-  file_model_data <- fs::dir_ls(
-    model_dir, regexp = ".*/ModDT_.*subset\\.RData$")
-  if (length(file_model_data) != 1 || !nzchar(file_model_data)) {
+  modelling_data <- fs::path(model_dir, "ModDT.RData")
+  data_CV <- fs::path(model_dir, "CV_data.RData")
+  data_subset <- fs::path(model_dir, "ModDT_subset.RData")
+  data_training <- fs::path(model_dir, "ModDT_training.RData")
+  data_testing <- fs::path(model_dir, "ModDT_testing.RData")
+
+  if (!ecokit::check_data(modelling_data, warning = FALSE)) {
     ecokit::stop_ctx(
-      "Model data file not found",
-      model_dir = model_dir, file_model_data = file_model_data)
+      "Model data at the full extent file does not exist or is invalid",
+      modelling_data = modelling_data, include_backtrace = TRUE)
+  }
+  if (!ecokit::check_data(data_subset, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Model data at the subset extent file does not exist or is invalid",
+      data_subset = data_subset, include_backtrace = TRUE)
+  }
+  if (!ecokit::check_data(data_CV, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Cross-validation file does not exist or is invalid",
+      data_CV = data_CV, include_backtrace = TRUE)
   }
 
-  if (!ecokit::check_data(file_model_data, warning = FALSE)) {
-    ecokit::stop_ctx(
-      "Model data at the subset extent file does not exist or invalid",
-      model_dir = model_dir, file_model_data = file_model_data,
-      model_data_exists = fs::file_exists(file_model_data))
+  data_subset <- ecokit::load_as(data_subset)
+  predictor_names <- names(data_subset$DT_x)
+  model_form <- data_subset$Form_x
+  train_test_exist <- ecokit::check_data(data_training, warning = FALSE) &&
+    ecokit::check_data(data_testing, warning = FALSE)
+
+  if (train_test_exist) {
+    train_test_data <- dplyr::bind_rows(
+      ecokit::load_as(data_training), ecokit::load_as(data_testing))
+    model_cell_numbers <- dplyr::pull(train_test_data, "CellNum")
+    model_cv_folds <- dplyr::select(
+      train_test_data, CellNum, CellCode, cv_fold = tidyselect::all_of(cv_type))
+    rm(train_test_data, envir = environment())
+  } else {
+    model_cell_numbers <- dplyr::pull(data_subset$DT_All, "CellNum")
+    model_cv_folds <- dplyr::select(
+      data_subset$DT_CV,
+      CellNum, CellCode, cv_fold = tidyselect::all_of(cv_type))
   }
 
-  model_data <- ecokit::load_as(file_model_data)
+  modelling_data <- ecokit::load_as(modelling_data) %>%
+    dplyr::filter(CellNum %in% model_cell_numbers) %>%
+    dplyr::left_join(model_cv_folds, by = c("CellNum", "CellCode"))
 
-  if (!all(c("DT_x", "DT_y", "DT_CV") %in% names(model_data))) {
-    ecokit::stop_ctx(
-      "Loaded model data is missing required components.",
-      file_model_data = file_model_data, names_model_data = names(model_data))
-  }
-
-  if (is.null(model_data$DT_x) || is.null(model_data$DT_y) ||
-      is.null(model_data$DT_CV)) {
-    ecokit::stop_ctx(
-      "Loaded model data is missing required components.",
-      file_model_data = file_model_data, names_model_data = names(model_data))
-  }
-
-  predictor_names <- names(model_data$DT_x)
-
-  n_cv_folds <- length(unique(dplyr::pull(model_data$DT_CV, cv_type)))
+  n_cv_folds <- length(unique(modelling_data$cv_fold))
   if (n_cv_folds < 2L) {
     ecokit::stop_ctx(
-      "Not enough CV folds found in model data",
-      length_cv_folds = n_cv_folds)
+      "Not enough CV folds found in model data", length_cv_folds = n_cv_folds)
   }
 
   # `clamp_pred` can not be TRUE when `EffortsLog` is not used as predictor
@@ -675,13 +689,16 @@ prepare_input_data <- function(
       include_backtrace = TRUE)
   }
 
-  species_names <- names(model_data$DT_y)
+  species_names <- names(data_subset$DT_y)
   chelsa_pattern <- paste0(
     "^", IASDT.R::CHELSA_variables$Variable, collapse = "|")
   other_variables <- stringr::str_subset(
     predictor_names, chelsa_pattern, negate = TRUE)
-  bio_variables <- stringr::str_subset( # nolint: object_usage_linter
+  bio_variables <- stringr::str_subset(
     predictor_names, chelsa_pattern, negate = FALSE)
+
+  rm(data_subset, model_cv_folds, envir = environment())
+  invisible(gc())
 
   # # ..................................................................... ###
 
@@ -690,19 +707,18 @@ prepare_input_data <- function(
   if (!is.null(selected_species)) {
     if (!inherits(selected_species, "character") ||
         length(selected_species) < 1L ||
-        length(selected_species) > length(names(model_data$DT_y))) {
+        length(selected_species) > length(species_names)) {
       ecokit::stop_ctx(
         "selected_species must be a character vector of length >= 1",
         selected_species = selected_species,
         length_selected_species = length(selected_species),
         class_selected_species = class(selected_species))
     }
-    if (!all(selected_species %in% names(model_data$DT_y))) {
-      invalid_species <- setdiff(selected_species, names(model_data$DT_y))
+    if (!all(selected_species %in% species_names)) {
+      invalid_species <- setdiff(selected_species, species_names)
       ecokit::stop_ctx(
         "Some or all of the selected species not found in model data",
-        selected_species = selected_species,
-        available_species = names(model_data$DT_y),
+        selected_species = selected_species, species_names = species_names,
         invalid_species = invalid_species)
     }
     species_names <- selected_species
@@ -716,19 +732,18 @@ prepare_input_data <- function(
   if (!is.null(excluded_species)) {
     if (!inherits(excluded_species, "character") ||
         length(excluded_species) < 1L ||
-        length(excluded_species) > length(names(model_data$DT_y))) {
+        length(excluded_species) > length(species_names)) {
       ecokit::stop_ctx(
         "excluded_species must be a character vector of length >= 1",
         excluded_species = excluded_species,
         length_excluded_species = length(excluded_species),
         class_excluded_species = class(excluded_species))
     }
-    if (!all(excluded_species %in% names(model_data$DT_y))) {
-      invalid_species <- setdiff(excluded_species, names(model_data$DT_y))
+    if (!all(excluded_species %in% species_names)) {
+      invalid_species <- setdiff(excluded_species, species_names)
       ecokit::stop_ctx(
         "Some or all of the selected species not found in model data",
-        excluded_species = excluded_species,
-        available_species = names(model_data$DT_y),
+        excluded_species = excluded_species, species_names = species_names,
         invalid_species = invalid_species)
     }
     species_names <- setdiff(species_names, excluded_species)
@@ -738,12 +753,9 @@ prepare_input_data <- function(
 
   # Prepare species data -----
 
-  modelling_data <- cbind.data.frame(
-    model_data$DT_y, model_data$DT_x, cv_fold = model_data$DT_CV[[cv_type]])
-
   # extract list of linear and quadratic terms from the model formula
   # Use terms() to robustly extract variable names from the formula
-  term_labels <- attr(stats::terms(model_data$Form_x), "term.labels")
+  term_labels <- attr(stats::terms(model_form), "term.labels")
   formula_vars <- purrr::map(
     term_labels,
     .f = ~{
@@ -780,10 +792,11 @@ prepare_input_data <- function(
   }
 
   pkg_to_load <- c(
-    "dplyr", "ecokit", "fs", "qs2", "stringr", "sdm", "tibble", "tidyselect")
+    "dplyr", "ecokit", "fs", "qs2", "stringr", "purrr",
+    "sdm", "tibble", "tidyselect", "rlang", "tidyr")
   future_globals <- c(
-    "species_data_dir", "q_preds", "l_preds", "predictor_names", "model_data",
-    "modelling_data", "n_cv_folds")
+    "species_data_dir", "q_preds", "l_preds", "predictor_names",
+    "modelling_data", "n_cv_folds", "model_form")
 
   species_modelling_data2 <- ecokit::quietly(
     future.apply::future_lapply(
@@ -802,59 +815,65 @@ prepare_input_data <- function(
         }
 
         species_modelling_data <- tidyr::expand_grid(
-          species_name = species_name, cv = seq_len(n_cv_folds),
-          method_is_glm = c(TRUE, FALSE)) %>%
+          cv = seq_len(n_cv_folds), method_is_glm = c(TRUE, FALSE)) %>%
           dplyr::mutate(
-            model_form = purrr::pmap(
-              .l = list(species_name, cv, method_is_glm),
-              .f = function(species_name, cv, method_is_glm) {
+            model_form = purrr::map2(
+              .x = cv, .y = method_is_glm,
+              .f = ~ {
 
                 valid_species <- TRUE
 
                 # model formula
-                if (method_is_glm) {
+                if (.y) {
                   if (length(q_preds) == 0L) {
                     # No quadratic terms, use linear predictors only
                     model_formula <- paste(
-                      species_name, " ~ ", paste(l_preds, collapse = " + ")) %>%
-                      stats::as.formula(env = baseenv())
+                      species_name, " ~ ", paste(l_preds, collapse = " + "))
                     predictor_names_local <- predictor_names
                   } else {
                     # Add quadratic terms as columns to the modelling data
                     predictor_names_local <- c(
                       predictor_names, paste0(q_preds, "_sq"))
-
                     # Update model formula
                     model_formula <- c(
                       l_preds, q_preds, paste0(q_preds, "_sq")) %>%
                       paste(collapse = " + ") %>%
-                      paste(species_name, " ~ ", .) %>%
-                      stats::as.formula(env = baseenv())
+                      paste(species_name, " ~ ", .)
                   }
                 } else {
                   predictor_names_local <- predictor_names
                   str_rem_1 <- "stats::poly\\(|, degree = 2, raw = TRUE\\)"
-                  model_formula <- deparse1(model_data$Form_x) %>%
+                  model_formula <- deparse1(model_form) %>%
                     stringr::str_remove_all(str_rem_1) %>%
-                    paste(species_name, .) %>%
-                    stats::as.formula(env = baseenv())
+                    paste(species_name, .)
                 }
+
+                if (length(model_formula) > 1) {
+                  model_formula <- paste(model_formula, collapse = " ")
+                }
+
+                model_formula <- stats::as.formula(
+                  model_formula, env = baseenv())
 
                 # Training and testing data
                 training_data <- modelling_data %>%
-                  dplyr::filter(cv_fold != cv) %>%
+                  dplyr::filter(cv_fold != .x) %>%
                   dplyr::select(
                     tidyselect::all_of(c(species_name, predictor_names_local)))
                 testing_data <- modelling_data %>%
-                  dplyr::filter(cv_fold == cv) %>%
+                  dplyr::filter(cv_fold == .x) %>%
                   dplyr::select(
                     tidyselect::all_of(c(species_name, predictor_names_local)))
 
-                valid_training <- unique(training_data[, species_name]) %>%
+                valid_training <- training_data %>%
+                  dplyr::distinct(.data[[species_name]]) %>%
+                  unlist() %>%
                   sort() %>%
                   as.integer() %>%
                   identical(c(0L, 1L))
-                valid_testing <- unique(testing_data[, species_name]) %>%
+                valid_testing <- testing_data %>%
+                  dplyr::distinct(.data[[species_name]]) %>%
+                  unlist() %>%
                   sort() %>%
                   as.integer() %>%
                   identical(c(0L, 1L))
@@ -865,17 +884,18 @@ prepare_input_data <- function(
                   valid_species <- FALSE
                 } else {
                   sdm_data <- sdm::sdmData(
-                    formula = model_formula, train = training_data,
-                    test = testing_data)
+                    formula = model_formula,
+                    train = as.data.frame(training_data),
+                    test = as.data.frame(testing_data))
                 }
 
                 tibble::tibble(
                   model_formula = list(model_formula),
                   predictor_names = list(predictor_names_local),
-                  sdm_data = list(sdm_data),
-                  valid_species = valid_species)
+                  sdm_data = list(sdm_data), valid_species = valid_species)
               })) %>%
-          tidyr::unnest("model_form")
+          tidyr::unnest("model_form") %>%
+          dplyr::mutate(species_name = species_name, .before = 1)
 
         ecokit::save_as(
           object = species_modelling_data, out_path = species_data_file)
@@ -885,8 +905,7 @@ prepare_input_data <- function(
           data_path = species_data_file)
       },
       future.scheduling = Inf, future.seed = TRUE,
-      future.packages = pkg_to_load, future.globals = future_globals)
-  )
+      future.packages = pkg_to_load, future.globals = future_globals))
 
   ecokit::set_parallel(stop_cluster = TRUE, show_log = FALSE)
   future::plan("sequential", gc = TRUE)
@@ -895,7 +914,11 @@ prepare_input_data <- function(
   species_modelling_data <- dplyr::tibble(
     species_name = species_names, species_data = species_modelling_data2) %>%
     tidyr::unnest("species_data")
+  rm(species_modelling_data2, envir = environment())
+  invisible(gc())
 
+
+  ## Check invalid species ------
   invalid_species <- dplyr::filter(species_modelling_data, !valid_species)
 
   if (nrow(invalid_species) > 0) {
@@ -1267,6 +1290,43 @@ prepare_input_data <- function(
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
 
+  ## Soil bulk density -----
+
+  if ("soil" %in% other_variables) {
+    r_soil <- fs::path(path_soil, "soil_density.RData")
+    if (!fs::file_exists(r_soil)) {
+      ecokit::stop_ctx(
+        "Soil bulk density data does not exist", r_soil = r_soil,
+        include_backtrace = TRUE)
+    }
+    r_soil <- ecokit::load_as(r_soil, unwrap_r = TRUE) %>%
+      magrittr::extract2("bdod_5_15_mean") %>%
+      stats::setNames("soil")
+
+    static_predictors <- c(static_predictors, r_soil)
+    rm(r_soil, envir = environment())
+  }
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
+
+  ## Topographic wetness index -----
+
+  if ("wetness" %in% other_variables) {
+    r_wetness <- fs::path(path_wetness, "wetness_index.RData")
+    if (!fs::file_exists(r_wetness)) {
+      ecokit::stop_ctx(
+        "Topographic wetness index data does not exist", r_wetness = r_wetness,
+        include_backtrace = TRUE)
+    }
+    r_wetness <- ecokit::load_as(r_wetness, unwrap_r = TRUE) %>%
+      stats::setNames("wetness")
+
+    static_predictors <- c(static_predictors, r_wetness)
+    rm(r_wetness, envir = environment())
+  }
+
+  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
+
   ## Merge static predictors -----
   static_predictors <- terra::rast(static_predictors)
 
@@ -1323,7 +1383,7 @@ prepare_input_data <- function(
               dplyr::mutate(
                 dplyr::across(
                   tidyselect::all_of(q_preds),
-                  .fns = ~ I(.x^2L), .names = "{.col}_sq"))
+                  .fns = ~ .x^2L, .names = "{.col}_sq"))
           }
           pred_df0
         })) %>%
@@ -1351,6 +1411,8 @@ prepare_input_data <- function(
     path_species_data = path_species_data, excluded_species = excluded_species,
     path_prediction_data = path_prediction_data,
     path_prediction_options = path_prediction_options)
+
+  rm(bio_variables, l_preds, q_preds, static_predictors, envir = environment())
   return(invisible(outputs))
 
 }
@@ -1853,6 +1915,9 @@ summarize_predictions <- function(
 #'   - `variable_importance`: List of tibbles with variable importance values
 #'   - `response_curves`: List of tibbles with response curve data
 #'   - `prediction_info`: List of tibbles with prediction file information
+#' @param n_cores Integer. Number of CPU cores for parallel processing.
+#' @param future_max_size Numeric or character. Maximum allowed size for future
+#'   package globals (see future documentation).
 #'
 #' @details
 #' - The function outputs information about any identified issues to the
@@ -1863,7 +1928,7 @@ summarize_predictions <- function(
 #' [fit_sdm_models()] function.
 
 #' @return Returns invisibly NULL. This function is used for its side effects
-#'   (console output).
+#'   (console output). The return value is always `invisible(NULL)`.
 #' @author Ahmed El-Gabbas
 #' @noRd
 #' @keywords internal

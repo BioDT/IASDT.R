@@ -67,7 +67,7 @@ avoid overlap.</p>
 <span>  jitter_distance <span class="op">=</span> <span class="fl">100</span>,</span>
 <span>  min_LF <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  max_LF <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  alphapw <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>Prior <span class="op">=</span> <span class="cn">NULL</span>, Min <span class="op">=</span> <span class="fl">150</span>, Max <span class="op">=</span> <span class="fl">1500</span>, Samples <span class="op">=</span> <span class="fl">101</span><span class="op">)</span></span>
+<span>  alphapw <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>Prior <span class="op">=</span> <span class="cn">NULL</span>, Min <span class="op">=</span> <span class="fl">10</span>, Max <span class="op">=</span> <span class="fl">1500</span>, Samples <span class="op">=</span> <span class="fl">101</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -99,19 +99,20 @@ respective values will be used as arguments to <a href="https://rdrr.io/pkg/Hmsc
 
 
 <dt id="arg-alphapw">alphapw<a class="anchor" aria-label="anchor" href="#arg-alphapw"></a></dt>
-<dd><p>Prior for the alpha parameter. Defaults to a list with <code>Prior = NULL</code>, <code>Min = 150</code>, <code>Max = 1500</code>, and <code>Samples = 101</code>. If <code>alphapw</code> is
+<dd><p>Prior for the alpha parameter. Defaults to a list with <code>Prior = NULL</code>, <code>Min = 10</code>, <code>Max = 1500</code>, and <code>Samples = 101</code>. If <code>alphapw</code> is
 <code>NULL</code> or a list with all <code>NULL</code> list items, the default prior will be
 used. If <code>Prior</code> is a matrix, it will be used as the prior. If <code>Prior = NULL</code>, the prior will be generated using the minimum and maximum values of
 the alpha parameter (<code>min</code> and <code>max</code>, respectively; in kilometre) and  the
 number of samples (<code>Samples</code>). Defaults to a prior with 101 samples ranging
-from 150 to 1500 km, with the first value in the second column set to 0.5.</p></dd>
+from 10 to 1500 km, with the first value in the second column set to 0.5.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An object of class <code>HmscRandomLevel</code>, suitable for specifying the
 random level in HMSC GPP models. This object contains the prepared knot
-locations.</p>
+locations as a data frame with columns <code>Var1</code> and <code>Var2</code> (numeric
+coordinates), after possible jittering and conversion to avoid overlap.</p>
     </div>
     <div class="section level2">
     <h2 id="author">Author<a class="anchor" aria-label="anchor" href="#author"></a></h2>

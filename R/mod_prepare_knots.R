@@ -20,25 +20,26 @@
 #'   factors will be estimated from the data. If either is provided, the
 #'   respective values will be used as arguments to [Hmsc::setPriors].
 #' @param alphapw Prior for the alpha parameter. Defaults to a list with `Prior
-#'   = NULL`, `Min = 150`, `Max = 1500`, and `Samples = 101`. If `alphapw` is
+#'   = NULL`, `Min = 10`, `Max = 1500`, and `Samples = 101`. If `alphapw` is
 #'   `NULL` or a list with all `NULL` list items, the default prior will be
 #'   used. If `Prior` is a matrix, it will be used as the prior. If `Prior =
 #'   NULL`, the prior will be generated using the minimum and maximum values of
 #'   the alpha parameter (`min` and `max`, respectively; in kilometre) and  the
 #'   number of samples (`Samples`). Defaults to a prior with 101 samples ranging
-#'   from 150 to 1500 km, with the first value in the second column set to 0.5.
+#'   from 10 to 1500 km, with the first value in the second column set to 0.5.
 #'
 #' @name prepare_knots
 #' @author Ahmed El-Gabbas
 #' @return An object of class `HmscRandomLevel`, suitable for specifying the
 #'   random level in HMSC GPP models. This object contains the prepared knot
-#'   locations.
+#'   locations as a data frame with columns `Var1` and `Var2` (numeric
+#'   coordinates), after possible jittering and conversion to avoid overlap.
 #' @export
 
 prepare_knots <- function(
     coordinates = NULL, min_distance = NULL, jitter_distance = 100,
     min_LF = NULL, max_LF = NULL,
-    alphapw = list(Prior = NULL, Min = 150, Max = 1500, Samples = 101)) {
+    alphapw = list(Prior = NULL, Min = 10, Max = 1500, Samples = 101)) {
 
   # # ..................................................................... ###
 
@@ -48,12 +49,14 @@ prepare_knots <- function(
 
   # # ..................................................................... ###
 
+  # alphapw Prior values
   AlphaPrior <- function(MinVal, MaxVal, NSamples) {
-    seq(MinVal, MaxVal, length.out = (NSamples - 1)) %>%
-      magrittr::multiply_by(1000) %>%
-      round() %>%
-      c(0, .) %>%
-      cbind(c(0.5, rep(0.5 / (NSamples - 1), (NSamples - 1))))
+    values <- round(seq(MinVal, MaxVal, length.out = (NSamples - 1)) * 1000)
+    prs <- cbind(
+      c(0, values),
+      c(0.5, rep(0.5 / (NSamples - 1), (NSamples - 1))))
+    dimnames(prs) <- NULL
+    prs
   }
 
   if (ncol(coordinates) != 2L) {
@@ -69,11 +72,11 @@ prepare_knots <- function(
   if (is.null(alphapw)) {
     Prior <- NULL
   } else {
-    if (all(purrr::map_lgl(alphapw, is.null))) {   # nolint: unneeded_nesting_linter
+    if (all(purrr::map_lgl(alphapw, is.null))) {
       Prior <- NULL
     } else {
 
-      if (is.null(alphapw$Prior)) {   # nolint: unneeded_nesting_linter
+      if (is.null(alphapw$Prior)) {
 
         if (is.null(alphapw$Min) || !is.numeric(alphapw$Min)) {
           ecokit::stop_ctx(
@@ -172,7 +175,7 @@ prepare_knots <- function(
 
   if (!is.null(min_LF) && !is.null(max_LF) && min_LF >= max_LF) {
     ecokit::stop_ctx(
-      "`min_LF` must be less than `max_LF`",
+      "`min_LF` must be strictly less than `max_LF`",
       min_LF = min_LF, max_LF = max_LF)
   }
 
@@ -189,9 +192,9 @@ prepare_knots <- function(
 
   # coordinates of the sampling units as sf object -----
 
-  SU_Sf <- tibble::as_tibble(coordinates) %>%      # nolint: object_name_linter
+  SU_Sf <- tibble::as_tibble(coordinates) %>%
     stats::setNames(c("x", "y")) %>%
-    sf::st_as_sf(coords = c("x", "y"), remove = FALSE, crs = 3035)
+    sf::st_as_sf(coords = c("x", "y"), remove = FALSE, crs = 3035L)
 
   # # ..................................................................... ###
 
@@ -206,11 +209,10 @@ prepare_knots <- function(
       Identical = purrr::map2_lgl(
         .x = Var1, .y = Var2,
         .f = ~ {
-          SU_Sf %>%  # nolint: nrow_subset_linter
-            dplyr::filter(x == .x, y == .y) %>%
-            nrow() %>%
-            magrittr::is_greater_than(0)
+          ident0 <- dplyr::filter(SU_Sf, x == .x, y == .y)
+          nrow(ident0) > 0
         }))
+  rm(SU_Sf, envir = environment())
 
   if (any(Knots$Identical)) {
     Knots <- sf::st_as_sf(

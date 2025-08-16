@@ -10,7 +10,7 @@ prepare_knots(
   jitter_distance = 100,
   min_LF = NULL,
   max_LF = NULL,
-  alphapw = list(Prior = NULL, Min = 150, Max = 1500, Samples = 101)
+  alphapw = list(Prior = NULL, Min = 10, Max = 1500, Samples = 101)
 )
 }
 \arguments{
@@ -29,17 +29,18 @@ be used. Both default to \code{NULL} which means that the number of latent
 factors will be estimated from the data. If either is provided, the
 respective values will be used as arguments to \link[Hmsc:setPriors]{Hmsc::setPriors}.}
 
-\item{alphapw}{Prior for the alpha parameter. Defaults to a list with \code{Prior = NULL}, \code{Min = 150}, \code{Max = 1500}, and \code{Samples = 101}. If \code{alphapw} is
+\item{alphapw}{Prior for the alpha parameter. Defaults to a list with \code{Prior = NULL}, \code{Min = 10}, \code{Max = 1500}, and \code{Samples = 101}. If \code{alphapw} is
 \code{NULL} or a list with all \code{NULL} list items, the default prior will be
 used. If \code{Prior} is a matrix, it will be used as the prior. If \code{Prior = NULL}, the prior will be generated using the minimum and maximum values of
 the alpha parameter (\code{min} and \code{max}, respectively; in kilometre) and  the
 number of samples (\code{Samples}). Defaults to a prior with 101 samples ranging
-from 150 to 1500 km, with the first value in the second column set to 0.5.}
+from 10 to 1500 km, with the first value in the second column set to 0.5.}
 }
 \value{
 An object of class \code{HmscRandomLevel}, suitable for specifying the
 random level in HMSC GPP models. This object contains the prepared knot
-locations.
+locations as a data frame with columns \code{Var1} and \code{Var2} (numeric
+coordinates), after possible jittering and conversion to avoid overlap.
 }
 \description{
 Prepare the locations of knots for use in Gaussian Predictive Process (GPP)

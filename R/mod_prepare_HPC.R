@@ -178,7 +178,7 @@ mod_prepare_HPC <- function(
     hab_abb = NULL, directory_name = NULL,
     min_efforts_n_species = 100L, n_pres_per_species = 80L, env_file = ".env",
     GPP = TRUE, GPP_dists = NULL, min_LF = NULL, max_LF = NULL,
-    alphapw = list(Prior = NULL, Min = 150, Max = 1500, Samples = 101),
+    alphapw = list(Prior = NULL, Min = 10, Max = 1500, Samples = 101),
     efforts_as_predictor = TRUE, road_rail_as_predictor = TRUE,
     habitat_as_predictor = TRUE, river_as_predictor = FALSE,
     soil_as_predictor = TRUE, wetness_as_predictor = TRUE,

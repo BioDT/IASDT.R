@@ -94,7 +94,8 @@ cross-validated models. See details for more information.</p>
 <span>  height_omega <span class="op">=</span> <span class="fl">22.5</span>,</span>
 <span>  width_beta <span class="op">=</span> <span class="fl">25</span>,</span>
 <span>  height_beta <span class="op">=</span> <span class="fl">35</span>,</span>
-<span>  spatial_model <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  spatial_model <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  future_max_size <span class="op">=</span> <span class="fl">1500L</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">mod_prepare_TF</span><span class="op">(</span></span>
@@ -321,6 +322,12 @@ centimetres.</p></dd>
 <dt id="arg-spatial-model">spatial_model<a class="anchor" aria-label="anchor" href="#arg-spatial-model"></a></dt>
 <dd><p>Logical. Whether the model is spatial (<code>TRUE</code>) or not
 (<code>FALSE</code>). Defaults to <code>TRUE</code>.</p></dd>
+
+
+<dt id="arg-future-max-size">future_max_size<a class="anchor" aria-label="anchor" href="#arg-future-max-size"></a></dt>
+<dd><p>Numeric. Maximum allowed total size (in megabytes) of
+global variables identified. See <code>future.globals.maxSize</code> argument of
+<a href="https://future.futureverse.org/reference/zzz-future.options.html" class="external-link">future::future.options</a> for more details.</p></dd>
 
 
 <dt id="arg-process-vp">process_VP<a class="anchor" aria-label="anchor" href="#arg-process-vp"></a></dt>

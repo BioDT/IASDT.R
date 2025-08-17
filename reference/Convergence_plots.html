@@ -72,6 +72,7 @@ on HPC environments.</p>
 <span>  n_omega <span class="op">=</span> <span class="fl">1000L</span>,</span>
 <span>  n_cores <span class="op">=</span> <span class="fl">8L</span>,</span>
 <span>  strategy <span class="op">=</span> <span class="st">"multisession"</span>,</span>
+<span>  future_max_size <span class="op">=</span> <span class="fl">2000L</span>,</span>
 <span>  n_RC <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">2L</span><span class="op">)</span>,</span>
 <span>  beta_n_RC <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3L</span>, <span class="fl">3L</span><span class="op">)</span>,</span>
 <span>  pages_per_file <span class="op">=</span> <span class="fl">20L</span>,</span>
@@ -139,6 +140,12 @@ Default: 8.</p></dd>
 <dd><p>Character. The parallel processing strategy to use. Valid
 options are "sequential", "multisession" (default), "multicore", and
 "cluster". See <code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code> and <code><a href="https://elgabbas.github.io/ecokit/reference/set_parallel.html" class="external-link">ecokit::set_parallel()</a></code> for details.</p></dd>
+
+
+<dt id="arg-future-max-size">future_max_size<a class="anchor" aria-label="anchor" href="#arg-future-max-size"></a></dt>
+<dd><p>Numeric. Maximum allowed total size (in megabytes) of
+global variables identified. See <code>future.globals.maxSize</code> argument of
+<a href="https://future.futureverse.org/reference/zzz-future.options.html" class="external-link">future::future.options</a> for more details.</p></dd>
 
 
 <dt id="arg-n-rc">n_RC<a class="anchor" aria-label="anchor" href="#arg-n-rc"></a></dt>

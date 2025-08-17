@@ -1465,6 +1465,7 @@ sdm_model_settings <- function() {
     mlp = list(maxit = 250L),
     # rbf = list(maxit = 200L),
     svm = list(),
+    svm2 = list(),
     mda = list(),
     fda = list())
 }
@@ -2309,4 +2310,88 @@ check_model_results <- function(model_results, n_cores, future_max_size) {
   }
 
   invisible(NULL)
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++ ------
+
+# # ========================================================================= #
+# copy_svm2 -------
+# # ========================================================================= #
+
+#' Copy the svm2 methodInfo to the sdm package methods/sdm directory
+#'
+#' This function checks if the file `svm2.R` exists in the `methods/sdm`
+#' subdirectory of the installed sdm package. If not, it writes a new file
+#' containing the methodInfo list for registering the svm2 method (using `e1071`
+#' SVM) in sdm.
+#'
+#' @details The methodInfo list defines the `svm2` modeling method for sdm,
+#'   using the `e1071::svm` implementation.
+#' @return Returns `invisible(NULL)`. The function is called for its side effect
+#'   of writing a file.
+#' @author Ahmed El-Gabbas
+#' @noRd
+#' @keywords internal
+
+copy_svm2 <- function() {
+  # Target path in the sdm package
+  target_dir <- system.file("methods/sdm", package = "sdm")
+  target_file <- fs::path(target_dir, "svm2.R")
+
+  # Check if file already exists
+  if (fs::file_exists(target_file)) {
+    return(invisible(NULL))
+  }
+
+  # MethodInfo function text to write
+  method_text <-
+    'methodInfo <- list(
+  name = c("svm2", "SVM2", "svm_e1071"),
+  packages = "e1071",
+  modelTypes = c("pa", "pb", "ab", "n"),
+  fitParams = list(
+    formula = "standard.formula", data = "sdmDataFrame", v = "sdmVariables"),
+  fitSettings = list(kernel = "radial", probability = TRUE),
+  fitFunction = function(formula, data, v, ...) {
+    x <- sdm:::.getData.sdmMatrix(
+      formula, data, normalize = TRUE, frame = v@varInfo$numeric, scale = FALSE)
+    y <- sdm:::.getData.sdmY(formula, data)
+    e1071::svm(x = x, y = y, scale = TRUE, ...)
+
+    # Set class weights for pa/pb (binary response)
+    n0 <- sum(y == 0, na.rm = TRUE)
+    n1 <- sum(y == 1, na.rm = TRUE)
+    max_weight <- 20 # Upper bound for weight
+    if (n0 >= n1) {
+      # More absences
+      class.weights <- c("0" = 1, "1" = min(n0 / n1, max_weight))
+    } else {
+      # More presences
+      class.weights <- c("0" = min(n1 / n0, max_weight), "1" = 1)
+    }
+
+    e1071::svm(x = x, y = y, scale = TRUE, class.weights = class.weights, ...)
+  },
+  settingRules = NULL,
+  tuneParams = NULL,
+  predictParams = list(
+    object = "model", formula = "standard.formula", newx = "sdmDataFrame",
+    v = "sdmVariables"),
+  predictSettings = list(probability = TRUE),
+  predictFunction = function(object, formula, newx, v, ...) {
+    newx <- sdm:::.getData.sdmMatrix(
+      formula, newx, normalize = TRUE,
+      frame = v@varInfo$numeric, scale = FALSE)
+    predict(object, newx, ...)
+  },
+
+  #------ metadata (optional):
+  title = "Support Vector Machines using e1071",
+  creator = "Ahmed El-Gabbas"
+  )'
+
+  # Write to file, preserving formatting
+  writeLines(method_text, target_file)
+  # message("svm2.R written to sdm package methods/sdm directory.")
+  return(invisible(NULL))
 }

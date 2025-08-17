@@ -129,7 +129,7 @@ fit_sdm_models <- function(
 
   summary_data <- packages <- path_grid <- mod_method <- cv_fold <- preds <-
     pred_mean <- pred_w_mean <- species_name <- method_is_glm <- output_path <-
-    evaluation_testing <- auc_test <- summary_prediction_path <- issues <-
+    evaluation_testing <- auc_test <- summary_prediction_path <-
     climate_name <- pred_mean_okay <- pred_w_mean_okay <- richness_map <-
     pred_type <- cv <- preds_summ <- NULL
 
@@ -139,6 +139,9 @@ fit_sdm_models <- function(
     ecokit::info_chunk(
       cat_bold = TRUE, cat_red = TRUE, line_char_rep = 80L,
       info_lines_before = 2L)
+
+  # Ensure that svm2 method is registered
+  copy_svm2()
 
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -184,7 +187,7 @@ fit_sdm_models <- function(
   # rbf is not bounded; see https://github.com/babaknaimi/sdm/issues/42
   valid_sdm_methods <- c(
     "glm", "glmpoly", "gam", "glmnet", "mars", "gbm", "rf", "ranger",
-    "cart", "rpart", "maxent", "mlp", "svm", "mda", "fda")
+    "cart", "rpart", "maxent", "mlp", "svm", "svm2", "mda", "fda")
   sdm_method_valid <- any(
     is.null(sdm_method), length(sdm_method) != 1L,
     !is.character(sdm_method), !sdm_method %in% valid_sdm_methods)
@@ -312,6 +315,7 @@ fit_sdm_models <- function(
       "mlp", "RSNNS",
       # "rbf", "RSNNS",
       "svm", "kernlab",
+      "svm", "e1071",
       "mda", "mda",
       "fda", "mda") %>%
       dplyr::filter(mod_method == sdm_method) %>%
@@ -617,52 +621,11 @@ fit_sdm_models <- function(
       stringr::str_replace_all(" ", " ") %>%
       paste(collapse = "\n  >>>  ") %>%
       ecokit::cat_time(cat_timestamp = FALSE, level = 1L, ... = "\n")
+    paste(collapse = "\n") %>%
 
-    summ_issues %>%
-      dplyr::select(-pred_mean, -pred_w_mean) %>%
-      tidyr::nest(issues = -climate_name) %>%
-      dplyr::mutate(
-        message = purrr::map_chr(
-          .x = issues,
-          .f = ~ {
-            tidyr::pivot_longer(
-              data = .x,
-              cols = c("pred_mean_okay", "pred_w_mean_okay"),
-              names_to = "mean_type", values_to = "mean_okay") %>%
-              dplyr::filter(!mean_okay) %>%
-              dplyr::mutate(
-                mean_type = dplyr::if_else(
-                  mean_type == "pred_mean_okay", "mean", "w_mean")) %>%
-              dplyr::select(-mean_okay) %>%
-              tidyr::nest(message_int = -mean_type) %>%
-              dplyr::mutate(
-                message_int = purrr::map2_chr(
-                  .x = mean_type, .y = message_int,
-                  .f = function(type, name) {
-                    mean_name <- dplyr::if_else(
-                      type == "w_mean", "weighted mean", "mean")
-                    paste0(
-                      crayon::blue(crayon::bold(mean_name)), " (",
-                      paste(unique(unlist(name)), collapse = "; "), ")")
-                  })
-              ) %>%
-              dplyr::pull(message_int) %>%
-              paste(collapse = " --- ") %>%
-              paste0("  >>>  ", .)
-          }),
-        message = purrr::map2_chr(
-          .x = climate_name, .y = message,
-          .f = ~ {
-            paste0(crayon::bold(crayon::red(.x)), "\n", .y) %>%
-              paste(collapse = "\n")
-          })) %>%
-      dplyr::pull(message) %>%
-      paste(collapse = "\n") %>%
-      ecokit::cat_time(cat_timestamp = FALSE)
-
-    ecokit::cat_sep(
-      line_char_rep = 60L, sep_lines_before = 1L, sep_lines_after = 2L,
-      line_char = "=", cat_bold = TRUE, cat_red = TRUE)
+      ecokit::cat_sep(
+        line_char_rep = 60L, sep_lines_before = 1L, sep_lines_after = 2L,
+        line_char = "=", cat_bold = TRUE, cat_red = TRUE)
   }
 
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

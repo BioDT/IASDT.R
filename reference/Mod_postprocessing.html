@@ -94,8 +94,7 @@ cross-validated models. See details for more information.</p>
 <span>  height_omega <span class="op">=</span> <span class="fl">22.5</span>,</span>
 <span>  width_beta <span class="op">=</span> <span class="fl">25</span>,</span>
 <span>  height_beta <span class="op">=</span> <span class="fl">35</span>,</span>
-<span>  spatial_model <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  clamp_pred <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  spatial_model <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">mod_prepare_TF</span><span class="op">(</span></span>
@@ -324,12 +323,6 @@ centimetres.</p></dd>
 (<code>FALSE</code>). Defaults to <code>TRUE</code>.</p></dd>
 
 
-<dt id="arg-clamp-pred">clamp_pred<a class="anchor" aria-label="anchor" href="#arg-clamp-pred"></a></dt>
-<dd><p>Logical indicating whether to clamp the sampling efforts at
-a single value. If <code>TRUE</code> (default), the <code>fix_efforts</code> argument must be
-provided.</p></dd>
-
-
 <dt id="arg-process-vp">process_VP<a class="anchor" aria-label="anchor" href="#arg-process-vp"></a></dt>
 <dd><p>Logical. Whether to prepares batch scripts for variance
 partitioning GPU computations on GPUs. Defaults to <code>TRUE</code>.</p></dd>
@@ -381,6 +374,12 @@ predictions. Available options are: <code>c("ssp126", "ssp370", "ssp585")</code>
 <dt id="arg-rc-n-cores">RC_n_cores<a class="anchor" aria-label="anchor" href="#arg-rc-n-cores"></a></dt>
 <dd><p>Integer. The number of cores to use for response curve
 prediction. Defaults to <code>8</code>.</p></dd>
+
+
+<dt id="arg-clamp-pred">clamp_pred<a class="anchor" aria-label="anchor" href="#arg-clamp-pred"></a></dt>
+<dd><p>Logical indicating whether to clamp the sampling efforts at
+a single value. If <code>TRUE</code> (default), the <code>fix_efforts</code> argument must be
+provided.</p></dd>
 
 
 <dt id="arg-fix-efforts">fix_efforts<a class="anchor" aria-label="anchor" href="#arg-fix-efforts"></a></dt>

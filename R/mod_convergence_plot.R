@@ -47,6 +47,9 @@
 #' @param spatial_model Logical. Whether the model is a spatial model. If `TRUE`
 #'   (default), the function will generate additional plots for the model's
 #'   `Alpha` parameter.
+#' @param future_max_size	Numeric. Maximum allowed total size (in megabytes) of
+#'   global variables identified. See `future.globals.maxSize` argument of
+#'   [future::future.options] for more details.
 #'
 #' @details `convergence_alpha()`, `convergence_rho()`, and
 #'   `convergence_beta_ranges` are internal functions and should not be called
@@ -63,8 +66,9 @@
 convergence_plot <- function(
     path_coda = NULL, path_model = NULL, env_file = ".env", title = " ",
     n_omega = 1000L, n_cores = 8L, strategy = "multisession",
-    n_RC = c(2L, 2L), beta_n_RC = c(3L, 3L), pages_per_file = 20L,
-    chain_colors = NULL, margin_type = "histogram", spatial_model = TRUE) {
+    future_max_size = 2000L, n_RC = c(2L, 2L), beta_n_RC = c(3L, 3L),
+    pages_per_file = 20L, chain_colors = NULL, margin_type = "histogram",
+    spatial_model = TRUE) {
 
   # # ..................................................................... ###
 
@@ -746,7 +750,8 @@ convergence_plot <- function(
     } else {
       ecokit::set_parallel(
         n_cores = min(n_cores, nrow(Beta_DF)), level = 2L,
-        strategy = strategy, cat_timestamp = FALSE, future_max_size = 1500L)
+        strategy = strategy, cat_timestamp = FALSE,
+        future_max_size = future_max_size)
       withr::defer(future::plan("sequential", gc = TRUE))
     }
 
@@ -1046,7 +1051,8 @@ convergence_plot <- function(
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, nrow(BetaTracePlots_ByVar)), level = 2L,
-      future_max_size = 1500, strategy = strategy, cat_timestamp = FALSE)
+      future_max_size = future_max_size, strategy = strategy,
+      cat_timestamp = FALSE)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
 
@@ -1184,7 +1190,8 @@ convergence_plot <- function(
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, nrow(BetaTracePlots_BySp)), level = 2L,
-      future_max_size = 1500, strategy = strategy, cat_timestamp = FALSE)
+      future_max_size = future_max_size, strategy = strategy,
+      cat_timestamp = FALSE)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##

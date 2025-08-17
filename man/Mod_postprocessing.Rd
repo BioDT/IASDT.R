@@ -39,7 +39,8 @@ mod_postprocess_1_CPU(
   height_omega = 22.5,
   width_beta = 25,
   height_beta = 35,
-  spatial_model = TRUE
+  spatial_model = TRUE,
+  future_max_size = 1500L
 )
 
 mod_prepare_TF(
@@ -211,6 +212,10 @@ centimetres.}
 
 \item{spatial_model}{Logical. Whether the model is spatial (\code{TRUE}) or not
 (\code{FALSE}). Defaults to \code{TRUE}.}
+
+\item{future_max_size}{Numeric. Maximum allowed total size (in megabytes) of
+global variables identified. See \code{future.globals.maxSize} argument of
+\link[future:zzz-future.options]{future::future.options} for more details.}
 
 \item{process_VP}{Logical. Whether to prepares batch scripts for variance
 partitioning GPU computations on GPUs. Defaults to \code{TRUE}.}

@@ -17,6 +17,7 @@ convergence_plot(
   n_omega = 1000L,
   n_cores = 8L,
   strategy = "multisession",
+  future_max_size = 2000L,
   n_RC = c(2L, 2L),
   beta_n_RC = c(3L, 3L),
   pages_per_file = 20L,
@@ -67,6 +68,10 @@ Default: 8.}
 \item{strategy}{Character. The parallel processing strategy to use. Valid
 options are "sequential", "multisession" (default), "multicore", and
 "cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
+
+\item{future_max_size}{Numeric. Maximum allowed total size (in megabytes) of
+global variables identified. See \code{future.globals.maxSize} argument of
+\link[future:zzz-future.options]{future::future.options} for more details.}
 
 \item{n_RC}{Numeric vector. Grid layout (rows×columns) for arranging
 alpha parameter plots. Default: \code{c(2, 2)}. If \code{NULL}, the layout is

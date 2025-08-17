@@ -70,6 +70,9 @@
 #'   partitioning GPU computations on GPUs. Defaults to `TRUE`.
 #' @param process_LF Logical. Whether to prepares batch scripts for latent
 #'   factor predictions GPU computations on GPUs. Defaults to `TRUE`.
+#' @param future_max_size	Numeric. Maximum allowed total size (in megabytes) of
+#'   global variables identified. See `future.globals.maxSize` argument of
+#'   [future::future.options] for more details.
 #' @rdname mod_postprocessing
 #' @name mod_postprocessing
 #' @order 1
@@ -191,7 +194,7 @@ mod_postprocess_1_CPU <- function(
     LF_temp_cleanup = TRUE, LF_check = FALSE, temp_cleanup = TRUE,
     TF_environ = NULL, pred_new_sites = TRUE, n_cores_VP = 10L,
     width_omega = 26, height_omega = 22.5, width_beta = 25, height_beta = 35,
-    spatial_model = TRUE) {
+    spatial_model = TRUE, future_max_size = 1500L) {
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -399,7 +402,7 @@ mod_postprocess_1_CPU <- function(
     path_coda = path_coda, path_model = path_model, env_file = env_file,
     n_omega = n_omega, n_cores = n_cores, strategy = strategy, n_RC = c(2, 3),
     beta_n_RC = c(3, 3), margin_type = "histogram",
-    spatial_model = spatial_model)
+    spatial_model = spatial_model, future_max_size = future_max_size)
 
   invisible(gc())
 

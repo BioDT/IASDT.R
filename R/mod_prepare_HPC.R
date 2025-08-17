@@ -1294,6 +1294,16 @@ mod_prepare_HPC <- function(
               studyDesign <- data.frame(sample = as.factor(seq_len(n_samples)))
               rL <- Hmsc::HmscRandomLevel(units = studyDesign$sample)
 
+              if (is.null(min_LF) && !is.null(max_LF)) {
+                rL <- Hmsc::setPriors(rL, nfMax = max_LF)
+              }
+              if (!is.null(min_LF) && is.null(max_LF)) {
+                rL <- Hmsc::setPriors(rL, nfMin = min_LF)
+              }
+              if (!is.null(min_LF) && !is.null(max_LF)) {
+                rL <- Hmsc::setPriors(rL, nfMin = min_LF, nfMax = max_LF)
+              }
+
               InitModel <- Hmsc::Hmsc(
                 Y = DT_y, XFormula = Form_x, XData = DT_x,
                 distr = "probit", phyloTree = Tree,

@@ -191,7 +191,7 @@ mod_postprocess_1_CPU <- function(
     LF_temp_cleanup = TRUE, LF_check = FALSE, temp_cleanup = TRUE,
     TF_environ = NULL, pred_new_sites = TRUE, n_cores_VP = 10L,
     width_omega = 26, height_omega = 22.5, width_beta = 25, height_beta = 35,
-    spatial_model = TRUE, clamp_pred = TRUE) {
+    spatial_model = TRUE) {
 
   .start_time <- lubridate::now(tzone = "CET")
 

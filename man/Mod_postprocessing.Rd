@@ -39,8 +39,7 @@ mod_postprocess_1_CPU(
   height_omega = 22.5,
   width_beta = 25,
   height_beta = 35,
-  spatial_model = TRUE,
-  clamp_pred = TRUE
+  spatial_model = TRUE
 )
 
 mod_prepare_TF(
@@ -213,10 +212,6 @@ centimetres.}
 \item{spatial_model}{Logical. Whether the model is spatial (\code{TRUE}) or not
 (\code{FALSE}). Defaults to \code{TRUE}.}
 
-\item{clamp_pred}{Logical indicating whether to clamp the sampling efforts at
-a single value. If \code{TRUE} (default), the \code{fix_efforts} argument must be
-provided.}
-
 \item{process_VP}{Logical. Whether to prepares batch scripts for variance
 partitioning GPU computations on GPUs. Defaults to \code{TRUE}.}
 
@@ -249,6 +244,10 @@ predictions. Available options are: \code{c("ssp126", "ssp370", "ssp585")}
 
 \item{RC_n_cores}{Integer. The number of cores to use for response curve
 prediction. Defaults to \code{8}.}
+
+\item{clamp_pred}{Logical indicating whether to clamp the sampling efforts at
+a single value. If \code{TRUE} (default), the \code{fix_efforts} argument must be
+provided.}
 
 \item{fix_efforts}{Numeric or character. When \code{clamp_pred = TRUE}, fixes the
 sampling efforts predictor at this value during predictions. If numeric,

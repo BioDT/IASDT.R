@@ -86,7 +86,8 @@
 <span>  evaluate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  evaluation_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  evaluation_directory <span class="op">=</span> <span class="st">"Evaluation"</span>,</span>
-<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  spatial_model <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -274,6 +275,14 @@ will be saved. Defaults to <code>Evaluation</code>.</p></dd>
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Logical. Whether to print a message upon successful saving of
 files. Defaults to <code>FALSE</code>.</p></dd>
+
+
+<dt id="arg-spatial-model">spatial_model<a class="anchor" aria-label="anchor" href="#arg-spatial-model"></a></dt>
+<dd><p>Logical. Whether to use spatial model. If <code>TRUE</code>
+(default), the latent factors for the alpha components of the model is
+estimated using <a href="predict_latent_factor.html">predict_latent_factor</a>. If <code>FALSE</code>, the latent factors for
+the alpha components are set to zero, and the model is treated as a
+non-spatial model.</p></dd>
 
 </dl></div>
 

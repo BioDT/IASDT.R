@@ -88,6 +88,7 @@ documentation and the details section below.</p>
 <span>  temp_dir <span class="op">=</span> <span class="st">"TEMP_Pred"</span>,</span>
 <span>  temp_cleanup <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  tar_predictions <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  spatial_model <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  CC_models <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"GFDL-ESM4"</span>, <span class="st">"IPSL-CM6A-LR"</span>, <span class="st">"MPI-ESM1-2-HR"</span>, <span class="st">"MRI-ESM2-0"</span>,</span>
 <span>    <span class="st">"UKESM1-0-LL"</span><span class="op">)</span>,</span>
 <span>  CC_scenario <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ssp126"</span>, <span class="st">"ssp370"</span>, <span class="st">"ssp585"</span><span class="op">)</span></span>
@@ -225,6 +226,14 @@ Python script. Default is <code>FALSE</code>.</p></dd>
 <dt id="arg-tar-predictions">tar_predictions<a class="anchor" aria-label="anchor" href="#arg-tar-predictions"></a></dt>
 <dd><p>Logical. Whether to compress the add files into a
 single <code>*.tar</code> file (without compression). Default: <code>TRUE</code>.</p></dd>
+
+
+<dt id="arg-spatial-model">spatial_model<a class="anchor" aria-label="anchor" href="#arg-spatial-model"></a></dt>
+<dd><p>Logical. Whether to use spatial model. If <code>TRUE</code>
+(default), the latent factors for the alpha components of the model is
+estimated using <a href="predict_latent_factor.html">predict_latent_factor</a>. If <code>FALSE</code>, the latent factors for
+the alpha components are set to zero, and the model is treated as a
+non-spatial model.</p></dd>
 
 
 <dt id="arg-cc-models">CC_models<a class="anchor" aria-label="anchor" href="#arg-cc-models"></a></dt>

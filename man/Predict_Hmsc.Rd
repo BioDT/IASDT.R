@@ -38,8 +38,7 @@ predict_hmsc(
   evaluate = FALSE,
   evaluation_name = NULL,
   evaluation_directory = "Evaluation",
-  verbose = TRUE,
-  spatial_model = TRUE
+  verbose = TRUE
 )
 }
 \arguments{
@@ -156,12 +155,6 @@ will be saved. Defaults to \code{Evaluation}.}
 
 \item{verbose}{Logical. Whether to print a message upon successful saving of
 files. Defaults to \code{FALSE}.}
-
-\item{spatial_model}{Logical. Whether to use spatial model. If \code{TRUE}
-(default), the latent factors for the alpha components of the model is
-estimated using \link{predict_latent_factor}. If \code{FALSE}, the latent factors for
-the alpha components are set to zero, and the model is treated as a
-non-spatial model.}
 }
 \description{
 This function modifies the \code{Hmsc:::predict.Hmsc} function.

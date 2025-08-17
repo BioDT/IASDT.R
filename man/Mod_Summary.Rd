@@ -4,7 +4,12 @@
 \alias{mod_summary}
 \title{Summary of Hmsc model parameters}
 \usage{
-mod_summary(path_coda = NULL, env_file = ".env", return_data = FALSE)
+mod_summary(
+  path_coda = NULL,
+  env_file = ".env",
+  return_data = FALSE,
+  spatial_model = TRUE
+)
 }
 \arguments{
 \item{path_coda}{Character. Path to the \code{.qs2} / \code{.RData} file containing the
@@ -18,6 +23,9 @@ an R object. If \code{TRUE}, the function returns a list containing summaries of
 \code{Alpha}, \code{Beta}, \code{Rho}, and \code{Omega} parameters. The default value is
 \code{FALSE}, which means the function will not return any data but will save
 the summaries to a specified directory.}
+
+\item{spatial_model}{Logical. Whether the model is a spatial model. If \code{TRUE}
+(default), the function will also process the \code{Alpha} parameter.}
 }
 \value{
 If \code{return_data} is \code{FALSE} (default), the function does not return

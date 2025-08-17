@@ -17,6 +17,8 @@
 #'   `Alpha`, `Beta`, `Rho`, and `Omega` parameters. The default value is
 #'   `FALSE`, which means the function will not return any data but will save
 #'   the summaries to a specified directory.
+#' @param spatial_model Logical. Whether the model is a spatial model. If `TRUE`
+#'   (default), the function will also process the `Alpha` parameter.
 #' @author Ahmed El-Gabbas
 #' @return If `return_data` is `FALSE` (default), the function does not return
 #'   anything and saves the summaries to a directory. If `return_data` is
@@ -25,7 +27,8 @@
 #' @name mod_summary
 
 mod_summary <- function(
-    path_coda = NULL, env_file = ".env", return_data = FALSE) {
+    path_coda = NULL, env_file = ".env", return_data = FALSE,
+    spatial_model = TRUE) {
 
   # # ..................................................................... ###
 
@@ -89,7 +92,7 @@ mod_summary <- function(
   ecokit::cat_time("Beta summary", level = 1L)
   Beta_Summary <- summary(Coda$Beta)
 
-  if ("Alpha" %in% coda_names) {
+  if (("Alpha" %in% coda_names) && spatial_model) {
     ecokit::cat_time("Alpha summary", level = 1L)
     Alpha_Summary <- summary(Coda$Alpha[[1]])
   } else {
@@ -148,7 +151,7 @@ mod_summary <- function(
         .x = Q2_5, .y = Q97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
 
   # Alpha -----
-  if ("Alpha" %in% coda_names) {
+  if (("Alpha" %in% coda_names) && spatial_model) {
     ecokit::cat_time("Alpha", level = 1L)
     Alpha_Summary <- DataPrep(Alpha_Summary$statistics) %>%
       dplyr::full_join(DataPrep(Alpha_Summary$quantiles), by = "VarSp") %>%

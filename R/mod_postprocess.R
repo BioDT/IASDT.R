@@ -191,12 +191,7 @@ mod_postprocess_1_CPU <- function(
     LF_temp_cleanup = TRUE, LF_check = FALSE, temp_cleanup = TRUE,
     TF_environ = NULL, pred_new_sites = TRUE, n_cores_VP = 10L,
     width_omega = 26, height_omega = 22.5, width_beta = 25, height_beta = 35,
-    spatial_model = TRUE, clamp_pred = TRUE, fix_efforts = "q90",
-    fix_rivers = "q90",
-    CC_models = c(
-      "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0",
-      "UKESM1-0-LL"),
-    CC_scenario = c("ssp126", "ssp370", "ssp585")) {
+    spatial_model = TRUE, clamp_pred = TRUE) {
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -332,7 +327,8 @@ mod_postprocess_1_CPU <- function(
 
   IASDT.R::convergence_plot_all(
     model_dir = model_dir, n_omega = n_omega, n_cores = n_cores,
-    strategy = strategy, margin_type = "histogram")
+    strategy = strategy, margin_type = "histogram",
+    spatial_model = spatial_model)
 
   invisible(gc())
 
@@ -386,7 +382,8 @@ mod_postprocess_1_CPU <- function(
     cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
   IASDT.R::plot_gelman(
-    path_coda = path_coda, alpha = TRUE, beta = TRUE, omega = TRUE, rho = TRUE,
+    path_coda = path_coda, alpha = spatial_model,
+    beta = TRUE, omega = TRUE, rho = TRUE,
     n_omega = n_omega, env_file = env_file)
 
   invisible(gc())
@@ -412,7 +409,8 @@ mod_postprocess_1_CPU <- function(
     "Model summary", level = 1L, line_char = "+", line_char_rep = 60L,
     cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
-  IASDT.R::mod_summary(path_coda = path_coda, env_file = env_file)
+  IASDT.R::mod_summary(
+    path_coda = path_coda, env_file = env_file, spatial_model = spatial_model)
 
   invisible(gc())
 
@@ -462,9 +460,10 @@ mod_postprocess_1_CPU <- function(
 
   # ****************************************************************
 
+  ## Response curves -------
+
   if (spatial_model) {
 
-    # latent factors of the response curves -------
     ecokit::info_chunk(
       "Prepare scripts for predicting latent factors of the response curves",
       line_char = "+", line_char_rep = 90L, cat_red = TRUE, cat_bold = TRUE,
@@ -480,29 +479,8 @@ mod_postprocess_1_CPU <- function(
 
     invisible(gc())
 
-    # ****************************************************************
-
-    # latent factors for new sampling units -------
-
-    ecokit::info_chunk(
-      "Prepare scripts for predicting latent factors for new sampling units",
-      line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
-      cat_timestamp = FALSE, level = 1L)
-
-    IASDT.R::predict_maps(
-      path_model = path_model, hab_abb = hab_abb, env_file = env_file,
-      n_cores = n_cores, strategy = strategy, clamp_pred = FALSE,
-      pred_new_sites = pred_new_sites, use_TF = use_TF, TF_environ = TF_environ,
-      temp_dir = temp_dir, temp_cleanup = temp_cleanup,
-      TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
-      LF_check = LF_check, LF_temp_cleanup = LF_temp_cleanup, LF_only = TRUE,
-      LF_commands_only = TRUE, spatial_model = spatial_model,
-      fix_efforts = fix_efforts, fix_rivers = fix_rivers, CC_models = CC_models,
-      CC_scenario = CC_scenario)
 
   } else {
-
-    # Response curves -------
 
     ecokit::info_chunk(
       "Prepare response curve data", line_char = "+", line_char_rep = 90L,
@@ -514,6 +492,7 @@ mod_postprocess_1_CPU <- function(
     path_rc_data <- fs::path(rc_dir, "response_curve_data.qs2")
     path_observed_data <- fs::path(rc_dir, "observed_data.qs2")
 
+    # Observed data
     if (!ecokit::check_data(path_observed_data, warning = FALSE)) {
       Model <- ecokit::load_as(path_model)
       model_vars <- names(Model$XData)
@@ -567,6 +546,7 @@ mod_postprocess_1_CPU <- function(
             abind::abind(along = 3)
           x_vals <- Gradient$XDataNew[, variable]
           rm(Model, Gradient, envir = environment())
+          invisible(gc())
 
           pred_mean <- apply(pred, c(1, 2), mean)
           rich_array <- apply(pred, 3, rowSums)
@@ -579,6 +559,8 @@ mod_postprocess_1_CPU <- function(
 
           pred_mean_plus  <- pred_mean + pred_sd
           pred_mean_minus <- pred_mean - pred_sd
+          rm(rich_array, rich_mean, pred_sd, rich_sd, pred)
+          invisible(gc())
 
           pred_mean <- tibble::as_tibble(pred_mean) %>%
             dplyr::mutate(x_value = x_vals, .before = 1) %>%
@@ -614,7 +596,7 @@ mod_postprocess_1_CPU <- function(
         future.seed = TRUE,
         future.globals = c("response_curve_data", "path_model"),
         future.packages = c(
-          "Hmsc", "dplyr", "magrittr", "Hmsc", "abind", "tibble",
+          "Hmsc", "dplyr", "magrittr", "abind", "tibble", "qs2",
           "tidyr", "ecokit", "tidyselect"))
 
       if (n_cores > 1) {
@@ -629,21 +611,25 @@ mod_postprocess_1_CPU <- function(
       invisible(gc())
     }
 
-    # Predictions -------
-
-    ecokit::info_chunk(
-      "Making predictions", line_char = "+", line_char_rep = 60L,
-      cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE, level = 1L)
-
-    IASDT.R::predict_maps(
-      path_model = path_model, hab_abb = hab_abb, env_file = env_file,
-      n_cores = n_cores, strategy = strategy, clamp_pred = clamp_pred,
-      pred_new_sites = pred_new_sites, use_TF = use_TF, TF_environ = TF_environ,
-      temp_dir = temp_dir, temp_cleanup = temp_cleanup,
-      TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
-      LF_check = LF_check, LF_temp_cleanup = LF_temp_cleanup, LF_only = FALSE,
-      LF_commands_only = FALSE, spatial_model = TRUE)
   }
+
+  # ****************************************************************
+
+  # latent factors for new sampling units -------
+
+  ecokit::info_chunk(
+    "Prepare scripts for predicting latent factors for new sampling units",
+    line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
+    cat_timestamp = FALSE, level = 1L)
+
+  IASDT.R::predict_maps(
+    path_model = path_model, hab_abb = hab_abb, env_file = env_file,
+    n_cores = n_cores, strategy = strategy, clamp_pred = FALSE,
+    pred_new_sites = pred_new_sites, use_TF = use_TF, TF_environ = TF_environ,
+    temp_dir = temp_dir, temp_cleanup = temp_cleanup,
+    TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
+    LF_check = LF_check, LF_temp_cleanup = LF_temp_cleanup, LF_only = TRUE,
+    LF_commands_only = TRUE)
 
   # ****************************************************************
 

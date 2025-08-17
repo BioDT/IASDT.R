@@ -16,16 +16,20 @@
 #' @param strategy Character. The parallel processing strategy to use. Valid
 #'   options are "sequential", "multisession" (default), "multicore", and
 #'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
+#' @param spatial_model Logical. Whether the model is a spatial model. If `TRUE`
+#'   (default), the function will generate additional plots for the model's
+#'   `Alpha` parameter.
 #' @name convergence_plot_all
 #' @inheritParams convergence_plots
 #' @author Ahmed El-Gabbas
-#' @return The function returns `invisible(NULL)` and does not return any
-#'   value, but saves a series of diagnostic plots in the specified path.
+#' @return The function returns `invisible(NULL)` and does not return any value,
+#'   but saves a series of diagnostic plots in the specified path.
 #' @export
 
 convergence_plot_all <- function(
     model_dir = NULL, n_omega = 1000L, n_cores = NULL,
-    strategy = "multisession", margin_type = "histogram") {
+    strategy = "multisession", margin_type = "histogram",
+    spatial_model = TRUE) {
 
   # # ..................................................................... ###
 
@@ -42,8 +46,8 @@ convergence_plot_all <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   GPP_Thin <- M_Name_Fit <- rL <- M_thin <- M_samples <- Omega_Gelman <-
-    Omega_ESS <- Beta_Gelman <- Beta_ESS <- ESS2 <- Path_Trace_Rho <- Rho <-
-    Path_Trace_Alpha <- Path_Trace_Rho <- NULL
+    Omega_ESS <- Beta_Gelman <- Beta_ESS <- ESS2 <- Rho <-
+    Path_Trace_Alpha <- NULL
 
   # # ..................................................................... ###
 
@@ -83,7 +87,7 @@ convergence_plot_all <- function(
   pkg_to_export <- ecokit::load_packages_future(
     packages = c(
       "dplyr", "sf", "Hmsc", "coda", "magrittr", "ggplot2", "ecokit",
-      "IASDT.R", "withr", "ggtext"),
+      "purrr", "stringr", "fs", "IASDT.R", "withr", "ggtext"),
     strategy = strategy)
 
   # # ..................................................................... ###
@@ -179,7 +183,8 @@ convergence_plot_all <- function(
       }
 
       # Alpha -----
-      if (!file.exists(Path_Trace_Alpha) && ("Alpha" %in% names_coda)) {
+      if (!file.exists(Path_Trace_Alpha) && ("Alpha" %in% names_coda) &&
+          spatial_model) {
         PlotObj_Alpha <- IASDT.R::convergence_alpha(
           posterior = Coda_Obj, model_object = Model_Obj,
           title = stringr::str_remove_all(
@@ -194,7 +199,6 @@ convergence_plot_all <- function(
       } else {
         Path_Trace_Alpha <- NA_character_
       }
-
 
       # Beta -----
       if (file.exists(Path_Beta)) {
@@ -306,7 +310,8 @@ convergence_plot_all <- function(
           future.scheduling = Inf, future.seed = TRUE,
           future.packages = pkg_to_export,
           future.globals = c(
-            "Model_Info", "Path_ConvDT", "n_omega", "PrepConvergence"))) %>%
+            "Model_Info", "Path_ConvDT", "n_omega", "PrepConvergence",
+            "spatial_model", "margin_type"))) %>%
       ecokit::quiet_device()
 
     Convergence_DT <- Convergence_DT %>%
@@ -352,7 +357,7 @@ convergence_plot_all <- function(
   # # ..................................................................... ###
 
   # Alpha - trace plots ------
-  if (!all(is.na(Convergence_DT$Path_Trace_Alpha))) {
+  if (!all(is.na(Convergence_DT$Path_Trace_Alpha)) && spatial_model) {
     Convergence_DT_alpha <- dplyr::filter(
       Convergence_DT, !is.na(Path_Trace_Alpha))
 
@@ -375,12 +380,6 @@ convergence_plot_all <- function(
   # Rho - trace plots ------
   ecokit::cat_time("Rho - trace plots", level = 2L)
 
-  if (nrow(Convergence_DT) > 1) {
-    layout_matrix <- matrix(seq_len(2 * 2), nrow = 2, byrow = TRUE)
-  } else {
-    layout_matrix <- matrix(1)
-  }
-
   Plot <- Convergence_DT %>%
     dplyr::filter(stringr::str_detect(M_Name_Fit, "_Tree_")) %>%
     dplyr::mutate(
@@ -389,13 +388,18 @@ convergence_plot_all <- function(
         .p = ~is.na(.x),
         .f = ~grid::grid.rect(gp = grid::gpar(col = "white")),
         .else = ~ecokit::load_as(.x))) %>%
-    dplyr::pull(Rho) %>%
-    gridExtra::marrangeGrob(
-      bottom = bquote(paste0("page ", g, " of ", npages)),
-      top = grid::textGrob(
-        label = "Convergence of the rho parameter",
-        gp = grid::gpar(fontface = "bold", fontsize = 20)),
-      nrow = 2, ncol = 2, layout_matrix = layout_matrix)
+    dplyr::pull(Rho)
+
+  if (nrow(Convergence_DT) > 1) {
+    layout_matrix <- matrix(seq_len(2 * 2), nrow = 2, byrow = TRUE)
+    Plot <- Plot %>%
+      gridExtra::marrangeGrob(
+        bottom = bquote(paste0("page ", g, " of ", npages)),
+        top = grid::textGrob(
+          label = "Convergence of the rho parameter",
+          gp = grid::gpar(fontface = "bold", fontsize = 20)),
+        nrow = 2, ncol = 2, layout_matrix = layout_matrix)
+  }
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   grDevices::cairo_pdf(

@@ -88,7 +88,6 @@ predict_maps <- function(
     TF_use_single = FALSE, LF_n_cores = n_cores, LF_check = FALSE,
     LF_temp_cleanup = TRUE, LF_only = FALSE, LF_commands_only = FALSE,
     temp_dir = "TEMP_Pred", temp_cleanup = TRUE, tar_predictions = TRUE,
-    spatial_model = TRUE,
     CC_models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
@@ -319,7 +318,7 @@ predict_maps <- function(
     stringr::str_subset(names(Model$XData), ., negate = FALSE)
 
   # Coordinates of the model sampling units
-  if (is.null(Model$rL)) {
+  if (is.null(Model$rL) || is.null(Model$rL[[1]]$s)) {
     suppressWarnings({
       Model_Coords <- tibble::tibble(x = numeric(0L), y = numeric(0L)) %>%
         sf::st_as_sf(coords = c("x", "y"), crs = 3035L) %>%
@@ -784,11 +783,11 @@ predict_maps <- function(
 
   # Predict latent factor at new locations ------
 
-  ecokit::cat_time("Predict latent factor at new locations")
-
   Path_Test_LF <- fs::path(Path_Prediction1, "Test_LF.qs2")
 
-  if (!fs::file_exists(Path_Test_LF) && pred_new_sites && spatial_model) {
+  if (!fs::file_exists(Path_Test_LF) && pred_new_sites) {
+
+    ecokit::cat_time("Predict latent factor at new locations")
 
     ecokit::cat_time(
       "Preparing input data for predicting latent factor", level = 1L)
@@ -854,6 +853,7 @@ predict_maps <- function(
     }
 
   } else {
+
     if (pred_new_sites) {
       ecokit::cat_time(
         "LF prediction is already available on disk", level = 1L)
@@ -864,7 +864,6 @@ predict_maps <- function(
     rm(Model, envir = environment())
     invisible(gc())
   }
-
 
   if (LF_only) {
     return(invisible(NULL))
@@ -991,12 +990,16 @@ predict_maps <- function(
           Option_Name, "_",
           dplyr::if_else(DoClamp, "Clamping", "NoClamping"), "_Train")
         Predict_DF_Train <- dplyr::filter(Predict_DF, Train)
-        Train_XY <- sf::st_drop_geometry(Predict_DF_Train[, c("x", "y")])
-        Train_PA <- as.data.frame(Model$Y)
-        Train_X <- Predict_DF_Train %>%
-          dplyr::select(tidyselect::all_of(names(Model$XData))) %>%
-          sf::st_drop_geometry() %>%
-          stats::model.matrix(Model$XFormula, ., xlev = NULL)
+        if (nrow(Predict_DF_Train) > 0L) {
+          Train_XY <- sf::st_drop_geometry(Predict_DF_Train[, c("x", "y")])
+          Train_PA <- as.data.frame(Model$Y)
+          Train_X <- Predict_DF_Train %>%
+            dplyr::select(tidyselect::all_of(names(Model$XData))) %>%
+            sf::st_drop_geometry() %>%
+            stats::model.matrix(Model$XFormula, ., xlev = NULL)
+        } else {
+          Train_XY <- Train_PA <- Train_X <- NULL
+        }
 
         # Testing locations
         Model_Name_Test <- paste0(
@@ -1019,32 +1022,36 @@ predict_maps <- function(
 
         # ______________________________________________
 
-        # Predicting at training sites ----
-        ecokit::cat_time("Predicting at training sites")
+        if (nrow(Predict_DF_Train) > 0L) {
 
-        Path_Current_Train <- fs::path(
-          Path_Prediction, paste0("Prediction_", Option_Name, "_Train.qs2"))
+          # Predicting at training sites ----
+          ecokit::cat_time("Predicting at training sites")
 
-        if (fs::file_exists(Path_Current_Train)) {
+          Path_Current_Train <- fs::path(
+            Path_Prediction, paste0("Prediction_", Option_Name, "_Train.qs2"))
 
-          ecokit::cat_time("Loading predictions from disk", level = 2L)
-          Preds_ModFitSites <- tibble::tibble(Pred_Path = Path_Current_Train)
+          if (fs::file_exists(Path_Current_Train)) {
 
+            ecokit::cat_time("Loading predictions from disk", level = 2L)
+            Preds_ModFitSites <- tibble::tibble(Pred_Path = Path_Current_Train)
+
+          } else {
+
+            Preds_ModFitSites <- IASDT.R::predict_hmsc(
+              path_model = path_model, X = Train_X, gradient = NULL,
+              expected = TRUE, n_cores = n_cores, strategy = strategy,
+              model_name = Model_Name_Train, temp_dir = temp_dir,
+              temp_cleanup = temp_cleanup, use_TF = use_TF,
+              TF_environ = TF_environ, TF_use_single = TF_use_single,
+              LF_return = TRUE, LF_n_cores = LF_n_cores, LF_check = LF_check,
+              LF_temp_cleanup = LF_temp_cleanup, LF_commands_only = FALSE,
+              pred_directory = Path_Prediction, pred_PA = Train_PA,
+              pred_XY = Train_XY, evaluate = evaluate, evaluation_name = NULL,
+              evaluation_directory = Path_Eval, verbose = FALSE)
+
+          }
         } else {
-
-          Preds_ModFitSites <- IASDT.R::predict_hmsc(
-            path_model = path_model, X = Train_X, gradient = NULL,
-            expected = TRUE, n_cores = n_cores, strategy = strategy,
-            model_name = Model_Name_Train, temp_dir = temp_dir,
-            temp_cleanup = temp_cleanup, use_TF = use_TF,
-            TF_environ = TF_environ, TF_use_single = TF_use_single,
-            LF_return = TRUE, LF_n_cores = LF_n_cores, LF_check = LF_check,
-            LF_temp_cleanup = LF_temp_cleanup, LF_commands_only = FALSE,
-            pred_directory = Path_Prediction, pred_PA = Train_PA,
-            pred_XY = Train_XY, evaluate = evaluate, evaluation_name = NULL,
-            evaluation_directory = Path_Eval, verbose = FALSE,
-            spatial_model = spatial_model)
-
+          Preds_ModFitSites <- tibble::tibble(Pred_Path = NULL)
         }
 
         # ______________________________________________
@@ -1075,41 +1082,28 @@ predict_maps <- function(
               LF_n_cores = LF_n_cores, LF_check = LF_check,
               LF_temp_cleanup = LF_temp_cleanup, LF_commands_only = FALSE,
               verbose = FALSE, pred_directory = Path_Prediction,
-              evaluate = FALSE, pred_XY = sf::st_drop_geometry(Test_XY),
-              spatial_model = spatial_model)
+              evaluate = FALSE, pred_XY = sf::st_drop_geometry(Test_XY))
 
           }
-
-          # ______________________________________________
-
-          # Merge & save predictions - sf ------
-          ecokit::cat_time("Merge & save predictions at training and new sites")
-
-          Prediction_sf <- dplyr::bind_rows(
-            ecokit::load_as(Preds_ModFitSites$Pred_Path),
-            ecokit::load_as(Preds_NewSites$Pred_Path))
-
         } else {
-
           ecokit::cat_time(
             "Predictions at new sites will NOT be made", level = 1L)
-
-          # Get column names from predictions at training sites
-          ColsToAdd <- ecokit::load_as(Preds_ModFitSites$Pred_Path) %>%
-            names() %>%
-            stringr::str_subset("^Sp_|^SR_|model_name")
-
-          # Add missing columns to predictions at new sites
-          Preds_New_NA <- Test_XY %>%
-            dplyr::mutate(model_name = Model_Name_Test) %>%
-            ecokit::add_missing_columns(fill_value = NA_real_, ColsToAdd)
-
-          # combine predictions
-          Prediction_sf <- ecokit::load_as(Preds_ModFitSites$Pred_Path) %>%
-            dplyr::bind_rows(Preds_New_NA)
-
-          rm(Preds_New_NA, ColsToAdd, envir = environment())
+          Preds_NewSites <- tibble::tibble(Pred_Path = NULL)
         }
+
+        # ______________________________________________
+
+        # Merge & save predictions - sf ------
+        ecokit::cat_time("Merge & save predictions at training and new sites")
+        Prediction_sf <- purrr::map_dfr(
+          .x = c(Preds_ModFitSites$Pred_Path, Preds_NewSites$Pred_Path),
+          .f = ~ {
+            if (fs::file_exists(.x)) {
+              ecokit::load_as(.x)
+            } else {
+              tibble::tibble()
+            }
+          })
 
         # ______________________________________________
 

@@ -58,11 +58,6 @@
 #'   Defaults to `FALSE`. This helps in predicting to new sites, allowing to
 #'   predicting the latent factors only once, then the output can be loaded in
 #'   other predictions when needed.
-#' @param spatial_model Logical. Whether to use spatial model. If `TRUE`
-#'   (default), the latent factors for the alpha components of the model is
-#'   estimated using [predict_latent_factor]. If `FALSE`, the latent factors for
-#'   the alpha components are set to zero, and the model is treated as a
-#'   non-spatial model.
 #' @param verbose Logical. Whether to print a message upon successful saving of
 #'   files. Defaults to `FALSE`.
 #' @param Loff See [Hmsc::predict.Hmsc] for more details.
@@ -80,9 +75,7 @@ predict_hmsc <- function(
     LF_n_cores = n_cores, LF_check = FALSE, LF_temp_cleanup = TRUE,
     LF_commands_only = FALSE, pred_directory = NULL, pred_PA = NULL,
     pred_XY = NULL, evaluate = FALSE, evaluation_name = NULL,
-    evaluation_directory = "Evaluation", verbose = TRUE, spatial_model = TRUE) {
-
-
+    evaluation_directory = "Evaluation", verbose = TRUE) {
 
   # # ..................................................................... ###
 
@@ -347,20 +340,13 @@ predict_hmsc <- function(
   }
 
   # Do not use `predict_latent_factor` when predicting values for response
-  # curves when using coordinates = "i" in constructGradient or for non-spatial
-  # models
-
-  if ((!is.null(prediction_type) && prediction_type == "i") ||
-      isFALSE(spatial_model)) {
+  # curves when using coordinates = "i" in constructGradient
+  if (!is.null(prediction_type) && prediction_type == "i") {
     for (r in seq_len(Mod_nr)) {
-      if (r == 1 && prediction_type == "i") {
+      if (r == 1) {
         ecokit::cat_time(
           "LF prediction for response curve with infinite coordinates",
           level = 1L, verbose = verbose)
-      }
-      if (r == 1 && isFALSE(spatial_model)) {
-        ecokit::cat_time(
-          "LF prediction for non-spatial model", level = 1L, verbose = verbose)
       }
 
       nLF <- length(post[[1]]$Alpha[[1]])
@@ -441,7 +427,6 @@ predict_hmsc <- function(
   } else {
 
     if (is.null(prediction_type) || prediction_type == "c") {   # nolint: unneeded_nesting_linter
-
       ecokit::cat_time(
         "Loading LF prediction from disk", level = 1L, verbose = verbose)
       ecokit::cat_time(

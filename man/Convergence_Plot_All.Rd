@@ -9,7 +9,8 @@ convergence_plot_all(
   n_omega = 1000L,
   n_cores = NULL,
   strategy = "multisession",
-  margin_type = "histogram"
+  margin_type = "histogram",
+  spatial_model = TRUE
 )
 }
 \arguments{
@@ -28,10 +29,14 @@ options are "sequential", "multisession" (default), "multicore", and
 
 \item{margin_type}{Character. The type of marginal plot to add to the main
 plot. Valid options are "histogram" (default) or "density".}
+
+\item{spatial_model}{Logical. Whether the model is a spatial model. If \code{TRUE}
+(default), the function will generate additional plots for the model's
+\code{Alpha} parameter.}
 }
 \value{
-The function returns \code{invisible(NULL)} and does not return any
-value, but saves a series of diagnostic plots in the specified path.
+The function returns \code{invisible(NULL)} and does not return any value,
+but saves a series of diagnostic plots in the specified path.
 }
 \description{
 This function generates and saves a series of diagnostic plots to assess the

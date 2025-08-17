@@ -40,12 +40,7 @@ mod_postprocess_1_CPU(
   width_beta = 25,
   height_beta = 35,
   spatial_model = TRUE,
-  clamp_pred = TRUE,
-  fix_efforts = "q90",
-  fix_rivers = "q90",
-  CC_models = c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0",
-    "UKESM1-0-LL"),
-  CC_scenario = c("ssp126", "ssp370", "ssp585")
+  clamp_pred = TRUE
 )
 
 mod_prepare_TF(
@@ -222,25 +217,6 @@ centimetres.}
 a single value. If \code{TRUE} (default), the \code{fix_efforts} argument must be
 provided.}
 
-\item{fix_efforts}{Numeric or character. When \code{clamp_pred = TRUE}, fixes the
-sampling efforts predictor at this value during predictions. If numeric,
-uses the value directly (on log\if{html}{\out{<sub>}}10\if{html}{\out{</sub>}} scale). If character, must be
-one of \code{identity} (i.e., do not fix), \code{median}, \code{mean}, \code{max}, or \code{q90}
-(90\% quantile). Using \code{max} may reflect extreme sampling efforts from
-highly sampled locations, while \code{q90} captures high sampling areas without
-extremes. Required if \code{clamp_pred = TRUE}.}
-
-\item{fix_rivers}{Numeric, character, or \code{NULL}. Similar to \code{fix_efforts},
-but for the river length predictor. If \code{NULL}, the river length is not
-fixed. Default: \code{q90}.}
-
-\item{CC_models}{Character vector. Climate models for future predictions.
-Available options are \code{c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")} (default).}
-
-\item{CC_scenario}{Character vector. Climate scenarios for future
-predictions. Available options are: \code{c("ssp126", "ssp370", "ssp585")}
-(default).}
-
 \item{process_VP}{Logical. Whether to prepares batch scripts for variance
 partitioning GPU computations on GPUs. Defaults to \code{TRUE}.}
 
@@ -264,8 +240,27 @@ Defaults are \code{01:00:00} and \code{02:00:00} respectively.}
 \code{model_prefix_TF} is created in the \code{model_dir} to store the \code{TensorFlow}
 running commands. Defaults to \code{NULL}. This can not be \code{NULL}.}
 
+\item{CC_models}{Character vector. Climate models for future predictions.
+Available options are \code{c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")} (default).}
+
+\item{CC_scenario}{Character vector. Climate scenarios for future
+predictions. Available options are: \code{c("ssp126", "ssp370", "ssp585")}
+(default).}
+
 \item{RC_n_cores}{Integer. The number of cores to use for response curve
 prediction. Defaults to \code{8}.}
+
+\item{fix_efforts}{Numeric or character. When \code{clamp_pred = TRUE}, fixes the
+sampling efforts predictor at this value during predictions. If numeric,
+uses the value directly (on log\if{html}{\out{<sub>}}10\if{html}{\out{</sub>}} scale). If character, must be
+one of \code{identity} (i.e., do not fix), \code{median}, \code{mean}, \code{max}, or \code{q90}
+(90\% quantile). Using \code{max} may reflect extreme sampling efforts from
+highly sampled locations, while \code{q90} captures high sampling areas without
+extremes. Required if \code{clamp_pred = TRUE}.}
+
+\item{fix_rivers}{Numeric, character, or \code{NULL}. Similar to \code{fix_efforts},
+but for the river length predictor. If \code{NULL}, the river length is not
+fixed. Default: \code{q90}.}
 
 \item{tar_predictions}{Logical. Whether to compress the add files into a
 single \verb{*.tar} file (without compression). Default: \code{TRUE}.}

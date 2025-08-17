@@ -191,7 +191,12 @@ mod_postprocess_1_CPU <- function(
     LF_temp_cleanup = TRUE, LF_check = FALSE, temp_cleanup = TRUE,
     TF_environ = NULL, pred_new_sites = TRUE, n_cores_VP = 10L,
     width_omega = 26, height_omega = 22.5, width_beta = 25, height_beta = 35,
-    spatial_model = TRUE) {
+    spatial_model = TRUE, clamp_pred = TRUE, fix_efforts = "q90",
+    fix_rivers = "q90",
+    CC_models = c(
+      "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0",
+      "UKESM1-0-LL"),
+    CC_scenario = c("ssp126", "ssp370", "ssp585")) {
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -491,7 +496,9 @@ mod_postprocess_1_CPU <- function(
       temp_dir = temp_dir, temp_cleanup = temp_cleanup,
       TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
       LF_check = LF_check, LF_temp_cleanup = LF_temp_cleanup, LF_only = TRUE,
-      LF_commands_only = TRUE)
+      LF_commands_only = TRUE, spatial_model = spatial_model,
+      fix_efforts = fix_efforts, fix_rivers = fix_rivers, CC_models = CC_models,
+      CC_scenario = CC_scenario)
 
   } else {
 
@@ -624,6 +631,18 @@ mod_postprocess_1_CPU <- function(
 
     # Predictions -------
 
+    ecokit::info_chunk(
+      "Making predictions", line_char = "+", line_char_rep = 60L,
+      cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE, level = 1L)
+
+    IASDT.R::predict_maps(
+      path_model = path_model, hab_abb = hab_abb, env_file = env_file,
+      n_cores = n_cores, strategy = strategy, clamp_pred = clamp_pred,
+      pred_new_sites = pred_new_sites, use_TF = use_TF, TF_environ = TF_environ,
+      temp_dir = temp_dir, temp_cleanup = temp_cleanup,
+      TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
+      LF_check = LF_check, LF_temp_cleanup = LF_temp_cleanup, LF_only = FALSE,
+      LF_commands_only = FALSE, spatial_model = TRUE)
   }
 
   # ****************************************************************
@@ -647,6 +666,8 @@ mod_postprocess_1_CPU <- function(
 
   return(invisible(NULL))
 }
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++ ------
 
 # # ========================================================================== #
 # # ========================================================================== #
@@ -1040,6 +1061,8 @@ mod_prepare_TF <- function(
 
   return(invisible(NULL))
 }
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++ ------
 
 # # ========================================================================== #
 # # ========================================================================== #

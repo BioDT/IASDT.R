@@ -88,6 +88,7 @@ predict_maps <- function(
     TF_use_single = FALSE, LF_n_cores = n_cores, LF_check = FALSE,
     LF_temp_cleanup = TRUE, LF_only = FALSE, LF_commands_only = FALSE,
     temp_dir = "TEMP_Pred", temp_cleanup = TRUE, tar_predictions = TRUE,
+    spatial_model = TRUE,
     CC_models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
@@ -787,7 +788,7 @@ predict_maps <- function(
 
   Path_Test_LF <- fs::path(Path_Prediction1, "Test_LF.qs2")
 
-  if (!fs::file_exists(Path_Test_LF) && pred_new_sites) {
+  if (!fs::file_exists(Path_Test_LF) && pred_new_sites && spatial_model) {
 
     ecokit::cat_time(
       "Preparing input data for predicting latent factor", level = 1L)
@@ -1041,7 +1042,8 @@ predict_maps <- function(
             LF_temp_cleanup = LF_temp_cleanup, LF_commands_only = FALSE,
             pred_directory = Path_Prediction, pred_PA = Train_PA,
             pred_XY = Train_XY, evaluate = evaluate, evaluation_name = NULL,
-            evaluation_directory = Path_Eval, verbose = FALSE)
+            evaluation_directory = Path_Eval, verbose = FALSE,
+            spatial_model = spatial_model)
 
         }
 
@@ -1073,7 +1075,8 @@ predict_maps <- function(
               LF_n_cores = LF_n_cores, LF_check = LF_check,
               LF_temp_cleanup = LF_temp_cleanup, LF_commands_only = FALSE,
               verbose = FALSE, pred_directory = Path_Prediction,
-              evaluate = FALSE, pred_XY = sf::st_drop_geometry(Test_XY))
+              evaluate = FALSE, pred_XY = sf::st_drop_geometry(Test_XY),
+              spatial_model = spatial_model)
 
           }
 

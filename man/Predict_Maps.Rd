@@ -26,6 +26,7 @@ predict_maps(
   temp_dir = "TEMP_Pred",
   temp_cleanup = TRUE,
   tar_predictions = TRUE,
+  spatial_model = TRUE,
   CC_models = c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0",
     "UKESM1-0-LL"),
   CC_scenario = c("ssp126", "ssp370", "ssp585")
@@ -120,6 +121,12 @@ Python script. Default is \code{FALSE}.}
 
 \item{tar_predictions}{Logical. Whether to compress the add files into a
 single \verb{*.tar} file (without compression). Default: \code{TRUE}.}
+
+\item{spatial_model}{Logical. Whether to use spatial model. If \code{TRUE}
+(default), the latent factors for the alpha components of the model is
+estimated using \link{predict_latent_factor}. If \code{FALSE}, the latent factors for
+the alpha components are set to zero, and the model is treated as a
+non-spatial model.}
 
 \item{CC_models}{Character vector. Climate models for future predictions.
 Available options are \code{c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")} (default).}

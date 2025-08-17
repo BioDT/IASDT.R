@@ -281,11 +281,12 @@ convergence_plot <- function(
 
     # Ensure that all latent factors of the model are plotted
     n_lf <- ncol(Coda_Obj$Alpha[[1]][[1]])
-    if ((n_RC[1] * n_RC[2]) > n_lf) {
-      if (n_RC[1] == 1) {
-        n_RC[1] <- 2
-      } else if (n_RC[1] == 2) {
-        n_RC[1] <- 3
+    n_RC_alpha <- n_RC
+    if ((n_RC_alpha[1] * n_RC_alpha[2]) < n_lf) {
+      if (n_RC_alpha[1] == 1) {
+        n_RC_alpha[1] <- 2
+      } else if (n_RC_alpha[1] == 2) {
+        n_RC_alpha[1] <- 3
       }
     }
 
@@ -295,8 +296,9 @@ convergence_plot <- function(
     } else {
       ecokit::cat_time("Prepare plot", level = 1L)
       PlotObj_Alpha <- IASDT.R::convergence_alpha(
-        posterior = Coda_Obj, model_object = Model, title = title, n_RC = n_RC,
-        add_footer = FALSE, add_title = FALSE, chain_colors = chain_colors)
+        posterior = Coda_Obj, model_object = Model, title = title,
+        n_RC = n_RC_alpha, add_footer = FALSE, add_title = FALSE,
+        chain_colors = chain_colors)
 
       ecokit::cat_time("Save plotting data", level = 1L)
       ecokit::save_as(

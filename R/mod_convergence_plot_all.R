@@ -388,12 +388,11 @@ convergence_plot_all <- function(
         .x = Path_Trace_Rho,
         .p = ~is.na(.x),
         .f = ~grid::grid.rect(gp = grid::gpar(col = "white")),
-        .else = ~ecokit::load_as(.x))) %>%
-    dplyr::pull(Rho)
+        .else = ~ecokit::load_as(.x)))
 
   if (nrow(Convergence_DT) > 1) {
     layout_matrix <- matrix(seq_len(2 * 2), nrow = 2, byrow = TRUE)
-    Plot <- Plot %>%
+    Plot <- Plot$Rho %>%
       gridExtra::marrangeGrob(
         bottom = bquote(paste0("page ", g, " of ", npages)),
         top = grid::textGrob(
@@ -401,7 +400,7 @@ convergence_plot_all <- function(
           gp = grid::gpar(fontface = "bold", fontsize = 20)),
         nrow = 2, ncol = 2, layout_matrix = layout_matrix)
   } else {
-    Plot <- Plot[[1]]
+    Plot <- Plot$Rho[[1]]
   }
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
@@ -409,7 +408,7 @@ convergence_plot_all <- function(
     filename = fs::path(
       Path_Convergence_All, "TracePlots_Rho_Phylogenetic.pdf"),
     width = 18, height = 15, onefile = TRUE)
-  invisible(print(Plot))
+  invisible(plot(Plot))
   grDevices::dev.off()
 
   # # ..................................................................... ###

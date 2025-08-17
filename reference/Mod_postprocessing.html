@@ -95,12 +95,7 @@ cross-validated models. See details for more information.</p>
 <span>  width_beta <span class="op">=</span> <span class="fl">25</span>,</span>
 <span>  height_beta <span class="op">=</span> <span class="fl">35</span>,</span>
 <span>  spatial_model <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  clamp_pred <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  fix_efforts <span class="op">=</span> <span class="st">"q90"</span>,</span>
-<span>  fix_rivers <span class="op">=</span> <span class="st">"q90"</span>,</span>
-<span>  CC_models <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"GFDL-ESM4"</span>, <span class="st">"IPSL-CM6A-LR"</span>, <span class="st">"MPI-ESM1-2-HR"</span>, <span class="st">"MRI-ESM2-0"</span>,</span>
-<span>    <span class="st">"UKESM1-0-LL"</span><span class="op">)</span>,</span>
-<span>  CC_scenario <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ssp126"</span>, <span class="st">"ssp370"</span>, <span class="st">"ssp585"</span><span class="op">)</span></span>
+<span>  clamp_pred <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">mod_prepare_TF</span><span class="op">(</span></span>
@@ -335,33 +330,6 @@ a single value. If <code>TRUE</code> (default), the <code>fix_efforts</code> arg
 provided.</p></dd>
 
 
-<dt id="arg-fix-efforts">fix_efforts<a class="anchor" aria-label="anchor" href="#arg-fix-efforts"></a></dt>
-<dd><p>Numeric or character. When <code>clamp_pred = TRUE</code>, fixes the
-sampling efforts predictor at this value during predictions. If numeric,
-uses the value directly (on log<sub>10</sub> scale). If character, must be
-one of <code>identity</code> (i.e., do not fix), <code>median</code>, <code>mean</code>, <code>max</code>, or <code>q90</code>
-(90% quantile). Using <code>max</code> may reflect extreme sampling efforts from
-highly sampled locations, while <code>q90</code> captures high sampling areas without
-extremes. Required if <code>clamp_pred = TRUE</code>.</p></dd>
-
-
-<dt id="arg-fix-rivers">fix_rivers<a class="anchor" aria-label="anchor" href="#arg-fix-rivers"></a></dt>
-<dd><p>Numeric, character, or <code>NULL</code>. Similar to <code>fix_efforts</code>,
-but for the river length predictor. If <code>NULL</code>, the river length is not
-fixed. Default: <code>q90</code>.</p></dd>
-
-
-<dt id="arg-cc-models">CC_models<a class="anchor" aria-label="anchor" href="#arg-cc-models"></a></dt>
-<dd><p>Character vector. Climate models for future predictions.
-Available options are <code>c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")</code> (default).</p></dd>
-
-
-<dt id="arg-cc-scenario">CC_scenario<a class="anchor" aria-label="anchor" href="#arg-cc-scenario"></a></dt>
-<dd><p>Character vector. Climate scenarios for future
-predictions. Available options are: <code>c("ssp126", "ssp370", "ssp585")</code>
-(default).</p></dd>
-
-
 <dt id="arg-process-vp">process_VP<a class="anchor" aria-label="anchor" href="#arg-process-vp"></a></dt>
 <dd><p>Logical. Whether to prepares batch scripts for variance
 partitioning GPU computations on GPUs. Defaults to <code>TRUE</code>.</p></dd>
@@ -399,9 +367,36 @@ Defaults are <code>01:00:00</code> and <code>02:00:00</code> respectively.</p></
 running commands. Defaults to <code>NULL</code>. This can not be <code>NULL</code>.</p></dd>
 
 
+<dt id="arg-cc-models">CC_models<a class="anchor" aria-label="anchor" href="#arg-cc-models"></a></dt>
+<dd><p>Character vector. Climate models for future predictions.
+Available options are <code>c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")</code> (default).</p></dd>
+
+
+<dt id="arg-cc-scenario">CC_scenario<a class="anchor" aria-label="anchor" href="#arg-cc-scenario"></a></dt>
+<dd><p>Character vector. Climate scenarios for future
+predictions. Available options are: <code>c("ssp126", "ssp370", "ssp585")</code>
+(default).</p></dd>
+
+
 <dt id="arg-rc-n-cores">RC_n_cores<a class="anchor" aria-label="anchor" href="#arg-rc-n-cores"></a></dt>
 <dd><p>Integer. The number of cores to use for response curve
 prediction. Defaults to <code>8</code>.</p></dd>
+
+
+<dt id="arg-fix-efforts">fix_efforts<a class="anchor" aria-label="anchor" href="#arg-fix-efforts"></a></dt>
+<dd><p>Numeric or character. When <code>clamp_pred = TRUE</code>, fixes the
+sampling efforts predictor at this value during predictions. If numeric,
+uses the value directly (on log<sub>10</sub> scale). If character, must be
+one of <code>identity</code> (i.e., do not fix), <code>median</code>, <code>mean</code>, <code>max</code>, or <code>q90</code>
+(90% quantile). Using <code>max</code> may reflect extreme sampling efforts from
+highly sampled locations, while <code>q90</code> captures high sampling areas without
+extremes. Required if <code>clamp_pred = TRUE</code>.</p></dd>
+
+
+<dt id="arg-fix-rivers">fix_rivers<a class="anchor" aria-label="anchor" href="#arg-fix-rivers"></a></dt>
+<dd><p>Numeric, character, or <code>NULL</code>. Similar to <code>fix_efforts</code>,
+but for the river length predictor. If <code>NULL</code>, the river length is not
+fixed. Default: <code>q90</code>.</p></dd>
 
 
 <dt id="arg-tar-predictions">tar_predictions<a class="anchor" aria-label="anchor" href="#arg-tar-predictions"></a></dt>

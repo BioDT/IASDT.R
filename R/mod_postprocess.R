@@ -397,7 +397,7 @@ mod_postprocess_1_CPU <- function(
 
   IASDT.R::convergence_plot(
     path_coda = path_coda, path_model = path_model, env_file = env_file,
-    n_omega = n_omega, n_cores = n_cores, strategy = strategy, n_RC = c(2, 2),
+    n_omega = n_omega, n_cores = n_cores, strategy = strategy, n_RC = c(2, 3),
     beta_n_RC = c(3, 3), margin_type = "histogram")
 
   invisible(gc())
@@ -619,9 +619,8 @@ mod_postprocess_1_CPU <- function(
 
   ecokit::info_chunk(
     "Prepare scripts for predicting latent factors for new sampling units",
-    line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
+    line_char = "+", line_char_rep = 90L, cat_red = TRUE, cat_bold = TRUE,
     cat_timestamp = FALSE, level = 1L)
-
   IASDT.R::predict_maps(
     path_model = path_model, hab_abb = hab_abb, env_file = env_file,
     n_cores = n_cores, strategy = strategy, clamp_pred = FALSE,
@@ -636,9 +635,8 @@ mod_postprocess_1_CPU <- function(
   # Prepare scripts for computing variance partitioning -------
   ecokit::info_chunk(
     "Prepare scripts for computing variance partitioning", level = 1L,
-    line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
-    cat_timestamp = FALSE)
-
+    line_char = "+", line_char_rep = 90L, cat_red = TRUE, cat_bold = TRUE,
+    cat_timestamp = FALSE, level = 1L)
   IASDT.R::variance_partitioning_compute(
     path_model = path_model, n_cores = n_cores_VP, use_TF = use_TF,
     TF_environ = TF_environ, TF_use_single = TF_use_single,

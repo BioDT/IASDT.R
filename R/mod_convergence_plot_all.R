@@ -379,6 +379,7 @@ convergence_plot_all <- function(
 
   # Rho - trace plots ------
   ecokit::cat_time("Rho - trace plots", level = 2L)
+  Path_Trace_Rho <- NULL
 
   Plot <- Convergence_DT %>%
     dplyr::filter(stringr::str_detect(M_Name_Fit, "_Tree_")) %>%
@@ -399,6 +400,8 @@ convergence_plot_all <- function(
           label = "Convergence of the rho parameter",
           gp = grid::gpar(fontface = "bold", fontsize = 20)),
         nrow = 2, ncol = 2, layout_matrix = layout_matrix)
+  } else {
+    Plot <- Plot[[1]]
   }
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly

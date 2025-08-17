@@ -277,8 +277,17 @@ convergence_plot <- function(
   if ("Alpha" %in% names_coda) {
 
     ecokit::cat_time("Alpha")
-
     FileConv_Alpha <- fs::path(Path_Convergence, "Convergence_Alpha.RData")
+
+    # Ensure that all latent factors of the model are plotted
+    n_lf <- ncol(Coda_Obj$Alpha[[1]][[1]])
+    if ((n_RC[1] * n_RC[2]) > n_lf) {
+      if (n_RC[1] == 1) {
+        n_RC[1] <- 2
+      } else if (n_RC[1] == 2) {
+        n_RC[1] <- 3
+      }
+    }
 
     if (ecokit::check_data(FileConv_Alpha, warning = FALSE)) {
       ecokit::cat_time("Loading plotting data", level = 1L)

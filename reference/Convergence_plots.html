@@ -76,7 +76,8 @@ on HPC environments.</p>
 <span>  beta_n_RC <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3L</span>, <span class="fl">3L</span><span class="op">)</span>,</span>
 <span>  pages_per_file <span class="op">=</span> <span class="fl">20L</span>,</span>
 <span>  chain_colors <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  margin_type <span class="op">=</span> <span class="st">"histogram"</span></span>
+<span>  margin_type <span class="op">=</span> <span class="st">"histogram"</span>,</span>
+<span>  spatial_model <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">convergence_alpha</span><span class="op">(</span></span>
@@ -164,6 +165,12 @@ parameter output. Default: 20L.</p></dd>
 <dt id="arg-margin-type">margin_type<a class="anchor" aria-label="anchor" href="#arg-margin-type"></a></dt>
 <dd><p>Character. The type of marginal plot to add to the main
 plot. Valid options are "histogram" (default) or "density".</p></dd>
+
+
+<dt id="arg-spatial-model">spatial_model<a class="anchor" aria-label="anchor" href="#arg-spatial-model"></a></dt>
+<dd><p>Logical. Whether the model is a spatial model. If <code>TRUE</code>
+(default), the function will generate additional plots for the model's
+<code>Alpha</code> parameter.</p></dd>
 
 
 <dt id="arg-posterior">posterior<a class="anchor" aria-label="anchor" href="#arg-posterior"></a></dt>

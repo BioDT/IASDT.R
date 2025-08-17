@@ -44,6 +44,9 @@
 #'   to the plot.
 #' @param margin_type Character. The type of marginal plot to add to the main
 #'   plot. Valid options are "histogram" (default) or "density".
+#' @param spatial_model Logical. Whether the model is a spatial model. If `TRUE`
+#'   (default), the function will generate additional plots for the model's
+#'   `Alpha` parameter.
 #'
 #' @details `convergence_alpha()`, `convergence_rho()`, and
 #'   `convergence_beta_ranges` are internal functions and should not be called
@@ -61,7 +64,7 @@ convergence_plot <- function(
     path_coda = NULL, path_model = NULL, env_file = ".env", title = " ",
     n_omega = 1000L, n_cores = 8L, strategy = "multisession",
     n_RC = c(2L, 2L), beta_n_RC = c(3L, 3L), pages_per_file = 20L,
-    chain_colors = NULL, margin_type = "histogram") {
+    chain_colors = NULL, margin_type = "histogram", spatial_model = TRUE) {
 
   # # ..................................................................... ###
 
@@ -274,7 +277,7 @@ convergence_plot <- function(
 
   # Alpha  ------
 
-  if ("Alpha" %in% names_coda) {
+  if (("Alpha" %in% names_coda) && spatial_model) {
 
     ecokit::cat_time("Alpha")
     FileConv_Alpha <- fs::path(Path_Convergence, "Convergence_Alpha.RData")
@@ -303,7 +306,7 @@ convergence_plot <- function(
       ecokit::cat_time("Save plotting data", level = 1L)
       ecokit::save_as(
         object = PlotObj_Alpha, object_name = "convergence_alpha",
-        out_path = fs::path(Path_Convergence, "Convergence_Alpha.RData"))
+        out_path = FileConv_Alpha)
     }
 
     ecokit::cat_time("Save plots", level = 1L)

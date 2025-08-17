@@ -21,7 +21,8 @@ convergence_plot(
   beta_n_RC = c(3L, 3L),
   pages_per_file = 20L,
   chain_colors = NULL,
-  margin_type = "histogram"
+  margin_type = "histogram",
+  spatial_model = TRUE
 )
 
 convergence_alpha(
@@ -82,6 +83,10 @@ parameter output. Default: 20L.}
 
 \item{margin_type}{Character. The type of marginal plot to add to the main
 plot. Valid options are "histogram" (default) or "density".}
+
+\item{spatial_model}{Logical. Whether the model is a spatial model. If \code{TRUE}
+(default), the function will generate additional plots for the model's
+\code{Alpha} parameter.}
 
 \item{posterior}{\code{mcmc.list} or character. Either an MCMC object
 (\code{mcmc.list}) containing posterior samples, or a file path to a saved coda

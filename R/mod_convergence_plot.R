@@ -318,12 +318,13 @@ convergence_plot <- function(
     print(PlotObj_Alpha)
     grDevices::dev.off()
 
-    Obj_Omega <- Coda_Obj$Omega[[1]]
-    Obj_Beta <- Coda_Obj$Beta
-
-    rm(Model, Coda_Obj, PlotObj_Alpha, envir = environment())
-    invisible(gc())
+    rm(Model, PlotObj_Alpha, envir = environment())
   }
+
+  Obj_Omega <- Coda_Obj$Omega[[1]]
+  Obj_Beta <- Coda_Obj$Beta
+  rm(Coda_Obj, envir = environment())
+  invisible(gc())
 
   # # ..................................................................... ###
 

@@ -1015,9 +1015,7 @@ predict_maps <- function(
           sDataNew = list(
             sample = as.data.frame(sf::st_drop_geometry(Test_XY))))
 
-        rm(
-          Model, Predict_DF_Test, Predict_DF_Train, Predict_DF,
-          envir = environment())
+        rm(Model, Predict_DF_Test, Predict_DF, envir = environment())
         invisible(gc())
 
         # ______________________________________________

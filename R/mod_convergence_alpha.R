@@ -9,9 +9,9 @@
 #' @author Ahmed El-Gabbas
 
 convergence_alpha <- function(
-    posterior = NULL, model_object = NULL, title = NULL, n_RC = NULL,
-    add_footer = TRUE, add_title = TRUE, chain_colors = NULL,
-    margin_type = "histogram") {
+    posterior = NULL, title = NULL, n_RC = NULL, add_footer = TRUE,
+    add_title = TRUE, chain_colors = NULL, margin_type = "histogram",
+    n_chains = NULL, n_samples = NULL) {
 
   temp_file <- fs::file_temp(ext = "pdf")
   grDevices::cairo_pdf(temp_file)
@@ -21,10 +21,9 @@ convergence_alpha <- function(
   },
   add = TRUE)
 
-  if (is.null(posterior) || is.null(model_object)) {
+  if (is.null(posterior)) {
     ecokit::stop_ctx(
-      "`posterior` and `model_object` cannot be empty",
-      model_object = model_object, posterior = posterior,
+      "`posterior` cannot be empty", posterior = posterior,
       include_backtrace = TRUE)
   }
 
@@ -39,6 +38,14 @@ convergence_alpha <- function(
     ecokit::stop_ctx(
       "`margin_type` must be either 'histogram' or 'density'.",
       margin_type = margin_type, include_backtrace = TRUE)
+  }
+
+  if (!is.numeric(n_chains) || !is.numeric(n_samples) ||
+      length(n_chains) != 1 || length(n_samples) != 1 ||
+      n_chains < 1 || n_samples < 1) {
+    ecokit::stop_ctx(
+      "n_chains and n_samples should be positive numeric vectors of length 1",
+      n_chains = n_chains, n_samples = n_samples)
   }
 
   # # ..................................................................... ###
@@ -71,21 +78,12 @@ convergence_alpha <- function(
   }
   posterior <- posterior$Alpha[[1]]
 
-
-  # Load model object
-  if (inherits(model_object, "character")) {
-    model_object <- ecokit::load_as(model_object)
-  }
-
-  SampleSize <- model_object$samples      # nolint: object_name_linter
-  NChains <- length(model_object$postList)
-
   #  Plotting colours
   define_chain_colors <- FALSE
 
   if (is.null(chain_colors)) {
     define_chain_colors <- TRUE
-  } else if (length(chain_colors) != NChains) {
+  } else if (length(chain_colors) != n_chains) {
     define_chain_colors <- TRUE
     warning(
       "The length of provided colours != number of chains", call. = FALSE)
@@ -94,18 +92,16 @@ convergence_alpha <- function(
   if (define_chain_colors) {
     # minimum value of n colours in RColorBrewer::brewer.pal is 3.
     # black and grey will be used anyway
-    if (NChains >= 4) {
+    if (n_chains >= 4) {
       chain_colors <- c(
         "black", "grey60",
-        RColorBrewer::brewer.pal(n = NChains - 2, name = "Set1"))
-    } else if (NChains == 3) {
+        RColorBrewer::brewer.pal(n = n_chains - 2, name = "Set1"))
+    } else if (n_chains == 3) {
       chain_colors <- c("black", "grey60", "red")
-    } else if (NChains == 2) {
+    } else if (n_chains == 2) {
       chain_colors <- c("black", "grey60")
     }
   }
-
-  rm(model_object, envir = environment())
 
   # Number of latent factors
   NLV <- ncol(posterior[[1]])
@@ -124,14 +120,14 @@ convergence_alpha <- function(
 
   ## Effective sample size
   ESS <- coda::effectiveSize(x = posterior) %>%  # nolint: object_name_linter
-    magrittr::divide_by(NChains) %>%
+    magrittr::divide_by(n_chains) %>%
     round(1)
 
   ## quantiles
   CI <- summary(posterior, quantiles = c(0.025, 0.975)) %>% # nolint: object_name_linter
     magrittr::extract2("quantiles") %>%
-    matrix(ncol = 2) %>%
-    magrittr::divide_by(1000) %>%
+    matrix(ncol = 2L) %>%
+    magrittr::divide_by(1000L) %>%
     round(3)
 
   AlphaDF <- IASDT.R::coda_to_tibble(      # nolint: object_name_linter
@@ -160,7 +156,7 @@ convergence_alpha <- function(
     .f = ~ {
       ESS0 <- paste0(
         "<b><i>Mean effective sample size:</i></b> ", ESS[.x],
-        " / ", SampleSize, " samples")
+        " / ", n_samples, " samples")
 
       CI0 <- paste(round(CI[.x, ], 2), collapse = " to ") %>%
         paste0("<b><i>95% credible interval:</i></b> ", ., " km")

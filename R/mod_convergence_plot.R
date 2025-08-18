@@ -11,7 +11,6 @@
 #' on HPC environments.
 #' @param path_coda Character. Path to a saved coda object containing MCMC
 #'   samples.
-#' @param path_model Character. Path to a saved Hmsc model object.
 #' @param model_dir Character. A path to the model directory.
 #' @param env_file Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
@@ -36,8 +35,6 @@
 #' @param posterior `mcmc.list` or character. Either an MCMC object
 #'   (`mcmc.list`) containing posterior samples, or a file path to a saved coda
 #'   object.
-#' @param model_object `Hmsc` object or character. Either a fitted Hmsc model
-#'   object, or a file path to a saved Hmsc model.
 #' @param add_footer Logical. If `TRUE` (default), adds a footer with page
 #'   numbers to each plot.
 #' @param add_title Logical. If `TRUE` (default), adds the main title (`title`)
@@ -50,7 +47,8 @@
 #' @param future_max_size	Numeric. Maximum allowed total size (in megabytes) of
 #'   global variables identified. See `future.globals.maxSize` argument of
 #'   [future::future.options] for more details.
-#'
+#' @param n_chains Integer. Number of MCMC chains.
+#' @param n_samples Integer. Number of MCMC samples.
 #' @details `convergence_alpha()`, `convergence_rho()`, and
 #'   `convergence_beta_ranges` are internal functions and should not be called
 #'   directly. The `convergence_beta_ranges` plots the convergence range of the
@@ -64,7 +62,7 @@
 #' @export
 
 convergence_plot <- function(
-    path_coda = NULL, path_model = NULL, env_file = ".env", title = " ",
+    path_coda = NULL, env_file = ".env", title = " ",
     n_omega = 1000L, n_cores = 8L, strategy = "multisession",
     future_max_size = 2000L, n_RC = c(2L, 2L), beta_n_RC = c(3L, 3L),
     pages_per_file = 20L, chain_colors = NULL, margin_type = "histogram",
@@ -78,11 +76,6 @@ convergence_plot <- function(
     ecokit::stop_ctx(
       "`path_coda` cannot be empty",
       path_coda = path_coda, include_backtrace = TRUE)
-  }
-  if (is.null(path_model)) {
-    ecokit::stop_ctx(
-      "path_model cannot be empty",
-      path_model = path_model, include_backtrace = TRUE)
   }
 
   if (length(margin_type) != 1) {
@@ -106,7 +99,7 @@ convergence_plot <- function(
     Species <- Variable <- data <- PlotID <- File <- Page <- Iter <- Value <-
     Chain <- y <- label <- Var_Sp <- CI_025 <- CI_975 <- Var_Min <- Var_Max <-
     Plot_File <- Var_Sp2 <- Species_name <- Species_File <- Path_PA <-
-    VarDesc <- is_intercept <- ModVar <- LQ <- NULL
+    is_intercept <- Var_Sp_File <- description <- LQ <- NULL
 
   # # ..................................................................... ###
 
@@ -122,7 +115,7 @@ convergence_plot <- function(
 
   ecokit::check_args(
     args_all = AllArgs, args_type = "character",
-    args_to_check = c("path_coda", "path_model", "strategy"))
+    args_to_check = c("path_coda", "strategy"))
   ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c("n_omega", "n_cores", "n_RC"))
@@ -139,7 +132,7 @@ convergence_plot <- function(
     packages = c(
       "dplyr", "ggplot2", "ggtext", "magrittr", "stringr", "ggExtra",
       "coda", "ecokit", "qs2", "tibble", "tidyr", "purrr", "cowplot",
-      "gtools", "withr", "fs"),
+      "gtools", "withr", "fs", "grid"),
     strategy = strategy)
 
   # # ..................................................................... ###
@@ -179,20 +172,17 @@ convergence_plot <- function(
   Path_Convergence <- dirname(dirname(path_coda)) %>%
     fs::path("Model_Convergence")
   Path_Beta_Data <- fs::path(Path_Convergence, "Beta_Data")
+  # Path_Beta_Data_tmp <- fs::path(Path_Beta_Data, "tmp")
   Path_Convergence_BySp <- fs::path(Path_Convergence, "Beta_BySpecies")
-  fs::dir_create(c(Path_Convergence, Path_Convergence_BySp, Path_Beta_Data))
+  fs::dir_create(
+    c(Path_Convergence, Path_Convergence_BySp,
+      Path_Beta_Data)) # Path_Beta_Data_tmp
 
   # # ..................................................................... ###
 
   # Prepare convergence data ------
 
   ecokit::cat_time("Prepare convergence data")
-
-  if (!file.exists(path_model)) {
-    ecokit::stop_ctx(
-      "`path_model` does not exist", path_model = path_model,
-      include_backtrace = TRUE)
-  }
 
   if (!file.exists(path_coda)) {
     ecokit::stop_ctx(
@@ -204,24 +194,18 @@ convergence_plot <- function(
   Coda_Obj <- ecokit::load_as(path_coda)
   names_coda <- names(Coda_Obj)
 
-  ecokit::cat_time("Loading fitted model object", level = 1L)
-  Model <- ecokit::load_as(path_model)
-
-  # Model variables
-  ModVars <- Model$covNames
-
   # Number of chains
-  NChains <- length(Model$postList)
+  n_chains <- length(Coda_Obj$Beta)
 
   # Number of samples
-  SampleSize <- Model$samples
+  n_samples <- nrow(Coda_Obj$Beta[[1]])
 
   #  Plotting colours
   define_chain_colors <- FALSE
 
   if (is.null(chain_colors)) {
     define_chain_colors <- TRUE
-  } else if (length(chain_colors) != NChains) {
+  } else if (length(chain_colors) != n_chains) {
     define_chain_colors <- TRUE
     warning(
       "The length of provided colours != number of chains", call. = FALSE)
@@ -230,16 +214,101 @@ convergence_plot <- function(
   if (define_chain_colors) {
     # minimum value of n colours in RColorBrewer::brewer.pal is 3.
     # black and grey will be used anyway
-    if (NChains >= 4) {
+    if (n_chains >= 4) {
       chain_colors <- c(
         "black", "grey60",
-        RColorBrewer::brewer.pal(n = NChains - 2, name = "Set1"))
-    } else if (NChains == 3) {
+        RColorBrewer::brewer.pal(n = n_chains - 2, name = "Set1"))
+    } else if (n_chains == 3) {
       chain_colors <- c("black", "grey60", "red")
-    } else if (NChains == 2) {
+    } else if (n_chains == 2) {
       chain_colors <- c("black", "grey60")
     }
   }
+
+  # # ..................................................................... ###
+
+  # Model variables ------
+
+  arrange_vars <- function(df) {
+    ecokit::arrange_alphanum(df, Variable) %>%
+      dplyr::mutate(is_intercept = (Variable == "Intercept")) %>%
+      dplyr::arrange(dplyr::desc(is_intercept)) %>%
+      dplyr::select(-is_intercept)
+  }
+
+  vars_desc <- tibble::tribble(
+    ~Variable, ~description,
+    "Intercept", "Intercept",
+    "RiversLog", "River length (log<sub>10</sub>)",
+    "RoadRailLog", "Road + Rail intensity (log<sub>10</sub>)",
+    "EffortsLog", "Sampling efforts (log<sub>10</sub>)",
+    "HabLog", "% Habitat coverage",
+    "bio1", "bio1 (annual mean temperature)",
+    "bio2", "bio2 (mean diurnal range)",
+    "bio3", "bio3 (isothermality)",
+    "bio4", "bio4 (temperature seasonality)",
+    "bio5", "bio5 (max temperature of warmest month)",
+    "bio6", "bio6 (temperature of the coldest month)",
+    "bio7", "bio7 (temperature annual range)",
+    "bio8", "bio8 (temperatures of the wettest quarter)",
+    "bio9", "bio9 (mean temperature of driest quarter)",
+    "bio10", "bio10 (mean temperature of warmest quarter)",
+    "bio11", "bio11 (mean temperature of coldest quarter)",
+    "bio12", "bio12 (annual precipitation amount)",
+    "bio13", "bio13 (precipitation of wettest month)",
+    "bio14", "bio14 (precipitation of driest month)",
+    "bio15", "bio15 (precipitation seasonality)",
+    "bio16", "bio16 (precipitation of wettest quarter)",
+    "bio17", "bio17 (precipitation of driest quarter)",
+    "bio18", "bio18 (precipitation of the warmest quarter)",
+    "bio19", "bio19 (precipitation of coldest quarter)",
+    "npp", "npp (net primary productivity)",
+    "soil", "soil bulk density",
+    "wetness", "topographic wetness index")
+
+  model_terms <- attr(Coda_Obj$Beta[[1]], "dimnames") %>%
+    unlist() %>%
+    stringr::str_remove_all("^B\\[|, Sp_\\d{4}\\]$") %>%
+    unique() %>%
+    sort()
+  model_vars <- model_terms %>%
+    stringr::str_remove_all("stats::poly|, degree = 2, raw = TRUE\\)[0-9]") %>%
+    stringr::str_remove_all("\\(|\\)") %>%
+    stringr::str_trim()
+  model_vars <- dplyr::bind_cols(Variable = model_vars, term = model_terms) %>%
+    dplyr::mutate(
+      LQ = dplyr::case_when(
+        stringr::str_detect(term, "raw = TRUE\\)1") ~ "L",
+        stringr::str_detect(term, "raw = TRUE\\)2") ~ "Q",
+        .default = "L_only")) %>%
+    dplyr::left_join(vars_desc, by = "Variable") %>%
+    dplyr::mutate(
+      Variable = purrr::map2_chr(
+        .x = Variable, .y = LQ,
+        .f = ~ {
+          dplyr::case_when(
+            .y == "L" ~ paste0(.x, "_L"),
+            .y == "Q" ~ paste0(.x, "_Q"),
+            .default = .x)
+        }),
+      description = purrr::map2_chr(
+        .x = description, .y = LQ,
+        .f = ~{
+          desc <- stringr::str_to_sentence(.x)
+          desc <- dplyr::case_when(
+            (.y == "L_only" && .x != "Intercept") ~
+              paste0(desc, "\n&nbsp;&mdash;&nbsp;Linear"),
+            .y == "L" ~ paste0(desc, "\n&nbsp;&mdash;&nbsp;Linear"),
+            .y == "Q" ~ paste0(desc, "\n&nbsp;&mdash;&nbsp;Quadratic"),
+            .default = .x)
+
+          stringr::str_glue(
+            "<span style='color:blue;'><b>{desc}</b></span>")
+        }),
+      Variable = stringr::str_replace(
+        Variable, "\\(Intercept\\)", "Intercept"),
+      LQ = NULL) %>%
+    arrange_vars()
 
   # # ..................................................................... ###
 
@@ -256,8 +325,8 @@ convergence_plot <- function(
     } else {
       ecokit::cat_time("Prepare plot", level = 1L)
       PlotObj_Rho <- IASDT.R::convergence_rho(
-        posterior = Coda_Obj, model_object = Model, title = title,
-        chain_colors = chain_colors)
+        posterior = Coda_Obj, title = title, chain_colors = chain_colors,
+        n_chains = n_chains, n_samples = n_samples)
 
       ecokit::cat_time("Save plotting data", level = 1L)
       ecokit::save_as(
@@ -274,7 +343,9 @@ convergence_plot <- function(
     plot(PlotObj_Rho)
     grDevices::dev.off()
 
+    Coda_Obj$Rho <- NULL
     rm(PlotObj_Rho, envir = environment())
+    invisible(gc())
   }
 
   # # ..................................................................... ###
@@ -303,9 +374,9 @@ convergence_plot <- function(
     } else {
       ecokit::cat_time("Prepare plot", level = 1L)
       PlotObj_Alpha <- IASDT.R::convergence_alpha(
-        posterior = Coda_Obj, model_object = Model, title = title,
-        n_RC = n_RC_alpha, add_footer = FALSE, add_title = FALSE,
-        chain_colors = chain_colors)
+        posterior = Coda_Obj, title = title, n_RC = n_RC_alpha,
+        add_footer = FALSE, add_title = FALSE, chain_colors = chain_colors,
+        n_chains = n_chains, n_samples = n_samples)
 
       ecokit::cat_time("Save plotting data", level = 1L)
       ecokit::save_as(
@@ -322,7 +393,8 @@ convergence_plot <- function(
     print(PlotObj_Alpha)
     grDevices::dev.off()
 
-    rm(Model, PlotObj_Alpha, envir = environment())
+    rm(PlotObj_Alpha, envir = environment())
+    Coda_Obj$Alpha <- NULL
   }
 
   Obj_Omega <- Coda_Obj$Omega[[1]]
@@ -407,11 +479,11 @@ convergence_plot <- function(
 
           ## Effective sample size
           Label_ESS <- coda::effectiveSize(CurrPost) %>%
-            magrittr::divide_by(NChains) %>%
+            magrittr::divide_by(n_chains) %>%
             round(1) %>%
             paste0(
               "<b><i>Mean effective sample size:</i></b> ",
-              ., " / ", SampleSize)
+              ., " / ", n_samples)
           CurrCI <- dplyr::select(CombData, c("CI_25", "CI_975")) %>%
             unlist() %>%
             round(2)
@@ -489,7 +561,7 @@ convergence_plot <- function(
       rm(OmegaDF, SelectedCombs, CI, OmegaNames, envir = environment())
       invisible(gc())
     }
-
+    rm(Obj_Omega, envir = environment())
 
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
@@ -555,7 +627,7 @@ convergence_plot <- function(
         })
       })
 
-    rm(OmegaPlotList, PlotObj_Omega, Obj_Omega, envir = environment())
+    rm(OmegaPlotList, PlotObj_Omega, envir = environment())
     invisible(gc())
 
   }
@@ -565,15 +637,6 @@ convergence_plot <- function(
   # Beta - 1. Prepare data ------
 
   ecokit::cat_time("Beta")
-
-
-  arrange_vars <- function(df) {
-    ecokit::arrange_alphanum(df, Variable) %>%
-      dplyr::mutate(is_intercept = (Variable == "Intercept")) %>%
-      dplyr::arrange(dplyr::desc(is_intercept)) %>%
-      dplyr::select(-is_intercept)
-  }
-
   FileConv_Beta <- fs::path(Path_Convergence, "Convergence_Beta.qs2")
 
   if (ecokit::check_data(FileConv_Beta, warning = FALSE, n_threads = 5)) {
@@ -586,75 +649,7 @@ convergence_plot <- function(
 
   } else {
 
-    VarsDesc <- tibble::tribble(
-      ~Variable, ~VarDesc,
-      "(Intercept)", "Intercept",
-      "RiversLog", "River length (log<sub>10</sub>)",
-      "RoadRailLog", "Road + Rail intensity (log<sub>10</sub>)",
-      "EffortsLog", "Sampling efforts (log<sub>10</sub>)",
-      "HabLog", "% Habitat coverage",
-      "bio1", "bio1 (annual mean temperature)",
-      "bio2", "bio2 (mean diurnal range)",
-      "bio3", "bio3 (isothermality)",
-      "bio4", "bio4 (temperature seasonality)",
-      "bio5", "bio5 (max temperature of warmest month)",
-      "bio6", "bio6 (temperature of the coldest month)",
-      "bio7", "bio7 (temperature annual range)",
-      "bio8", "bio8 (temperatures of the wettest quarter)",
-      "bio9", "bio9 (mean temperature of driest quarter)",
-      "bio10", "bio10 (mean temperature of warmest quarter)",
-      "bio11", "bio11 (mean temperature of coldest quarter)",
-      "bio12", "bio12 (annual precipitation amount)",
-      "bio13", "bio13 (precipitation of wettest month)",
-      "bio14", "bio14 (precipitation of driest month)",
-      "bio15", "bio15 (precipitation seasonality)",
-      "bio16", "bio16 (precipitation of wettest quarter)",
-      "bio17", "bio17 (precipitation of driest quarter)",
-      "bio18", "bio18 (precipitation of the warmest quarter)",
-      "bio19", "bio19 (precipitation of coldest quarter)",
-      "npp", "npp (net primary productivity)",
-      "soil", "soil bulk density",
-      "wetness", "topographic wetness index")
-
-    VarsDesc <- tibble::tibble(ModVar = ModVars) %>%
-      dplyr::mutate(
-        Variable = stringr::str_remove_all(
-          ModVar, "stats::poly\\(|, degree = [0-9], raw = TRUE\\)[0-9]"),
-        LQ = dplyr::case_when(
-          stringr::str_detect(ModVar, "raw = TRUE\\)1") ~ "L",
-          stringr::str_detect(ModVar, "raw = TRUE\\)2") ~ "Q",
-          .default = "L_only")) %>%
-      dplyr::left_join(VarsDesc, by = "Variable") %>%
-      dplyr::mutate(
-        Variable = purrr::map2_chr(
-          .x = Variable, .y = LQ,
-          .f = ~ {
-            dplyr::case_when(
-              .y == "L" ~ paste0(.x, "_L"),
-              .y == "Q" ~ paste0(.x, "_Q"),
-              .default = .x)
-          }),
-        VarDesc = purrr::map2_chr(
-          .x = VarDesc, .y = LQ,
-          .f = ~{
-            desc <- stringr::str_to_sentence(.x)
-            desc <- dplyr::case_when(
-              (.y == "L_only" && .x != "Intercept") ~
-                paste0(desc, "\n&nbsp;&mdash;&nbsp;Linear"),
-              .y == "L" ~ paste0(desc, "\n&nbsp;&mdash;&nbsp;Linear"),
-              .y == "Q" ~ paste0(desc, "\n&nbsp;&mdash;&nbsp;Quadratic"),
-              .default = .x)
-
-            stringr::str_glue(
-              "<span style='color:blue;'><b>{desc}</b></span>")
-          }),
-        Variable = stringr::str_replace(
-          Variable, "\\(Intercept\\)", "Intercept"),
-        LQ = NULL) %>%
-      arrange_vars()
-
     ecokit::cat_time("Prepare trace plots", level = 1L)
-
     BetaNames <- attr(Obj_Beta[[1]], "dimnames")[[2]]
 
     ecokit::cat_time("Prepare 95% credible interval data", level = 2L)
@@ -699,21 +694,26 @@ convergence_plot <- function(
 
     ecokit::cat_time("Preparing plotting data", level = 2L)
     Cols2remove <- c(
-      "CI_025", "CI_975", "Var_Min", "Var_Max", "Class", "Order", "Family")
+      "CI_025", "CI_975", "Var_Min", "Var_Max",
+      "Class", "Order", "Family", "DT")
 
     Beta_DF <- Beta_DF %>%
       dplyr::left_join(VarRanges, by = "Variable") %>%
       dplyr::left_join(SpeciesTaxonomy, by = "IAS_ID") %>%
       dplyr::mutate(
         Var_Sp2 = paste0(Variable, "_", IAS_ID),
-        Var_Sp_File = fs::path(Path_Beta_Data, paste0(Var_Sp2, ".RData")),
+        Var_Sp_File = fs::path(Path_Beta_Data, paste0(Var_Sp2, ".qs2")),
         Plot_File = fs::path(Path_Beta_Data, paste0(Var_Sp2, "_Plots.qs2")),
         DT = purrr::pmap(
           .l = list(
             Var_Sp, DT, CI_025, CI_975, Var_Min,
-            Var_Max, Class, Order, Family),
+            Var_Max, Class, Order, Family, Var_Sp2, Var_Sp_File),
           .f = function(Var_Sp, DT, CI_025, CI_975, Var_Min,
-                        Var_Max, Class, Order, Family) {
+                        Var_Max, Class, Order, Family, Var_Sp2, Var_Sp_File) {
+
+            if (ecokit::check_data(Var_Sp_File, warning = FALSE)) {
+              return(NULL)
+            }
 
             Beta_ID <- which(BetaNames == Var_Sp)
             Post <- coda::as.mcmc.list(Obj_Beta[, Beta_ID])
@@ -728,12 +728,15 @@ convergence_plot <- function(
             }
 
             ESS <- coda::effectiveSize(Post)
-
-            list(
+            output <- list(
               DT = DT, CI_025 = CI_025, CI_975 = CI_975,
               Var_Min = Var_Min, Var_Max = Var_Max,
               Class = Class, Order = Order, Family = Family,
               Beta_ID = Beta_ID, Post = Post, Gelman = Gelman, ESS = ESS)
+            ecokit::save_as(
+              object = output, object_name = Var_Sp2, out_path = Var_Sp_File)
+
+            return(NULL)
           })) %>%
       dplyr::select(-tidyselect::all_of(Cols2remove))
 
@@ -743,6 +746,9 @@ convergence_plot <- function(
     invisible(gc())
 
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
+
+    # Prepare beta plots
+    ecokit::cat_time("Prepare beta plots", level = 2L)
 
     # Prepare working in parallel
     if (n_cores == 1) {
@@ -755,65 +761,10 @@ convergence_plot <- function(
       withr::defer(future::plan("sequential", gc = TRUE))
     }
 
-    # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
-
-    # Split data for each of variables and species combination
-    ecokit::cat_time(
-      "Split data for each of variables and species combination", level = 2L)
-
-    Beta_DF2 <- future.apply::future_lapply(
-      X = seq_len(nrow(Beta_DF)),
-      FUN = function(x) {
-
-        Var_Sp_File <- Beta_DF$Var_Sp_File[[x]]
-
-        if (ecokit::check_data(Var_Sp_File, warning = FALSE)) {
-          return(NULL)
-        }
-
-        # try saving for a max of 5 attempts using repeat loop
-        attempt <- 1
-        repeat {
-
-          if (attempt > 5) {
-            ecokit::stop_ctx(
-              "Maximum attempts (5) reached without success: ",
-              Var_Sp_File = Var_Sp_File, include_backtrace = TRUE)
-          }
-
-          try({
-            ecokit::save_as(
-              object = Beta_DF$DT[[x]], object_name = Beta_DF$Var_Sp2[[x]],
-              out_path = Var_Sp_File)
-            Sys.sleep(2)
-          },
-          silent = TRUE)
-
-          if (ecokit::check_data(Var_Sp_File, warning = FALSE)) {
-            break
-          }
-
-          # Increment attempt counter
-          attempt <- attempt + 1
-        }
-      },
-      future.seed = TRUE, future.globals = "Beta_DF",
-      future.packages = pkg_to_export)
-
-    rm(Beta_DF2, envir = environment())
-
-    # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
-
-    # Prepare beta plots
-    ecokit::cat_time("Prepare beta plots", level = 2L)
-
     PlotObj_Beta <- future.apply::future_lapply(
       X = seq_len(nrow(Beta_DF)),
       FUN = function(x) {
 
-        Var_Sp <- Beta_DF$Var_Sp[x]
-        Species <- Beta_DF$Species[x]
-        Curr_IAS <- Beta_DF$IAS_ID[x]
         Var_Sp_File <- Beta_DF$Var_Sp_File[x]
         Plot_File <- Beta_DF$Plot_File[x]
 
@@ -826,13 +777,11 @@ convergence_plot <- function(
 
         # Check if the output file already exists
         if (ecokit::check_data(Plot_File, warning = FALSE)) {
-          return(tibble::tibble(Var_Sp = Var_Sp, Plot_File = Plot_File))
+          return(invisible(NULL))
         }
 
         # delete file if corrupted
-        if (file.exists(Plot_File)) {
-          fs::file_delete(Plot_File)
-        }
+        if (file.exists(Plot_File)) fs::file_delete(Plot_File)
 
         temp_file <- fs::file_temp(ext = "pdf")
         grDevices::cairo_pdf(temp_file)
@@ -873,10 +822,10 @@ convergence_plot <- function(
               data.frame(x = Inf, y = -Inf, label = .)
 
             ## Effective sample size / CI
-            Label_ESS <- round(DT_all$ESS / NChains) %>%
+            Label_ESS <- round(DT_all$ESS / n_chains) %>%
               paste0(
                 "<b><i>Mean effective sample size:</i></b> ",
-                ., " / ", SampleSize)
+                ., " / ", n_samples)
             CurrCI <- c(DT_all$CI_025, DT_all$CI_975)
             Label_CI <- paste(round(CurrCI, 4), collapse = " to ") %>%
               paste0("<b><i>95% credible interval:</i></b> ", .)
@@ -885,12 +834,12 @@ convergence_plot <- function(
 
             Label_Panel <- data.frame(
               x = Inf, y = Inf,
-              label = paste0("<br><b><i>", Species, "</i></b>"))
+              label = paste0("<br><b><i>", Beta_DF$Species[x], "</i></b>"))
 
             PanelTitle <- c(DT_all$Class, DT_all$Order, DT_all$Family) %>%
               paste(collapse = " | ") %>%
               paste0("<b>", ., "</b>") %>%
-              paste0("<br>", Curr_IAS) %>%
+              paste0("<br>", Beta_DF$IAS_ID[x]) %>%
               data.frame(x = -Inf, y = Inf, label = .)
 
             Plot <- ggplot2::ggplot(
@@ -992,16 +941,15 @@ convergence_plot <- function(
           attempt <- attempt + 1
         }
 
-        # Return result if successful
-        tibble::tibble(Var_Sp = Var_Sp, Plot_File = Plot_File)
+        return(invisible(NULL))
 
       },
       future.seed = TRUE, future.packages = pkg_to_export,
       future.globals = c(
-        "Beta_DF", "NChains", "SampleSize", "chain_colors", "margin_type")) %>%
+        "Beta_DF", "n_chains", "n_samples", "chain_colors", "margin_type")) %>%
       ecokit::quiet_device()
 
-    PlotObj_Beta <- dplyr::left_join(Beta_DF, VarsDesc, by = "Variable")
+    PlotObj_Beta <- dplyr::left_join(Beta_DF, model_vars, by = "Variable")
 
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
@@ -1019,7 +967,6 @@ convergence_plot <- function(
     ecokit::save_as(
       object = PlotObj_Beta, object_name = "Convergence_Beta",
       out_path = FileConv_Beta, n_threads = 5)
-
   }
 
   # # ..................................................................... ###
@@ -1028,7 +975,9 @@ convergence_plot <- function(
   ecokit::cat_time(
     "plot minimum and maximum value of each beta parameter", level = 1L)
 
-  IASDT.R::convergence_beta_ranges(model_dir = dirname(path_model))
+  IASDT.R::convergence_beta_ranges(
+    model_dir = fs::path(dirname(dirname(path_coda)), "Model_Fitted"),
+    n_chains = n_chains)
 
   # # ..................................................................... ###
 
@@ -1038,7 +987,8 @@ convergence_plot <- function(
 
   ecokit::cat_time("Preparing data", level = 2L)
   BetaTracePlots_ByVar <- dplyr::arrange(PlotObj_Beta, Variable, IAS_ID) %>%
-    dplyr::select(Variable, Plot_File, VarDesc) %>%
+    dplyr::select(
+      tidyselect::all_of(c("Variable", "Plot_File", "description"))) %>%
     tidyr::nest(Plot_File = "Plot_File") %>%
     dplyr::mutate(Plot_File = purrr::map(Plot_File, unlist)) %>%
     arrange_vars()
@@ -1050,9 +1000,8 @@ convergence_plot <- function(
     future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
-      n_cores = min(n_cores, nrow(BetaTracePlots_ByVar)), level = 2L,
-      future_max_size = future_max_size, strategy = strategy,
-      cat_timestamp = FALSE)
+      n_cores = n_cores, level = 2L, future_max_size = future_max_size,
+      strategy = strategy, cat_timestamp = FALSE)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
 
@@ -1065,9 +1014,8 @@ convergence_plot <- function(
     X = VarNames,
     FUN = function(x) {
 
-      VarDesc <- BetaTracePlots_ByVar %>%
-        dplyr::filter(Variable == x) %>%
-        dplyr::pull(VarDesc)
+      var_desc0 <- dplyr::filter(BetaTracePlots_ByVar, Variable == x) %>%
+        dplyr::pull(description)
 
       Plots <- dplyr::filter(BetaTracePlots_ByVar, Variable == x) %>%
         dplyr::pull(Plot_File) %>%
@@ -1086,7 +1034,7 @@ convergence_plot <- function(
       invisible(gc())
 
       PlotTitle <- ggplot2::ggplot(environment = emptyenv()) +
-        ggplot2::labs(title = VarDesc) +
+        ggplot2::labs(title = var_desc0) +
         ggplot2::theme_minimal() +
         ggplot2::theme(
           text = ggplot2::element_text(family = "sans"),
@@ -1094,13 +1042,13 @@ convergence_plot <- function(
             size = 24, hjust = 0.5,
             margin = ggplot2::margin(t = 15, b = 15)))
 
-      if (!stringr::str_detect(VarDesc, "\n&nbsp;&mdash;&nbsp;")) {
-        VarDesc <- paste0(VarDesc, "  ---  ")
+      if (!stringr::str_detect(var_desc0, "\n&nbsp;&mdash;&nbsp;")) {
+        var_desc0 <- paste0(var_desc0, "  ---  ")
       }
 
       PlotTitleFixed <- ggplot2::ggplot(environment = emptyenv()) +
         ggplot2::labs(
-          title = paste0(VarDesc, " (fixed y-axis range)")) +
+          title = paste0(var_desc0, " (fixed y-axis range)")) +
         ggplot2::theme_minimal() +
         ggplot2::theme(
           text = ggplot2::element_text(family = "sans"),
@@ -1162,14 +1110,6 @@ convergence_plot <- function(
   rm(BetaTracePlots_ByVar0, BetaTracePlots_ByVar, envir = environment())
   invisible(gc())
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
-
-  # Stopping cluster
-  if (n_cores > 1) {
-    ecokit::set_parallel(stop_cluster = TRUE, level = 2L, cat_timestamp = FALSE)
-    future::plan("sequential", gc = TRUE)
-  }
-
   # # ..................................................................... ###
 
   # Beta - 3. by species ------
@@ -1177,25 +1117,14 @@ convergence_plot <- function(
   ecokit::cat_time("Trace plots, grouped by species", level = 1L)
 
   ecokit::cat_time("Preparing data", level = 2L)
-  Order <- stringr::str_remove_all(ModVars, "\\(|\\)")
   BetaTracePlots_BySp <- PlotObj_Beta %>%
-    dplyr::arrange(Species, factor(Variable, levels = Order)) %>%
-    dplyr::select(Species, IAS_ID, Plot_File, Variable, VarDesc) %>%
+    dplyr::arrange(Species, factor(Variable, levels = model_vars$Variable)) %>%
+    dplyr::select(
+      tidyselect::all_of(
+        c("Species", "IAS_ID", "Plot_File", "Variable", "description"))) %>%
     tidyr::nest(data = -c("Species", "IAS_ID")) %>%
     dplyr::left_join(SpSummary, by = "Species")
 
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
-
-  # Prepare working in parallel
-  if (n_cores == 1) {
-    future::plan("sequential", gc = TRUE)
-  } else {
-    ecokit::set_parallel(
-      n_cores = min(n_cores, nrow(BetaTracePlots_BySp)), level = 2L,
-      future_max_size = future_max_size, strategy = strategy,
-      cat_timestamp = FALSE)
-    withr::defer(future::plan("sequential", gc = TRUE))
-  }
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   ecokit::cat_time("Save plots, grouped by species", level = 2L)
@@ -1226,7 +1155,7 @@ convergence_plot <- function(
         dplyr::arrange(factor(Variable, levels = VarOrder)) %>%
         dplyr::mutate(
           Plot = purrr::map2(
-            .x = Plot_File, .y = VarDesc,
+            .x = Plot_File, .y = description,
             .f = ~ {
               Plot <- ecokit::load_as(.x)$Plot +
                 ggplot2::ggtitle(.y) +
@@ -1254,10 +1183,10 @@ convergence_plot <- function(
       grDevices::dev.off()
       try(fs::file_delete(temp_file), silent = TRUE)
 
-      NumPages <- ceiling(length(SpPlots) / (beta_n_RC[1] * beta_n_RC[2]))
+      n_per_page <- beta_n_RC[1] * beta_n_RC[2]
 
-      SpPlots2 <- ecokit::split_vector(
-        vector = seq_len(length(SpPlots)), n_splits = NumPages) %>%
+      SpPlots2 <- split(
+        seq_len(length(SpPlots)), ceiling(seq_along(SpPlots) / n_per_page)) %>%
         purrr::map(
           .f = ~ {
             SpPlots[.x] %>%
@@ -1294,7 +1223,6 @@ convergence_plot <- function(
     ecokit::set_parallel(stop_cluster = TRUE, level = 2L, cat_timestamp = FALSE)
     future::plan("sequential", gc = TRUE)
   }
-
   rm(BetaTracePlots_BySp0, envir = environment())
 
   # # ..................................................................... ###
@@ -1306,6 +1234,8 @@ convergence_plot <- function(
 
   return(invisible(NULL))
 }
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++ ------
 
 # # ========================================================================== #
 # # ========================================================================== #
@@ -1320,7 +1250,7 @@ convergence_plot <- function(
 #' @author Ahmed El-Gabbas
 #' @export
 
-convergence_beta_ranges <- function(model_dir) {
+convergence_beta_ranges <- function(model_dir = NULL, n_chains = NULL) {
 
   # # ..................................................................... ###
 
@@ -1356,14 +1286,17 @@ convergence_beta_ranges <- function(model_dir) {
       beta_data_path = beta_data_path, include_backtrace = TRUE)
   }
 
+  if (!is.numeric(n_chains) || length(n_chains) != 1 || n_chains < 1) {
+    ecokit::stop_ctx(
+      "n_chains should be positive numeric vectors of length 1",
+      n_chains = n_chains)
+  }
+
   # # ..................................................................... ###
 
   # Load beta parameter information -----
 
   Beta_ranges <- ecokit::load_as(beta_data_path, n_threads = 5)
-
-  # number of chains
-  n_chains <- length(Beta_ranges$DT[[1]]$Post) # nolint: object_length_linter
 
   fct_levels <- unique(
     c("Intercept", gtools::mixedsort(unique(Beta_ranges$Variable))))
@@ -1387,7 +1320,7 @@ convergence_beta_ranges <- function(model_dir) {
             dplyr::bind_rows()
         })) %>%
     tidyr::unnest(Range) %>%
-    dplyr::select(Variable, chain, min, max)
+    dplyr::select(tidyselect::all_of(c("Variable", "chain", "min", "max")))
 
   plot_subtitle <- stringr::str_glue(
     "Values of beta parameters (<span style='color:red'>minimum</span> and \\

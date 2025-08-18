@@ -9,8 +9,8 @@
 #' @author Ahmed El-Gabbas
 
 convergence_rho <- function(
-    posterior = NULL, model_object = NULL, title = NULL,
-    chain_colors = NULL, margin_type = "histogram") {
+    posterior = NULL, title = NULL, chain_colors = NULL,
+    margin_type = "histogram", n_chains = NULL, n_samples = NULL) {
 
   temp_file <- fs::file_temp(ext = "pdf")
   grDevices::cairo_pdf(temp_file)
@@ -20,11 +20,10 @@ convergence_rho <- function(
   },
   add = TRUE)
 
-  if (is.null(posterior) || is.null(model_object) || is.null(title)) {
+  if (is.null(posterior) || is.null(title)) {
     ecokit::stop_ctx(
-      "`posterior`, `model_object`, and `title` cannot be empty",
-      posterior = posterior, model_object = model_object, title = title,
-      include_backtrace = TRUE)
+      "`posterior` and `title` cannot be empty",
+      posterior = posterior, title = title, include_backtrace = TRUE)
   }
 
   if (length(margin_type) != 1) {
@@ -37,6 +36,14 @@ convergence_rho <- function(
     ecokit::stop_ctx(
       "`margin_type` must be either 'histogram' or 'density'.",
       margin_type = margin_type, include_backtrace = TRUE)
+  }
+
+  if (!is.numeric(n_chains) || !is.numeric(n_samples) ||
+      length(n_chains) != 1 || length(n_samples) != 1 ||
+      n_chains < 1 || n_samples < 1) {
+    ecokit::stop_ctx(
+      "n_chains and n_samples should be positive numeric vectors of length 1",
+      n_chains = n_chains, n_samples = n_samples)
   }
 
   # # ..................................................................... ###
@@ -55,22 +62,11 @@ convergence_rho <- function(
 
   # # ..................................................................... ###
 
-  # Load model object
-  if (inherits(model_object, "character")) {
-    model_object <- ecokit::load_as(model_object)
-  }
-
-  # # ..................................................................... ###
-
-  SampleSize <- model_object$samples
-  NChains <- length(model_object$postList)
-  rm(model_object, envir = environment())
-
   ## Effective sample size
   ESS <- coda::effectiveSize(posterior) %>%
-    magrittr::divide_by(NChains) %>%
+    magrittr::divide_by(n_chains) %>%
     round(1) %>%
-    paste0("<b><i>Mean effective sample size:</i></b> ", ., " / ", SampleSize)
+    paste0("<b><i>Mean effective sample size:</i></b> ", ., " / ", n_samples)
 
   CI <- summary(posterior, quantiles = c(0.025, 0.975))$quantiles
   CI2 <- paste0(
@@ -109,7 +105,7 @@ convergence_rho <- function(
 
   if (is.null(chain_colors)) {
     define_chain_colors <- TRUE
-  } else if (length(chain_colors) != NChains) {
+  } else if (length(chain_colors) != n_chains) {
     define_chain_colors <- TRUE
     warning(
       "The length of provided colours != number of chains", call. = FALSE)
@@ -118,13 +114,13 @@ convergence_rho <- function(
   if (define_chain_colors) {
     # minimum value of n colours in RColorBrewer::brewer.pal is 3.
     # black and grey will be used anyway
-    if (NChains >= 4) {
+    if (n_chains >= 4) {
       chain_colors <- c(
         "black", "grey60",
-        RColorBrewer::brewer.pal(n = NChains - 2, name = "Set1"))
-    } else if (NChains == 3) {
+        RColorBrewer::brewer.pal(n = n_chains - 2, name = "Set1"))
+    } else if (n_chains == 3) {
       chain_colors <- c("black", "grey60", "red")
-    } else if (NChains == 2) {
+    } else if (n_chains == 2) {
       chain_colors <- c("black", "grey60")
     }
   }

@@ -7,10 +7,10 @@
 convergence_plot_all(
   model_dir = NULL,
   n_omega = 1000L,
-  n_cores = NULL,
-  strategy = "multisession",
   margin_type = "histogram",
-  spatial_model = TRUE
+  spatial_model = TRUE,
+  n_cores = NULL,
+  strategy = "multisession"
 )
 }
 \arguments{
@@ -21,18 +21,18 @@ subfolder.}
 \item{n_omega}{Integer. Number of species interactions sampled for Omega
 parameter diagnostics. Default: 1000L}
 
-\item{n_cores}{Integer. Number of CPU cores to use for parallel processing.}
-
-\item{strategy}{Character. The parallel processing strategy to use. Valid
-options are "sequential", "multisession" (default), "multicore", and
-"cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
-
 \item{margin_type}{Character. The type of marginal plot to add to the main
 plot. Valid options are "histogram" (default) or "density".}
 
 \item{spatial_model}{Logical. Whether the model is a spatial model. If \code{TRUE}
 (default), the function will generate additional plots for the model's
 \code{Alpha} parameter.}
+
+\item{n_cores}{Integer. Number of CPU cores to use for parallel processing.}
+
+\item{strategy}{Character. The parallel processing strategy to use. Valid
+options are "sequential", "multisession" (default), "multicore", and
+"cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 }
 \value{
 The function returns \code{invisible(NULL)} and does not return any value,

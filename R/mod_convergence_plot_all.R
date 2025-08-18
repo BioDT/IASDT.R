@@ -27,9 +27,8 @@
 #' @export
 
 convergence_plot_all <- function(
-    model_dir = NULL, n_omega = 1000L, n_cores = NULL,
-    strategy = "multisession", margin_type = "histogram",
-    spatial_model = TRUE) {
+    model_dir = NULL, n_omega = 1000L, margin_type = "histogram",
+    spatial_model = TRUE, n_cores = NULL, strategy = "multisession") {
 
   # # ..................................................................... ###
 
@@ -123,15 +122,12 @@ convergence_plot_all <- function(
     }, add = TRUE)
 
     path_coda <- Model_Info$Path_Coda[[ID]]
-    Path_FittedMod <- Model_Info$Path_FittedMod[[ID]]
     M_Name_Fit <- Model_Info$M_Name_Fit[[ID]]
     Tree <- Model_Info$Tree[[ID]]
 
-    CodaModelExist <- all(file.exists(c(path_coda, Path_FittedMod)))
-
     # Prepare traceplot ----
 
-    if (isFALSE(CodaModelExist)) {
+    if (isFALSE(fs::file_exists(path_coda))) {
 
       Path_Trace_Rho <- Path_Trace_Alpha <- Beta_Gelman <-
         Beta_ESS <- Omega_Gelman <- Omega_ESS  <- NULL
@@ -153,11 +149,16 @@ convergence_plot_all <- function(
       if ((Tree == "Tree" && !file.exists(Path_Trace_Rho)) ||
           !file.exists(Path_Trace_Alpha) || !file.exists(Path_Beta) ||
           !file.exists(Path_Omega)) {
-        Model_Obj <- ecokit::load_as(Path_FittedMod)
         Coda_Obj <- ecokit::load_as(path_coda)
       }
 
+      # names of coda
       names_coda <- names(Coda_Obj)
+      # Number of chains
+      n_chains <- length(Coda_Obj$Beta)
+
+      # Number of samples
+      n_samples <- nrow(Coda_Obj$Beta[[1]])
 
       # Rho -----
       if (!file.exists(Path_Trace_Rho) && ("Rho" %in% names_coda)) {
@@ -166,8 +167,8 @@ convergence_plot_all <- function(
             string = basename(path_coda), pattern = "_Tree|_Coda|.RData$|.qs2")
 
           PlotObj_Rho <- IASDT.R::convergence_rho(
-            posterior = Coda_Obj, model_object = Model_Obj, title = RhoTitle,
-            margin_type = margin_type)
+            posterior = Coda_Obj, title = RhoTitle, margin_type = margin_type,
+            n_chains = n_chains, n_samples = n_samples)
 
           ecokit::save_as(
             object = PlotObj_Rho, object_name = Obj_Rho,
@@ -182,23 +183,26 @@ convergence_plot_all <- function(
         Path_Trace_Rho <- NA_character_
       }
 
+      if ("Rho" %in% names_coda) Coda_Obj$Rho <- NULL
+
       # Alpha -----
       if (!file.exists(Path_Trace_Alpha) && ("Alpha" %in% names_coda) &&
           spatial_model) {
         PlotObj_Alpha <- IASDT.R::convergence_alpha(
-          posterior = Coda_Obj, model_object = Model_Obj,
+          posterior = Coda_Obj,
           title = stringr::str_remove_all(
             basename(path_coda), "_Tree|_Coda|.RData$|.qs2"),
-          margin_type = margin_type)
+          margin_type = margin_type, n_chains = n_chains, n_samples = n_samples)
 
         ecokit::save_as(
           object = PlotObj_Alpha, object_name = Obj_Alpha,
           out_path = Path_Trace_Alpha)
 
-        rm(PlotObj_Alpha, Model_Obj, envir = environment())
+        rm(PlotObj_Alpha, envir = environment())
       } else {
         Path_Trace_Alpha <- NA_character_
       }
+      if ("Alpha" %in% names_coda) Coda_Obj$Alpha <- NULL
 
       # Beta -----
       if (file.exists(Path_Beta)) {
@@ -226,6 +230,7 @@ convergence_plot_all <- function(
         save(Beta_conv, file = Path_Beta)
         rm(Beta_conv, Beta, envir = environment())
       }
+      if ("Beta" %in% names_coda) Coda_Obj$Beta <- NULL
 
       # Omega -----
 
@@ -317,7 +322,7 @@ convergence_plot_all <- function(
     Convergence_DT <- Convergence_DT %>%
       dplyr::select(tidyselect::all_of(c("M_Name_Fit", "Plots"))) %>%
       tidyr::unnest_wider("Plots") %>%
-      # arrange data alphanumerically by model name
+      # Arrange data alphanumerically by model name
       dplyr::arrange(gtools::mixedorder(M_Name_Fit))
 
     save(
@@ -454,25 +459,22 @@ convergence_plot_all <- function(
 
     # Suppress the following message: Scale for y is already present. Adding
     # another scale for y, which will replace the existing scale.
-    ecokit::quietly({
-      Plot2 <- Plot +
-        ggplot2::ylab(
-          paste0(
-            "Gelman and Rubin's convergence diagnostic ",
-            "<sub>(only values between 0.9 and 1.1)</sub>")) +
-        ggplot2::ylim(c(0.9, 1.1)) +
-        Theme
+    Plot2 <- Plot +
+      ggplot2::ylab(
+        paste0(
+          "Gelman and Rubin's convergence diagnostic ",
+          "<sub>(only values between 0.9 and 1.1)</sub>")) +
+      ggplot2::ylim(c(0.9, 1.1)) +
+      Theme
 
-      # Using ggplot2::ggsave directly does not show non-ascii characters
-      # correctly
-      grDevices::cairo_pdf(
-        filename = Plot_Path, width = 18, height = 12, onefile = TRUE)
-      print(Plot)
-      print(Plot2)
-      grDevices::dev.off()
-
-    },
-    "rows containing non-finite outside")
+    # Using ggplot2::ggsave directly does not show non-ascii characters
+    # correctly
+    grDevices::cairo_pdf(
+      filename = Plot_Path, width = 18, height = 12, onefile = TRUE)
+    print(Plot)
+    print(Plot2)
+    grDevices::dev.off()
+    rm(Plot, Plot2, envir = environment())
 
     # # .................................................................. ###
 
@@ -543,6 +545,7 @@ convergence_plot_all <- function(
     print(Plot)
     print(Plot2)
     grDevices::dev.off()
+    rm(Plot, Plot2, envir = environment())
   }
 
   # # ..................................................................... ###
@@ -583,42 +586,22 @@ convergence_plot_all <- function(
     ggplot2::coord_flip(expand = FALSE) +
     Theme
 
-  suppressMessages(suppressWarnings({
-    Plot2 <- Plot +
-      ggplot2::ylab(
-        paste0(
-          "Gelman and Rubin's convergence diagnostic ",
-          "<sub>(only values between 0.9 and 1.1)</sub>")) +
-      ggplot2::ylim(c(0.9, 1.1)) +
-      Theme
+  Plot2 <- Plot +
+    ggplot2::ylab(
+      paste0(
+        "Gelman and Rubin's convergence diagnostic ",
+        "<sub>(only values between 0.9 and 1.1)</sub>")) +
+    ggplot2::ylim(c(0.9, 1.1)) +
+    Theme
 
-    # Using ggplot2::ggsave directly does not show non-ascii characters
-    # correctly
-    grDevices::cairo_pdf(
-      filename = Plot_Path, width = 18, height = 12, onefile = TRUE)
-    print(Plot)
-    print(Plot2)
-    grDevices::dev.off()
-  }))
-
-  ecokit::quietly({
-    Plot2 <- Plot +
-      ggplot2::ylab(
-        paste0(
-          "Gelman and Rubin's convergence diagnostic ",
-          "<sub>(only values between 0.9 and 1.1)</sub>")) +
-      ggplot2::ylim(c(0.9, 1.1)) +
-      Theme
-
-    # Using ggplot2::ggsave directly does not show non-ascii characters
-    # correctly
-    grDevices::cairo_pdf(
-      filename = Plot_Path, width = 18, height = 12, onefile = TRUE)
-    print(Plot)
-    print(Plot2)
-    grDevices::dev.off()
-  },
-  "rows containing non-finite outside", "is already present")
+  # Using ggplot2::ggsave directly does not show non-ascii characters
+  # correctly
+  grDevices::cairo_pdf(
+    filename = Plot_Path, width = 18, height = 12, onefile = TRUE)
+  print(Plot)
+  print(Plot2)
+  grDevices::dev.off()
+  rm(Plot, Plot2, envir = environment())
 
   # # ..................................................................... ###
 
@@ -690,6 +673,7 @@ convergence_plot_all <- function(
   print(Plot)
   print(Plot2)
   grDevices::dev.off()
+  rm(Plot, Plot2, envir = environment())
 
   # # ..................................................................... ###
 

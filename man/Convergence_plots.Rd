@@ -11,7 +11,6 @@
 \usage{
 convergence_plot(
   path_coda = NULL,
-  path_model = NULL,
   env_file = ".env",
   title = " ",
   n_omega = 1000L,
@@ -28,30 +27,30 @@ convergence_plot(
 
 convergence_alpha(
   posterior = NULL,
-  model_object = NULL,
   title = NULL,
   n_RC = NULL,
   add_footer = TRUE,
   add_title = TRUE,
   chain_colors = NULL,
-  margin_type = "histogram"
+  margin_type = "histogram",
+  n_chains = NULL,
+  n_samples = NULL
 )
 
 convergence_rho(
   posterior = NULL,
-  model_object = NULL,
   title = NULL,
   chain_colors = NULL,
-  margin_type = "histogram"
+  margin_type = "histogram",
+  n_chains = NULL,
+  n_samples = NULL
 )
 
-convergence_beta_ranges(model_dir)
+convergence_beta_ranges(model_dir = NULL, n_chains = NULL)
 }
 \arguments{
 \item{path_coda}{Character. Path to a saved coda object containing MCMC
 samples.}
-
-\item{path_model}{Character. Path to a saved Hmsc model object.}
 
 \item{env_file}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
@@ -97,14 +96,15 @@ plot. Valid options are "histogram" (default) or "density".}
 (\code{mcmc.list}) containing posterior samples, or a file path to a saved coda
 object.}
 
-\item{model_object}{\code{Hmsc} object or character. Either a fitted Hmsc model
-object, or a file path to a saved Hmsc model.}
-
 \item{add_footer}{Logical. If \code{TRUE} (default), adds a footer with page
 numbers to each plot.}
 
 \item{add_title}{Logical. If \code{TRUE} (default), adds the main title (\code{title})
 to the plot.}
+
+\item{n_chains}{Integer. Number of MCMC chains.}
+
+\item{n_samples}{Integer. Number of MCMC samples.}
 
 \item{model_dir}{Character. A path to the model directory.}
 }

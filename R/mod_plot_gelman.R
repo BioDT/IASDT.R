@@ -288,7 +288,7 @@ plot_gelman_alpha <- function(coda_object, plotting_alpha = 0.25) {
       Plot = purrr::map2(
         .x = Var_LV, .y = data,
         .f = ~{
-          ggplot2::ggplot(data = .y) +
+          Plot <- ggplot2::ggplot(data = .y) +
             ggplot2::geom_line(
               mapping = ggplot2::aes(
                 x = Iter, y = ShrinkFactor, group = group, color = Type),
@@ -327,6 +327,8 @@ plot_gelman_alpha <- function(coda_object, plotting_alpha = 0.25) {
               panel.spacing = ggplot2::unit(0.85, "lines"),
               plot.caption = ggplot2::element_text(
                 color = "darkgrey", face = "italic", size = 10))
+          ggplot_reduce(Plot)
+
         })
     ) %>%
     dplyr::pull(Plot)
@@ -464,6 +466,7 @@ plot_gelman_beta <- function(
       panel.spacing = ggplot2::unit(0.85, "lines"),
       plot.caption = ggplot2::element_text(
         color = "darkgrey", face = "italic", size = 10))
+  return(ggplot_reduce(Gelman_Beta_Plot))
 
   # # ..................................................................... ###
 
@@ -599,7 +602,7 @@ plot_gelman_omega <- function(
       plot.caption = ggplot2::element_text(
         color = "darkgrey", face = "italic", size = 10))
 
-  return(Gelman_Omega_Plot)
+  return(ggplot_reduce(Gelman_Omega_Plot))
 }
 
 
@@ -649,8 +652,8 @@ plot_gelman_rho <- function(coda_object) {
     tidyr::pivot_longer(
       cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
     dplyr::arrange(Type, Iter) %>%
-    dplyr::mutate(Type = factor(Type)) %>%
-    ggplot2::ggplot() +
+    dplyr::mutate(Type = factor(Type))
+  Gelman_Rho_Plot <- ggplot2::ggplot(Gelman_Rho_Plot) +
     ggplot2::geom_line(
       mapping = ggplot2::aes(x = Iter, y = ShrinkFactor, color = Type)) +
     ggplot2::scale_color_manual(values = c(Median = "red", Q97_5 = "black")) +
@@ -686,6 +689,5 @@ plot_gelman_rho <- function(coda_object) {
       panel.spacing = ggplot2::unit(0.85, "lines"),
       plot.caption = ggplot2::element_text(
         color = "darkgrey", face = "italic", size = 10))
-
-  return(Gelman_Rho_Plot)
+  return(ggplot_reduce(Gelman_Rho_Plot))
 }

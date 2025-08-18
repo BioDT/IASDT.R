@@ -193,10 +193,10 @@ resp_curv_plot_species_all <- function(
       Plots <- purrr::map(
         .x = DT,
         .f = ~ {
-          .x %>%
-            dplyr::select(Species, PlotData_Quant) %>%
+          Plot <- dplyr::select(.x, Species, PlotData_Quant) %>%
             tidyr::unnest("PlotData_Quant") %>%
-            dplyr::filter(Quantile == 0.5) %>%
+            dplyr::filter(Quantile == 0.5)
+          Plot <- Plot %>%
             ggplot2::ggplot(
               mapping = ggplot2::aes(x = XVals, y = Pred, group = Species)) +
             ggplot2::geom_line(
@@ -225,6 +225,8 @@ resp_curv_plot_species_all <- function(
               panel.grid.major = ggplot2::element_line(linewidth = 0.25),
               panel.grid.minor = ggplot2::element_line(linewidth = 0.1),
               plot.margin = ggplot2::unit(c(0.1, 0.2, 0.1, 0.2), "lines"))
+          ggplot_reduce(Plot)
+
         }) %>%
         patchwork::wrap_plots(nrow = NR, ncol = NC) +
         patchwork::plot_annotation(

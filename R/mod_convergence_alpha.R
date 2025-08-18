@@ -217,6 +217,7 @@ convergence_alpha <- function(
           text = ggplot2::element_text(family = "sans"),
           legend.position = "none",
           axis.text = ggplot2::element_text(size = 12))
+      Plot <- ggplot_reduce(Plot)
 
       if (margin_type == "histogram") {
         Plot <- ggExtra::ggMarginal(
@@ -232,6 +233,7 @@ convergence_alpha <- function(
       # https://stackoverflow.com/a/78196022/3652584
       Plot$layout$t[1] <- 1
       Plot$layout$r[1] <- max(Plot$layout$r)
+      Plot <- ggplot_reduce(Plot)
 
       return(Plot)
     })

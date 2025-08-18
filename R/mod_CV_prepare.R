@@ -290,7 +290,7 @@ mod_CV_prepare <- function(
             margin = ggplot2::margin(0.2, 0, 0.2, 0.5, "cm")),
           legend.position = "none")
 
-      return(Plot)
+      return(ggplot_reduce(Plot))
     })
 
   grDevices::cairo_pdf(

@@ -46,7 +46,7 @@ convergence_plot_all <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   GPP_Thin <- M_Name_Fit <- rL <- M_thin <- M_samples <- Omega_Gelman <-
-    Omega_ESS <- Beta_Gelman <- Beta_ESS <- ESS2 <- Rho <-
+    Omega_ESS <- Beta_Gelman <- Beta_ESS <- ESS2 <-
     Path_Trace_Alpha <- NULL
 
   # # ..................................................................... ###
@@ -437,7 +437,9 @@ convergence_plot_all <- function(
           paste0("GPP", rL, " | Th", M_thin)),
         GPP_Thin = factor(
           GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
-      tidyr::unnest("Omega_Gelman") %>%
+      tidyr::unnest("Omega_Gelman")
+
+    Plot <- Plot %>%
       ggplot2::ggplot(ggplot2::aes(GPP_Thin, Omega_Gelman)) +
       ggplot2::geom_violin() +
       ggplot2::scale_y_log10() +
@@ -448,6 +450,7 @@ convergence_plot_all <- function(
         "Gelman and Rubin's convergence diagnostic (log<sub>10</sub>)") +
       ggplot2::coord_flip(expand = FALSE) +
       Theme
+    Plot <- ggplot_reduce(Plot)
 
     # Suppress the following message: Scale for y is already present. Adding
     # another scale for y, which will replace the existing scale.
@@ -505,6 +508,7 @@ convergence_plot_all <- function(
       ggplot2::ylab(paste0("Effective sample size (", NChains, " chains)")) +
       ggplot2::coord_flip(expand = FALSE) +
       Theme
+    Plot <- ggplot_reduce(Plot)
 
     Plot2 <- Convergence_DT %>%
       dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
@@ -521,7 +525,8 @@ convergence_plot_all <- function(
         GPP_Thin = factor(
           GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
       tidyr::unnest("Omega_ESS") %>%
-      dplyr::mutate(ESS2 = (100 * Omega_ESS / (M_samples * NChains))) %>%
+      dplyr::mutate(ESS2 = (100 * Omega_ESS / (M_samples * NChains)))
+    Plot2 <- Plot2 %>%
       ggplot2::ggplot(ggplot2::aes(GPP_Thin, ESS2)) +
       ggplot2::geom_violin() +
       ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
@@ -530,6 +535,7 @@ convergence_plot_all <- function(
       ggplot2::ylab("Mean effective sample size (%)") +
       ggplot2::coord_flip(expand = FALSE) +
       Theme
+    Plot2 <- ggplot_reduce(Plot2)
 
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
@@ -564,7 +570,8 @@ convergence_plot_all <- function(
         paste0("GPP", rL, " | Th", M_thin)),
       GPP_Thin = factor(
         GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
-    tidyr::unnest("Beta_Gelman") %>%
+    tidyr::unnest("Beta_Gelman")
+  Plot <- Plot %>%
     ggplot2::ggplot(ggplot2::aes(GPP_Thin, Beta_Gelman)) +
     ggplot2::geom_violin() +
     ggplot2::scale_y_log10() +
@@ -575,6 +582,7 @@ convergence_plot_all <- function(
       "Gelman and Rubin's convergence diagnostic (log<sub>10</sub>)") +
     ggplot2::coord_flip(expand = FALSE) +
     Theme
+  Plot <- ggplot_reduce(Plot)
 
   suppressMessages(suppressWarnings({
     Plot2 <- Plot +
@@ -584,6 +592,7 @@ convergence_plot_all <- function(
           "<sub>(only values between 0.9 and 1.1)</sub>")) +
       ggplot2::ylim(c(0.9, 1.1)) +
       Theme
+    Plot2 <- ggplot_reduce(Plot2)
 
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
@@ -636,7 +645,8 @@ convergence_plot_all <- function(
         paste0("GPP", rL, " | Th", M_thin)),
       GPP_Thin = factor(
         GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
-    tidyr::unnest("Beta_ESS") %>%
+    tidyr::unnest("Beta_ESS")
+  Plot <- Plot %>%
     ggplot2::ggplot(ggplot2::aes(GPP_Thin, Beta_ESS)) +
     ggplot2::geom_violin() +
     ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
@@ -645,6 +655,7 @@ convergence_plot_all <- function(
     ggplot2::ylab(paste0("Effective sample size (", NChains, " chains)")) +
     ggplot2::coord_flip(expand = FALSE) +
     Theme
+  Plot <- ggplot_reduce(Plot)
 
   Plot2 <- Convergence_DT %>%
     dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
@@ -661,7 +672,8 @@ convergence_plot_all <- function(
       GPP_Thin = factor(
         GPP_Thin, levels = rev(gtools::mixedsort(unique(GPP_Thin))))) %>%
     tidyr::unnest("Beta_ESS") %>%
-    dplyr::mutate(ESS2 = (100 * Beta_ESS / (M_samples * NChains))) %>%
+    dplyr::mutate(ESS2 = (100 * Beta_ESS / (M_samples * NChains)))
+  Plot2 <- Plot2 %>%
     ggplot2::ggplot(ggplot2::aes(GPP_Thin, ESS2)) +
     ggplot2::geom_violin() +
     ggplot2::facet_grid(Tree ~ M_samples, labeller = Label) +
@@ -670,6 +682,7 @@ convergence_plot_all <- function(
     ggplot2::ylab("Mean effective sample size (%)") +
     ggplot2::coord_flip(expand = FALSE) +
     Theme
+  Plot2 <- ggplot_reduce(Plot2)
 
   # # ..................................................................... ###
 

@@ -297,6 +297,7 @@ mod_prepare_data <- function(
       axis.title = ggplot2::element_blank(),
       axis.text = ggplot2::element_blank(),
       panel.border = ggplot2::element_blank())
+  NSpPerGrid_gg <- ggplot_reduce(NSpPerGrid_gg)
 
   ragg::agg_jpeg(
     filename = fs::path(path_model, "NSpPerGrid.jpeg"),

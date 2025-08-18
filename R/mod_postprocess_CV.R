@@ -620,7 +620,7 @@ mod_postprocess_CV_2_CPU <- function(
       metric == "TjurR2" ~ "Tjur R-squared",
       .default = NULL)
 
-    data2 %>%
+    Plot <- data2 %>%
       ggplot2::ggplot(
         mapping = ggplot2::aes(
           x = n_grids, y = pred_mean, ymin = mean_minus, ymax = mean_plus)) +
@@ -643,6 +643,7 @@ mod_postprocess_CV_2_CPU <- function(
         plot.title = ggplot2::element_text(face = "bold"),
         panel.grid.major = ggplot2::element_line(
           colour = "lightgrey", linetype = 2, linewidth = 0.25))
+    ggplot_reduce(Plot)
   }
 
   # ****************************************************************
@@ -742,7 +743,7 @@ mod_postprocess_CV_2_CPU <- function(
       metric == "TjurR2" ~ "Tjur R-squared",
       .default = NULL)
 
-    data2 %>%
+    Plot <- data2 %>%
       ggplot2::ggplot(
         mapping = ggplot2::aes(
           x = exp, y = pred, ymin = mean_minus, ymax = mean_plus)) +
@@ -759,6 +760,8 @@ mod_postprocess_CV_2_CPU <- function(
         plot.title = ggplot2::element_text(face = "bold"),
         panel.grid.major = ggplot2::element_line(
           colour = "lightgrey", linetype = 2, linewidth = 0.25))
+    ggplot_reduce(Plot)
+
   }
 
   # ****************************************************************

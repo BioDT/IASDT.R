@@ -1127,6 +1127,7 @@ plot_latent_factor <- function(
         linewidth = 0.1, colour = "grey40", linetype = 2),
       panel.border = ggplot2::element_blank(),
       panel.ontop = TRUE, panel.background = ggplot2::element_rect(fill = NA))
+  LF_Plot <- ggplot_reduce(LF_Plot)
 
   ragg::agg_jpeg(
     filename = fs::path(

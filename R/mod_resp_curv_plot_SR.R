@@ -278,6 +278,7 @@ resp_curv_plot_SR <- function(
             ggplot2::labs(title = TitleTxt, caption = Caption) +
             ggplot2::theme_bw() +
             Theme
+          Plot <- ggplot_reduce(Plot)
 
           # Using ggplot2::ggsave directly does not show non-ascii characters
           # correctly
@@ -348,6 +349,7 @@ resp_curv_plot_SR <- function(
               ggplot2::labs(title = TitleTxt, caption = Caption) +
               ggplot2::theme_bw() +
               Theme
+            Plot2 <- ggplot_reduce(Plot2)
 
             # Using ggplot2::ggsave directly does not show non-ascii characters
             # correctly

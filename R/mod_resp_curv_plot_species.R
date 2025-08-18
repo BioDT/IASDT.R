@@ -319,6 +319,7 @@ resp_curv_plot_species <- function(
               x = NULL, y = NULL, title = DT$VarDesc[[.x]],
               subtitle = DT$VarDesc2[[.x]]) +
             PlottingTheme
+          Plot_Fixed <- ggplot_reduce(Plot_Fixed)
 
           # Free y-axis
           Plot_Free <- ggplot2::ggplot(
@@ -355,6 +356,7 @@ resp_curv_plot_species <- function(
             PlottingTheme +
             ggplot2::theme(
               axis.text.y = ggplot2::element_text(angle = 90, hjust = 0.5))
+          Plot_Free <- ggplot_reduce(Plot_Free)
 
           return(
             tibble::tibble(

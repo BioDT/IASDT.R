@@ -741,6 +741,7 @@ mod_prepare_HPC <- function(
         legend.position = "inside",
         legend.position.inside = c(0.95, 0.9),
         legend.key.size = grid::unit(0.8, "cm"))
+    NSpPerGrid_Sub <- ggplot_reduce(NSpPerGrid_Sub)
 
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
@@ -914,6 +915,7 @@ mod_prepare_HPC <- function(
         strip.text = ggtext::element_markdown(size = 12),
         axis.title = ggplot2::element_blank(),
         axis.text = ggplot2::element_blank())
+    n_species_plot <- ggplot_reduce(n_species_plot)
 
     ragg::agg_jpeg(
       filename = fs::path(path_model, "Training_testing_data.jpeg"),
@@ -1177,6 +1179,7 @@ mod_prepare_HPC <- function(
               size = 15, color = "darkgrey",
               margin = ggplot2::margin(0.125, 0, 0.125, 0.5, "cm")),
             legend.position = "none")
+        Plot <- ggplot_reduce(Plot)
 
         return(Plot)
       })

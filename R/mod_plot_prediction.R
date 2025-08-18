@@ -221,7 +221,7 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
     Plot <- ggplot2::ggplot() +
       tidyterra::geom_spatraster(
         data = Map, maxcell = Inf, show.legend = ShowLegend)
-
+    Plot <- ggplot_reduce(Plot)
     rm(Map, envir = environment())
 
     if (Observed) {
@@ -506,6 +506,8 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
         ggplot2::guides(
           colour = ggplot2::guide_legend(
             override.aes = list(size = 1.5, shape = c(17, 16), alpha = 1)))
+      Plot_Final <- ggplot_reduce(Plot_Final)
+
     }
 
     plot_grid_main <- cowplot::plot_grid(

@@ -77,6 +77,8 @@ plot_evaluation <- function(model_dir) {
     ggplot2::scale_x_continuous(expand = c(0.02, 0.01)) +
     ggplot2::scale_y_continuous(expand = c(0.001, 0.005)) +
     PlottingTheme
+  Plot_RMSE <- ggplot_reduce(Plot_RMSE)
+
   Plot_AUC <- ggplot2::ggplot(
     data = Mod_Eval, mapping = ggplot2::aes(x = n_cells, y = AUC)) +
     ggplot2::geom_point(alpha = 0.5, color = "blue", size = 1, shape = 19) +
@@ -84,6 +86,8 @@ plot_evaluation <- function(model_dir) {
     ggplot2::scale_x_continuous(expand = c(0.02, 0.01)) +
     ggplot2::scale_y_continuous(expand = c(0.001, 0.005), limits = c(NA, 1)) +
     PlottingTheme
+  Plot_AUC <- ggplot_reduce(Plot_AUC)
+
   Plot_Boyce <- ggplot2::ggplot(
     data = Mod_Eval, mapping = ggplot2::aes(x = n_cells, y = Boyce)) +
     ggplot2::geom_point(alpha = 0.5, color = "blue", size = 1, shape = 19) +
@@ -92,6 +96,8 @@ plot_evaluation <- function(model_dir) {
     ggplot2::scale_x_continuous(expand = c(0.02, 0.01)) +
     ggplot2::scale_y_continuous(expand = c(0.02, 0), limits = c(NA, 1.01)) +
     PlottingTheme
+  Plot_Boyce <- ggplot_reduce(Plot_Boyce)
+
   Plot_Tjur2 <- ggplot2::ggplot(
     data = Mod_Eval, mapping = ggplot2::aes(x = n_cells, y = TjurR2)) +
     ggplot2::geom_point(alpha = 0.5, color = "blue", size = 1, shape = 19) +
@@ -100,6 +106,7 @@ plot_evaluation <- function(model_dir) {
     ggplot2::scale_x_continuous(expand = c(0.02, 0.01)) +
     ggplot2::scale_y_continuous(expand = c(0, 0), limits = c(NA, 1.035)) +
     PlottingTheme
+  Plot_Tjur2 <- ggplot_reduce(Plot_Tjur2)
 
   Plots <- patchwork::wrap_plots(
     Plot_RMSE, Plot_AUC, Plot_Boyce, Plot_Tjur2, nrow = 2, ncol = 2) +

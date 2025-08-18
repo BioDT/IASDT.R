@@ -479,6 +479,8 @@ convergence_plot <- function(
           Plot$layout$t[1] <- 1
           Plot$layout$r[1] <- max(Plot$layout$r)
 
+          Plot <- ggplot_reduce(Plot)
+
           return(tibble::tibble(SpComb = CombData$SpComb, Plot = list(Plot)))
         }
       )
@@ -521,6 +523,8 @@ convergence_plot <- function(
                 plot.subtitle = ggplot2::element_text(
                   size = 12, colour = "grey",
                   margin = ggplot2::margin(-5, 0, 0, 0)))
+
+            PlotTitle <- ggplot_reduce(PlotTitle)
 
             cowplot::plot_grid(
               plotlist = PlotObj_Omega$Plot[PlotID],
@@ -935,10 +939,13 @@ convergence_plot <- function(
                 legend.position = "none",
                 axis.text = ggplot2::element_text(size = 12))
 
+            Plot <- ggplot_reduce(Plot)
+
             suppressMessages({
               Plot2 <- Plot +
                 ggplot2::scale_y_continuous(
                   limits = c(DT_all$Var_Min, DT_all$Var_Max))
+              Plot2 <- ggplot_reduce(Plot2)
             })
 
             if (margin_type == "histogram") {
@@ -955,6 +962,7 @@ convergence_plot <- function(
             # https://stackoverflow.com/a/78196022/3652584
             Plot_Marginal$layout$t[1] <- 1
             Plot_Marginal$layout$r[1] <- max(Plot_Marginal$layout$r)
+            Plot_Marginal <- ggplot_reduce(Plot_Marginal)
 
             suppressWarnings({
               if (margin_type == "histogram") {
@@ -972,6 +980,7 @@ convergence_plot <- function(
             # https://stackoverflow.com/a/78196022/3652584
             Plot2_Marginal$layout$t[1] <- 1
             Plot2_Marginal$layout$r[1] <- max(Plot2_Marginal$layout$r)
+            Plot2_Marginal <- ggplot_reduce(Plot2_Marginal)
 
             ecokit::save_as(
               object = list(
@@ -1091,7 +1100,9 @@ convergence_plot <- function(
         ggplot2::theme(
           text = ggplot2::element_text(family = "sans"),
           plot.title = ggtext::element_markdown(
-            size = 24, hjust = 0.5, margin = ggplot2::margin(t = 15, b = 15)))
+            size = 24, hjust = 0.5,
+            margin = ggplot2::margin(t = 15, b = 15)))
+      PlotTitle <- ggplot_reduce(PlotTitle)
 
       if (!stringr::str_detect(VarDesc, "\n&nbsp;&mdash;&nbsp;")) {
         VarDesc <- paste0(VarDesc, "  ---  ")
@@ -1104,7 +1115,9 @@ convergence_plot <- function(
         ggplot2::theme(
           text = ggplot2::element_text(family = "sans"),
           plot.title = ggtext::element_markdown(
-            size = 24, hjust = 0.5, margin = ggplot2::margin(t = 15, b = 15)))
+            size = 24, hjust = 0.5,
+            margin = ggplot2::margin(t = 15, b = 15)))
+      PlotTitleFixed <- ggplot_reduce(PlotTitleFixed)
 
       BetaPlotList <- tibble::tibble(PlotID = seq_len(length(BetaPlots))) %>%
         dplyr::mutate(Page = ceiling(PlotID / (n_RC[2] * n_RC[1]))) %>%
@@ -1209,6 +1222,7 @@ convergence_plot <- function(
           text = ggplot2::element_text(family = "sans"),
           plot.title = ggtext::element_markdown(
             face = "bold", size = 24, hjust = 0.5))
+      PlotTitle <- ggplot_reduce(PlotTitle)
 
       SpDT <- dplyr::filter(BetaTracePlots_BySp, Species == x)
 
@@ -1415,6 +1429,7 @@ convergence_beta_ranges <- function(model_dir) {
       plot.title = ggplot2::element_text(size = 20, face = "bold"),
       plot.subtitle = ggtext::element_markdown(),
       axis.title = ggtext::element_markdown(face = "bold"))
+  Beta_plot <- ggplot_reduce(Beta_plot)
 
   ragg::agg_jpeg(
     filename = plot_path, width = 30, height = 20, res = 600,

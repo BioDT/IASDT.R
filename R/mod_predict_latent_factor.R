@@ -1089,7 +1089,7 @@ plot_latent_factor <- function(
   Xlim <- c(2600000, 6700000)
   Ylim <- c(1450000, 5420000)
 
-  LF_Plot <- ggplot2::ggplot() +
+  LF_Plot <- ggplot2::ggplot(environment = emptyenv()) +
     tidyterra::geom_spatraster(data = Eta_Mean_R, maxcell = Inf) +
     ggplot2::facet_wrap(~lyr, ncol = 2) +
     paletteer::scale_fill_paletteer_c(
@@ -1127,7 +1127,6 @@ plot_latent_factor <- function(
         linewidth = 0.1, colour = "grey40", linetype = 2),
       panel.border = ggplot2::element_blank(),
       panel.ontop = TRUE, panel.background = ggplot2::element_rect(fill = NA))
-  LF_Plot <- ggplot_reduce(LF_Plot)
 
   ragg::agg_jpeg(
     filename = fs::path(

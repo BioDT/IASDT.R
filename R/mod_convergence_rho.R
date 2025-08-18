@@ -130,7 +130,7 @@ convergence_rho <- function(
   }
 
   Plot <- ggplot2::ggplot(
-    data = RhoDF,
+    data = RhoDF, environment = emptyenv(),
     mapping = ggplot2::aes(x = ID, y = Value, color = factor(Chain))) +
     ggplot2::geom_line(linewidth = 0.15, alpha = 0.6) +
     ggplot2::geom_smooth(
@@ -157,7 +157,6 @@ convergence_rho <- function(
     ggplot2::theme(
       text = ggplot2::element_text(family = "sans"),
       legend.position = "none", axis.text = ggplot2::element_text(size = 14))
-  Plot <- ggplot_reduce(Plot)
 
   if (margin_type == "histogram") {
     Plot1 <- ggExtra::ggMarginal(
@@ -173,7 +172,6 @@ convergence_rho <- function(
   # https://stackoverflow.com/a/78196022/3652584
   Plot1$layout$t[1] <- 1
   Plot1$layout$r[1] <- max(Plot1$layout$r)
-  Plot1 <- ggplot_reduce(Plot1)
 
   return(Plot1)
 }

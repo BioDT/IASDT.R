@@ -249,7 +249,8 @@ resp_curv_plot_SR <- function(
 
           # Plot
           Plot <- ggplot2::ggplot(
-            data = Observed, mapping = ggplot2::aes(x = XVals, y = Pred)) +
+            data = Observed, mapping = ggplot2::aes(x = XVals, y = Pred),
+            environment = emptyenv()) +
             ggplot2::geom_jitter(
               shape = 16, width = 0, height = 0.02, alpha = 0.2, size = 0.75,
               colour = "darkgrey") +
@@ -278,7 +279,6 @@ resp_curv_plot_SR <- function(
             ggplot2::labs(title = TitleTxt, caption = Caption) +
             ggplot2::theme_bw() +
             Theme
-          Plot <- ggplot_reduce(Plot)
 
           # Using ggplot2::ggsave directly does not show non-ascii characters
           # correctly
@@ -318,7 +318,8 @@ resp_curv_plot_SR <- function(
                 "</span>")
 
             Plot2 <- ggplot2::ggplot(
-              data = Observed2, mapping = ggplot2::aes(x = XVals, y = Pred)) +
+              data = Observed2, mapping = ggplot2::aes(x = XVals, y = Pred),
+              environment = emptyenv()) +
               ggplot2::geom_jitter(
                 shape = 16, width = 0, height = 0.02, alpha = 0.2, size = 0.75,
                 colour = "darkgrey") +
@@ -349,7 +350,6 @@ resp_curv_plot_SR <- function(
               ggplot2::labs(title = TitleTxt, caption = Caption) +
               ggplot2::theme_bw() +
               Theme
-            Plot2 <- ggplot_reduce(Plot2)
 
             # Using ggplot2::ggsave directly does not show non-ascii characters
             # correctly

@@ -288,7 +288,7 @@ plot_gelman_alpha <- function(coda_object, plotting_alpha = 0.25) {
       Plot = purrr::map2(
         .x = Var_LV, .y = data,
         .f = ~{
-          Plot <- ggplot2::ggplot(data = .y) +
+          Plot <- ggplot2::ggplot(data = .y, environment = emptyenv()) +
             ggplot2::geom_line(
               mapping = ggplot2::aes(
                 x = Iter, y = ShrinkFactor, group = group, color = Type),
@@ -327,7 +327,7 @@ plot_gelman_alpha <- function(coda_object, plotting_alpha = 0.25) {
               panel.spacing = ggplot2::unit(0.85, "lines"),
               plot.caption = ggplot2::element_text(
                 color = "darkgrey", face = "italic", size = 10))
-          ggplot_reduce(Plot)
+          Plot
 
         })
     ) %>%
@@ -430,7 +430,8 @@ plot_gelman_beta <- function(
 
   # # ..................................................................... ###
 
-  Gelman_Beta_Plot <- ggplot2::ggplot(data = Gelman_Beta_Vals) +
+  Gelman_Beta_Plot <- ggplot2::ggplot(
+    data = Gelman_Beta_Vals, environment = emptyenv()) +
     ggplot2::geom_line(
       mapping = ggplot2::aes(
         x = Iter, y = ShrinkFactor, group = group, color = Type),
@@ -466,7 +467,7 @@ plot_gelman_beta <- function(
       panel.spacing = ggplot2::unit(0.85, "lines"),
       plot.caption = ggplot2::element_text(
         color = "darkgrey", face = "italic", size = 10))
-  return(ggplot_reduce(Gelman_Beta_Plot))
+  return(Gelman_Beta_Plot)
 
   # # ..................................................................... ###
 
@@ -561,7 +562,8 @@ plot_gelman_omega <- function(
 
   # # ..................................................................... ###
 
-  Gelman_Omega_Plot <- ggplot2::ggplot(data = Gelman_OmegaDT) +
+  Gelman_Omega_Plot <- ggplot2::ggplot(
+    data = Gelman_OmegaDT, environment = emptyenv()) +
     ggplot2::geom_line(
       mapping = ggplot2::aes(
         x = Iter, y = ShrinkFactor, group = group, color = Type),
@@ -602,7 +604,7 @@ plot_gelman_omega <- function(
       plot.caption = ggplot2::element_text(
         color = "darkgrey", face = "italic", size = 10))
 
-  return(ggplot_reduce(Gelman_Omega_Plot))
+  return(Gelman_Omega_Plot)
 }
 
 
@@ -653,7 +655,8 @@ plot_gelman_rho <- function(coda_object) {
       cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
     dplyr::arrange(Type, Iter) %>%
     dplyr::mutate(Type = factor(Type))
-  Gelman_Rho_Plot <- ggplot2::ggplot(Gelman_Rho_Plot) +
+  Gelman_Rho_Plot <- ggplot2::ggplot(
+    Gelman_Rho_Plot, environment = emptyenv()) +
     ggplot2::geom_line(
       mapping = ggplot2::aes(x = Iter, y = ShrinkFactor, color = Type)) +
     ggplot2::scale_color_manual(values = c(Median = "red", Q97_5 = "black")) +
@@ -689,5 +692,5 @@ plot_gelman_rho <- function(coda_object) {
       panel.spacing = ggplot2::unit(0.85, "lines"),
       plot.caption = ggplot2::element_text(
         color = "darkgrey", face = "italic", size = 10))
-  return(ggplot_reduce(Gelman_Rho_Plot))
+  return(Gelman_Rho_Plot)
 }

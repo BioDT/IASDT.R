@@ -218,10 +218,9 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
       PlotLimits <- limits
     }
 
-    Plot <- ggplot2::ggplot() +
+    Plot <- ggplot2::ggplot(environment = emptyenv()) +
       tidyterra::geom_spatraster(
         data = Map, maxcell = Inf, show.legend = ShowLegend)
-    Plot <- ggplot_reduce(Plot)
     rm(Map, envir = environment())
 
     if (Observed) {
@@ -452,7 +451,8 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
       Plot_Final <- c(terra::unwrap(R_SR), R_mean_Clamp, R_mean_NoClamp) %>%
         terra::as.data.frame(na.rm = TRUE) %>%
         stats::setNames(c("Observed", "Clamp", "NoClamp")) %>%
-        ggplot2::ggplot(mapping = ggplot2::aes(x = Observed)) +
+        ggplot2::ggplot(
+          mapping = ggplot2::aes(x = Observed), environment = emptyenv()) +
         ggplot2::geom_point(
           ggplot2::aes(y = Clamp, colour = "with clamping"),
           shape = 17, size = 0.03, alpha = 0.2) +
@@ -506,8 +506,6 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
         ggplot2::guides(
           colour = ggplot2::guide_legend(
             override.aes = list(size = 1.5, shape = c(17, 16), alpha = 1)))
-      Plot_Final <- ggplot_reduce(Plot_Final)
-
     }
 
     plot_grid_main <- cowplot::plot_grid(

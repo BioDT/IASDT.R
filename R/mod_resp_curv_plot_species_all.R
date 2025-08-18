@@ -198,7 +198,8 @@ resp_curv_plot_species_all <- function(
             dplyr::filter(Quantile == 0.5)
           Plot <- Plot %>%
             ggplot2::ggplot(
-              mapping = ggplot2::aes(x = XVals, y = Pred, group = Species)) +
+              mapping = ggplot2::aes(x = XVals, y = Pred, group = Species),
+              environment = emptyenv()) +
             ggplot2::geom_line(
               linetype = 1, linewidth = 0.3,
               colour = "blue", alpha = plotting_alpha) +
@@ -225,7 +226,7 @@ resp_curv_plot_species_all <- function(
               panel.grid.major = ggplot2::element_line(linewidth = 0.25),
               panel.grid.minor = ggplot2::element_line(linewidth = 0.1),
               plot.margin = ggplot2::unit(c(0.1, 0.2, 0.1, 0.2), "lines"))
-          ggplot_reduce(Plot)
+          Plot
 
         }) %>%
         patchwork::wrap_plots(nrow = NR, ncol = NC) +

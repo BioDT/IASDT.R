@@ -198,25 +198,3 @@
 
   return(ram)
 }
-
-
-
-# # ..................................................................... ###
-
-#' Reduce a ggplot object to a simplified ggplot grob
-#'
-#' This function takes a ggplot object and converts it into a simplified ggplot
-#' grob using `ggplot2::ggplotGrob` and wraps it as a ggpubr ggplot object.
-#'
-#' @param gg A ggplot object to be reduced.
-#' @return A ggpubr ggplot object containing the simplified grob.
-#'
-#' @keywords internal
-#' @noRd
-
-ggplot_reduce <- function(gg) {
-  if (!inherits(gg, "gg")) {
-    ecokit::stop_ctx("Input must be a ggplot object")
-  }
-  ggpubr::as_ggplot(ggplot2::ggplotGrob(gg))
-}

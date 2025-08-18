@@ -267,7 +267,7 @@ mod_prepare_data <- function(
       "- Considering only IAS with &#8805; {n_pres_per_species}",
       " presence grid cells"))
 
-  NSpPerGrid_gg <- ggplot2::ggplot() +
+  NSpPerGrid_gg <- ggplot2::ggplot(environment = emptyenv()) +
     ggplot2::geom_sf(
       data = EU_Bound, fill = "gray95", colour = "black", linewidth = 0.15) +
     tidyterra::geom_spatraster(data = R_Sp_sum) +
@@ -297,7 +297,6 @@ mod_prepare_data <- function(
       axis.title = ggplot2::element_blank(),
       axis.text = ggplot2::element_blank(),
       panel.border = ggplot2::element_blank())
-  NSpPerGrid_gg <- ggplot_reduce(NSpPerGrid_gg)
 
   ragg::agg_jpeg(
     filename = fs::path(path_model, "NSpPerGrid.jpeg"),

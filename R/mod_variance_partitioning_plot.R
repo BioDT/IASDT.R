@@ -272,7 +272,6 @@ variance_partitioning_plot <- function(
     ggplot2::labs(title = Title_Relative) +
     Theme +
     ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
-  Plot_Relative <- ggplot_reduce(Plot_Relative)
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   ragg::agg_jpeg(
@@ -291,7 +290,8 @@ variance_partitioning_plot <- function(
 
   Plot_Relative_Orig <- DT_Relative_Orig %>%
     ggplot2::ggplot(
-      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label)) +
+      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label),
+      environment = emptyenv()) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
     ggplot2::ylab("Species") +
@@ -302,7 +302,6 @@ variance_partitioning_plot <- function(
     ggplot2::labs(title = Title_Relative_Orig) +
     Theme +
     ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
-  Plot_Relative_Orig <- ggplot_reduce(Plot_Relative_Orig)
 
   ragg::agg_jpeg(
     filename = fs::path(Path_VarPar, "VarPar_Relative_ByTaxonomy.jpeg"),
@@ -321,7 +320,8 @@ variance_partitioning_plot <- function(
 
   Plot_Relative_TjurR2 <- DT_Relative_TjurR2 %>%
     ggplot2::ggplot(
-      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label)) +
+      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label),
+      environment = emptyenv()) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
     ggplot2::ylab("Species") +
@@ -332,7 +332,6 @@ variance_partitioning_plot <- function(
     ggplot2::labs(title = Title_Relative_TjurR2) +
     Theme +
     ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
-  Plot_Relative_TjurR2 <- ggplot_reduce(Plot_Relative_TjurR2)
 
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
@@ -353,7 +352,8 @@ variance_partitioning_plot <- function(
 
   Plot_Relative_NonSpatial <- DT_Relative_NonSpatial %>%
     ggplot2::ggplot(
-      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label)) +
+      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label),
+      environment = emptyenv()) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
     ggplot2::ylab("Species") +
@@ -364,7 +364,6 @@ variance_partitioning_plot <- function(
     ggplot2::labs(title = Title_NonSpatial) +
     Theme +
     ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
-  Plot_Relative_NonSpatial <- ggplot_reduce(Plot_Relative_NonSpatial)
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   ragg::agg_jpeg(
@@ -461,7 +460,8 @@ variance_partitioning_plot <- function(
 
   Plot_Raw <- DT_Raw_Orig %>%
     ggplot2::ggplot(
-      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label)) +
+      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label),
+      environment = emptyenv()) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
     ggplot2::ylab("Species") +
@@ -472,7 +472,6 @@ variance_partitioning_plot <- function(
     ggplot2::labs(title = Title_Raw) +
     Theme +
     ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
-  Plot_Raw <- ggplot_reduce(Plot_Raw)
 
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
@@ -495,7 +494,8 @@ variance_partitioning_plot <- function(
 
   Plot_Raw_TotalRaw <- DT_Raw_TotalRaw %>%
     ggplot2::ggplot(
-      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label)) +
+      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label),
+      environment = emptyenv()) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
     ggplot2::ylab("Species") +
@@ -506,7 +506,6 @@ variance_partitioning_plot <- function(
     ggplot2::labs(title = Title_Raw_TotalRaw) +
     Theme +
     ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
-  Plot_Raw_TotalRaw <- ggplot_reduce(Plot_Raw_TotalRaw)
 
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
@@ -528,7 +527,8 @@ variance_partitioning_plot <- function(
 
   Plot_Raw_NonSpatial <- DT_Raw_NonSpatial %>%
     ggplot2::ggplot(
-      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label)) +
+      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label),
+      environment = emptyenv()) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
     ggplot2::ylab("Species") +
@@ -539,7 +539,6 @@ variance_partitioning_plot <- function(
     ggplot2::labs(title = Title_Raw_NonSpatial) +
     Theme +
     ggplot2::guides(fill = ggplot2::guide_legend(nrow = 1, byrow = TRUE))
-  Plot_Raw_NonSpatial <- ggplot_reduce(Plot_Raw_NonSpatial)
 
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly

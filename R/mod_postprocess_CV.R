@@ -623,7 +623,8 @@ mod_postprocess_CV_2_CPU <- function(
     Plot <- data2 %>%
       ggplot2::ggplot(
         mapping = ggplot2::aes(
-          x = n_grids, y = pred_mean, ymin = mean_minus, ymax = mean_plus)) +
+          x = n_grids, y = pred_mean, ymin = mean_minus, ymax = mean_plus),
+        environment = emptyenv()) +
       # plot error bar then the mean point on top of it
       ggplot2::geom_errorbar(linewidth = 0.25, colour = "grey55") +
       ggplot2::geom_point(size = 0.75, colour = "blue", pch = 19) +
@@ -643,7 +644,7 @@ mod_postprocess_CV_2_CPU <- function(
         plot.title = ggplot2::element_text(face = "bold"),
         panel.grid.major = ggplot2::element_line(
           colour = "lightgrey", linetype = 2, linewidth = 0.25))
-    ggplot_reduce(Plot)
+    Plot
   }
 
   # ****************************************************************
@@ -746,7 +747,8 @@ mod_postprocess_CV_2_CPU <- function(
     Plot <- data2 %>%
       ggplot2::ggplot(
         mapping = ggplot2::aes(
-          x = exp, y = pred, ymin = mean_minus, ymax = mean_plus)) +
+          x = exp, y = pred, ymin = mean_minus, ymax = mean_plus),
+        environment = emptyenv()) +
       ggplot2::geom_errorbar(linewidth = 0.25, colour = "grey55") +
       ggplot2::geom_point(size = 0.75, colour = "blue", pch = 19) +
       ggplot2::geom_abline(
@@ -760,7 +762,7 @@ mod_postprocess_CV_2_CPU <- function(
         plot.title = ggplot2::element_text(face = "bold"),
         panel.grid.major = ggplot2::element_line(
           colour = "lightgrey", linetype = 2, linewidth = 0.25))
-    ggplot_reduce(Plot)
+    Plot
 
   }
 

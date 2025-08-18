@@ -261,7 +261,7 @@ mod_CV_prepare <- function(
         magrittr::extract2("blocks") %>%
         dplyr::mutate(folds = factor(folds))
 
-      Plot <- ggplot2::ggplot() +
+      Plot <- ggplot2::ggplot(environment = emptyenv()) +
         ggplot2::geom_sf(
           data = EU_Bound, fill = "gray95", colour = "darkgrey",
           linewidth = 0.5) +
@@ -290,7 +290,7 @@ mod_CV_prepare <- function(
             margin = ggplot2::margin(0.2, 0, 0.2, 0.5, "cm")),
           legend.position = "none")
 
-      return(ggplot_reduce(Plot))
+      return(Plot)
     })
 
   grDevices::cairo_pdf(

@@ -183,7 +183,7 @@ convergence_alpha <- function(
         dplyr::mutate(Smoothed = pmax(predict(loess(Value ~ Iter)), 0))
 
       Plot <- ggplot2::ggplot(
-        data = PlotDT,
+        data = PlotDT, environment = emptyenv(),
         mapping = ggplot2::aes(
           x = Iter, y = Value, color = Chain, group = Chain)) +
         ggplot2::geom_line(linewidth = 0.125, alpha = 0.6) +
@@ -217,7 +217,6 @@ convergence_alpha <- function(
           text = ggplot2::element_text(family = "sans"),
           legend.position = "none",
           axis.text = ggplot2::element_text(size = 12))
-      Plot <- ggplot_reduce(Plot)
 
       if (margin_type == "histogram") {
         Plot <- ggExtra::ggMarginal(
@@ -233,7 +232,6 @@ convergence_alpha <- function(
       # https://stackoverflow.com/a/78196022/3652584
       Plot$layout$t[1] <- 1
       Plot$layout$r[1] <- max(Plot$layout$r)
-      Plot <- ggplot_reduce(Plot)
 
       return(Plot)
     })

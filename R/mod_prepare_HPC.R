@@ -711,7 +711,7 @@ mod_prepare_HPC <- function(
       " presence grid cells in the selected countries (",
       NGrids, " grid cells)")
 
-    NSpPerGrid_Sub <- ggplot2::ggplot() +
+    NSpPerGrid_Sub <- ggplot2::ggplot(environment = emptyenv()) +
       tidyterra::geom_spatraster(data = NSpSubset) +
       tidyterra::scale_fill_whitebox_c(
         na.value = "transparent", palette = "bl_yl_rd", name = NULL) +
@@ -741,7 +741,6 @@ mod_prepare_HPC <- function(
         legend.position = "inside",
         legend.position.inside = c(0.95, 0.9),
         legend.key.size = grid::unit(0.8, "cm"))
-    NSpPerGrid_Sub <- ggplot_reduce(NSpPerGrid_Sub)
 
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
@@ -889,7 +888,7 @@ mod_prepare_HPC <- function(
       magrittr::extract2(CV_fit_type) %>%
       magrittr::extract2("blocks")
 
-    n_species_plot <- ggplot2::ggplot() +
+    n_species_plot <- ggplot2::ggplot(environment = emptyenv()) +
       ggplot2::geom_sf(
         data = EU_Bound, fill = "gray98", colour = "black", linewidth = 0.15) +
       tidyterra::geom_spatraster(data = n_species_all) +
@@ -915,7 +914,6 @@ mod_prepare_HPC <- function(
         strip.text = ggtext::element_markdown(size = 12),
         axis.title = ggplot2::element_blank(),
         axis.text = ggplot2::element_blank())
-    n_species_plot <- ggplot_reduce(n_species_plot)
 
     ragg::agg_jpeg(
       filename = fs::path(path_model, "Training_testing_data.jpeg"),
@@ -1150,7 +1148,7 @@ mod_prepare_HPC <- function(
         NKnots <- nrow(GPP_Knots[[paste0("GPP_", .x)]]$sKnot) %>%
           formatC(format = "d", big.mark = ",")
 
-        Plot <- ggplot2::ggplot() +
+        Plot <- ggplot2::ggplot(environment = emptyenv()) +
           ggplot2::geom_sf(
             data = EU_Bound, fill = "gray95", colour = "darkgrey",
             linewidth = 0.4) +
@@ -1179,8 +1177,6 @@ mod_prepare_HPC <- function(
               size = 15, color = "darkgrey",
               margin = ggplot2::margin(0.125, 0, 0.125, 0.5, "cm")),
             legend.position = "none")
-        Plot <- ggplot_reduce(Plot)
-
         return(Plot)
       })
 

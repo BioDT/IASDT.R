@@ -835,7 +835,7 @@ convergence_plot <- function(
           plot.title.position = "panel",
           plot.margin = ggplot2::margin(1, 0, 1, 0, unit = "pt"),
           plot.title = ggtext::element_markdown(
-            hjust = 0.5, size = 11, margin = ggplot2::margin(0, 0, -3.5, 0)))
+            hjust = 0.5, size = 11, margin = ggplot2::margin(-0.5, 0, -2.5, 0)))
     }
 
     if (margin_type == "histogram") {

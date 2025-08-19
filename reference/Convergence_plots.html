@@ -72,8 +72,7 @@ on HPC environments.</p>
 <span>  n_cores <span class="op">=</span> <span class="fl">8L</span>,</span>
 <span>  strategy <span class="op">=</span> <span class="st">"multisession"</span>,</span>
 <span>  future_max_size <span class="op">=</span> <span class="fl">2000L</span>,</span>
-<span>  n_RC <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">2L</span><span class="op">)</span>,</span>
-<span>  beta_n_RC <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3L</span>, <span class="fl">3L</span><span class="op">)</span>,</span>
+<span>  n_rc <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">2L</span><span class="op">)</span>, omega <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">2L</span><span class="op">)</span>, beta <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3L</span>, <span class="fl">3L</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  pages_per_file <span class="op">=</span> <span class="fl">20L</span>,</span>
 <span>  chain_colors <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  margin_type <span class="op">=</span> <span class="st">"histogram"</span>,</span>
@@ -145,15 +144,10 @@ global variables identified. See <code>future.globals.maxSize</code> argument of
 <a href="https://future.futureverse.org/reference/zzz-future.options.html" class="external-link">future::future.options</a> for more details.</p></dd>
 
 
-<dt id="arg-n-rc">n_RC<a class="anchor" aria-label="anchor" href="#arg-n-rc"></a></dt>
-<dd><p>Numeric vector. Grid layout (rows×columns) for arranging
-alpha parameter plots. Default: <code>c(2, 2)</code>. If <code>NULL</code>, the layout is
-automatically determined based on the number of alpha levels.</p></dd>
-
-
-<dt id="arg-beta-n-rc">beta_n_RC<a class="anchor" aria-label="anchor" href="#arg-beta-n-rc"></a></dt>
-<dd><p>Numeric vector. The grid layout (rows×columns) for
-arranging beta parameter plots. Default: <code>c(3, 3)</code>.</p></dd>
+<dt id="arg-n-rc">n_rc<a class="anchor" aria-label="anchor" href="#arg-n-rc"></a></dt>
+<dd><p>List of 3 numeric vectors representing the number of rows and
+columns for grid layout of the convergence plots of alpha, omega, and beta
+parameters. .</p></dd>
 
 
 <dt id="arg-pages-per-file">pages_per_file<a class="anchor" aria-label="anchor" href="#arg-pages-per-file"></a></dt>

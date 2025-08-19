@@ -9,7 +9,7 @@
 #' @author Ahmed El-Gabbas
 
 convergence_alpha <- function(
-    posterior = NULL, title = NULL, n_RC = NULL, add_footer = TRUE,
+    posterior = NULL, title = NULL, n_rc_alpha = c(2L, 3L), add_footer = TRUE,
     add_title = TRUE, chain_colors = NULL, margin_type = "histogram",
     n_chains = NULL, n_samples = NULL) {
 
@@ -142,8 +142,8 @@ convergence_alpha <- function(
         }),
       Value = Value / 1000)
 
-  if (is.null(n_RC)) {
-    n_RC <- dplyr::case_when(
+  if (is.null(n_rc_alpha)) {
+    n_rc_alpha <- dplyr::case_when(
       NLV == 1 ~ c(1, 1), NLV == 2 ~ c(1, 2),
       NLV == 3 ~ c(1, 3), NLV == 4 ~ c(2, 2),
       .default = c(2, 3))
@@ -242,14 +242,14 @@ convergence_alpha <- function(
     })
 
   layout_matrix <- matrix(
-    seq_len(n_RC[1] * n_RC[2]), nrow = n_RC[1], byrow = TRUE)
+    seq_len(n_rc_alpha[1] * n_rc_alpha[2]), nrow = n_rc_alpha[1], byrow = TRUE)
 
   if (add_title && add_footer) {
     Plots <- gridExtra::marrangeGrob(
       Plots, bottom = bquote(paste0("page ", g, " of ", npages)),
       top = grid::textGrob(
         label = title, gp = grid::gpar(fontface = "bold", fontsize = 20)),
-      nrow = n_RC[1], ncol = n_RC[2], layout_matrix = layout_matrix)
+      nrow = n_rc_alpha[1], ncol = n_rc_alpha[2], layout_matrix = layout_matrix)
   }
 
   if (add_title && isFALSE(add_footer)) {
@@ -257,18 +257,19 @@ convergence_alpha <- function(
       Plots, bottom = NULL,
       top = grid::textGrob(
         label = title, gp = grid::gpar(fontface = "bold", fontsize = 20)),
-      nrow = n_RC[1], ncol = n_RC[2], layout_matrix = layout_matrix)
+      nrow = n_rc_alpha[1], ncol = n_rc_alpha[2], layout_matrix = layout_matrix)
   }
 
   if (isFALSE(add_title) && add_footer) {
     Plots <- gridExtra::marrangeGrob(
       Plots, bottom = bquote(paste0("page ", g, " of ", npages)),
-      top = NULL, nrow = n_RC[1], ncol = n_RC[2], layout_matrix = layout_matrix)
+      top = NULL, nrow = n_rc_alpha[1], ncol = n_rc_alpha[2],
+      layout_matrix = layout_matrix)
   }
 
   if (isFALSE(add_title) && isFALSE(add_footer)) {
     Plots <- cowplot::plot_grid(
-      plotlist = Plots, ncol = n_RC[2], nrow = n_RC[1],
+      plotlist = Plots, ncol = n_rc_alpha[2], nrow = n_rc_alpha[1],
       align = "hv", byrow = TRUE)
   }
 

@@ -10,7 +10,8 @@ convergence_plot_all(
   margin_type = "histogram",
   spatial_model = TRUE,
   n_cores = NULL,
-  strategy = "multisession"
+  strategy = "multisession",
+  n_rc_alpha = c(2L, 3L)
 )
 }
 \arguments{
@@ -33,6 +34,9 @@ plot. Valid options are "histogram" (default) or "density".}
 \item{strategy}{Character. The parallel processing strategy to use. Valid
 options are "sequential", "multisession" (default), "multicore", and
 "cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
+
+\item{n_rc_alpha}{Numeric vector of length 2. Number of rows and columns for
+the convergence plots of the \code{alpha} parameter. Default: \code{c(2L, 3L)}.}
 }
 \value{
 The function returns \code{invisible(NULL)} and does not return any value,

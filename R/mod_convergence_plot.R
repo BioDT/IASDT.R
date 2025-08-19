@@ -26,6 +26,8 @@
 #' @param n_rc List of 3 numeric vectors representing the number of rows and
 #'   columns for grid layout of the convergence plots of alpha, omega, and beta
 #'   parameters. .
+#' @param n_rc_alpha Numeric vector of length 2. Number of rows and columns for
+#'   the convergence plots of the `alpha` parameter. Default: `c(2L, 3L)`.
 #' @param pages_per_file Integer. Number of plots per page in the Omega
 #'   parameter output. Default: 20L.
 #' @param chain_colors Character vector. MCMC chain colours (optional). Default:
@@ -63,7 +65,7 @@
 convergence_plot <- function(
     path_coda = NULL, env_file = ".env", title = " ", n_omega = 1000L,
     n_cores = 8L, strategy = "multisession", future_max_size = 2000L,
-    n_rc = list(alpha = c(2L, 2L), omega = c(2L, 2L), beta = c(3L, 3L)),
+    n_rc = list(alpha = c(2L, 3L), omega = c(2L, 2L), beta = c(3L, 3L)),
     pages_per_file = 20L, chain_colors = NULL, margin_type = "histogram",
     spatial_model = TRUE) {
 
@@ -368,7 +370,7 @@ convergence_plot <- function(
     }
 
     PlotObj_Alpha <- IASDT.R::convergence_alpha(
-      posterior = Coda_Obj, title = title, n_rc = n_rc_alpha,
+      posterior = Coda_Obj, title = title, n_rc_alpha = n_rc_alpha,
       add_footer = FALSE, add_title = FALSE, chain_colors = chain_colors,
       n_chains = n_chains, n_samples = n_samples)
 

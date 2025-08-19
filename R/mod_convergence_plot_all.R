@@ -28,7 +28,8 @@
 
 convergence_plot_all <- function(
     model_dir = NULL, n_omega = 1000L, margin_type = "histogram",
-    spatial_model = TRUE, n_cores = NULL, strategy = "multisession") {
+    spatial_model = TRUE, n_cores = NULL, strategy = "multisession",
+    n_rc_alpha = c(2L, 3L)) {
 
   # # ..................................................................... ###
 
@@ -186,7 +187,8 @@ convergence_plot_all <- function(
           posterior = Coda_Obj,
           title = stringr::str_remove_all(
             basename(path_coda), "_Tree|_Coda|.RData$|.qs2"),
-          margin_type = margin_type, n_chains = n_chains, n_samples = n_samples)
+          n_rc_alpha = n_rc_alpha, margin_type = margin_type,
+          n_chains = n_chains, n_samples = n_samples)
 
         ecokit::save_as(
           object = PlotObj_Alpha, object_name = Obj_Alpha,

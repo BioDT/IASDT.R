@@ -17,7 +17,7 @@ convergence_plot(
   n_cores = 8L,
   strategy = "multisession",
   future_max_size = 2000L,
-  n_rc = list(alpha = c(2L, 2L), omega = c(2L, 2L), beta = c(3L, 3L)),
+  n_rc = list(alpha = c(2L, 3L), omega = c(2L, 2L), beta = c(3L, 3L)),
   pages_per_file = 20L,
   chain_colors = NULL,
   margin_type = "histogram",
@@ -27,7 +27,7 @@ convergence_plot(
 convergence_alpha(
   posterior = NULL,
   title = NULL,
-  n_RC = NULL,
+  n_rc_alpha = c(2L, 3L),
   add_footer = TRUE,
   add_title = TRUE,
   chain_colors = NULL,
@@ -91,6 +91,9 @@ plot. Valid options are "histogram" (default) or "density".}
 \item{posterior}{\code{mcmc.list} or character. Either an MCMC object
 (\code{mcmc.list}) containing posterior samples, or a file path to a saved coda
 object.}
+
+\item{n_rc_alpha}{Numeric vector of length 2. Number of rows and columns for
+the convergence plots of the \code{alpha} parameter. Default: \code{c(2L, 3L)}.}
 
 \item{add_footer}{Logical. If \code{TRUE} (default), adds a footer with page
 numbers to each plot.}

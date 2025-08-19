@@ -565,13 +565,18 @@ convergence_plot <- function(
                   margin = ggplot2::margin(-5, 0, 0, 0)))
 
             ecokit::quietly({
-              cowplot::plot_grid(
+              plot <- cowplot::plot_grid(
                 plotlist = PlotObj_Omega$Plot[PlotID],
-                ncol = n_rc_omega[2], nrow = n_rc_omega[1], align = "hv") %>%
-                cowplot::plot_grid(
-                  PlotTitle, ., ncol = 1, rel_heights = c(0.05, 1))
+                ncol = n_rc_omega[2], nrow = n_rc_omega[1], align = "hv")
             },
             "Removed [0-9]+ rows containing non-finite outside the scale range")
+            
+            plot <- plot %>%
+              cowplot::plot_grid(
+                PlotTitle, ., ncol = 1, rel_heights = c(0.05, 1))
+          
+            return(plot)
+
           }
         )
       )

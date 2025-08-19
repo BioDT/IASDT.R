@@ -38,7 +38,8 @@ predict_hmsc(
   evaluate = FALSE,
   evaluation_name = NULL,
   evaluation_directory = "Evaluation",
-  verbose = TRUE
+  verbose = TRUE,
+  spatial_model = TRUE
 )
 }
 \arguments{
@@ -155,6 +156,9 @@ will be saved. Defaults to \code{Evaluation}.}
 
 \item{verbose}{Logical. Whether to print a message upon successful saving of
 files. Defaults to \code{FALSE}.}
+
+\item{spatial_model}{Logical. Whether the fitted model is a spatial model.
+Defaults to \code{TRUE}.}
 }
 \description{
 This function modifies the \code{Hmsc:::predict.Hmsc} function.

@@ -194,7 +194,13 @@ mod_postprocess_1_CPU <- function(
     LF_temp_cleanup = TRUE, LF_check = FALSE, temp_cleanup = TRUE,
     TF_environ = NULL, pred_new_sites = TRUE, n_cores_VP = 10L,
     width_omega = 26, height_omega = 22.5, width_beta = 25, height_beta = 35,
-    spatial_model = TRUE, future_max_size = 1500L) {
+    spatial_model = TRUE, future_max_size = 1500L,
+    CC_models = c(
+      "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
+      "MRI-ESM2-0", "UKESM1-0-LL"),
+    CC_scenario = c("ssp126", "ssp370", "ssp585"),
+    clamp_pred = TRUE, fix_efforts = "q90", fix_rivers = "q90",
+    tar_predictions = TRUE, plot_predictions = TRUE) {
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -620,20 +626,43 @@ mod_postprocess_1_CPU <- function(
 
   # ****************************************************************
 
-  # latent factors for new sampling units -------
+  # Predicting latent factors or habitat suitability -------
 
-  ecokit::info_chunk(
-    "Prepare scripts for predicting latent factors for new sampling units",
-    line_char = "+", line_char_rep = 90L, cat_red = TRUE, cat_bold = TRUE,
-    cat_timestamp = FALSE, level = 1L)
+  if (spatial_model) {
+    ecokit::info_chunk(
+      "Prepare scripts for predicting latent factors for new sampling units",
+      line_char = "+", line_char_rep = 90L, cat_red = TRUE, cat_bold = TRUE,
+      cat_timestamp = FALSE, level = 1L)
+  } else {
+    ecokit::info_chunk(
+      "Predicting habitat suitability across different climate options",
+      line_char = "+", line_char_rep = 90L, cat_red = TRUE, cat_bold = TRUE,
+      cat_timestamp = FALSE, level = 1L)
+  }
+
   IASDT.R::predict_maps(
     path_model = path_model, hab_abb = hab_abb, env_file = env_file,
-    n_cores = n_cores, strategy = strategy, clamp_pred = FALSE,
+    n_cores = n_cores, strategy = strategy,
+    # Do not clamp predictions for predicting latent factors
+    clamp_pred = dplyr::if_else(spatial_model, FALSE, clamp_pred),
+    fix_efforts = fix_efforts, fix_rivers = fix_rivers,
     pred_new_sites = pred_new_sites, use_TF = use_TF, TF_environ = TF_environ,
     temp_dir = temp_dir, temp_cleanup = temp_cleanup,
     TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
-    LF_check = LF_check, LF_temp_cleanup = LF_temp_cleanup, LF_only = TRUE,
-    LF_commands_only = TRUE)
+    LF_check = LF_check, LF_temp_cleanup = LF_temp_cleanup,
+    LF_only = spatial_model, LF_commands_only = spatial_model,
+    CC_models = CC_models, CC_scenario = CC_scenario,
+    spatial_model = spatial_model, tar_predictions = tar_predictions)
+
+  if (spatial_model && plot_predictions) {
+    ecokit::info_chunk(
+      "Plot species & SR predictions as JPEG", level = 1L, line_char = "+",
+      line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
+      cat_timestamp = FALSE)
+
+    IASDT.R::plot_prediction(
+      model_dir = model_dir, env_file = env_file, n_cores = n_cores)
+  }
 
   # ****************************************************************
 
@@ -1080,7 +1109,7 @@ mod_postprocess_2_CPU <- function(
     pred_new_sites = TRUE, tar_predictions = TRUE,
     RC_prepare = TRUE, RC_plot = TRUE, VP_prepare = TRUE, VP_plot = TRUE,
     predict_suitability = TRUE, plot_predictions = TRUE, plot_LF = TRUE,
-    plot_internal_evaluation = TRUE) {
+    plot_internal_evaluation = TRUE, spatial_model = TRUE) {
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -1330,7 +1359,8 @@ mod_postprocess_2_CPU <- function(
       LF_temp_cleanup = LF_temp_cleanup, LF_only = FALSE,
       LF_commands_only = FALSE, temp_dir = temp_dir,
       temp_cleanup = temp_cleanup, tar_predictions = tar_predictions,
-      CC_models = CC_models, CC_scenario = CC_scenario)
+      CC_models = CC_models, CC_scenario = CC_scenario,
+      spatial_model = spatial_model)
 
     invisible(gc())
   }

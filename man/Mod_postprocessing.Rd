@@ -40,7 +40,15 @@ mod_postprocess_1_CPU(
   width_beta = 25,
   height_beta = 35,
   spatial_model = TRUE,
-  future_max_size = 1500L
+  future_max_size = 1500L,
+  CC_models = c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0",
+    "UKESM1-0-LL"),
+  CC_scenario = c("ssp126", "ssp370", "ssp585"),
+  clamp_pred = TRUE,
+  fix_efforts = "q90",
+  fix_rivers = "q90",
+  tar_predictions = TRUE,
+  plot_predictions = TRUE
 )
 
 mod_prepare_TF(
@@ -217,6 +225,35 @@ centimetres.}
 global variables identified. See \code{future.globals.maxSize} argument of
 \link[future:zzz-future.options]{future::future.options} for more details.}
 
+\item{CC_models}{Character vector. Climate models for future predictions.
+Available options are \code{c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")} (default).}
+
+\item{CC_scenario}{Character vector. Climate scenarios for future
+predictions. Available options are: \code{c("ssp126", "ssp370", "ssp585")}
+(default).}
+
+\item{clamp_pred}{Logical indicating whether to clamp the sampling efforts at
+a single value. If \code{TRUE} (default), the \code{fix_efforts} argument must be
+provided.}
+
+\item{fix_efforts}{Numeric or character. When \code{clamp_pred = TRUE}, fixes the
+sampling efforts predictor at this value during predictions. If numeric,
+uses the value directly (on log\if{html}{\out{<sub>}}10\if{html}{\out{</sub>}} scale). If character, must be
+one of \code{identity} (i.e., do not fix), \code{median}, \code{mean}, \code{max}, or \code{q90}
+(90\% quantile). Using \code{max} may reflect extreme sampling efforts from
+highly sampled locations, while \code{q90} captures high sampling areas without
+extremes. Required if \code{clamp_pred = TRUE}.}
+
+\item{fix_rivers}{Numeric, character, or \code{NULL}. Similar to \code{fix_efforts},
+but for the river length predictor. If \code{NULL}, the river length is not
+fixed. Default: \code{q90}.}
+
+\item{tar_predictions}{Logical. Whether to compress the add files into a
+single \verb{*.tar} file (without compression). Default: \code{TRUE}.}
+
+\item{plot_predictions}{Logical. Whether to plot species and species richness
+predictions as JPEG files (using \link{plot_prediction}). Defaults to \code{TRUE}.}
+
 \item{process_VP}{Logical. Whether to prepares batch scripts for variance
 partitioning GPU computations on GPUs. Defaults to \code{TRUE}.}
 
@@ -240,34 +277,8 @@ Defaults are \code{01:00:00} and \code{02:00:00} respectively.}
 \code{model_prefix_TF} is created in the \code{model_dir} to store the \code{TensorFlow}
 running commands. Defaults to \code{NULL}. This can not be \code{NULL}.}
 
-\item{CC_models}{Character vector. Climate models for future predictions.
-Available options are \code{c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")} (default).}
-
-\item{CC_scenario}{Character vector. Climate scenarios for future
-predictions. Available options are: \code{c("ssp126", "ssp370", "ssp585")}
-(default).}
-
 \item{RC_n_cores}{Integer. The number of cores to use for response curve
 prediction. Defaults to \code{8}.}
-
-\item{clamp_pred}{Logical indicating whether to clamp the sampling efforts at
-a single value. If \code{TRUE} (default), the \code{fix_efforts} argument must be
-provided.}
-
-\item{fix_efforts}{Numeric or character. When \code{clamp_pred = TRUE}, fixes the
-sampling efforts predictor at this value during predictions. If numeric,
-uses the value directly (on log\if{html}{\out{<sub>}}10\if{html}{\out{</sub>}} scale). If character, must be
-one of \code{identity} (i.e., do not fix), \code{median}, \code{mean}, \code{max}, or \code{q90}
-(90\% quantile). Using \code{max} may reflect extreme sampling efforts from
-highly sampled locations, while \code{q90} captures high sampling areas without
-extremes. Required if \code{clamp_pred = TRUE}.}
-
-\item{fix_rivers}{Numeric, character, or \code{NULL}. Similar to \code{fix_efforts},
-but for the river length predictor. If \code{NULL}, the river length is not
-fixed. Default: \code{q90}.}
-
-\item{tar_predictions}{Logical. Whether to compress the add files into a
-single \verb{*.tar} file (without compression). Default: \code{TRUE}.}
 
 \item{RC_prepare}{Logical. Whether to prepare the data for response curve
 prediction (using \link{resp_curv_prepare_data}). Defaults to \code{TRUE}.}
@@ -285,9 +296,6 @@ partitioning (using \link{variance_partitioning_compute}). Defaults to \code{TRU
 \item{predict_suitability}{Logical. Whether to predict habitat suitability
 across different climate options (using \link{predict_maps}). Defaults to
 \code{TRUE}.}
-
-\item{plot_predictions}{Logical. Whether to plot species and species richness
-predictions as JPEG files (using \link{plot_prediction}). Defaults to \code{TRUE}.}
 
 \item{plot_LF}{Logical. Whether to plot latent factors as JPEG files (using
 \link{plot_latent_factor}). Defaults to \code{TRUE}.}

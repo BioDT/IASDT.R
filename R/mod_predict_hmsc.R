@@ -60,6 +60,8 @@
 #'   other predictions when needed.
 #' @param verbose Logical. Whether to print a message upon successful saving of
 #'   files. Defaults to `FALSE`.
+#' @param spatial_model Logical. Whether the fitted model is a spatial model.
+#'   Defaults to `TRUE`.
 #' @param Loff See [Hmsc::predict.Hmsc] for more details.
 #' @inheritParams predict_latent_factor
 #' @name predict_hmsc
@@ -75,7 +77,8 @@ predict_hmsc <- function(
     LF_n_cores = n_cores, LF_check = FALSE, LF_temp_cleanup = TRUE,
     LF_commands_only = FALSE, pred_directory = NULL, pred_PA = NULL,
     pred_XY = NULL, evaluate = FALSE, evaluation_name = NULL,
-    evaluation_directory = "Evaluation", verbose = TRUE) {
+    evaluation_directory = "Evaluation", verbose = TRUE,
+    spatial_model = TRUE) {
 
   # # ..................................................................... ###
 
@@ -215,7 +218,6 @@ predict_hmsc <- function(
     X <- Model$X
   }
 
-
   if (!is.null(XRRRData)) {
     xlev <- lapply(Model$XRRRData, levels)
     xlev <- xlev[unlist(lapply(Model$XRRRData, is.factor))]
@@ -340,21 +342,41 @@ predict_hmsc <- function(
   }
 
   # Do not use `predict_latent_factor` when predicting values for response
-  # curves when using coordinates = "i" in constructGradient
-  if (!is.null(prediction_type) && prediction_type == "i") {
-    for (r in seq_len(Mod_nr)) {
-      if (r == 1) {
-        ecokit::cat_time(
-          "LF prediction for response curve with infinite coordinates",
-          level = 1L, verbose = verbose)
-      }
+  # curves when using coordinates = "i" in constructGradient or for making
+  # predictions for non-spatial models
 
-      nLF <- length(post[[1]]$Alpha[[1]])
-      predPostEta[[r]] <- replicate(
-        n = predN,
-        expr = structure(   # nolint: undesirable_function_linter
-          rep(0, nLF), dim = c(1L, nLF), dimnames = list("new_unit", NULL)),
-        simplify = FALSE)
+  rc_predict_i <- !is.null(prediction_type) && prediction_type == "i"
+
+  if (rc_predict_i || isFALSE(spatial_model)) {
+
+    nLF <- length(post[[1]]$Alpha[[1]])
+
+    for (r in seq_len(Mod_nr)) {
+      if (rc_predict_i) {
+        if (r == 1) {
+          ecokit::cat_time(
+            "LF prediction for response curve with infinite coordinates",
+            level = 1L, verbose = verbose)
+        }
+        predPostEta[[r]] <- replicate(
+          n = predN,
+          expr = matrix(
+            0, nrow = 1L, ncol = nLF, dimnames = list("new_unit", NULL)),
+          simplify = FALSE)
+
+      } else {
+        if (r == 1) {
+          ecokit::cat_time(
+            "No LF prediction is needed for non-spatial models",
+            level = 1L, verbose = verbose)
+        }
+        predPostEta[[r]] <- replicate(
+          n = predN,
+          expr = matrix(
+            0, nrow = nrow(dfPiNew), ncol = nLF,
+            dimnames = list(dfPiNew$sample, NULL)),
+          simplify = FALSE)
+      }
     }
     CalcLF <- FALSE
   }
@@ -426,7 +448,8 @@ predict_hmsc <- function(
 
   } else {
 
-    if (is.null(prediction_type) || prediction_type == "c") {   # nolint: unneeded_nesting_linter
+    if (spatial_model &&
+        (is.null(prediction_type) || prediction_type == "c")) {
       ecokit::cat_time(
         "Loading LF prediction from disk", level = 1L, verbose = verbose)
       ecokit::cat_time(
@@ -434,6 +457,13 @@ predict_hmsc <- function(
 
       for (r in seq_len(Mod_nr)) {
         predPostEta[[r]] <- ecokit::load_as(LF_inputFile[[r]])
+        rowNames <- rownames(predPostEta[[r]][[1]])
+        PiNew[, r] <- fastmatch::fmatch(dfPiNew[, r], rowNames)
+      }
+    }
+
+    if (isFALSE(spatial_model)) {
+      for (r in seq_len(Mod_nr)) {
         rowNames <- rownames(predPostEta[[r]][[1]])
         PiNew[, r] <- fastmatch::fmatch(dfPiNew[, r], rowNames)
       }

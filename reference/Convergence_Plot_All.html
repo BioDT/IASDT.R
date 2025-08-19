@@ -67,7 +67,8 @@ model parameters.</p>
 <span>  margin_type <span class="op">=</span> <span class="st">"histogram"</span>,</span>
 <span>  spatial_model <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  n_cores <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  strategy <span class="op">=</span> <span class="st">"multisession"</span></span>
+<span>  strategy <span class="op">=</span> <span class="st">"multisession"</span>,</span>
+<span>  n_rc_alpha <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">3L</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -105,6 +106,11 @@ plot. Valid options are "histogram" (default) or "density".</p></dd>
 <dd><p>Character. The parallel processing strategy to use. Valid
 options are "sequential", "multisession" (default), "multicore", and
 "cluster". See <code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code> and <code><a href="https://elgabbas.github.io/ecokit/reference/set_parallel.html" class="external-link">ecokit::set_parallel()</a></code> for details.</p></dd>
+
+
+<dt id="arg-n-rc-alpha">n_rc_alpha<a class="anchor" aria-label="anchor" href="#arg-n-rc-alpha"></a></dt>
+<dd><p>Numeric vector of length 2. Number of rows and columns for
+the convergence plots of the <code>alpha</code> parameter. Default: <code>c(2L, 3L)</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

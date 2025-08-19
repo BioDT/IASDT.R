@@ -72,7 +72,7 @@ on HPC environments.</p>
 <span>  n_cores <span class="op">=</span> <span class="fl">8L</span>,</span>
 <span>  strategy <span class="op">=</span> <span class="st">"multisession"</span>,</span>
 <span>  future_max_size <span class="op">=</span> <span class="fl">2000L</span>,</span>
-<span>  n_rc <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">2L</span><span class="op">)</span>, omega <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">2L</span><span class="op">)</span>, beta <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3L</span>, <span class="fl">3L</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  n_rc <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">3L</span><span class="op">)</span>, omega <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">2L</span><span class="op">)</span>, beta <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">3L</span>, <span class="fl">3L</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  pages_per_file <span class="op">=</span> <span class="fl">20L</span>,</span>
 <span>  chain_colors <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  margin_type <span class="op">=</span> <span class="st">"histogram"</span>,</span>
@@ -82,7 +82,7 @@ on HPC environments.</p>
 <span><span class="fu">convergence_alpha</span><span class="op">(</span></span>
 <span>  posterior <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  title <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  n_RC <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  n_rc_alpha <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">3L</span><span class="op">)</span>,</span>
 <span>  add_footer <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  add_title <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  chain_colors <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -175,6 +175,11 @@ plot. Valid options are "histogram" (default) or "density".</p></dd>
 <dd><p><code>mcmc.list</code> or character. Either an MCMC object
 (<code>mcmc.list</code>) containing posterior samples, or a file path to a saved coda
 object.</p></dd>
+
+
+<dt id="arg-n-rc-alpha">n_rc_alpha<a class="anchor" aria-label="anchor" href="#arg-n-rc-alpha"></a></dt>
+<dd><p>Numeric vector of length 2. Number of rows and columns for
+the convergence plots of the <code>alpha</code> parameter. Default: <code>c(2L, 3L)</code>.</p></dd>
 
 
 <dt id="arg-add-footer">add_footer<a class="anchor" aria-label="anchor" href="#arg-add-footer"></a></dt>

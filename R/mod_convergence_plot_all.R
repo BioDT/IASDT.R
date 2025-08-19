@@ -132,23 +132,19 @@ convergence_plot_all <- function(
 
     } else {
 
-      Obj_Rho <- paste0(M_Name_Fit, "_TraceRho")
+      Obj_Rho <- paste0(M_Name_Fit, "_trace_rho")
       Path_Trace_Rho <- fs::path(path_conv_all, paste0(Obj_Rho, ".RData"))
 
-      Obj_Alpha <- paste0(M_Name_Fit, "_TraceAlpha")
+      Obj_Alpha <- paste0(M_Name_Fit, "_trace_alpha")
       Path_Trace_Alpha <- fs::path(path_conv_all, paste0(Obj_Alpha, ".RData"))
 
-      Obj_Beta <- paste0(M_Name_Fit, "_Beta")
+      Obj_Beta <- paste0(M_Name_Fit, "_beta")
       Path_Beta <- fs::path(path_conv_all, paste0(Obj_Beta, ".RData"))
 
-      Obj_Omega <- paste0(M_Name_Fit, "_Omega")
+      Obj_Omega <- paste0(M_Name_Fit, "_omega")
       Path_Omega <- fs::path(path_conv_all, paste0(Obj_Omega, ".RData"))
 
-      if ((Tree == "Tree" && !file.exists(Path_Trace_Rho)) ||
-          !file.exists(Path_Trace_Alpha) || !file.exists(Path_Beta) ||
-          !file.exists(Path_Omega)) {
-        Coda_Obj <- ecokit::load_as(path_coda)
-      }
+      Coda_Obj <- ecokit::load_as(path_coda)
 
       # names of coda
       names_coda <- names(Coda_Obj)

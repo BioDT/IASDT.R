@@ -17,8 +17,7 @@ convergence_plot(
   n_cores = 8L,
   strategy = "multisession",
   future_max_size = 2000L,
-  n_RC = c(2L, 2L),
-  beta_n_RC = c(3L, 3L),
+  n_rc = list(alpha = c(2L, 2L), omega = c(2L, 2L), beta = c(3L, 3L)),
   pages_per_file = 20L,
   chain_colors = NULL,
   margin_type = "histogram",
@@ -72,12 +71,9 @@ options are "sequential", "multisession" (default), "multicore", and
 global variables identified. See \code{future.globals.maxSize} argument of
 \link[future:zzz-future.options]{future::future.options} for more details.}
 
-\item{n_RC}{Numeric vector. Grid layout (rows×columns) for arranging
-alpha parameter plots. Default: \code{c(2, 2)}. If \code{NULL}, the layout is
-automatically determined based on the number of alpha levels.}
-
-\item{beta_n_RC}{Numeric vector. The grid layout (rows×columns) for
-arranging beta parameter plots. Default: \code{c(3, 3)}.}
+\item{n_rc}{List of 3 numeric vectors representing the number of rows and
+columns for grid layout of the convergence plots of alpha, omega, and beta
+parameters. .}
 
 \item{pages_per_file}{Integer. Number of plots per page in the Omega
 parameter output. Default: 20L.}

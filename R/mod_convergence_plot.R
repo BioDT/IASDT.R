@@ -23,11 +23,9 @@
 #' @param strategy Character. The parallel processing strategy to use. Valid
 #'   options are "sequential", "multisession" (default), "multicore", and
 #'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
-#' @param n_RC Numeric vector. Grid layout (rows&times;columns) for arranging
-#'   alpha parameter plots. Default: `c(2, 2)`. If `NULL`, the layout is
-#'   automatically determined based on the number of alpha levels.
-#' @param beta_n_RC Numeric vector. The grid layout (rows&times;columns) for
-#'   arranging beta parameter plots. Default: `c(3, 3)`.
+#' @param n_rc List of 3 numeric vectors representing the number of rows and
+#'   columns for grid layout of the convergence plots of alpha, omega, and beta
+#'   parameters. .
 #' @param pages_per_file Integer. Number of plots per page in the Omega
 #'   parameter output. Default: 20L.
 #' @param chain_colors Character vector. MCMC chain colours (optional). Default:
@@ -65,8 +63,9 @@
 convergence_plot <- function(
     path_coda = NULL, env_file = ".env", title = " ", n_omega = 1000L,
     n_cores = 8L, strategy = "multisession", future_max_size = 2000L,
-    n_RC = c(2L, 2L), beta_n_RC = c(3L, 3L), pages_per_file = 20L,
-    chain_colors = NULL, margin_type = "histogram", spatial_model = TRUE) {
+    n_rc = list(alpha = c(2L, 2L), omega = c(2L, 2L), beta = c(3L, 3L)),
+    pages_per_file = 20L, chain_colors = NULL, margin_type = "histogram",
+    spatial_model = TRUE) {
 
   # # ..................................................................... ###
 
@@ -89,6 +88,26 @@ convergence_plot <- function(
     ecokit::stop_ctx(
       "`margin_type` must be either 'histogram' or 'density'.",
       margin_type = margin_type, include_backtrace = TRUE)
+  }
+
+  # Validate n_rc
+  if (!is.list(n_rc) || length(n_rc) != 3 ||
+      !all(sapply(n_rc, is.numeric)) || !all(sapply(n_rc, length) == 2)) {
+    ecokit::stop_ctx(
+      "`n_rc` must be a list of three numeric vectors of length 2.",
+      n_rc = n_rc, include_backtrace = TRUE)
+  }
+  if (any(sapply(n_rc, function(x) any(x <= 0)))) {
+    ecokit::stop_ctx(
+      "`n_rc` values must be positive integers.",
+      n_rc = n_rc, include_backtrace = TRUE)
+  }
+
+  # Validate n_omega
+  if (!is.numeric(n_omega) || length(n_omega) != 1 || n_omega <= 0) {
+    ecokit::stop_ctx(
+      "`n_omega` must be a positive integer.",
+      n_omega = n_omega, include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -117,7 +136,7 @@ convergence_plot <- function(
     args_to_check = c("path_coda", "strategy"))
   ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
-    args_to_check = c("n_omega", "n_cores", "n_RC"))
+    args_to_check = c("future_max_size", "pages_per_file"))
   rm(AllArgs, envir = environment())
 
   strategy <- .validate_strategy(strategy)
@@ -339,17 +358,17 @@ convergence_plot <- function(
 
     # Ensure that all latent factors of the model are plotted
     n_lf <- ncol(Coda_Obj$Alpha[[1]][[1]])
-    n_RC_alpha <- n_RC
-    if ((n_RC_alpha[1] * n_RC_alpha[2]) < n_lf) {
-      if (n_RC_alpha[1] == 1) {
-        n_RC_alpha[1] <- 2
-      } else if (n_RC_alpha[1] == 2) {
-        n_RC_alpha[1] <- 3
+    n_rc_alpha <- n_rc$alpha
+    if ((n_rc_alpha[1] * n_rc_alpha[2]) < n_lf) {
+      if (n_rc_alpha[1] == 1) {
+        n_rc_alpha[1] <- 2
+      } else if (n_rc_alpha[1] == 2) {
+        n_rc_alpha[1] <- 3
       }
     }
 
     PlotObj_Alpha <- IASDT.R::convergence_alpha(
-      posterior = Coda_Obj, title = title, n_RC = n_RC_alpha,
+      posterior = Coda_Obj, title = title, n_rc = n_rc_alpha,
       add_footer = FALSE, add_title = FALSE, chain_colors = chain_colors,
       n_chains = n_chains, n_samples = n_samples)
 
@@ -361,7 +380,7 @@ convergence_plot <- function(
     print(PlotObj_Alpha)
     grDevices::dev.off()
 
-    rm(PlotObj_Alpha, n_RC_alpha, envir = environment())
+    rm(PlotObj_Alpha, n_rc_alpha, envir = environment())
   }
 
   if ("Alpha" %in% names_coda) Coda_Obj$Alpha <- NULL
@@ -512,10 +531,13 @@ convergence_plot <- function(
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
     ecokit::cat_time("Arrange plots", level = 1L)
+    n_rc_omega <- n_rc$omega
+
     OmegaPlotList <- tibble::tibble(PlotID = seq_len(nrow(PlotObj_Omega))) %>%
       dplyr::mutate(
-        File = ceiling(PlotID / (pages_per_file * n_RC[2] * n_RC[1])),
-        Page = ceiling(PlotID / (n_RC[2] * n_RC[1]))) %>%
+        File = ceiling(
+          PlotID / (pages_per_file * n_rc_omega[2] * n_rc_omega[1])),
+        Page = ceiling(PlotID / (n_rc_omega[2] * n_rc_omega[1]))) %>%
       tidyr::nest(.by = c("File", "Page"), .key = "PlotID") %>%
       dplyr::mutate(
         PlotID = purrr::map(PlotID, ~ unlist(as.vector(.x))),
@@ -540,14 +562,17 @@ convergence_plot <- function(
                   size = 12, colour = "grey",
                   margin = ggplot2::margin(-5, 0, 0, 0)))
 
-            cowplot::plot_grid(
-              plotlist = PlotObj_Omega$Plot[PlotID],
-              ncol = n_RC[2], nrow = n_RC[1], align = "hv") %>%
+            ecokit::quietly({
               cowplot::plot_grid(
-                PlotTitle, ., ncol = 1, rel_heights = c(0.05, 1))
-
+                plotlist = PlotObj_Omega$Plot[PlotID],
+                ncol = n_rc_omega[2], nrow = n_rc_omega[1], align = "hv") %>%
+                cowplot::plot_grid(
+                  PlotTitle, ., ncol = 1, rel_heights = c(0.05, 1))
+            },
+            "Removed [0-9]+ rows containing non-finite outside the scale range")
           }
-        ))
+        )
+      )
 
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
@@ -567,17 +592,19 @@ convergence_plot <- function(
           file_omega <- fs::path(
             dir_convergence, paste0("convergence_omega_", .x, ".pdf"))
           grDevices::cairo_pdf(
-            filename = file_omega, width = 18, height = 14, onefile = TRUE)
-          purrr::map(CurrPlotOrder$PlotID, grid::grid.draw, recording = FALSE)
+            filename = file_omega, width = 18,
+            height = 13.5, onefile = TRUE)
+          purrr::map(
+            CurrPlotOrder$PlotID, grid::grid.draw, recording = FALSE)
           grDevices::dev.off()
         })
       })
 
-    rm(OmegaPlotList, PlotObj_Omega, envir = environment())
+    rm(OmegaPlotList, PlotObj_Omega, n_rc_omega, envir = environment())
     invisible(gc())
   }
 
-  # # ..................................................................... ###
+  # ..................................................................... ###
 
   # Beta - 1. Prepare data ------
 
@@ -693,7 +720,6 @@ convergence_plot <- function(
     chain_colors = NULL, plot_title = NULL) {
 
     x <- NULL
-
     Var_Sp_File <- data_option$Var_Sp_File
 
     # check if input data exists
@@ -762,7 +788,8 @@ convergence_plot <- function(
       ggplot2::labs(x = NULL, y = NULL) +
       ggplot2::theme_bw() +
       ggplot2::theme(
-        text = ggplot2::element_text(family = "sans"), legend.position = "none",
+        text = ggplot2::element_text(family = "sans"),
+        legend.position = "none",
         axis.text = ggplot2::element_text(size = 12))
 
     if (add_taxonomy) {
@@ -788,21 +815,20 @@ convergence_plot <- function(
 
     if (fixed_y) {
       vars_limits <- c(DT_all$Var_Min, DT_all$Var_Max)
-      suppressMessages({
+      ecokit::quietly({
         Plot <- Plot + ggplot2::scale_y_continuous(limits = vars_limits)
-      })
+      },
+      "Scale for \\w+ is already present.")
     }
 
     if (!is.null(plot_title)) {
-      Plot <-  Plot +
+      Plot <- Plot +
         ggplot2::ggtitle(plot_title) +
         ggplot2::theme(
-          text = ggplot2::element_text(family = "sans"),
           plot.title.position = "panel",
           plot.margin = ggplot2::margin(1, 0, 1, 0, unit = "pt"),
           plot.title = ggtext::element_markdown(
-            hjust = 0.5, size = 10, colour = "red",
-            margin = ggplot2::margin(-0.5, 0, -3.5, 0)))
+            hjust = 0.5, size = 11, margin = ggplot2::margin(0, 0, -3.5, 0)))
     }
 
     if (margin_type == "histogram") {
@@ -849,6 +875,7 @@ convergence_plot <- function(
     FUN = function(x) {
 
       plot_id <- NULL
+      n_rc_beta <- n_rc$beta
 
       plot_title_orig <- plots_by_variable$description[x]
       data_list <- unname(unlist(plots_by_variable$var_data[[x]]))
@@ -873,7 +900,8 @@ convergence_plot <- function(
         title_theme
 
       plot_list <- tibble::tibble(plot_id = seq_len(length(data_list))) %>%
-        dplyr::mutate(Page = ceiling(plot_id / (n_RC[2] * n_RC[1]))) %>%
+        dplyr::mutate(
+          Page = ceiling(plot_id / (n_rc_beta[2] * n_rc_beta[1]))) %>%
         tidyr::nest(.by = "Page", .key = "plot_id") %>%
         dplyr::mutate(
           Plot = purrr::map(
@@ -881,7 +909,7 @@ convergence_plot <- function(
             .f = function(z) {
               cowplot::plot_grid(
                 plotlist = plots[unlist(as.vector(z))],
-                ncol = n_RC[2], nrow = n_RC[1], align = "hv") %>%
+                ncol = n_rc_beta[2], nrow = n_rc_beta[1], align = "hv") %>%
                 cowplot::plot_grid(
                   plot_title, ., ncol = 1, rel_heights = c(0.035, 1))
             }))
@@ -920,7 +948,8 @@ convergence_plot <- function(
         })
 
       plot_list <- tibble::tibble(plot_id = seq_len(length(data_list))) %>%
-        dplyr::mutate(Page = ceiling(plot_id / (n_RC[2] * n_RC[1]))) %>%
+        dplyr::mutate(
+          Page = ceiling(plot_id / (n_rc_beta[2] * n_rc_beta[1]))) %>%
         tidyr::nest(.by = "Page", .key = "plot_id") %>%
         dplyr::mutate(
           Plot = purrr::map(
@@ -928,7 +957,7 @@ convergence_plot <- function(
             .f = function(z) {
               cowplot::plot_grid(
                 plotlist = plots[unlist(as.vector(z))],
-                ncol = n_RC[2], nrow = n_RC[1], align = "hv") %>%
+                ncol = n_rc_beta[2], nrow = n_rc_beta[1], align = "hv") %>%
                 cowplot::plot_grid(
                   plot_title, ., ncol = 1, rel_heights = c(0.035, 1))
             }))
@@ -947,7 +976,7 @@ convergence_plot <- function(
     },
     future.seed = TRUE, future.packages = pkg_to_export,
     future.globals = c(
-      "BetaTracePlots_ByVar", "n_RC", "dir_convergence", "n_chains",
+      "BetaTracePlots_ByVar", "n_rc", "dir_convergence", "n_chains",
       "chain_colors", "n_samples", "plot_beta", "plots_by_variable"))
 
   rm(plots_by_variable2, envir = environment())
@@ -965,13 +994,13 @@ convergence_plot <- function(
 
   ecokit::cat_time("Trace plots, grouped by species", level = 1L)
   cols_to_keep <- c(
-    "Species", "Variable", "Class", "Order", "Family",
+    "Species", "Variable", "Class", "Order", "Family", "IAS_ID",
     "Var_Sp_File", "description")
 
   plots_by_species <- beta_data %>%
     dplyr::arrange(Variable, IAS_ID) %>%
     dplyr::select(tidyselect::all_of(cols_to_keep)) %>%
-    tidyr::nest(var_data = -c("Class", "Order", "Family", "Species"))
+    tidyr::nest(var_data = -c("Class", "Order", "Family", "Species", "IAS_ID"))
 
   # Prepare working in parallel
   if (n_cores == 1) {
@@ -987,7 +1016,9 @@ convergence_plot <- function(
     X =  seq_len(nrow(plots_by_species)),
     FUN = function(x) {
 
-      n_per_page <- beta_n_RC[1] * beta_n_RC[2]
+      n_rc_beta <- n_rc$beta
+
+      n_per_page <- n_rc_beta[1] * n_rc_beta[2]
       title_text <- paste0("<i>", plots_by_species$Species[[x]], "</i>")
       subtitle_text <- paste0(
         plots_by_species$Class[[x]],  " - ", plots_by_species$Order[[x]],
@@ -1011,8 +1042,11 @@ convergence_plot <- function(
             fixed_y = FALSE, n_chains = n_chains, n_samples = n_samples,
             chain_colors = chain_colors, add_taxonomy = FALSE,
             plot_title = species_data$description[y])
+
+          # Making marginal background matching the plot background
+          # https://stackoverflow.com/a/78196022/3652584
           plot0$layout$t[1] <- 1
-          plot0$layout$r[1] <- 16
+          plot0$layout$r[1] <- max(plot0$layout$r)
           plot0
         })
 
@@ -1025,6 +1059,10 @@ convergence_plot <- function(
           ggplot2::aes(x = 0, y = 0.95, label = subtitle_text),
           size = 5, hjust = 0, vjust = 1, fill = NA, label.color = NA,
           colour = "darkblue", fontface = "bold") +
+        ggtext::geom_richtext(
+          ggplot2::aes(x = 0.9, y = 0.95, label = plots_by_species$IAS_ID[[x]]),
+          size = 5, hjust = 0, vjust = 1, fill = NA, label.color = NA,
+          colour = "red", fontface = "bold") +
         ggplot2::theme_void() +
         ggplot2::xlim(0, 1) +
         ggplot2::ylim(0, 1) +
@@ -1035,8 +1073,8 @@ convergence_plot <- function(
         purrr::map(
           .f = ~ {
             cowplot::plot_grid(
-              plotlist = plots[.x], ncol = beta_n_RC[2],
-              nrow = beta_n_RC[1], align = "hv") %>%
+              plotlist = plots[.x], ncol = n_rc_beta[2],
+              nrow = n_rc_beta[1], align = "hv") %>%
               cowplot::plot_grid(
                 plot_title, ., ncol = 1, rel_heights = c(0.05, 1))
           })
@@ -1044,8 +1082,7 @@ convergence_plot <- function(
 
       file_free_y <- fs::path(
         dir_convergence_by_sp,
-        paste0(
-          "convergence_beta_", plots_by_species$Species[x], "_free_y.pdf"))
+        paste0("convergence_beta_", plots_by_species$Species[x], ".pdf"))
       grDevices::cairo_pdf(
         filename = file_free_y, width = 18, height = 13, onefile = TRUE)
       purrr::walk(plot_list, grid::grid.draw, recording = FALSE)
@@ -1056,7 +1093,7 @@ convergence_plot <- function(
     },
     future.seed = TRUE, future.packages = pkg_to_export,
     future.globals = c(
-      "BetaTracePlots_ByVar", "n_RC", "dir_convergence", "n_chains",
+      "BetaTracePlots_ByVar", "n_rc", "dir_convergence", "n_chains",
       "chain_colors", "n_samples", "plot_beta", "plots_by_species"))
 
   rm(plots_by_species2, envir = environment())
@@ -1109,7 +1146,9 @@ convergence_beta_ranges <- function(
   if (!is.character(model_dir) || length(model_dir) != 1 ||
       !nzchar(model_dir)) {
     ecokit::stop_ctx(
-      "The specified model_dir is not a character of length 1 and nchar > 1.",
+      paste0(
+        "Invalid `model_dir`: must be a character vector of length 1 ",
+        "with at least one character."),
       model_dir = model_dir, include_backtrace = TRUE)
   }
 
@@ -1124,11 +1163,11 @@ convergence_beta_ranges <- function(
       "`beta_data` is not a data frame object",
       class_beta_object = class(beta_data), include_backtrace = TRUE)
   }
-
-  if (!is.numeric(n_chains) || length(n_chains) != 1 || n_chains < 1) {
+  if (!is.numeric(n_chains) || length(n_chains) != 1 || n_chains < 1 ||
+      n_chains %% 1 != 0) {
     ecokit::stop_ctx(
-      "n_chains should be positive numeric vectors of length 1",
-      n_chains = n_chains)
+      "n_chains must be a single positive integer.",
+      n_chains = n_chains, include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -1167,7 +1206,7 @@ convergence_beta_ranges <- function(
 
   # Construct path for saving the plot
   plot_path <- fs::path(
-    dirname(model_dir), "Model_Postprocessing", "Beta_min_max_Habitat.jpeg")
+    dirname(model_dir), "Model_Postprocessing", "beta_min_max.jpeg")
   fs::dir_create(dirname(plot_path))
 
   Beta_plot <- Beta_ranges %>%

@@ -400,9 +400,10 @@ mod_postprocess_1_CPU <- function(
 
   IASDT.R::convergence_plot(
     path_coda = path_coda, path_model = path_model, env_file = env_file,
-    n_omega = n_omega, n_cores = n_cores, strategy = strategy, n_RC = c(2, 3),
-    beta_n_RC = c(3, 3), margin_type = "histogram",
-    spatial_model = spatial_model, future_max_size = future_max_size)
+    n_omega = n_omega, n_cores = n_cores, strategy = strategy,
+    n_rc = list(alpha = c(2L, 2L), omega = c(2L, 2L), beta = c(3L, 3L)),
+    margin_type = "histogram", spatial_model = spatial_model,
+    future_max_size = future_max_size)
 
   invisible(gc())
 

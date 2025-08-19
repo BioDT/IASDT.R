@@ -154,6 +154,15 @@ convergence_alpha <- function(
   Plots <- purrr::map(
     .x = seq_len(NLV),
     .f = ~ {
+
+      temp_file <- fs::file_temp(ext = "pdf")
+      grDevices::cairo_pdf(temp_file)
+      on.exit({
+        grDevices::dev.off()
+        try(fs::file_delete(temp_file), silent = TRUE)
+      },
+      add = TRUE)
+
       ESS0 <- paste0(
         "<b><i>Mean effective sample size:</i></b> ", ESS[.x],
         " / ", n_samples, " samples")

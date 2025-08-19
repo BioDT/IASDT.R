@@ -570,11 +570,11 @@ convergence_plot <- function(
                 ncol = n_rc_omega[2], nrow = n_rc_omega[1], align = "hv")
             },
             "Removed [0-9]+ rows containing non-finite outside the scale range")
-            
+
             plot <- plot %>%
               cowplot::plot_grid(
                 PlotTitle, ., ncol = 1, rel_heights = c(0.05, 1))
-          
+
             return(plot)
 
           }
@@ -1028,8 +1028,9 @@ convergence_plot <- function(
       n_per_page <- n_rc_beta[1] * n_rc_beta[2]
       title_text <- paste0("<i>", plots_by_species$Species[[x]], "</i>")
       subtitle_text <- paste0(
-        plots_by_species$Class[[x]],  " - ", plots_by_species$Order[[x]],
-        " - ", plots_by_species$Family[[x]])
+        "**Class:** ", plots_by_species$Class[[x]], " / **Order:** ",
+        plots_by_species$Order[[x]], " / **Family:** ",
+        plots_by_species$Family[[x]])
 
       variable_order <- model_vars$Variable %>%
         stringr::str_subset("Intercept", negate = TRUE) %>%
@@ -1065,7 +1066,7 @@ convergence_plot <- function(
         ggtext::geom_richtext(
           ggplot2::aes(x = 0, y = 0.95, label = subtitle_text),
           size = 5, hjust = 0, vjust = 1, fill = NA, label.color = NA,
-          colour = "darkblue", fontface = "bold") +
+          colour = "darkblue") +
         ggtext::geom_richtext(
           ggplot2::aes(x = 0.9, y = 0.95, label = plots_by_species$IAS_ID[[x]]),
           size = 5, hjust = 0, vjust = 1, fill = NA, label.color = NA,

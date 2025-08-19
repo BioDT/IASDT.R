@@ -324,7 +324,7 @@ convergence_plot_all <- function(
       dplyr::arrange(gtools::mixedorder(M_Name_Fit))
 
     ecokit::save_as(
-      object = convergence_data, object_name = convergence_data,
+      object = convergence_data, object_name = "convergence_data",
       out_path = path_data)
 
     if (n_cores > 1) {

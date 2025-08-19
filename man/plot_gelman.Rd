@@ -16,8 +16,7 @@ plot_gelman(
   rho = TRUE,
   n_omega = 1000L,
   plotting_alpha = 0.25,
-  env_file = ".env",
-  return_plots = FALSE
+  env_file = ".env"
 )
 
 plot_gelman_alpha(coda_object, plotting_alpha = 0.25)
@@ -44,9 +43,6 @@ fully transparent, 1 = fully opaque). Default: 0.25.}
 
 \item{env_file}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
-
-\item{return_plots}{Character. Path to the folder where the output plots will
-be saved.}
 
 \item{coda_object}{\code{mcmc.list}. An MCMC sample object containing posterior
 distributions from an Hmsc model.}

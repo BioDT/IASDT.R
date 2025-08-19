@@ -27,8 +27,6 @@
 #'   fully transparent, 1 = fully opaque). Default: 0.25.
 #' @param env_file Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param return_plots Character. Path to the folder where the output plots will
-#'   be saved.
 #' @param coda_object `mcmc.list`. An MCMC sample object containing posterior
 #'   distributions from an Hmsc model.
 #' @rdname plot_gelman
@@ -39,8 +37,7 @@
 
 plot_gelman <- function(
     path_coda = NULL, alpha = TRUE, beta = TRUE, omega = TRUE, rho = TRUE,
-    n_omega = 1000L, plotting_alpha = 0.25, env_file = ".env",
-    return_plots = FALSE) {
+    n_omega = 1000L, plotting_alpha = 0.25, env_file = ".env") {
 
   # # ..................................................................... ###
 
@@ -74,7 +71,7 @@ plot_gelman <- function(
     args_to_check = c("n_omega", "plotting_alpha"))
   ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
-    args_to_check = c("beta", "rho", "omega", "alpha", "return_plots"))
+    args_to_check = c("beta", "rho", "omega", "alpha"))
 
   if (!ecokit::check_env_file(env_file, warning = FALSE)) {
     ecokit::stop_ctx(
@@ -180,7 +177,7 @@ plot_gelman <- function(
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
     grDevices::cairo_pdf(
-      filename = fs::path(out_path, "GelmanPlots.pdf"),
+      filename = fs::path(out_path, "gelman_plots.pdf"),
       width = 13, height = 7, onefile = TRUE)
     purrr::walk(PlotList4Plot, grid::grid.draw)
     grDevices::dev.off()
@@ -190,20 +187,9 @@ plot_gelman <- function(
 
   # # ..................................................................... ###
 
-  # Saving plots as qs2 -----
-  ecokit::save_as(
-    object = PlotList, object_name = "GelmanPlots", n_threads = 5L,
-    out_path = fs::path(out_path, "GelmanPlots.qs2"))
-
-  # # ..................................................................... ###
-
   ecokit::cat_diff(init_time = .start_time)
 
-  if (return_plots) {
-    return(PlotList)
-  } else {
-    return(invisible(NULL))
-  }
+  return(invisible(NULL))
 }
 
 # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##

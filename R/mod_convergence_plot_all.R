@@ -11,7 +11,7 @@
 #'
 #' @param model_dir Character. Path to the root directory of the fitted model.
 #'   The convergence outputs will be saved to the `Model_Convergence_All`
-#'   subfolder.
+#'   subdirectory.
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #' @param strategy Character. The parallel processing strategy to use. Valid
 #'   options are "sequential", "multisession" (default), "multicore", and
@@ -45,8 +45,7 @@ convergence_plot_all <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   GPP_Thin <- M_Name_Fit <- rL <- M_thin <- M_samples <- Omega_Gelman <-
-    Omega_ESS <- Beta_Gelman <- Beta_ESS <- ESS2 <-
-    Path_Trace_Alpha <- NULL
+    Omega_ESS <- Beta_Gelman <- Beta_ESS <- ESS2 <- Path_Trace_Alpha <- NULL
 
   # # ..................................................................... ###
 
@@ -95,9 +94,8 @@ convergence_plot_all <- function(
 
   ecokit::cat_time("Prepare or load convergence data")
 
-  Path_Convergence_All <- fs::path(model_dir, "Model_Convergence_All")
-  Path_ConvDT <- fs::path(Path_Convergence_All, "DT")
-  fs::dir_create(c(Path_ConvDT, Path_Convergence_All))
+  path_conv_all <- fs::path(model_dir, "Model_Convergence_All")
+  fs::dir_create(path_conv_all)
 
   Model_Info <- fs::path(model_dir, "Model_Info.RData")
   if (!file.exists(Model_Info)) {
@@ -135,16 +133,16 @@ convergence_plot_all <- function(
     } else {
 
       Obj_Rho <- paste0(M_Name_Fit, "_TraceRho")
-      Path_Trace_Rho <- fs::path(Path_ConvDT, paste0(Obj_Rho, ".RData"))
+      Path_Trace_Rho <- fs::path(path_conv_all, paste0(Obj_Rho, ".RData"))
 
       Obj_Alpha <- paste0(M_Name_Fit, "_TraceAlpha")
-      Path_Trace_Alpha <- fs::path(Path_ConvDT, paste0(Obj_Alpha, ".RData"))
+      Path_Trace_Alpha <- fs::path(path_conv_all, paste0(Obj_Alpha, ".RData"))
 
       Obj_Beta <- paste0(M_Name_Fit, "_Beta")
-      Path_Beta <- fs::path(Path_ConvDT, paste0(Obj_Beta, ".RData"))
+      Path_Beta <- fs::path(path_conv_all, paste0(Obj_Beta, ".RData"))
 
       Obj_Omega <- paste0(M_Name_Fit, "_Omega")
-      Path_Omega <- fs::path(Path_ConvDT, paste0(Obj_Omega, ".RData"))
+      Path_Omega <- fs::path(path_conv_all, paste0(Obj_Omega, ".RData"))
 
       if ((Tree == "Tree" && !file.exists(Path_Trace_Rho)) ||
           !file.exists(Path_Trace_Alpha) || !file.exists(Path_Beta) ||
@@ -285,12 +283,12 @@ convergence_plot_all <- function(
 
   # Processing convergence data -----
 
-  Path_DT <- fs::path(Path_Convergence_All, "Convergence_DT.RData")
+  path_data <- fs::path(path_conv_all, "convergence_data.RData")
 
-  if (ecokit::check_data(Path_DT, warning = FALSE)) {
+  if (ecokit::check_data(path_data, warning = FALSE)) {
 
     ecokit::cat_time("Loading convergence data", level = 1L)
-    Convergence_DT <- ecokit::load_as(Path_DT)
+    convergence_data <- ecokit::load_as(path_data)
 
   } else {
 
@@ -308,26 +306,26 @@ convergence_plot_all <- function(
     ecokit::cat_time(
       "Starting processing convergence data", level = 2L, cat_timestamp = FALSE)
 
-    Convergence_DT <- Model_Info %>%
+    convergence_data <- Model_Info %>%
       dplyr::mutate(
         Plots = future.apply::future_lapply(
           X = seq_len(nrow(Model_Info)), FUN = PrepConvergence,
           future.scheduling = Inf, future.seed = TRUE,
           future.packages = pkg_to_export,
           future.globals = c(
-            "Model_Info", "Path_ConvDT", "n_omega", "PrepConvergence",
+            "Model_Info", "path_conv_all", "n_omega", "PrepConvergence",
             "spatial_model", "margin_type"))) %>%
       ecokit::quiet_device()
 
-    Convergence_DT <- Convergence_DT %>%
+    convergence_data <- convergence_data %>%
       dplyr::select(tidyselect::all_of(c("M_Name_Fit", "Plots"))) %>%
       tidyr::unnest_wider("Plots") %>%
       # Arrange data alphanumerically by model name
       dplyr::arrange(gtools::mixedorder(M_Name_Fit))
 
-    save(
-      Convergence_DT,
-      file = fs::path(Path_Convergence_All, "Convergence_DT.RData"))
+    ecokit::save_as(
+      object = convergence_data, object_name = convergence_data,
+      out_path = path_data)
 
     if (n_cores > 1) {
       ecokit::set_parallel(
@@ -362,13 +360,13 @@ convergence_plot_all <- function(
   # # ..................................................................... ###
 
   # Alpha - trace plots ------
-  if (!all(is.na(Convergence_DT$Path_Trace_Alpha)) && spatial_model) {
+  if (!all(is.na(convergence_data$Path_Trace_Alpha)) && spatial_model) {
     Convergence_DT_alpha <- dplyr::filter(
-      Convergence_DT, !is.na(Path_Trace_Alpha))
+      convergence_data, !is.na(Path_Trace_Alpha))
 
     ecokit::cat_time("Alpha - trace plots", level = 2L)
     grDevices::cairo_pdf(
-      filename = fs::path(Path_Convergence_All, "TracePlots_Alpha.pdf"),
+      filename = fs::path(path_conv_all, "TracePlots_Alpha.pdf"),
       width = 18, height = 12, onefile = TRUE)
     purrr::walk(
       .x = Convergence_DT_alpha$Path_Trace_Alpha,
@@ -386,7 +384,7 @@ convergence_plot_all <- function(
   ecokit::cat_time("Rho - trace plots", level = 2L)
   Path_Trace_Rho <- NULL
 
-  Plot <- Convergence_DT %>%
+  Plot <- convergence_data %>%
     dplyr::filter(stringr::str_detect(M_Name_Fit, "_Tree_")) %>%
     dplyr::mutate(
       Rho = purrr::map_if(
@@ -395,7 +393,7 @@ convergence_plot_all <- function(
         .f = ~grid::grid.rect(gp = grid::gpar(col = "white")),
         .else = ~ecokit::load_as(.x)))
 
-  if (nrow(Convergence_DT) > 1) {
+  if (nrow(convergence_data) > 1) {
     layout_matrix <- matrix(seq_len(2 * 2), nrow = 2, byrow = TRUE)
     Plot <- Plot$Rho %>%
       gridExtra::marrangeGrob(
@@ -410,26 +408,25 @@ convergence_plot_all <- function(
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   grDevices::cairo_pdf(
-    filename = fs::path(
-      Path_Convergence_All, "TracePlots_Rho_Phylogenetic.pdf"),
+    filename = fs::path(path_conv_all, "trace_plots_rho_phylogenetic.pdf"),
     width = 18, height = 15, onefile = TRUE)
   invisible(plot(Plot))
   grDevices::dev.off()
 
   # # ..................................................................... ###
 
-  if (!all(is.na(Convergence_DT$Omega_Gelman))) {
+  if (!all(is.na(convergence_data$Omega_Gelman))) {
 
     # Omega - Gelman convergence ------
     ecokit::cat_time("Omega - Gelman convergence", level = 2L)
 
-    Plot_Path <- fs::path(
-      Path_Convergence_All, paste0("Convergence_Omega_Gelman.pdf"))
+    Plot_Path <- fs::path(path_conv_all, paste0("convergence_omega_gelman.pdf"))
 
     Plot_Title <- paste0(
       "Gelman convergence diagnostic --- Omega (", n_omega, " samples)")
 
-    Plot <- dplyr::left_join(Convergence_DT, Model_Info, by = "M_Name_Fit") %>%
+    Plot <- convergence_data %>%
+      dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
       dplyr::select(
         tidyselect::any_of(
           c("rL", "Tree", "M_thin", "M_samples", "Omega_Gelman"))) %>%
@@ -481,13 +478,12 @@ convergence_plot_all <- function(
     # Omega - Effective sample size -----
     ecokit::cat_time("Omega - Effective sample size", level = 2L)
 
-    Plot_Path <- fs::path(
-      Path_Convergence_All, paste0("Convergence_Omega_ESS.pdf"))
+    Plot_Path <- fs::path(path_conv_all, paste0("convergence_omega_ess.pdf"))
 
     Plot_Title <- paste0(
       "Effective sample size --- Omega (", n_omega, " samples)")
 
-    Plot <- Convergence_DT %>%
+    Plot <- convergence_data %>%
       dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
       dplyr::select(
         tidyselect::any_of(
@@ -512,7 +508,7 @@ convergence_plot_all <- function(
       ggplot2::coord_flip(expand = FALSE) +
       Theme
 
-    Plot2 <- Convergence_DT %>%
+    Plot2 <- convergence_data %>%
       dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
       dplyr::select(
         tidyselect::any_of(
@@ -555,10 +551,9 @@ convergence_plot_all <- function(
 
   Plot_Title <- paste0("Gelman convergence diagnostic --- Beta")
 
-  Plot_Path <- fs::path(
-    Path_Convergence_All, paste0("Convergence_Beta_Gelman.pdf"))
+  Plot_Path <- fs::path(path_conv_all, paste0("convergence_beta_gelman.pdf"))
 
-  Plot <- Convergence_DT %>%
+  Plot <- convergence_data %>%
     dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
     dplyr::select(
       tidyselect::any_of(
@@ -608,11 +603,10 @@ convergence_plot_all <- function(
   # Beta - Effective sample size -----
   ecokit::cat_time("Beta - Effective sample size", level = 2L)
 
-  Plot_Path <- fs::path(
-    Path_Convergence_All, paste0("Convergence_Beta_ESS.pdf"))
+  Plot_Path <- fs::path(path_conv_all, paste0("convergence_beta_ess.pdf"))
   Plot_Title <- "Effective sample size --- Beta"
 
-  Plot <- Convergence_DT %>%
+  Plot <- convergence_data %>%
     dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
     dplyr::select(
       tidyselect::any_of(
@@ -638,7 +632,7 @@ convergence_plot_all <- function(
     ggplot2::coord_flip(expand = FALSE) +
     Theme
 
-  Plot2 <- Convergence_DT %>%
+  Plot2 <- convergence_data %>%
     dplyr::left_join(Model_Info, by = "M_Name_Fit") %>%
     dplyr::select(
       tidyselect::any_of(

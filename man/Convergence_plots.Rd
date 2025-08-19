@@ -46,7 +46,7 @@ convergence_rho(
   n_samples = NULL
 )
 
-convergence_beta_ranges(model_dir = NULL, n_chains = NULL)
+convergence_beta_ranges(model_dir = NULL, beta_data = NULL, n_chains = NULL)
 }
 \arguments{
 \item{path_coda}{Character. Path to a saved coda object containing MCMC
@@ -107,6 +107,8 @@ to the plot.}
 \item{n_samples}{Integer. Number of MCMC samples.}
 
 \item{model_dir}{Character. A path to the model directory.}
+
+\item{beta_data}{Data frame. Beta parameter summary data frame.}
 }
 \description{
 The \code{convergence_plot()} function generates and saves convergence diagnostics

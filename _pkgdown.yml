@@ -97,6 +97,7 @@ reference:
   - predict_maps
   - predict_maps_CV
   - plot_prediction
+  - mod_evaluate_cv
   - mod_postprocessing
   - plot_evaluation
   - parameter_heatmap

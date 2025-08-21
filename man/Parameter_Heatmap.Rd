@@ -21,7 +21,7 @@ mod_heatmap_omega(
 )
 }
 \arguments{
-\item{path_model}{Character. Path to the fitted Hmsc model object.}
+\item{path_model}{Character. Path to the fitted \code{Hmsc} model object.}
 
 \item{support_level}{Numeric. The posterior support threshold for determining
 which values are considered significant in the heatmap. Defaults to 0.95,

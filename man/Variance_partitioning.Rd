@@ -25,15 +25,17 @@ variance_partitioning_compute(
 )
 
 variance_partitioning_plot(
-  path_model,
+  path_model = NULL,
   env_file = ".env",
-  VP_file = "VarPar",
+  VP_file = "varpar",
   use_TF = TRUE,
   TF_environ = NULL,
   n_cores = 1L,
   width = 30,
   height = 15,
-  Axis_text = 4
+  axis_text = 4,
+  spatial_model = TRUE,
+  is_cv_model = FALSE
 )
 }
 \arguments{
@@ -86,19 +88,28 @@ data sources. Defaults to \code{.env}.}
 \item{width, height}{Numeric. Width and height of the output plot in
 centimetres. Default: \code{30} and \code{15}, respectively.}
 
-\item{Axis_text}{Numeric. Size of the axis text. Default: \code{4}.}
+\item{axis_text}{Numeric. Size of the axis text. Default: \code{4}.}
+
+\item{spatial_model}{Logical. Whether the fitted model is a spatial model.
+Defaults to \code{TRUE}.}
+
+\item{is_cv_model}{Logical. Whether the model is a cross-validated model
+(\code{TRUE}) or fitted with the full dataset (\code{FALSE}; default). If \code{TRUE}, the
+explanatory and predictive power of the model will be used to estimate the
+raw variance partitioning.}
 }
 \description{
-The \strong{\code{variance_partitioning_compute()}} function computes variance
-components with respect to given grouping of fixed effects and levels of
-random effects. This function inherits the main functionality from the
-\code{Hmsc::computeVariancePartitioning} function, but with the added
-functionality of parallel computation and using \code{TensorFlow}.\if{html}{\out{<br/>}}The
-\strong{\code{variance_partitioning_plot()}} function generates plots for variance
+Computes and plots variance components with respect to given grouping of
+fixed effects and levels of random effects. The The
+\code{variance_partitioning_compute()} function inherits the main functionality
+from the \link[Hmsc:computeVariancePartitioning]{Hmsc::computeVariancePartitioning} function, but with the added
+functionality of parallel computation and using \code{TensorFlow}. The
+\code{variance_partitioning_plot()} function generates plots for variance
 partitioning as JPEG files. It allows for sorting the predictors and species;
 e.g., by the mean value per predictor; and by original species order. It also
 plots the raw variance partitioning (relative variance partitioning
-multiplied by the Tjur-R\if{html}{\out{<sup>}}2\if{html}{\out{</sup>}} value).
+multiplied by the training and testing (if supported) Tjur-R\if{html}{\out{<sup>}}2\if{html}{\out{</sup>}}
+value).
 }
 \author{
 Ahmed El-Gabbas

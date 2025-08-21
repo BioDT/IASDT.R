@@ -10,7 +10,7 @@
 #' describes how species (*Y*) respond to various covariates (*X*); see
 #' [Hmsc::plotBeta]) and residual associations (`omega` parameter),
 #' respectively.
-#' @param path_model Character. Path to the fitted Hmsc model object.
+#' @param path_model Character. Path to the fitted `Hmsc` model object.
 #' @param support_level Numeric. The posterior support threshold for determining
 #'   which values are considered significant in the heatmap. Defaults to 0.95,
 #'   indicating 95% posterior support. Values above this threshold (or below 1 -

@@ -19,6 +19,8 @@
 #'   selected model. Accepts "Tree" (default) or "NoTree".
 #' @param MCMC_thin,MCMC_n_samples Integer. Thinning value and the number of
 #'   MCMC samples of the selected model.
+#' @param n_cores_pred Integer. Number of cores to use for predicting species'
+#'   habitat suitability.
 #' @param n_cores_VP Integer. Number of cores to use for processing variance
 #'   partitioning. Defaults to 10L.
 #' @param strategy Character. The parallel processing strategy to use. Valid
@@ -73,6 +75,9 @@
 #' @param future_max_size	Numeric. Maximum allowed total size (in megabytes) of
 #'   global variables identified. See `future.globals.maxSize` argument of
 #'   [future::future.options] for more details.
+#' @param is_cv_model Logical. Whether the model is a cross-validated model
+#'   (`TRUE`) or fitted with the full dataset (`FALSE`; default). If `TRUE`, the
+#'   explanatory and predictive power of the model will be computed.
 #' @rdname mod_postprocessing
 #' @name mod_postprocessing
 #' @order 1
@@ -186,21 +191,22 @@
 
 mod_postprocess_1_CPU <- function(
     model_dir = NULL, hab_abb = NULL, n_cores = 8L, strategy = "multisession",
+    n_cores_pred = n_cores, LF_n_cores = n_cores, n_cores_VP = 10L,
     env_file = ".env", path_Hmsc = NULL, memory_per_cpu = "64G",
     job_runtime = "01:00:00", from_JSON = FALSE, GPP_dist = NULL,
     use_trees = "Tree", MCMC_n_samples = 1000L, MCMC_thin = NULL,
     n_omega = 1000L, CV_name = c("CV_Dist", "CV_Large"), n_grid = 50L,
-    use_TF = TRUE, TF_use_single = FALSE, LF_n_cores = n_cores,
-    LF_temp_cleanup = TRUE, LF_check = FALSE, temp_cleanup = TRUE,
-    TF_environ = NULL, pred_new_sites = TRUE, n_cores_VP = 10L,
-    width_omega = 26, height_omega = 22.5, width_beta = 25, height_beta = 35,
-    spatial_model = TRUE, future_max_size = 1500L,
+    use_TF = TRUE, TF_use_single = FALSE,  LF_temp_cleanup = TRUE,
+    LF_check = FALSE, temp_cleanup = TRUE, TF_environ = NULL,
+    pred_new_sites = TRUE,  width_omega = 26, height_omega = 22.5,
+    width_beta = 25, height_beta = 35, spatial_model = TRUE,
+    future_max_size = 1500L, tar_predictions = TRUE, plot_predictions = TRUE,
+    is_cv_model = FALSE,
     CC_models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
     CC_scenario = c("ssp126", "ssp370", "ssp585"),
-    clamp_pred = TRUE, fix_efforts = "q90", fix_rivers = "q90",
-    tar_predictions = TRUE, plot_predictions = TRUE) {
+    clamp_pred = TRUE, fix_efforts = "q90", fix_rivers = "q90") {
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -222,25 +228,26 @@ mod_postprocess_1_CPU <- function(
   ecokit::check_args(
     args_all = AllArgs, args_type = "logical",
     args_to_check = c(
-      "from_JSON", "pred_new_sites", "temp_cleanup",
-      "use_TF", "LF_check", "LF_temp_cleanup", "TF_use_single"))
+      "from_JSON", "pred_new_sites", "temp_cleanup", "spatial_model",
+      "use_TF", "LF_check", "LF_temp_cleanup", "TF_use_single",
+      "tar_predictions", "plot_predictions"))
 
   ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c(
-      "n_cores", "n_omega", "GPP_dist", "MCMC_n_samples",
-      "MCMC_thin", "n_cores_VP", "LF_n_cores", "n_grid"))
+      "n_omega", "GPP_dist", "MCMC_n_samples", "MCMC_thin", "n_grid"))
   rm(AllArgs, envir = environment())
 
   hab_abb <- .validate_hab_abb(as.character(hab_abb))
 
   strategy <- .validate_strategy(strategy)
   if (strategy == "sequential") {
-    n_cores <- LF_n_cores <- n_cores_VP <- 1L
+    n_cores <- LF_n_cores <- n_cores_VP <- n_cores_pred <- 1L
   }
   n_cores <- .validate_n_cores(n_cores)
   LF_n_cores <- .validate_n_cores(LF_n_cores)
   n_cores_VP <- .validate_n_cores(n_cores_VP)
+  n_cores_pred <- .validate_n_cores(n_cores_pred)
 
   if (!ecokit::check_env_file(env_file, warning = FALSE)) {
     ecokit::stop_ctx(
@@ -405,8 +412,8 @@ mod_postprocess_1_CPU <- function(
     cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
   IASDT.R::convergence_plot(
-    path_coda = path_coda, path_model = path_model, env_file = env_file,
-    n_omega = n_omega, n_cores = n_cores, strategy = strategy,
+    path_coda = path_coda, env_file = env_file, n_omega = n_omega,
+    n_cores = n_cores, strategy = strategy,
     n_rc = list(alpha = c(2L, 2L), omega = c(2L, 2L), beta = c(3L, 3L)),
     margin_type = "histogram", spatial_model = spatial_model,
     future_max_size = future_max_size)
@@ -642,7 +649,8 @@ mod_postprocess_1_CPU <- function(
 
   IASDT.R::predict_maps(
     path_model = path_model, hab_abb = hab_abb, env_file = env_file,
-    n_cores = n_cores, strategy = strategy,
+    n_cores = dplyr::if_else(spatial_model, n_cores, n_cores_pred),
+    strategy = strategy,
     # Do not clamp predictions for predicting latent factors
     clamp_pred = dplyr::if_else(spatial_model, FALSE, clamp_pred),
     fix_efforts = fix_efforts, fix_rivers = fix_rivers,
@@ -654,19 +662,32 @@ mod_postprocess_1_CPU <- function(
     CC_models = CC_models, CC_scenario = CC_scenario,
     spatial_model = spatial_model, tar_predictions = tar_predictions)
 
-  if (spatial_model && plot_predictions) {
-    ecokit::info_chunk(
-      "Plot species & SR predictions as JPEG", level = 1L, line_char = "+",
-      line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
-      cat_timestamp = FALSE)
+  if (isFALSE(spatial_model)) {
 
-    IASDT.R::plot_prediction(
-      model_dir = model_dir, env_file = env_file, n_cores = n_cores)
+    # Plotting prediction maps as JPEG files -------
+    if (plot_predictions) {
+      ecokit::info_chunk(
+        "Plot species & SR predictions as JPEG", level = 1L, line_char = "+",
+        line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
+        cat_timestamp = FALSE)
+      IASDT.R::plot_prediction(
+        model_dir = model_dir, env_file = env_file, n_cores = n_cores)
+    }
+
+    # Evaluate cross-validated models -----
+    if (is_cv_model) {
+      ecokit::info_chunk(
+        "Evaluating explanatory and predictive power of the model",
+        level = 1L, line_char = "+", line_char_rep = 60L, cat_red = TRUE,
+        cat_bold = TRUE, cat_timestamp = FALSE)
+
+      IASDT.R::mod_evaluate_cv(model_dir = model_dir, cv_type = "CV_Dist")
+    }
   }
 
   # ****************************************************************
 
-  # Prepare scripts for computing variance partitioning -------
+  ## Prepare scripts for computing variance partitioning -------
   ecokit::info_chunk(
     "Prepare scripts for computing variance partitioning",
     line_char = "+", line_char_rep = 90L, cat_red = TRUE, cat_bold = TRUE,
@@ -793,6 +814,7 @@ mod_prepare_TF <- function(
       purrr::map(readr::read_lines, progress = FALSE) %>%
       unlist() %>%
       gtools::mixedsort() %>%
+      unique() %>%
       unname()
 
     n_VP_InFiles <- length(VP_InFiles)
@@ -864,7 +886,7 @@ mod_prepare_TF <- function(
   # ****************************************************************
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||| # #
-  # LF PREDICTIONS ----
+  ## LF PREDICTIONS ----
   # # |||||||||||||||||||||||||||||||||||||||||||||||||| # #
 
   if (process_LF) {
@@ -876,7 +898,7 @@ mod_prepare_TF <- function(
     # n_batch_files; so both can be run on the same time.
     n_batch_files <- n_batch_files - n_VP_InFiles
 
-    # Merge and organise `TensorFlow` commands for LF predictions ----
+    ## Merge and organise `TensorFlow` commands for LF predictions ----
     ecokit::cat_time(
       paste0(
         "Merge and organise `TensorFlow` commands for LF predictions ",
@@ -985,7 +1007,7 @@ mod_prepare_TF <- function(
 
     # ****************************************************************
 
-    # Prepare LF batch files ----
+    ## Prepare LF batch files ----
     ecokit::cat_time("Prepare batch files", level = 1L, cat_timestamp = FALSE)
 
     LF_slurm_script <- c(
@@ -1096,7 +1118,7 @@ mod_prepare_TF <- function(
 #' @author Ahmed El-Gabbas
 
 mod_postprocess_2_CPU <- function(
-    model_dir = NULL, hab_abb = NULL, n_cores = 8L,
+    model_dir = NULL, hab_abb = NULL, n_cores = 8L, n_cores_pred = n_cores,
     strategy = "multisession", env_file = ".env", GPP_dist = NULL,
     use_trees = "Tree", MCMC_n_samples = 1000L, MCMC_thin = NULL, use_TF = TRUE,
     TF_environ = NULL, TF_use_single = FALSE, LF_n_cores = n_cores,
@@ -1109,7 +1131,8 @@ mod_postprocess_2_CPU <- function(
     pred_new_sites = TRUE, tar_predictions = TRUE,
     RC_prepare = TRUE, RC_plot = TRUE, VP_prepare = TRUE, VP_plot = TRUE,
     predict_suitability = TRUE, plot_predictions = TRUE, plot_LF = TRUE,
-    plot_internal_evaluation = TRUE, spatial_model = TRUE) {
+    plot_internal_evaluation = TRUE, spatial_model = TRUE,
+    is_cv_model = FALSE) {
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -1120,10 +1143,13 @@ mod_postprocess_2_CPU <- function(
   hab_abb <- .validate_hab_abb(as.character(hab_abb))
 
   strategy <- .validate_strategy(strategy)
-  if (strategy == "sequential") n_cores <- LF_n_cores <- RC_n_cores <- 1L
+  if (strategy == "sequential") {
+    n_cores <- LF_n_cores <- RC_n_cores <- n_cores_pred <- 1L
+  }
   n_cores <- .validate_n_cores(n_cores)
   LF_n_cores <- .validate_n_cores(LF_n_cores)
   RC_n_cores <- .validate_n_cores(RC_n_cores)
+  n_cores_pred <- .validate_n_cores(n_cores_pred)
 
   AllArgs <- ls(envir = environment())
   AllArgs <- purrr::map(
@@ -1273,96 +1299,147 @@ mod_postprocess_2_CPU <- function(
 
   # ****************************************************************
 
-  # Prepare response curve data -----
+  if (spatial_model) {
 
-  if (RC_prepare) {
-    ecokit::info_chunk(
-      "Prepare response curve data", level = 1L, line_char = "+",
-      line_char_rep = 60L, cat_red = TRUE,
-      cat_bold = TRUE, cat_timestamp = FALSE)
+    # Prepare response curve data -----
 
-    IASDT.R::resp_curv_prepare_data(
-      path_model = path_model, n_grid = n_grid, n_cores = RC_n_cores,
-      strategy = strategy, use_TF = use_TF, TF_environ = TF_environ,
-      TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
-      LF_temp_cleanup = LF_temp_cleanup, LF_check = LF_check,
-      temp_dir = temp_dir, temp_cleanup = temp_cleanup, verbose = TRUE,
-      LF_commands_only = FALSE, return_data = FALSE,
-      probabilities = c(0.025, 0.5, 0.975))
+    if (RC_prepare) {
+      ecokit::info_chunk(
+        "Prepare response curve data", level = 1L, line_char = "+",
+        line_char_rep = 60L, cat_red = TRUE,
+        cat_bold = TRUE, cat_timestamp = FALSE)
 
-    invisible(gc())
-  }
+      IASDT.R::resp_curv_prepare_data(
+        path_model = path_model, n_grid = n_grid, n_cores = RC_n_cores,
+        strategy = strategy, use_TF = use_TF, TF_environ = TF_environ,
+        TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
+        LF_temp_cleanup = LF_temp_cleanup, LF_check = LF_check,
+        temp_dir = temp_dir, temp_cleanup = temp_cleanup, verbose = TRUE,
+        LF_commands_only = FALSE, return_data = FALSE,
+        probabilities = c(0.025, 0.5, 0.975))
 
-  # ****************************************************************
+      invisible(gc())
+    }
 
-  # Plotting response curves ----
+    # ****************************************************************
 
-  if (RC_plot) {
+    # Plotting response curves ----
 
-    ## Species richness -----
-    ecokit::info_chunk(
-      "Plotting response curves - species richness", level = 1L,
-      line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
-      cat_timestamp = FALSE)
+    if (RC_plot) {
 
-    IASDT.R::resp_curv_plot_SR(
-      model_dir = model_dir, verbose = TRUE, n_cores = RC_n_cores,
-      strategy = strategy)
+      ## Species richness -----
+      ecokit::info_chunk(
+        "Plotting response curves - species richness", level = 1L,
+        line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
+        cat_timestamp = FALSE)
 
-    invisible(gc())
+      IASDT.R::resp_curv_plot_SR(
+        model_dir = model_dir, verbose = TRUE, n_cores = RC_n_cores,
+        strategy = strategy)
 
-    # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+      invisible(gc())
 
-    # Individual species -----
-    ecokit::info_chunk(
-      "Plotting response curves - species", level = 1L, line_char = "+",
-      line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
-      cat_timestamp = FALSE)
+      # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-    IASDT.R::resp_curv_plot_species(
-      model_dir = model_dir, n_cores = RC_n_cores, env_file = env_file)
+      # Individual species -----
+      ecokit::info_chunk(
+        "Plotting response curves - species", level = 1L, line_char = "+",
+        line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
+        cat_timestamp = FALSE)
 
-    invisible(gc())
+      IASDT.R::resp_curv_plot_species(
+        model_dir = model_dir, n_cores = RC_n_cores, env_file = env_file)
 
-    # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+      invisible(gc())
 
-    # All species together -----
-    ecokit::info_chunk(
-      "Plotting response curves - all species together", level = 1L,
-      line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
-      cat_timestamp = FALSE)
+      # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-    IASDT.R::resp_curv_plot_species_all(
-      model_dir = model_dir, n_cores = RC_n_cores)
+      # All species together -----
+      ecokit::info_chunk(
+        "Plotting response curves - all species together", level = 1L,
+        line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
+        cat_timestamp = FALSE)
 
-    invisible(gc())
-  }
+      IASDT.R::resp_curv_plot_species_all(
+        model_dir = model_dir, n_cores = RC_n_cores)
 
-  # ****************************************************************
+      invisible(gc())
+    }
 
-  # Predicting habitat suitability across different climate options -------
+    # ****************************************************************
 
-  if (predict_suitability) {
+    # Predicting habitat suitability across different climate options -------
 
-    ecokit::info_chunk(
-      "Predicting habitat suitability across different climate options",
-      line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
-      cat_timestamp = FALSE, level = 1L)
+    if (predict_suitability) {
 
-    IASDT.R::predict_maps(
-      path_model = path_model, hab_abb = hab_abb, env_file = env_file,
-      n_cores = n_cores, strategy = strategy, clamp_pred = clamp_pred,
-      fix_efforts = fix_efforts, fix_rivers = fix_rivers,
-      pred_new_sites = pred_new_sites, use_TF = use_TF,
-      TF_environ = TF_environ, TF_use_single = TF_use_single,
-      LF_n_cores = LF_n_cores, LF_check = LF_check,
-      LF_temp_cleanup = LF_temp_cleanup, LF_only = FALSE,
-      LF_commands_only = FALSE, temp_dir = temp_dir,
-      temp_cleanup = temp_cleanup, tar_predictions = tar_predictions,
-      CC_models = CC_models, CC_scenario = CC_scenario,
-      spatial_model = spatial_model)
+      ecokit::info_chunk(
+        "Predicting habitat suitability across different climate options",
+        line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
+        cat_timestamp = FALSE, level = 1L)
 
-    invisible(gc())
+      IASDT.R::predict_maps(
+        path_model = path_model, hab_abb = hab_abb, env_file = env_file,
+        n_cores = n_cores_pred, strategy = strategy, clamp_pred = clamp_pred,
+        fix_efforts = fix_efforts, fix_rivers = fix_rivers,
+        pred_new_sites = pred_new_sites, use_TF = use_TF,
+        TF_environ = TF_environ, TF_use_single = TF_use_single,
+        LF_n_cores = LF_n_cores, LF_check = LF_check,
+        LF_temp_cleanup = LF_temp_cleanup, LF_only = FALSE,
+        LF_commands_only = FALSE, temp_dir = temp_dir,
+        temp_cleanup = temp_cleanup, tar_predictions = tar_predictions,
+        CC_models = CC_models, CC_scenario = CC_scenario,
+        spatial_model = spatial_model)
+
+      invisible(gc())
+
+      # Plot species & SR predictions as JPEG ------
+
+      if (plot_predictions) {
+        ecokit::info_chunk(
+          "Plot species & SR predictions as JPEG", level = 1L, line_char = "+",
+          line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
+          cat_timestamp = FALSE)
+
+        IASDT.R::plot_prediction(
+          model_dir = model_dir, env_file = env_file, n_cores = n_cores)
+      }
+
+      # Evaluate cross-validated models -----
+      if (is_cv_model) {
+        ecokit::info_chunk(
+          "Evaluating explanatory and predictive power of the model",
+          level = 1L, line_char = "+", line_char_rep = 60L, cat_red = TRUE,
+          cat_bold = TRUE, cat_timestamp = FALSE)
+        IASDT.R::mod_evaluate_cv(model_dir = model_dir, cv_type = "CV_Dist")
+      }
+    }
+
+    # ****************************************************************
+
+    ## Plot latent factors as JPEG ------
+
+    if (plot_LF) {
+      ecokit::info_chunk(
+        "Plot latent factors as JPEG", level = 1L, line_char = "+",
+        line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
+        cat_timestamp = FALSE)
+
+      IASDT.R::plot_latent_factor(path_model = path_model, env_file = env_file)
+    }
+
+    # ****************************************************************
+
+    ## Plot explanatory Power ------
+
+    if (isFALSE(is_cv_model) && plot_internal_evaluation) {
+      ecokit::info_chunk(
+        "Plot explanatory Power", level = 1L, line_char = "+",
+        line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
+        cat_timestamp = FALSE)
+
+      IASDT.R::plot_evaluation(model_dir = model_dir)
+    }
+
   }
 
   # ****************************************************************
@@ -1395,47 +1472,8 @@ mod_postprocess_2_CPU <- function(
     IASDT.R::variance_partitioning_plot(
       path_model = path_model, env_file = env_file, VP_file = "VarPar",
       use_TF = use_TF, TF_environ = TF_environ, n_cores = n_cores, width = 30,
-      height = 15)
-  }
+      height = 15, spatial_model = spatial_model, is_cv_model = is_cv_model)
 
-  # ****************************************************************
-
-  # Plot species & SR predictions as JPEG ------
-
-  if (plot_predictions) {
-    ecokit::info_chunk(
-      "Plot species & SR predictions as JPEG", level = 1L, line_char = "+",
-      line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
-      cat_timestamp = FALSE)
-
-    IASDT.R::plot_prediction(
-      model_dir = model_dir, env_file = env_file, n_cores = n_cores)
-  }
-
-  # ****************************************************************
-
-  # Plot latent factors as JPEG ------
-
-  if (plot_LF) {
-    ecokit::info_chunk(
-      "Plot latent factors as JPEG", level = 1L, line_char = "+",
-      line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
-      cat_timestamp = FALSE)
-
-    IASDT.R::plot_latent_factor(path_model = path_model, env_file = env_file)
-  }
-
-  # ****************************************************************
-
-  # Plot explanatory Power ------
-
-  if (plot_internal_evaluation) {
-    ecokit::info_chunk(
-      "Plot explanatory Power", level = 1L, line_char = "+",
-      line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
-      cat_timestamp = FALSE)
-
-    IASDT.R::plot_evaluation(model_dir = model_dir)
   }
 
   # ****************************************************************

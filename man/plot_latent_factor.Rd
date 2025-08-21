@@ -4,21 +4,13 @@
 \alias{plot_latent_factor}
 \title{Plot spatial variation in site loadings of HMSC models}
 \usage{
-plot_latent_factor(
-  path_model = NULL,
-  env_file = ".env",
-  plot_width = 20,
-  plot_height = 21
-)
+plot_latent_factor(path_model = NULL, env_file = ".env")
 }
 \arguments{
-\item{path_model}{Path to the model file.}
+\item{path_model}{Character. Path to fitted \code{Hmsc} model object.}
 
 \item{env_file}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
-
-\item{plot_width, plot_height}{Numeric. The width and height of the
-output plot in cm. Default is 20×21 cm.}
 }
 \description{
 Generate and save spatial variation in site loadings of HMSC models' latent

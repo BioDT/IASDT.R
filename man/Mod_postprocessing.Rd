@@ -14,6 +14,9 @@ mod_postprocess_1_CPU(
   hab_abb = NULL,
   n_cores = 8L,
   strategy = "multisession",
+  n_cores_pred = n_cores,
+  LF_n_cores = n_cores,
+  n_cores_VP = 10L,
   env_file = ".env",
   path_Hmsc = NULL,
   memory_per_cpu = "64G",
@@ -28,27 +31,26 @@ mod_postprocess_1_CPU(
   n_grid = 50L,
   use_TF = TRUE,
   TF_use_single = FALSE,
-  LF_n_cores = n_cores,
   LF_temp_cleanup = TRUE,
   LF_check = FALSE,
   temp_cleanup = TRUE,
   TF_environ = NULL,
   pred_new_sites = TRUE,
-  n_cores_VP = 10L,
   width_omega = 26,
   height_omega = 22.5,
   width_beta = 25,
   height_beta = 35,
   spatial_model = TRUE,
   future_max_size = 1500L,
+  tar_predictions = TRUE,
+  plot_predictions = TRUE,
+  is_cv_model = FALSE,
   CC_models = c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0",
     "UKESM1-0-LL"),
   CC_scenario = c("ssp126", "ssp370", "ssp585"),
   clamp_pred = TRUE,
   fix_efforts = "q90",
-  fix_rivers = "q90",
-  tar_predictions = TRUE,
-  plot_predictions = TRUE
+  fix_rivers = "q90"
 )
 
 mod_prepare_TF(
@@ -67,6 +69,7 @@ mod_postprocess_2_CPU(
   model_dir = NULL,
   hab_abb = NULL,
   n_cores = 8L,
+  n_cores_pred = n_cores,
   strategy = "multisession",
   env_file = ".env",
   GPP_dist = NULL,
@@ -97,7 +100,9 @@ mod_postprocess_2_CPU(
   predict_suitability = TRUE,
   plot_predictions = TRUE,
   plot_LF = TRUE,
-  plot_internal_evaluation = TRUE
+  plot_internal_evaluation = TRUE,
+  spatial_model = TRUE,
+  is_cv_model = FALSE
 )
 
 mod_postprocess_CV_1_CPU(
@@ -150,6 +155,15 @@ Default: 8.}
 options are "sequential", "multisession" (default), "multicore", and
 "cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 
+\item{n_cores_pred}{Integer. Number of cores to use for predicting species'
+habitat suitability.}
+
+\item{LF_n_cores}{Integer. Number of cores to use for parallel processing of
+latent factor prediction. Defaults to 8L.}
+
+\item{n_cores_VP}{Integer. Number of cores to use for processing variance
+partitioning. Defaults to 10L.}
+
 \item{env_file}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
 
@@ -192,9 +206,6 @@ to \code{TRUE}.}
 \item{TF_use_single}{Logical. Whether to use single precision for the
 \code{TensorFlow} calculations. Defaults to \code{FALSE}.}
 
-\item{LF_n_cores}{Integer. Number of cores to use for parallel processing of
-latent factor prediction. Defaults to 8L.}
-
 \item{LF_temp_cleanup}{Logical. Whether to delete temporary files in the
 \code{temp_dir} directory after finishing the LF predictions.}
 
@@ -211,9 +222,6 @@ required if \code{use_TF} is \code{TRUE} under Windows. Defaults to \code{NULL}.
 \item{pred_new_sites}{Logical. Whether to predict suitability at new sites.
 Default: \code{TRUE}.}
 
-\item{n_cores_VP}{Integer. Number of cores to use for processing variance
-partitioning. Defaults to 10L.}
-
 \item{width_omega, height_omega, width_beta, height_beta}{Integer. The width and
 height of the generated heatmaps of the Omega and Beta parameters in
 centimetres.}
@@ -224,6 +232,16 @@ centimetres.}
 \item{future_max_size}{Numeric. Maximum allowed total size (in megabytes) of
 global variables identified. See \code{future.globals.maxSize} argument of
 \link[future:zzz-future.options]{future::future.options} for more details.}
+
+\item{tar_predictions}{Logical. Whether to compress the add files into a
+single \verb{*.tar} file (without compression). Default: \code{TRUE}.}
+
+\item{plot_predictions}{Logical. Whether to plot species and species richness
+predictions as JPEG files (using \link{plot_prediction}). Defaults to \code{TRUE}.}
+
+\item{is_cv_model}{Logical. Whether the model is a cross-validated model
+(\code{TRUE}) or fitted with the full dataset (\code{FALSE}; default). If \code{TRUE}, the
+explanatory and predictive power of the model will be computed.}
 
 \item{CC_models}{Character vector. Climate models for future predictions.
 Available options are \code{c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")} (default).}
@@ -247,12 +265,6 @@ extremes. Required if \code{clamp_pred = TRUE}.}
 \item{fix_rivers}{Numeric, character, or \code{NULL}. Similar to \code{fix_efforts},
 but for the river length predictor. If \code{NULL}, the river length is not
 fixed. Default: \code{q90}.}
-
-\item{tar_predictions}{Logical. Whether to compress the add files into a
-single \verb{*.tar} file (without compression). Default: \code{TRUE}.}
-
-\item{plot_predictions}{Logical. Whether to plot species and species richness
-predictions as JPEG files (using \link{plot_prediction}). Defaults to \code{TRUE}.}
 
 \item{process_VP}{Logical. Whether to prepares batch scripts for variance
 partitioning GPU computations on GPUs. Defaults to \code{TRUE}.}

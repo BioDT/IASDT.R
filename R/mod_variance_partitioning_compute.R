@@ -4,16 +4,17 @@
 
 #' Computes and visualise variance partitioning of Hmsc models
 #'
-#' The **`variance_partitioning_compute()`** function computes variance
-#' components with respect to given grouping of fixed effects and levels of
-#' random effects. This function inherits the main functionality from the
-#' `Hmsc::computeVariancePartitioning` function, but with the added
-#' functionality of parallel computation and using `TensorFlow`.<br/>The
-#' **`variance_partitioning_plot()`** function generates plots for variance
+#' Computes and plots variance components with respect to given grouping of
+#' fixed effects and levels of random effects. The The
+#' `variance_partitioning_compute()` function inherits the main functionality
+#' from the [Hmsc::computeVariancePartitioning] function, but with the added
+#' functionality of parallel computation and using `TensorFlow`. The
+#' `variance_partitioning_plot()` function generates plots for variance
 #' partitioning as JPEG files. It allows for sorting the predictors and species;
 #' e.g., by the mean value per predictor; and by original species order. It also
 #' plots the raw variance partitioning (relative variance partitioning
-#' multiplied by the Tjur-R<sup>2</sup> value).
+#' multiplied by the training and testing (if supported) Tjur-R<sup>2</sup>
+#' value).
 #' @param path_model Character. Path to fitted `Hmsc` model object.
 #' @param group vector of numeric values corresponding to group identifiers in
 #'   groupnames. If the model was defined with `XData` and `XFormula`, the
@@ -41,7 +42,11 @@
 #'   data sources. Defaults to `.env`.
 #' @param width,height Numeric. Width and height of the output plot in
 #'   centimetres. Default: `30` and `15`, respectively.
-#' @param Axis_text Numeric. Size of the axis text. Default: `4`.
+#' @param is_cv_model Logical. Whether the model is a cross-validated model
+#'   (`TRUE`) or fitted with the full dataset (`FALSE`; default). If `TRUE`, the
+#'   explanatory and predictive power of the model will be used to estimate the
+#'   raw variance partitioning.
+#' @param axis_text Numeric. Size of the axis text. Default: `4`.
 #' @author Ahmed El-Gabbas
 #' @importFrom foreach %dopar%
 #' @inheritParams predict_hmsc
@@ -722,8 +727,10 @@ variance_partitioning_compute <- function(
 
   if (use_TF) {
 
+    # compute variance partitioning in parallel if `TensorFlow` was used
+
     ecokit::cat_time(
-      "Computing variance partitioning in parallel", verbose = verbose)
+      "Computing variance partitioning in parallel in R", verbose = verbose)
 
     ecokit::cat_time(
       "Split `lbeta` list into small qs2 files", level = 1L, verbose = verbose)

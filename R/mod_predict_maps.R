@@ -855,7 +855,7 @@ predict_maps <- function(
 
   } else {
 
-    if (pred_new_sites & spatial_model) {
+    if (pred_new_sites && spatial_model) {
       ecokit::cat_time(
         "LF prediction is already available on disk", level = 1L)
     } else {
@@ -1007,16 +1007,20 @@ predict_maps <- function(
           Option_Name, "_",
           dplyr::if_else(DoClamp, "Clamping", "NoClamping"), "_Test")
         Predict_DF_Test <- dplyr::filter(Predict_DF, !Train)
-        Test_XY <- Predict_DF_Test[, c("x", "y")]
-        Test_X <- Predict_DF_Test %>%
-          dplyr::select(tidyselect::all_of(names(Model$XData))) %>%
-          sf::st_drop_geometry()
-        Gradient <- Hmsc::prepareGradient(
-          hM = Model, XDataNew = as.data.frame(Test_X),
-          sDataNew = list(
-            sample = as.data.frame(sf::st_drop_geometry(Test_XY))))
+        if (nrow(Predict_DF_Train) > 0L) {
+          Test_XY <- Predict_DF_Test[, c("x", "y")]
+          Test_X <- Predict_DF_Test %>%
+            dplyr::select(tidyselect::all_of(names(Model$XData))) %>%
+            sf::st_drop_geometry()
+          Gradient <- Hmsc::prepareGradient(
+            hM = Model, XDataNew = as.data.frame(Test_X),
+            sDataNew = list(
+              sample = as.data.frame(sf::st_drop_geometry(Test_XY))))
+        } else {
+          Test_XY <- Test_X <- Gradient <- NULL
+        }
 
-        rm(Model, Predict_DF_Test, Predict_DF, envir = environment())
+        rm(Model, Predict_DF, envir = environment())
         invisible(gc())
 
         # ______________________________________________
@@ -1051,6 +1055,10 @@ predict_maps <- function(
 
           }
         } else {
+          ecokit::cat_time(
+            paste0(
+              "All sites are new sites; no predictions will be made at ","training sites"),
+            level = 1L)
           Preds_ModFitSites <- tibble::tibble(Pred_Path = NULL)
         }
 
@@ -1058,7 +1066,7 @@ predict_maps <- function(
 
         # Predicting at new sites ----
 
-        if (pred_new_sites) {
+        if (pred_new_sites && nrow(Predict_DF_Test) > 0L) {
 
           ecokit::cat_time("Predicting at new sites")
 
@@ -1267,267 +1275,270 @@ predict_maps <- function(
   # # ..................................................................... ###
   # # ..................................................................... ###
 
-  # Ensemble model predictions ------
+  if (length(CC_models) > 1 && !is.null(CC_scenario)) {
 
-  ecokit::info_chunk(
-    "\tEnsemble model predictions", n_separators = 1L, line_char = "-",
-    line_char_rep = 70L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
+    # Ensemble model predictions ------
 
-  # Prepare input data to calculate ensemble predictions
-  ecokit::cat_time(
-    "Prepare input data to calculate ensemble predictions", level = 1L)
+    ecokit::info_chunk(
+      "\tEnsemble model predictions", n_separators = 1L, line_char = "-",
+      line_char_rep = 70L, cat_red = TRUE, cat_bold = TRUE,
+      cat_timestamp = FALSE)
 
-  Prediction_Ensemble <- Prediction_Summary %>%
-    dplyr::filter(ClimateModel != "Current") %>%
-    dplyr::select(-File_Pred_sf, -File_Pred_R, -Name, -ClimateModel) %>%
-    dplyr::mutate(
-      Prediction2 = purrr::map(
-        .x = File_Pred_summary,
-        .f = ~ {
-          if (!fs::file_exists(.x)) {
-            warning("File not found: ", .x, call. = FALSE)
-            return(NULL)
-          }
+    # Prepare input data to calculate ensemble predictions
+    ecokit::cat_time(
+      "Prepare input data to calculate ensemble predictions", level = 1L)
 
-          ecokit::load_as(.x) %>%
-            dplyr::select(
-              -tidyselect::all_of(
-                c("tif_path_sd", "tif_path_cov", "tif_path_anomaly")))
+    Prediction_Ensemble <- Prediction_Summary %>%
+      dplyr::filter(ClimateModel != "Current") %>%
+      dplyr::select(-File_Pred_sf, -File_Pred_R, -Name, -ClimateModel) %>%
+      dplyr::mutate(
+        Prediction2 = purrr::map(
+          .x = File_Pred_summary,
+          .f = ~ {
+            if (!fs::file_exists(.x)) {
+              warning("File not found: ", .x, call. = FALSE)
+              return(NULL)
+            }
 
-        })) %>%
-    dplyr::select("Prediction2", "Clamp") %>%
-    tidyr::unnest("Prediction2") %>%
-    dplyr::mutate(
-      climate_model = "Ensemble",
-      Dir_Ensemble = fs::path(
-        dirname(dirname(tif_path_mean)),
-        paste0(
-          stringr::str_replace(time_period, "-", "_"), "_", climate_scenario,
-          "_Ensemble"))) %>%
-    dplyr::group_by(dplyr::across(-tif_path_mean)) %>%
-    dplyr::summarise(tifs = list(tif_path_mean), .groups = "drop") %>%
-    dplyr::mutate(
-      tif_path_mean = fs::path(Dir_Ensemble, paste0(ias_id, "_mean.tif")),
-      tif_path_anomaly = fs::path(
-        Dir_Ensemble, paste0(ias_id, "_anomaly.tif")),
-      tif_path_sd = fs::path(Dir_Ensemble, paste0(ias_id, "_sd.tif")),
-      tif_path_cov = fs::path(Dir_Ensemble, paste0(ias_id, "_cov.tif")))
+            ecokit::load_as(.x) %>%
+              dplyr::select(
+                -tidyselect::all_of(
+                  c("tif_path_sd", "tif_path_cov", "tif_path_anomaly")))
 
-  # --------------------------------------------------------- #
+          })) %>%
+      dplyr::select("Prediction2", "Clamp") %>%
+      tidyr::unnest("Prediction2") %>%
+      dplyr::mutate(
+        climate_model = "Ensemble",
+        Dir_Ensemble = fs::path(
+          dirname(dirname(tif_path_mean)),
+          paste0(
+            stringr::str_replace(time_period, "-", "_"), "_", climate_scenario,
+            "_Ensemble"))) %>%
+      dplyr::group_by(dplyr::across(-tif_path_mean)) %>%
+      dplyr::summarise(tifs = list(tif_path_mean), .groups = "drop") %>%
+      dplyr::mutate(
+        tif_path_mean = fs::path(Dir_Ensemble, paste0(ias_id, "_mean.tif")),
+        tif_path_anomaly = fs::path(
+          Dir_Ensemble, paste0(ias_id, "_anomaly.tif")),
+        tif_path_sd = fs::path(Dir_Ensemble, paste0(ias_id, "_sd.tif")),
+        tif_path_cov = fs::path(Dir_Ensemble, paste0(ias_id, "_cov.tif")))
 
-  ecokit::cat_time("Create directories for ensemble predictions", level = 1L)
-  fs::dir_create(unique(Prediction_Ensemble$Dir_Ensemble))
+    # --------------------------------------------------------- #
 
-  # --------------------------------------------------------- #
+    ecokit::cat_time("Create directories for ensemble predictions", level = 1L)
+    fs::dir_create(unique(Prediction_Ensemble$Dir_Ensemble))
 
-  # Loading mean predictions at current climates
-  ecokit::cat_time("Loading mean predictions at current climates", level = 1L)
+    # --------------------------------------------------------- #
 
-  CurrentMean <- list.files(
-    path = dplyr::if_else(
-      clamp_pred, Path_Prediction_Clamp, Path_Prediction_NoClamp),
-    pattern = "Prediction_Current.*_R.qs2", full.names = TRUE)
+    # Loading mean predictions at current climates
+    ecokit::cat_time("Loading mean predictions at current climates", level = 1L)
 
-  # --------------------------------------------------------- #
+    CurrentMean <- list.files(
+      path = dplyr::if_else(
+        clamp_pred, Path_Prediction_Clamp, Path_Prediction_NoClamp),
+      pattern = "Prediction_Current.*_R.qs2", full.names = TRUE)
 
-  # Calculate ensemble predictions
-  ecokit::cat_time("Calculate ensemble predictions", level = 1L)
+    # --------------------------------------------------------- #
 
-  # set up parallel processing
-  doParallel::registerDoParallel(cores = n_cores)
-  ecokit::load_packages(package_list = "foreach")
-  withr::defer(doParallel::stopImplicitCluster())
+    # Calculate ensemble predictions
+    ecokit::cat_time("Calculate ensemble predictions", level = 1L)
 
-  Prediction_Ensemble_0 <- dplyr::select(
-    Prediction_Ensemble,
-    tifs, tif_path_mean, tif_path_anomaly, tif_path_sd, tif_path_cov, ias_id)
+    # set up parallel processing
+    doParallel::registerDoParallel(cores = n_cores)
+    ecokit::load_packages(package_list = "foreach")
+    withr::defer(doParallel::stopImplicitCluster())
 
-  calculate_ensemble <- foreach::foreach(
-    row_id = seq_len(nrow(Prediction_Ensemble_0)),
-    .export = c("CurrentMean", "Prediction_Ensemble_0"),
-    .packages = c("terra", "purrr", "ecokit", "qs2", "magrittr", "fs")
-  ) %dopar% { # nolint: object_usage_linter
+    Prediction_Ensemble_0 <- dplyr::select(
+      Prediction_Ensemble,
+      tifs, tif_path_mean, tif_path_anomaly, tif_path_sd, tif_path_cov, ias_id)
 
-    path_mean <- Prediction_Ensemble_0$tif_path_mean[[row_id]]
-    path_anomaly <- Prediction_Ensemble_0$tif_path_anomaly[[row_id]]
-    path_cov <- Prediction_Ensemble_0$tif_path_cov[[row_id]]
-    path_sd <- Prediction_Ensemble_0$tif_path_sd[[row_id]]
+    calculate_ensemble <- foreach::foreach(
+      row_id = seq_len(nrow(Prediction_Ensemble_0)),
+      .export = c("CurrentMean", "Prediction_Ensemble_0"),
+      .packages = c("terra", "purrr", "ecokit", "qs2", "magrittr", "fs")
+    ) %dopar% { # nolint: object_usage_linter
 
-    paths_all <- c(path_mean, path_anomaly, path_cov, path_sd)
-    paths_exist <- purrr::map_lgl(.x = paths_all, .f = fs::file_exists)
-    all_okay <- all(paths_exist)
-    if (all_okay) {
-      all_okay <- purrr::map_lgl(
-        .x = paths_all, .f = ecokit::check_tiff, warning = FALSE) %>%
-        all()
-    }
+      path_mean <- Prediction_Ensemble_0$tif_path_mean[[row_id]]
+      path_anomaly <- Prediction_Ensemble_0$tif_path_anomaly[[row_id]]
+      path_cov <- Prediction_Ensemble_0$tif_path_cov[[row_id]]
+      path_sd <- Prediction_Ensemble_0$tif_path_sd[[row_id]]
 
-    if (all_okay) {
+      paths_all <- c(path_mean, path_anomaly, path_cov, path_sd)
+      paths_exist <- purrr::map_lgl(.x = paths_all, .f = fs::file_exists)
+      all_okay <- all(paths_exist)
+      if (all_okay) {
+        all_okay <- purrr::map_lgl(
+          .x = paths_all, .f = ecokit::check_tiff, warning = FALSE) %>%
+          all()
+      }
+
+      if (all_okay) {
+        return(NULL)
+      }
+
+      fs::file_delete(paths_all[paths_exist])
+
+      ias_id <- Prediction_Ensemble_0$ias_id[[row_id]]
+
+      # load maps for future climate option
+      tiffs_R <- terra::rast(Prediction_Ensemble_0$tifs[[row_id]])
+
+      # Mean
+      Ensemble_mean <- terra::app(tiffs_R, "mean", na.rm = TRUE)
+      # Standard deviation
+      Ensemble_sd <- terra::app(tiffs_R, "sd", na.rm = TRUE)
+      rm(tiffs_R)
+
+      # Anomaly
+      CurrentMean0 <- ecokit::load_as(CurrentMean, unwrap_r = TRUE) %>%
+        terra::subset(paste0(ias_id, "_mean"))
+      Ensemble_anomaly <- Ensemble_mean - CurrentMean0
+      rm(CurrentMean0)
+
+      # coefficient of variation: Replace very small mean values with
+      # reasonably small number to avoid overflow warning
+      Ensemble_mean_0 <- terra::classify(
+        x = Ensemble_mean, rcl = cbind(0, 1e-8, 1e-8))
+      Ensemble_cov <- (Ensemble_sd / Ensemble_mean_0)
+
+      gdal_o <- c("COMPRESS=DEFLATE", "TILED=YES")
+      terra::writeRaster(
+        x = Ensemble_mean, filename = path_mean,
+        overwrite = TRUE, gdal = gdal_o)
+      terra::writeRaster(
+        x = Ensemble_anomaly, filename = path_anomaly,
+        overwrite = TRUE, gdal = gdal_o)
+      terra::writeRaster(
+        x = Ensemble_cov, filename = path_cov,
+        overwrite = TRUE, gdal = gdal_o)
+      terra::writeRaster(
+        x = Ensemble_sd, filename = path_sd,
+        overwrite = TRUE, gdal = gdal_o)
+
       return(NULL)
     }
 
-    fs::file_delete(paths_all[paths_exist])
+    rm(
+      CurrentMean, Prediction_Ensemble_0, calculate_ensemble,
+      envir = environment())
+    invisible(gc())
 
-    ias_id <- Prediction_Ensemble_0$ias_id[[row_id]]
+    # --------------------------------------------------------- #
 
-    # load maps for future climate option
-    tiffs_R <- terra::rast(Prediction_Ensemble_0$tifs[[row_id]])
+    # Save ensemble maps as SpatRast
+    ecokit::cat_time("Save ensemble predictions as SpatRast", level = 1L)
 
-    # Mean
-    Ensemble_mean <- terra::app(tiffs_R, "mean", na.rm = TRUE)
-    # Standard deviation
-    Ensemble_sd <- terra::app(tiffs_R, "sd", na.rm = TRUE)
-    rm(tiffs_R)
-
-    # Anomaly
-    CurrentMean0 <- ecokit::load_as(CurrentMean, unwrap_r = TRUE) %>%
-      terra::subset(paste0(ias_id, "_mean"))
-    Ensemble_anomaly <- Ensemble_mean - CurrentMean0
-    rm(CurrentMean0)
-
-    # coefficient of variation: Replace very small mean values with
-    # reasonably small number to avoid overflow warning
-    Ensemble_mean_0 <- terra::classify(
-      x = Ensemble_mean, rcl = cbind(0, 1e-8, 1e-8))
-    Ensemble_cov <- (Ensemble_sd / Ensemble_mean_0)
-
-    gdal_o <- c("COMPRESS=DEFLATE", "TILED=YES")
-    terra::writeRaster(
-      x = Ensemble_mean, filename = path_mean,
-      overwrite = TRUE, gdal = gdal_o)
-    terra::writeRaster(
-      x = Ensemble_anomaly, filename = path_anomaly,
-      overwrite = TRUE, gdal = gdal_o)
-    terra::writeRaster(
-      x = Ensemble_cov, filename = path_cov,
-      overwrite = TRUE, gdal = gdal_o)
-    terra::writeRaster(
-      x = Ensemble_sd, filename = path_sd,
-      overwrite = TRUE, gdal = gdal_o)
-
-    return(NULL)
-  }
-
-  rm(
-    CurrentMean, Prediction_Ensemble_0, calculate_ensemble,
-    envir = environment())
-  invisible(gc())
-
-  # --------------------------------------------------------- #
-
-  # Save ensemble maps as SpatRast
-  ecokit::cat_time("Save ensemble predictions as SpatRast", level = 1L)
-
-  vars_to_select <- c(
-    "ias_id", "Ensemble_File", "tif_path_mean", "tif_path_anomaly",
-    "tif_path_sd", "tif_path_cov")
-  Prediction_Ensemble_R <- Prediction_Ensemble %>%
-    dplyr::select(-Dir_Ensemble, -tifs) %>%
-    dplyr::mutate(
-      Ensemble_File = fs::path(
-        dplyr::if_else(
-          clamp_pred, Path_Prediction_Clamp, Path_Prediction_NoClamp),
-        paste0(
-          "Prediction_", stringr::str_replace(time_period, "-", "_"), "_",
-          climate_scenario, "_Ensemble_R.qs2"))) %>%
-    dplyr::select(tidyselect::all_of(vars_to_select)) %>%
-    tidyr::nest(data = -Ensemble_File)
-
-  Prediction_Ensemble_R <- foreach::foreach(
-    row_id = seq_len(nrow(Prediction_Ensemble_R)),
-    .export = "Prediction_Ensemble_R",
-    .packages = c("dplyr", "magrittr", "terra", "purrr", "ecokit", "fs")
-  ) %dopar% { # nolint: object_usage_linter
-
-    OutMaps <- dplyr::slice(Prediction_Ensemble_R, row_id) %>%
-      dplyr::pull("data") %>%
-      magrittr::extract2(1) %>%
+    vars_to_select <- c(
+      "ias_id", "Ensemble_File", "tif_path_mean", "tif_path_anomaly",
+      "tif_path_sd", "tif_path_cov")
+    Prediction_Ensemble_R <- Prediction_Ensemble %>%
+      dplyr::select(-Dir_Ensemble, -tifs) %>%
       dplyr::mutate(
-        Maps = purrr::pmap(
-          .l = list(ias_id, tif_path_mean, tif_path_anomaly,
-                    tif_path_sd, tif_path_cov),
-          .f = function(ias_id, tif_path_mean, tif_path_anomaly,
-                        tif_path_sd, tif_path_cov) {
+        Ensemble_File = fs::path(
+          dplyr::if_else(
+            clamp_pred, Path_Prediction_Clamp, Path_Prediction_NoClamp),
+          paste0(
+            "Prediction_", stringr::str_replace(time_period, "-", "_"), "_",
+            climate_scenario, "_Ensemble_R.qs2"))) %>%
+      dplyr::select(tidyselect::all_of(vars_to_select)) %>%
+      tidyr::nest(data = -Ensemble_File)
 
-            Mean <- terra::rast(tif_path_mean) %>%
-              stats::setNames(paste0(ias_id, "_mean"))
-            SD <- terra::rast(tif_path_sd) %>%
-              stats::setNames(paste0(ias_id, "_sd"))
-            COV <- terra::rast(tif_path_cov) %>%
-              stats::setNames(paste0(ias_id, "_cov"))
-            Anomaly <- terra::rast(tif_path_anomaly) %>%
-              stats::setNames(paste0(ias_id, "_anomaly"))
+    Prediction_Ensemble_R <- foreach::foreach(
+      row_id = seq_len(nrow(Prediction_Ensemble_R)),
+      .export = "Prediction_Ensemble_R",
+      .packages = c("dplyr", "magrittr", "terra", "purrr", "ecokit", "fs")
+    ) %dopar% { # nolint: object_usage_linter
 
-            c(Mean, SD, COV, Anomaly) %>%
-              terra::wrap()
-          }
-        )) %>%
-      dplyr::pull("Maps") %>%
-      purrr::map(terra::unwrap) %>%
-      terra::rast() %>%
-      terra::wrap()
+      OutMaps <- dplyr::slice(Prediction_Ensemble_R, row_id) %>%
+        dplyr::pull("data") %>%
+        magrittr::extract2(1) %>%
+        dplyr::mutate(
+          Maps = purrr::pmap(
+            .l = list(ias_id, tif_path_mean, tif_path_anomaly,
+                      tif_path_sd, tif_path_cov),
+            .f = function(ias_id, tif_path_mean, tif_path_anomaly,
+                          tif_path_sd, tif_path_cov) {
 
-    ecokit::save_as(
-      object = OutMaps,
-      out_path = Prediction_Ensemble_R$Ensemble_File[[row_id]])
-    return(NULL)
+              Mean <- terra::rast(tif_path_mean) %>%
+                stats::setNames(paste0(ias_id, "_mean"))
+              SD <- terra::rast(tif_path_sd) %>%
+                stats::setNames(paste0(ias_id, "_sd"))
+              COV <- terra::rast(tif_path_cov) %>%
+                stats::setNames(paste0(ias_id, "_cov"))
+              Anomaly <- terra::rast(tif_path_anomaly) %>%
+                stats::setNames(paste0(ias_id, "_anomaly"))
+
+              c(Mean, SD, COV, Anomaly) %>%
+                terra::wrap()
+            }
+          )) %>%
+        dplyr::pull("Maps") %>%
+        purrr::map(terra::unwrap) %>%
+        terra::rast() %>%
+        terra::wrap()
+
+      ecokit::save_as(
+        object = OutMaps,
+        out_path = Prediction_Ensemble_R$Ensemble_File[[row_id]])
+      return(NULL)
+    }
+
+    doParallel::stopImplicitCluster()
+
+    rm(Prediction_Ensemble_R, envir = environment())
+
+    # --------------------------------------------------------- #
+
+    # Save summary of ensemble predictions
+    ecokit::cat_time("Save summary of ensemble predictions", level = 1L)
+
+    Prediction_Ensemble_Summary <- Prediction_Ensemble %>%
+      dplyr::select(-Ensemble_Maps) %>%
+      dplyr::mutate(
+        Ensemble_File = fs::path(
+          dplyr::if_else(
+            clamp_pred, Path_Prediction_Clamp, Path_Prediction_NoClamp),
+          paste0(
+            "Prediction_", stringr::str_replace(time_period, "-", "_"), "_",
+            climate_scenario, "_Ensemble_Summary.RData")),
+        # utils::write.table does not support `fs::path()`
+        # convert paths to character and use readr::write_delim instead
+        dplyr::across(
+          .cols = tidyselect::all_of(
+            c("Dir_Ensemble", "tifs", "tif_path_mean",
+              "tif_path_anomaly", "tif_path_sd", "tif_path_cov")),
+          .fns = as.character)) %>%
+      tidyr::nest(Ensemble_DT = -Ensemble_File) %>%
+      dplyr::mutate(
+        Ensemble_Save = purrr::map2(
+          .x = Ensemble_DT, .y = Ensemble_File,
+          .f = ~ {
+            ecokit::save_as(
+              object = .x, out_path = .y,
+              object_name = stringr::str_remove(basename(.y), ".RData"))
+            readr::write_delim(
+              x = .x, file = stringr::str_replace(.y, ".RData", ".txt"),
+              delim = "\t", col_names = TRUE,
+              append = FALSE, progress = FALSE)
+          }),
+        Ensemble_Save = NULL) %>%
+      tidyr::unnest(Ensemble_DT) %>%
+      dplyr::select(
+        tidyselect::all_of(
+          c("Ensemble_File", "time_period",
+            "climate_model", "climate_scenario"))) %>%
+      dplyr::rename(File_Pred_summary = Ensemble_File) %>%
+      dplyr::mutate(
+        Clamp = clamp_pred,
+        Name = paste0(
+          stringr::str_replace(time_period, "-", "_"), "_",
+          climate_scenario, "_Ensemble"),
+        File_Pred_sf = NA_character_,
+        File_Pred_R = stringr::str_replace(
+          File_Pred_summary, "_Summary.RData", "_R.qs2")) %>%
+      dplyr::distinct()
   }
-
-  doParallel::stopImplicitCluster()
-
-  rm(Prediction_Ensemble_R, envir = environment())
-
-  # --------------------------------------------------------- #
-
-  # Save summary of ensemble predictions
-  ecokit::cat_time("Save summary of ensemble predictions", level = 1L)
-
-  Prediction_Ensemble_Summary <- Prediction_Ensemble %>%
-    dplyr::select(-Ensemble_Maps) %>%
-    dplyr::mutate(
-      Ensemble_File = fs::path(
-        dplyr::if_else(
-          clamp_pred, Path_Prediction_Clamp, Path_Prediction_NoClamp),
-        paste0(
-          "Prediction_", stringr::str_replace(time_period, "-", "_"), "_",
-          climate_scenario, "_Ensemble_Summary.RData")),
-      # utils::write.table does not support `fs::path()`
-      # convert paths to character and use readr::write_delim instead
-      dplyr::across(
-        .cols = tidyselect::all_of(
-          c("Dir_Ensemble", "tifs", "tif_path_mean",
-            "tif_path_anomaly", "tif_path_sd", "tif_path_cov")),
-        .fns = as.character)) %>%
-    tidyr::nest(Ensemble_DT = -Ensemble_File) %>%
-    dplyr::mutate(
-      Ensemble_Save = purrr::map2(
-        .x = Ensemble_DT, .y = Ensemble_File,
-        .f = ~ {
-          ecokit::save_as(
-            object = .x, out_path = .y,
-            object_name = stringr::str_remove(basename(.y), ".RData"))
-          readr::write_delim(
-            x = .x, file = stringr::str_replace(.y, ".RData", ".txt"),
-            delim = "\t", col_names = TRUE,
-            append = FALSE, progress = FALSE)
-        }),
-      Ensemble_Save = NULL) %>%
-    tidyr::unnest(Ensemble_DT) %>%
-    dplyr::select(
-      tidyselect::all_of(
-        c("Ensemble_File", "time_period", "climate_model", "climate_scenario"))
-    ) %>%
-    dplyr::rename(File_Pred_summary = Ensemble_File) %>%
-    dplyr::mutate(
-      Clamp = clamp_pred,
-      Name = paste0(
-        stringr::str_replace(time_period, "-", "_"), "_",
-        climate_scenario, "_Ensemble"),
-      File_Pred_sf = NA_character_,
-      File_Pred_R = stringr::str_replace(
-        File_Pred_summary, "_Summary.RData", "_R.qs2")) %>%
-    dplyr::distinct()
-
   # # ..................................................................... ###
   # # ..................................................................... ###
 
@@ -1537,12 +1548,18 @@ predict_maps <- function(
     "\tPrepare overall summary", n_separators = 1L, line_char = "-",
     line_char_rep = 70L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
-  Prediction_Summary <- Prediction_Summary %>%
-    dplyr::rename(
-      time_period = TimePeriod, climate_model = ClimateModel,
-      climate_scenario = ClimateScenario) %>%
-    dplyr::bind_rows(Prediction_Ensemble_Summary) %>%
-    dplyr::mutate(hab_abb = hab_abb, hab_name = hab_name, .before = 1)
+  Prediction_Summary <- dplyr::rename(
+    Prediction_Summary,
+    time_period = TimePeriod, climate_model = ClimateModel,
+    climate_scenario = ClimateScenario)
+
+  if (length(CC_models) > 1 && !is.null(CC_scenario)) {
+    Prediction_Summary <- dplyr::bind_rows(
+      Prediction_Summary, Prediction_Ensemble_Summary)
+  }
+
+  Prediction_Summary <- dplyr::mutate(
+    Prediction_Summary, hab_abb = hab_abb, hab_name = hab_name, .before = 1)
 
   readr::write_delim(
     x = Prediction_Summary, file = Path_Summary_txt, delim = "\t",

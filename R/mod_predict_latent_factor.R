@@ -1025,17 +1025,14 @@ run_crossprod_solve <- function(
 #' Generate and save spatial variation in site loadings of HMSC models' latent
 #' factors as a JPEG file.
 #'
-#' @param path_model Path to the model file.
+#' @param path_model Character. Path to fitted `Hmsc` model object.
 #' @param env_file Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
-#' @param plot_width,plot_height Numeric. The width and height of the
-#'   output plot in cm. Default is 20&times;21 cm.
 #' @export
 #' @author Ahmed El-Gabbas
 #' @name plot_latent_factor
 
-plot_latent_factor <- function(
-    path_model = NULL, env_file = ".env", plot_width = 20, plot_height = 21) {
+plot_latent_factor <- function(path_model = NULL, env_file = ".env") {
 
   # # ..................................................................... ###
 
@@ -1089,9 +1086,18 @@ plot_latent_factor <- function(
   Xlim <- c(2600000, 6700000)
   Ylim <- c(1450000, 5420000)
 
+  n_layers <- terra::nlyr(Eta_Mean_R)
+  if (n_layers > 6) {
+    ncols <- 4
+  } else if (n_layers > 4) {
+    ncols <- 3
+  } else {
+    ncols <- 2
+  }
+
   LF_Plot <- ggplot2::ggplot(environment = emptyenv()) +
     tidyterra::geom_spatraster(data = Eta_Mean_R, maxcell = Inf) +
-    ggplot2::facet_wrap(~lyr, ncol = 2) +
+    ggplot2::facet_wrap(~lyr, ncol = ncols, nrow = 2) +
     paletteer::scale_fill_paletteer_c(
       na.value = "transparent", "viridis::plasma",
       breaks = ecokit::integer_breaks(), name = NULL) +
@@ -1128,11 +1134,17 @@ plot_latent_factor <- function(
       panel.border = ggplot2::element_blank(),
       panel.ontop = TRUE, panel.background = ggplot2::element_rect(fill = NA))
 
+  # Adapt height proportionally based on the number of layers
+  plot_height <- 20L
+  if (ncols == 4) plot_width <- 40L
+  if (ncols == 3) plot_width <- 30L
+  if (ncols == 2) plot_width <- 20L
+
   ragg::agg_jpeg(
     filename = fs::path(
       dirname(dirname(path_model)), "Model_Prediction", "LF_Plot.jpeg"),
-    width = plot_width, height = plot_height, res = 600,
-    quality = 100, units = "cm")
+    width = plot_width, height = plot_height, res = 600L,
+    quality = 100L, units = "cm")
   print(LF_Plot)
   grDevices::dev.off()
 

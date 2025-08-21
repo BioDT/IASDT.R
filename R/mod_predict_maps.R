@@ -1007,7 +1007,7 @@ predict_maps <- function(
           Option_Name, "_",
           dplyr::if_else(DoClamp, "Clamping", "NoClamping"), "_Test")
         Predict_DF_Test <- dplyr::filter(Predict_DF, !Train)
-        if (nrow(Predict_DF_Train) > 0L) {
+        if (nrow(Predict_DF_Test) > 0L) {
           Test_XY <- Predict_DF_Test[, c("x", "y")]
           Test_X <- Predict_DF_Test %>%
             dplyr::select(tidyselect::all_of(names(Model$XData))) %>%
@@ -1057,7 +1057,8 @@ predict_maps <- function(
         } else {
           ecokit::cat_time(
             paste0(
-              "All sites are new sites; no predictions will be made at ","training sites"),
+              "All sites are new sites; no predictions will be made at ",
+              "training sites"),
             level = 1L)
           Preds_ModFitSites <- tibble::tibble(Pred_Path = NULL)
         }

@@ -13,13 +13,16 @@
 #'   data sources. Defaults to `.env`.
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Default: 8.
+#' @param is_cv_model Logical. Whether the model is a cross-validated model
+#'   (`TRUE`) or fitted with the full dataset (`FALSE`; default).
 #' @return Saves prediction plots as JPEG files in the specified output
 #'   directory.
 #' @name plot_prediction
 #' @author Ahmed El-Gabbas
 #' @export
 
-plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
+plot_prediction <- function(
+    model_dir = NULL, env_file = ".env", n_cores = 8L, is_cv_model = FALSE) {
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -131,23 +134,37 @@ plot_prediction <- function(model_dir = NULL, env_file = ".env", n_cores = 8L) {
 
   ecokit::cat_time("Calculate observed species richness")
 
-  # Modelling data
-  Model_Data <- list.files(
-    model_dir, pattern = "^ModDT_.*subset.RData$", full.names = TRUE)
+  if (is_cv_model) {
+    Model_Data <- fs::path(model_dir, "ModDT_training.RData")
+    if (!ecokit::check_data(Model_Data)) {
+      ecokit::stop_ctx(
+        "Model data file not found",
+        Model_Data = Model_Data, include_backtrace = TRUE)
+    }
+    R_SR <- ecokit::load_as(Model_Data) %>%
+      dplyr::mutate(
+        SR = rowSums(
+          dplyr::select(., tidyselect::starts_with("Sp")), na.rm = TRUE)) %>%
+      dplyr::select(tidyselect::all_of(c("x", "y", "SR"))) %>%
+      terra::rasterize(Gird10, field = "SR") %>%
+      terra::wrap()
 
-  if (length(Model_Data) != 1) {
-    ecokit::stop_ctx(
-      "Model data does not exist", Model_Data = Model_Data,
-      include_backtrace = TRUE)
+  } else {
+
+    Model_Data <- fs::path(model_dir, "ModDT_subset.RData")
+    if (!ecokit::check_data(Model_Data)) {
+      ecokit::stop_ctx(
+        "Model data file not found",
+        Model_Data = Model_Data, include_backtrace = TRUE)
+    }
+    Model_Data <- ecokit::load_as(Model_Data)
+    R_SR <- tibble::tibble(
+      as.data.frame(Model_Data$DT_xy), SR = rowSums(Model_Data$DT_y)) %>%
+      sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
+      terra::rasterize(Gird10, field = "SR") %>%
+      terra::wrap()
+  
   }
-  Model_Data <- ecokit::load_as(Model_Data)
-
-  # Observed species richness
-  R_SR <- tibble::tibble(
-    as.data.frame(Model_Data$DT_xy), SR = rowSums(Model_Data$DT_y)) %>%
-    sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
-    terra::rasterize(Gird10, field = "SR") %>%
-    terra::wrap()
 
   rm(Model_Data, Map_summary_NoClamp, Map_summary_Clamp, envir = environment())
   invisible(gc())

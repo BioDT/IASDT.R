@@ -56,6 +56,8 @@
 #'   models.
 #' @param CV_name Character. Cross-validation strategy. Valid values are
 #'   `CV_Dist`, `CV_Large`, or `CV_SAC`.
+#' @param n_cores_pred Integer. Number of cores to use for predicting species'
+#'   habitat suitability.
 #' @param CV_fold Integer. The cross-validation fold number.
 #' @inheritParams predict_hmsc
 #' @details
@@ -88,7 +90,7 @@ predict_maps <- function(
     TF_use_single = FALSE, LF_n_cores = n_cores, LF_check = FALSE,
     LF_temp_cleanup = TRUE, LF_only = FALSE, LF_commands_only = FALSE,
     temp_dir = "TEMP_Pred", temp_cleanup = TRUE, tar_predictions = TRUE,
-    spatial_model = TRUE,
+    spatial_model = TRUE, n_cores_pred = n_cores,
     CC_models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
@@ -1042,7 +1044,7 @@ predict_maps <- function(
 
             Preds_ModFitSites <- IASDT.R::predict_hmsc(
               path_model = path_model, X = Train_X, gradient = NULL,
-              expected = TRUE, n_cores = n_cores, strategy = strategy,
+              expected = TRUE, n_cores = n_cores_pred, strategy = strategy,
               model_name = Model_Name_Train, temp_dir = temp_dir,
               temp_cleanup = temp_cleanup, use_TF = use_TF,
               TF_environ = TF_environ, TF_use_single = TF_use_single,
@@ -1083,7 +1085,7 @@ predict_maps <- function(
 
             Preds_NewSites <- IASDT.R::predict_hmsc(
               path_model = path_model, gradient = Gradient, expected = TRUE,
-              n_cores = n_cores, strategy = strategy,
+              n_cores = n_cores_pred, strategy = strategy,
               model_name = Model_Name_Test, temp_dir = temp_dir,
               temp_cleanup = temp_cleanup, use_TF = use_TF,
               TF_environ = TF_environ, TF_use_single = TF_use_single,

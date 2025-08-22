@@ -649,8 +649,7 @@ mod_postprocess_1_CPU <- function(
 
   IASDT.R::predict_maps(
     path_model = path_model, hab_abb = hab_abb, env_file = env_file,
-    n_cores = dplyr::if_else(spatial_model, n_cores, n_cores_pred),
-    strategy = strategy,
+    n_cores = n_cores, n_cores_pred = n_cores_pred, strategy = strategy,
     # Do not clamp predictions for predicting latent factors
     clamp_pred = dplyr::if_else(spatial_model, FALSE, clamp_pred),
     fix_efforts = fix_efforts, fix_rivers = fix_rivers,
@@ -671,7 +670,8 @@ mod_postprocess_1_CPU <- function(
         line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
         cat_timestamp = FALSE)
       IASDT.R::plot_prediction(
-        model_dir = model_dir, env_file = env_file, n_cores = n_cores)
+        model_dir = model_dir, env_file = env_file, n_cores = n_cores,
+        is_cv_model = is_cv_model)
     }
 
     # Evaluate cross-validated models -----
@@ -1249,14 +1249,13 @@ mod_postprocess_2_CPU <- function(
 
   temp_dir <- fs::path(model_dir, "TEMP_Pred")
 
-  ModelData <- list.files(
-    path = model_dir, full.names = TRUE, pattern = "^ModDT_.*subset.RData")
-
-  if (length(ModelData) != 1) {
+  ModelData <- fs::path(model_dir, "ModDT_subset.RData")
+  if (!ecokit::check_data(ModelData)) {
     ecokit::stop_ctx(
-      "Expected one model data file", length_model_data = length(ModelData),
-      include_backtrace = TRUE)
+      "Model data file not found",
+      ModelData = ModelData, include_backtrace = TRUE)
   }
+  ModelData <- ecokit::load_as(ModelData)
 
   # ****************************************************************
 
@@ -1379,10 +1378,10 @@ mod_postprocess_2_CPU <- function(
 
       IASDT.R::predict_maps(
         path_model = path_model, hab_abb = hab_abb, env_file = env_file,
-        n_cores = n_cores_pred, strategy = strategy, clamp_pred = clamp_pred,
-        fix_efforts = fix_efforts, fix_rivers = fix_rivers,
-        pred_new_sites = pred_new_sites, use_TF = use_TF,
-        TF_environ = TF_environ, TF_use_single = TF_use_single,
+        n_cores = n_cores, n_cores_pred = n_cores_pred, strategy = strategy,
+        clamp_pred = clamp_pred, fix_efforts = fix_efforts,
+        fix_rivers = fix_rivers, pred_new_sites = pred_new_sites,
+        use_TF = use_TF, TF_environ = TF_environ, TF_use_single = TF_use_single,
         LF_n_cores = LF_n_cores, LF_check = LF_check,
         LF_temp_cleanup = LF_temp_cleanup, LF_only = FALSE,
         LF_commands_only = FALSE, temp_dir = temp_dir,
@@ -1401,7 +1400,8 @@ mod_postprocess_2_CPU <- function(
           cat_timestamp = FALSE)
 
         IASDT.R::plot_prediction(
-          model_dir = model_dir, env_file = env_file, n_cores = n_cores)
+          model_dir = model_dir, env_file = env_file, n_cores = n_cores,
+          is_cv_model = is_cv_model)
       }
 
       # Evaluate cross-validated models -----

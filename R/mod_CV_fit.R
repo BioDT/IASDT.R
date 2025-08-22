@@ -126,13 +126,10 @@ mod_CV_fit <- function(
   Path_CV <- fs::path(dirname(dirname(path_model)), "Model_Fitting_CV")
 
   # Path of the model input data
-  Path_ModelData <- list.files(
-    path = dirname(dirname(path_model)),
-    pattern = "^ModDT_.*subset.RData", full.names = TRUE)
-  if (length(Path_ModelData) != 1) {
+  Path_ModelData <- fs::path(dirname(dirname(path_model)), "ModDT_subset.RData")
+  if (!ecokit::check_data(Path_ModelData)) {
     ecokit::stop_ctx(
-      "There should be exactly one file matches model input data",
-      length_Path_ModelData = length(Path_ModelData),
+      "Model data file not found",
       Path_ModelData = Path_ModelData, include_backtrace = TRUE)
   }
 

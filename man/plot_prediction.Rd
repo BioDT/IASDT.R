@@ -4,7 +4,12 @@
 \alias{plot_prediction}
 \title{Plot species and level of invasion predictions as JPEG files using \code{ggplot2}}
 \usage{
-plot_prediction(model_dir = NULL, env_file = ".env", n_cores = 8L)
+plot_prediction(
+  model_dir = NULL,
+  env_file = ".env",
+  n_cores = 8L,
+  is_cv_model = FALSE
+)
 }
 \arguments{
 \item{model_dir}{Character. Path to the model directory containing
@@ -15,6 +20,9 @@ data sources. Defaults to \code{.env}.}
 
 \item{n_cores}{Integer. Number of CPU cores to use for parallel processing.
 Default: 8.}
+
+\item{is_cv_model}{Logical. Whether the model is a cross-validated model
+(\code{TRUE}) or fitted with the full dataset (\code{FALSE}; default).}
 }
 \value{
 Saves prediction plots as JPEG files in the specified output

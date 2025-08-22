@@ -27,6 +27,7 @@ predict_maps(
   temp_cleanup = TRUE,
   tar_predictions = TRUE,
   spatial_model = TRUE,
+  n_cores_pred = n_cores,
   CC_models = c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0",
     "UKESM1-0-LL"),
   CC_scenario = c("ssp126", "ssp370", "ssp585")
@@ -124,6 +125,9 @@ single \verb{*.tar} file (without compression). Default: \code{TRUE}.}
 
 \item{spatial_model}{Logical. Whether the fitted model is a spatial model.
 Defaults to \code{TRUE}.}
+
+\item{n_cores_pred}{Integer. Number of cores to use for predicting species'
+habitat suitability.}
 
 \item{CC_models}{Character vector. Climate models for future predictions.
 Available options are \code{c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")} (default).}

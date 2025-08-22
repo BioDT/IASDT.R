@@ -149,13 +149,12 @@ predict_maps_CV <- function(
 
   # Loading data used in full model (without cross-validation)
   ecokit::cat_time("Loading data used in full model")
-
-  model_data <- list.files(
-    path = model_dir, pattern = "ModDT_.+_subset.RData", full.names = TRUE)
-  if (length(model_data) != 1) {
+  
+  model_data <- fs::path(model_dir, "ModDT_subset.RData")
+  if (!ecokit::check_data(model_data)) {
     ecokit::stop_ctx(
-      paste0("There are ", length(model_data), " model data files"),
-      model_dir = model_dir, include_backtrace = TRUE)
+      "Model data file not found",
+      model_data = model_data, include_backtrace = TRUE)
   }
   model_data <- ecokit::load_as(model_data)
 

@@ -146,6 +146,7 @@ plot_prediction <- function(
         SR = rowSums(
           dplyr::select(., tidyselect::starts_with("Sp")), na.rm = TRUE)) %>%
       dplyr::select(tidyselect::all_of(c("x", "y", "SR"))) %>%
+      sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
       terra::rasterize(Gird10, field = "SR") %>%
       terra::wrap()
 
@@ -163,7 +164,7 @@ plot_prediction <- function(
       sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
       terra::rasterize(Gird10, field = "SR") %>%
       terra::wrap()
-  
+
   }
 
   rm(Model_Data, Map_summary_NoClamp, Map_summary_Clamp, envir = environment())

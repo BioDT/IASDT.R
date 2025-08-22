@@ -19,13 +19,20 @@
 #'   selected model. Accepts "Tree" (default) or "NoTree".
 #' @param MCMC_thin,MCMC_n_samples Integer. Thinning value and the number of
 #'   MCMC samples of the selected model.
-#' @param n_cores_pred Integer. Number of cores to use for predicting species'
-#'   habitat suitability.
-#' @param n_cores_VP Integer. Number of cores to use for processing variance
-#'   partitioning. Defaults to 10L.
 #' @param strategy Character. The parallel processing strategy to use. Valid
 #'   options are "sequential", "multisession" (default), "multicore", and
 #'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
+#' @param future_max_size	Numeric. Maximum allowed total size (in megabytes) of
+#'   global variables identified. See `future.globals.maxSize` argument of
+#'   [future::future.options] for more details.
+#' @param n_cores,n_cores_pred,n_cores_LF,n_cores_VP,n_cores_RC Integer. Number
+#'   of cores to use for parallel processing. They are used for different
+#'   processing steps: `n_cores` for merging chains and plotting convergence
+#'   convergence diagnostics; `n_cores_pred` for predicting species' habitat
+#'   suitability; `n_cores_LF` for predicting latent factors; `n_cores_VP` for
+#'   processing variance partitioning; and `n_cores_RC` for response curve
+#'   prediction. All default to `8L`. If `strategy = "sequential"`, all of these
+#'   arguments are set to `1L`.
 #' @param CV_name `NULL` or character vector. Column name(s) in the model input
 #'   data to be used to cross-validate the models (see [mod_prepare_data] and
 #'   [mod_CV_prepare]). If `CV_name = NULL`, no cross-validation data
@@ -42,39 +49,33 @@
 #' @param LF_runtime,VP_runtime Character. Time limit for latent factor
 #'   prediction and variance partitioning processing jobs, respectively.
 #'   Defaults are `01:00:00` and `02:00:00` respectively.
-#' @param RC_n_cores Integer. The number of cores to use for response curve
-#'   prediction. Defaults to `8`.
+#' @param temp_cleanup,LF_temp_cleanup Logical. Whether to delete temporary
+#'   files after finishing predicting latent factor or species distribution.
+#'   Default: `TRUE`.
 #' @param width_omega,height_omega,width_beta,height_beta Integer. The width and
 #'   height of the generated heatmaps of the Omega and Beta parameters in
 #'   centimetres.
-#' @param spatial_model Logical. Whether the model is spatial (`TRUE`) or not
-#'   (`FALSE`). Defaults to `TRUE`.
-#' @param RC_prepare Logical. Whether to prepare the data for response curve
-#'   prediction (using [resp_curv_prepare_data]). Defaults to `TRUE`.
-#' @param RC_plot Logical. Whether to plot the response curves as JPEG files
-#'   (using [resp_curv_plot_SR], [resp_curv_plot_species], and
-#'   [resp_curv_plot_species_all]). Defaults to `TRUE`.
-#' @param VP_prepare Logical. Whether to prepare the data for variance
-#'   partitioning (using [variance_partitioning_compute]). Defaults to `TRUE`.
-#' @param VP_plot Logical. Whether to plot the variance partitioning results
+#' @param spatial_model,plot_LF Logical. Whether the model is spatial (`TRUE`)
+#'   or not (`FALSE`) and whether to plot latent factors for spatial models as
+#'   JPEG files (using [plot_latent_factor]). Defaults to `TRUE`.
+#' @param RC_prepare,RC_plot Logical. Whether to prepare the data for response
+#'   curve prediction (using [resp_curv_prepare_data]) and plot the response
+#'   curves as JPEG files. (using [resp_curv_plot_SR], [resp_curv_plot_species],
+#'   and [resp_curv_plot_species_all]). Defaults to `TRUE`.
+#' @param VP_prepare,VP_plot Logical. Whether to prepare the data for variance
+#'   partitioning (using [variance_partitioning_compute]) and plot its results
 #'   (using [variance_partitioning_plot]). Defaults to `TRUE`.
-#' @param predict_suitability Logical. Whether to predict habitat suitability
-#'   across different climate options (using [predict_maps]). Defaults to
-#'   `TRUE`.
-#' @param plot_predictions Logical. Whether to plot species and species richness
-#'   predictions as JPEG files (using [plot_prediction]). Defaults to `TRUE`.
-#' @param plot_LF Logical. Whether to plot latent factors as JPEG files (using
-#'   [plot_latent_factor]). Defaults to `TRUE`.
+#' @param predict_suitability,tar_predictions,plot_predictions Logical. Whether
+#'   to predict habitat suitability across different climate options (using
+#'   [predict_maps]), compress the resulted files into a single `*.tar` file
+#'   (without compression), or to plot species and species richness predictions
+#'   as JPEG files (using [plot_prediction]). Defaults to `TRUE`.
 #' @param plot_internal_evaluation Logical. Whether to compute and visualise
 #'   model internal evaluation (explanatory power) using [plot_evaluation].
 #'   Defaults to `TRUE`.
-#' @param process_VP Logical. Whether to prepares batch scripts for variance
-#'   partitioning GPU computations on GPUs. Defaults to `TRUE`.
-#' @param process_LF Logical. Whether to prepares batch scripts for latent
-#'   factor predictions GPU computations on GPUs. Defaults to `TRUE`.
-#' @param future_max_size	Numeric. Maximum allowed total size (in megabytes) of
-#'   global variables identified. See `future.globals.maxSize` argument of
-#'   [future::future.options] for more details.
+#' @param process_VP,process_LF Logical. Whether to prepares batch scripts for
+#'   variance partitioning computations and latent factor predictions on GPUs.
+#'   Defaults to `TRUE`.
 #' @param is_cv_model Logical. Whether the model is a cross-validated model
 #'   (`TRUE`) or fitted with the full dataset (`FALSE`; default). If `TRUE`, the
 #'   explanatory and predictive power of the model will be computed.
@@ -190,23 +191,23 @@
 ## |------------------------------------------------------------------------| #
 
 mod_postprocess_1_CPU <- function(
-    model_dir = NULL, hab_abb = NULL, n_cores = 8L, strategy = "multisession",
-    n_cores_pred = n_cores, LF_n_cores = n_cores, n_cores_VP = 10L,
-    env_file = ".env", path_Hmsc = NULL, memory_per_cpu = "64G",
-    job_runtime = "01:00:00", from_JSON = FALSE, GPP_dist = NULL,
-    use_trees = "Tree", MCMC_n_samples = 1000L, MCMC_thin = NULL,
-    n_omega = 1000L, CV_name = c("CV_Dist", "CV_Large"), n_grid = 50L,
-    use_TF = TRUE, TF_use_single = FALSE,  LF_temp_cleanup = TRUE,
-    LF_check = FALSE, temp_cleanup = TRUE, TF_environ = NULL,
-    pred_new_sites = TRUE,  width_omega = 26, height_omega = 22.5,
-    width_beta = 25, height_beta = 35, spatial_model = TRUE,
-    future_max_size = 1500L, tar_predictions = TRUE, plot_predictions = TRUE,
-    is_cv_model = FALSE,
+    model_dir = NULL, hab_abb = NULL, strategy = "multisession",
+    future_max_size = 1500L, n_cores = 8L, n_cores_pred = n_cores,
+    n_cores_LF = n_cores, n_cores_VP = n_cores, env_file = ".env",
+    path_Hmsc = NULL, memory_per_cpu = "64G", job_runtime = "01:00:00",
+    from_JSON = FALSE, GPP_dist = NULL, use_trees = "Tree",
+    MCMC_n_samples = 1000L, MCMC_thin = NULL, n_omega = 1000L,
+    CV_name = c("CV_Dist", "CV_Large"), n_grid = 50L, use_TF = TRUE,
+    TF_use_single = FALSE,  LF_temp_cleanup = TRUE, LF_check = FALSE,
+    temp_cleanup = TRUE, TF_environ = NULL, pred_new_sites = TRUE,
+    width_omega = 26, height_omega = 22.5, width_beta = 25, height_beta = 35,
+    spatial_model = TRUE, tar_predictions = TRUE, plot_predictions = TRUE,
+    is_cv_model = FALSE, clamp_pred = TRUE, fix_efforts = "q90",
+    fix_rivers = "q90",
     CC_models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
-    CC_scenario = c("ssp126", "ssp370", "ssp585"),
-    clamp_pred = TRUE, fix_efforts = "q90", fix_rivers = "q90") {
+    CC_scenario = c("ssp126", "ssp370", "ssp585")) {
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -242,10 +243,10 @@ mod_postprocess_1_CPU <- function(
 
   strategy <- .validate_strategy(strategy)
   if (strategy == "sequential") {
-    n_cores <- LF_n_cores <- n_cores_VP <- n_cores_pred <- 1L
+    n_cores <- n_cores_LF <- n_cores_VP <- n_cores_pred <- 1L
   }
   n_cores <- .validate_n_cores(n_cores)
-  LF_n_cores <- .validate_n_cores(LF_n_cores)
+  n_cores_LF <- .validate_n_cores(n_cores_LF)
   n_cores_VP <- .validate_n_cores(n_cores_VP)
   n_cores_pred <- .validate_n_cores(n_cores_pred)
 
@@ -490,7 +491,7 @@ mod_postprocess_1_CPU <- function(
     IASDT.R::resp_curv_prepare_data(
       path_model = path_model, n_grid = n_grid, n_cores = n_cores,
       strategy = strategy, use_TF = use_TF, TF_environ = TF_environ,
-      TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
+      TF_use_single = TF_use_single, n_cores_LF = n_cores_LF,
       LF_temp_cleanup = LF_temp_cleanup, LF_check = LF_check,
       temp_dir = temp_dir, temp_cleanup = temp_cleanup, verbose = TRUE,
       LF_commands_only = TRUE)
@@ -655,7 +656,7 @@ mod_postprocess_1_CPU <- function(
     fix_efforts = fix_efforts, fix_rivers = fix_rivers,
     pred_new_sites = pred_new_sites, use_TF = use_TF, TF_environ = TF_environ,
     temp_dir = temp_dir, temp_cleanup = temp_cleanup,
-    TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
+    TF_use_single = TF_use_single, n_cores_LF = n_cores_LF,
     LF_check = LF_check, LF_temp_cleanup = LF_temp_cleanup,
     LF_only = spatial_model, LF_commands_only = spatial_model,
     CC_models = CC_models, CC_scenario = CC_scenario,
@@ -1118,16 +1119,17 @@ mod_prepare_TF <- function(
 #' @author Ahmed El-Gabbas
 
 mod_postprocess_2_CPU <- function(
-    model_dir = NULL, hab_abb = NULL, n_cores = 8L, n_cores_pred = n_cores,
-    strategy = "multisession", env_file = ".env", GPP_dist = NULL,
-    use_trees = "Tree", MCMC_n_samples = 1000L, MCMC_thin = NULL, use_TF = TRUE,
-    TF_environ = NULL, TF_use_single = FALSE, LF_n_cores = n_cores,
-    LF_check = FALSE, LF_temp_cleanup = TRUE, temp_cleanup = TRUE, n_grid = 50L,
+    model_dir = NULL, hab_abb = NULL, strategy = "multisession", n_cores = 8L,
+    n_cores_pred = n_cores, n_cores_LF = n_cores, n_cores_RC = n_cores,
+    env_file = ".env", GPP_dist = NULL, use_trees = "Tree",
+    MCMC_n_samples = 1000L, MCMC_thin = NULL, use_TF = TRUE, TF_environ = NULL,
+    TF_use_single = FALSE, LF_check = FALSE, LF_temp_cleanup = TRUE,
+    temp_cleanup = TRUE, n_grid = 50L,
     CC_models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
     CC_scenario = c("ssp126", "ssp370", "ssp585"),
-    RC_n_cores = 8L, clamp_pred = TRUE, fix_efforts = "q90", fix_rivers = "q90",
+    clamp_pred = TRUE, fix_efforts = "q90", fix_rivers = "q90",
     pred_new_sites = TRUE, tar_predictions = TRUE,
     RC_prepare = TRUE, RC_plot = TRUE, VP_prepare = TRUE, VP_plot = TRUE,
     predict_suitability = TRUE, plot_predictions = TRUE, plot_LF = TRUE,
@@ -1144,11 +1146,11 @@ mod_postprocess_2_CPU <- function(
 
   strategy <- .validate_strategy(strategy)
   if (strategy == "sequential") {
-    n_cores <- LF_n_cores <- RC_n_cores <- n_cores_pred <- 1L
+    n_cores <- n_cores_LF <- n_cores_RC <- n_cores_pred <- 1L
   }
   n_cores <- .validate_n_cores(n_cores)
-  LF_n_cores <- .validate_n_cores(LF_n_cores)
-  RC_n_cores <- .validate_n_cores(RC_n_cores)
+  n_cores_LF <- .validate_n_cores(n_cores_LF)
+  n_cores_RC <- .validate_n_cores(n_cores_RC)
   n_cores_pred <- .validate_n_cores(n_cores_pred)
 
   AllArgs <- ls(envir = environment())
@@ -1170,7 +1172,7 @@ mod_postprocess_2_CPU <- function(
     args_all = AllArgs, args_type = "numeric",
     args_to_check = c(
       "n_cores", "GPP_dist", "MCMC_n_samples", "MCMC_thin", "n_grid",
-      "LF_n_cores", "RC_n_cores"))
+      "n_cores_LF", "n_cores_RC"))
   rm(AllArgs, envir = environment())
 
   if (!ecokit::check_env_file(env_file, warning = FALSE)) {
@@ -1235,8 +1237,8 @@ mod_postprocess_2_CPU <- function(
       "\n  >>> Operating system: ", ecokit::os(),
       "\n  >>> Model root: ", model_dir,
       "\n  >>> n_cores: ", n_cores,
-      "\n  >>> RC_n_cores: ", RC_n_cores,
-      "\n  >>> LF_n_cores: ", LF_n_cores,
+      "\n  >>> n_cores_RC: ", n_cores_RC,
+      "\n  >>> n_cores_LF: ", n_cores_LF,
       "\n  >>> env_file: ", env_file,
       "\n  >>> hab_abb: ", hab_abb,
       "\n  >>> use_TF: ", use_TF,
@@ -1309,9 +1311,9 @@ mod_postprocess_2_CPU <- function(
         cat_bold = TRUE, cat_timestamp = FALSE)
 
       IASDT.R::resp_curv_prepare_data(
-        path_model = path_model, n_grid = n_grid, n_cores = RC_n_cores,
+        path_model = path_model, n_grid = n_grid, n_cores = n_cores_RC,
         strategy = strategy, use_TF = use_TF, TF_environ = TF_environ,
-        TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
+        TF_use_single = TF_use_single, n_cores_LF = n_cores_LF,
         LF_temp_cleanup = LF_temp_cleanup, LF_check = LF_check,
         temp_dir = temp_dir, temp_cleanup = temp_cleanup, verbose = TRUE,
         LF_commands_only = FALSE, return_data = FALSE,
@@ -1333,7 +1335,7 @@ mod_postprocess_2_CPU <- function(
         cat_timestamp = FALSE)
 
       IASDT.R::resp_curv_plot_SR(
-        model_dir = model_dir, verbose = TRUE, n_cores = RC_n_cores,
+        model_dir = model_dir, verbose = TRUE, n_cores = n_cores_RC,
         strategy = strategy)
 
       invisible(gc())
@@ -1347,7 +1349,7 @@ mod_postprocess_2_CPU <- function(
         cat_timestamp = FALSE)
 
       IASDT.R::resp_curv_plot_species(
-        model_dir = model_dir, n_cores = RC_n_cores, env_file = env_file)
+        model_dir = model_dir, n_cores = n_cores_RC, env_file = env_file)
 
       invisible(gc())
 
@@ -1360,7 +1362,7 @@ mod_postprocess_2_CPU <- function(
         cat_timestamp = FALSE)
 
       IASDT.R::resp_curv_plot_species_all(
-        model_dir = model_dir, n_cores = RC_n_cores)
+        model_dir = model_dir, n_cores = n_cores_RC)
 
       invisible(gc())
     }
@@ -1382,7 +1384,7 @@ mod_postprocess_2_CPU <- function(
         clamp_pred = clamp_pred, fix_efforts = fix_efforts,
         fix_rivers = fix_rivers, pred_new_sites = pred_new_sites,
         use_TF = use_TF, TF_environ = TF_environ, TF_use_single = TF_use_single,
-        LF_n_cores = LF_n_cores, LF_check = LF_check,
+        n_cores_LF = n_cores_LF, LF_check = LF_check,
         LF_temp_cleanup = LF_temp_cleanup, LF_only = FALSE,
         LF_commands_only = FALSE, temp_dir = temp_dir,
         temp_cleanup = temp_cleanup, tar_predictions = tar_predictions,

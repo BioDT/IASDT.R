@@ -10,7 +10,7 @@ predict_latent_factor(
   postEta,
   post_alpha,
   LF_rL,
-  LF_n_cores = 8L,
+  n_cores_LF = 8L,
   strategy = "multisession",
   temp_dir = "TEMP_Pred",
   LF_temp_cleanup = TRUE,
@@ -43,7 +43,7 @@ for latent factors}
 \item{LF_rL}{a HmscRandomLevel-class object that describes the random level
 structure}
 
-\item{LF_n_cores}{Integer. Number of cores to use for parallel processing of
+\item{n_cores_LF}{Integer. Number of cores to use for parallel processing of
 latent factor prediction. Defaults to 8L.}
 
 \item{strategy}{Character. The parallel processing strategy to use. Valid
@@ -105,7 +105,7 @@ when working in parallel.
 
 The main difference is that this function:
 \itemize{
-\item allow for parallel processing (\code{LF_n_cores} argument);
+\item allow for parallel processing (\code{n_cores_LF} argument);
 \item when \code{TensorFlow} is used (\code{use_TF = TRUE}), matrix
 calculations are much faster, particularly when used on GPU. The following
 Python modules are needed: \code{numpy}, \code{tensorflow}, \code{rdata}, \code{xarray}, and

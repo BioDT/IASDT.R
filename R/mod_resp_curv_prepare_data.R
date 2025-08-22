@@ -47,14 +47,14 @@
 resp_curv_prepare_data <- function(
     path_model = NULL, n_grid = 50L, n_cores = 8L, strategy = "multisession",
     return_data = FALSE, probabilities = c(0.025, 0.5, 0.975), use_TF = TRUE,
-    TF_environ = NULL, TF_use_single = FALSE, LF_n_cores = n_cores,
+    TF_environ = NULL, TF_use_single = FALSE, n_cores_LF = n_cores,
     LF_check = FALSE, LF_temp_cleanup = TRUE, LF_commands_only = FALSE,
     temp_dir = "TEMP_Pred", temp_cleanup = TRUE, verbose = TRUE) {
 
   strategy <- .validate_strategy(strategy)
-  if (strategy == "sequential") n_cores <- LF_n_cores <- 1L
+  if (strategy == "sequential") n_cores <- n_cores_LF <- 1L
   n_cores <- .validate_n_cores(n_cores)
-  LF_n_cores <- .validate_n_cores(LF_n_cores)
+  n_cores_LF <- .validate_n_cores(n_cores_LF)
 
   # # ..................................................................... ###
 
@@ -86,7 +86,7 @@ resp_curv_prepare_data <- function(
     args_to_check = c("path_model", "temp_dir"))
   ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
-    args_to_check = c("n_cores", "LF_n_cores", "n_grid", "probabilities"))
+    args_to_check = c("n_cores", "n_cores_LF", "n_grid", "probabilities"))
   ecokit::check_args(
     args_all = AllArgs, args_type = "logical", args_to_check = "use_TF")
   rm(AllArgs, envir = environment())
@@ -96,9 +96,9 @@ resp_curv_prepare_data <- function(
       "`n_cores` must be greater than 0", n_cores = n_cores,
       include_backtrace = TRUE)
   }
-  if (!is.numeric(LF_n_cores) || LF_n_cores < 1) {
+  if (!is.numeric(n_cores_LF) || n_cores_LF < 1) {
     ecokit::stop_ctx(
-      "`LF_n_cores` must be greater than 0", LF_n_cores = LF_n_cores,
+      "`n_cores_LF` must be greater than 0", n_cores_LF = n_cores_LF,
       include_backtrace = TRUE)
   }
   if (any(probabilities > 1) || any(probabilities < 0)) {
@@ -201,7 +201,7 @@ resp_curv_prepare_data <- function(
           path_model = path_model, gradient = gradient, expected = TRUE,
           n_cores = 1, strategy = strategy, model_name = paste0("RC_", Coords),
           prediction_type = Coords, use_TF = use_TF, TF_environ = TF_environ,
-          LF_inputFile = File_LF, LF_n_cores = 1, LF_check = LF_check,
+          LF_inputFile = File_LF, n_cores_LF = 1, LF_check = LF_check,
           LF_temp_cleanup = LF_temp_cleanup, LF_commands_only = FALSE,
           TF_use_single = TF_use_single, temp_dir = temp_dir,
           temp_cleanup = temp_cleanup, verbose = FALSE)
@@ -460,7 +460,7 @@ resp_curv_prepare_data <- function(
         n_cores = n_cores, strategy = strategy, temp_dir = temp_dir,
         temp_cleanup = temp_cleanup, model_name = "RC_c",
         prediction_type = "c", use_TF = use_TF, TF_environ = TF_environ,
-        LF_out_file = File_LF, LF_n_cores = LF_n_cores, LF_check = LF_check,
+        LF_out_file = File_LF, n_cores_LF = n_cores_LF, LF_check = LF_check,
         LF_return = FALSE, LF_only = TRUE, LF_temp_cleanup = LF_temp_cleanup,
         LF_commands_only = LF_commands_only, TF_use_single = TF_use_single,
         verbose = verbose, pred_directory = temp_dir)

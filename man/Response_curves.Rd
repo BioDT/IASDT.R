@@ -20,7 +20,7 @@ resp_curv_prepare_data(
   use_TF = TRUE,
   TF_environ = NULL,
   TF_use_single = FALSE,
-  LF_n_cores = n_cores,
+  n_cores_LF = n_cores,
   LF_check = FALSE,
   LF_temp_cleanup = TRUE,
   LF_commands_only = FALSE,
@@ -82,7 +82,7 @@ required if \code{use_TF} is \code{TRUE} under Windows. Defaults to \code{NULL}.
 \item{TF_use_single}{Logical. Whether to use single precision for the
 \code{TensorFlow} calculations. Defaults to \code{FALSE}.}
 
-\item{LF_n_cores}{Integer. Number of cores to use for parallel processing of
+\item{n_cores_LF}{Integer. Number of cores to use for parallel processing of
 latent factor prediction. Defaults to 8L.}
 
 \item{LF_check}{Logical. If \code{TRUE}, the function checks if the output files

@@ -11,7 +11,7 @@
 mod_postprocess_CV_1_CPU <- function(
     model_dir = NULL, CV_names = NULL, n_cores = 8L, strategy = "multisession",
     env_file = ".env", from_JSON = FALSE, use_TF = TRUE, TF_use_single = FALSE,
-    TF_environ = NULL, LF_n_cores = n_cores, LF_only = TRUE,
+    TF_environ = NULL, n_cores_LF = n_cores, LF_only = TRUE,
     LF_temp_cleanup = TRUE, LF_check = FALSE, LF_runtime = "01:00:00",
     temp_cleanup = TRUE, n_batch_files = 210L, working_directory = NULL,
     partition_name = "small-g") {
@@ -42,7 +42,7 @@ mod_postprocess_CV_1_CPU <- function(
     args_to_check = c("model_dir", "env_file", "partition_name", "LF_runtime"))
   ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
-    args_to_check = c("n_cores", "LF_n_cores", "n_batch_files"))
+    args_to_check = c("n_cores", "n_cores_LF", "n_batch_files"))
   rm(AllArgs, envir = environment())
 
   if (n_batch_files <= 0) {
@@ -52,9 +52,9 @@ mod_postprocess_CV_1_CPU <- function(
   }
 
   strategy <- .validate_strategy(strategy)
-  if (strategy == "sequential") n_cores <- LF_n_cores <- 1L
+  if (strategy == "sequential") n_cores <- n_cores_LF <- 1L
   n_cores <- .validate_n_cores(n_cores)
-  LF_n_cores <- .validate_n_cores(LF_n_cores)
+  n_cores_LF <- .validate_n_cores(n_cores_LF)
 
   if (!dir.exists(model_dir)) {
     ecokit::stop_ctx(
@@ -150,7 +150,7 @@ mod_postprocess_CV_1_CPU <- function(
             model_dir = model_dir, CV_name = paste0("CV_", .x),
             CV_fold = .y, n_cores = n_cores, strategy = strategy,
             use_TF = use_TF, TF_environ = TF_environ,
-            TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
+            TF_use_single = TF_use_single, n_cores_LF = n_cores_LF,
             LF_check = LF_check, LF_temp_cleanup = LF_temp_cleanup,
             LF_only = LF_only, LF_commands_only = TRUE,
             temp_cleanup = temp_cleanup)
@@ -346,7 +346,7 @@ mod_postprocess_CV_2_CPU <- function(
     model_dir = NULL, CV_names = NULL, n_cores = 8L,
     strategy = "multisession", env_file = ".env", use_TF = TRUE,
     TF_use_single = FALSE, temp_cleanup = TRUE, LF_temp_cleanup = TRUE,
-    TF_environ = NULL, LF_n_cores = n_cores, LF_check = FALSE) {
+    TF_environ = NULL, n_cores_LF = n_cores, LF_check = FALSE) {
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -378,13 +378,13 @@ mod_postprocess_CV_2_CPU <- function(
     args_to_check = c("model_dir", "env_file", "strategy"))
   ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
-    args_to_check = c("n_cores", "LF_n_cores"))
+    args_to_check = c("n_cores", "n_cores_LF"))
   rm(AllArgs, envir = environment())
 
   strategy <- .validate_strategy(strategy)
-  if (strategy == "sequential") n_cores <- LF_n_cores <- 1L
+  if (strategy == "sequential") n_cores <- n_cores_LF <- 1L
   n_cores <- .validate_n_cores(n_cores)
-  LF_n_cores <- .validate_n_cores(LF_n_cores)
+  n_cores_LF <- .validate_n_cores(n_cores_LF)
 
   valid_CVs <- c("CV_Dist", "CV_Large", "CV_SAC")
   if (!all(CV_names %in% valid_CVs)) {
@@ -459,7 +459,7 @@ mod_postprocess_CV_2_CPU <- function(
             model_dir = model_dir, CV_name = paste0("CV_", .x),
             CV_fold = .y, n_cores = n_cores, strategy = strategy,
             env_file = env_file, use_TF = use_TF, TF_environ = TF_environ,
-            TF_use_single = TF_use_single, LF_n_cores = LF_n_cores,
+            TF_use_single = TF_use_single, n_cores_LF = n_cores_LF,
             LF_check = LF_check, LF_temp_cleanup = LF_temp_cleanup,
             LF_only = FALSE, LF_commands_only = FALSE,
             temp_cleanup = temp_cleanup)

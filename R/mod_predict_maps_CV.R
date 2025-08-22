@@ -11,7 +11,7 @@
 predict_maps_CV <- function(
     model_dir = NULL, CV_name = NULL, CV_fold = NULL, n_cores = 8L,
     strategy = "multisession", env_file = ".env", use_TF = TRUE,
-    TF_environ = NULL, TF_use_single = FALSE, LF_n_cores = n_cores,
+    TF_environ = NULL, TF_use_single = FALSE, n_cores_LF = n_cores,
     LF_check = FALSE, LF_temp_cleanup = TRUE, LF_only = FALSE,
     LF_commands_only = FALSE, temp_cleanup = TRUE) {
 
@@ -48,15 +48,15 @@ predict_maps_CV <- function(
       "LF_commands_only", "temp_cleanup"))
   ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
-    args_to_check = c("n_cores", "CV_fold", "LF_n_cores"))
+    args_to_check = c("n_cores", "CV_fold", "n_cores_LF"))
 
   rm(AllArgs, envir = environment())
 
   CV_name <- .validate_cv_name(CV_name)
   n_cores <- .validate_n_cores(n_cores)
-  LF_n_cores <- .validate_n_cores(LF_n_cores)
+  n_cores_LF <- .validate_n_cores(n_cores_LF)
   strategy <- .validate_strategy(strategy)
-  if (strategy == "sequential") n_cores <- LF_n_cores <- 1L
+  if (strategy == "sequential") n_cores <- n_cores_LF <- 1L
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -149,7 +149,7 @@ predict_maps_CV <- function(
 
   # Loading data used in full model (without cross-validation)
   ecokit::cat_time("Loading data used in full model")
-  
+
   model_data <- fs::path(model_dir, "ModDT_subset.RData")
   if (!ecokit::check_data(model_data)) {
     ecokit::stop_ctx(
@@ -221,7 +221,7 @@ predict_maps_CV <- function(
       n_cores = n_cores, strategy = strategy, model_name = model_name,
       temp_dir = temp_dir, temp_cleanup = temp_cleanup, use_TF = use_TF,
       TF_environ = TF_environ, LF_out_file = Path_Test_LF,
-      TF_use_single = TF_use_single, LF_only = TRUE, LF_n_cores = LF_n_cores,
+      TF_use_single = TF_use_single, LF_only = TRUE, n_cores_LF = n_cores_LF,
       LF_check = LF_check, LF_temp_cleanup = LF_temp_cleanup,
       LF_commands_only = LF_commands_only, evaluate = FALSE, verbose = TRUE)
 
@@ -266,7 +266,7 @@ predict_maps_CV <- function(
       n_cores = n_cores, strategy = strategy, model_name = model_name,
       temp_dir = temp_dir, temp_cleanup = temp_cleanup, use_TF = use_TF,
       TF_environ = TF_environ, TF_use_single = TF_use_single, LF_return = TRUE,
-      LF_inputFile = Path_Test_LF, LF_n_cores = LF_n_cores, LF_check = LF_check,
+      LF_inputFile = Path_Test_LF, n_cores_LF = n_cores_LF, LF_check = LF_check,
       LF_temp_cleanup = LF_temp_cleanup, LF_commands_only = FALSE,
       verbose = TRUE, pred_directory = Path_Prediction, evaluate = TRUE,
       evaluation_directory = Path_Eval, pred_XY = Test_XY, pred_PA = Test_PA)

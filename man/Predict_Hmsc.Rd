@@ -28,7 +28,7 @@ predict_hmsc(
   LF_return = FALSE,
   LF_inputFile = NULL,
   LF_only = FALSE,
-  LF_n_cores = n_cores,
+  n_cores_LF = n_cores,
   LF_check = FALSE,
   LF_temp_cleanup = TRUE,
   LF_commands_only = FALSE,
@@ -120,7 +120,7 @@ Defaults to \code{FALSE}. This helps in predicting to new sites, allowing to
 predicting the latent factors only once, then the output can be loaded in
 other predictions when needed.}
 
-\item{LF_n_cores}{Integer. Number of cores to use for parallel processing of
+\item{n_cores_LF}{Integer. Number of cores to use for parallel processing of
 latent factor prediction. Defaults to 8L.}
 
 \item{LF_check}{Logical. If \code{TRUE}, the function checks if the output files

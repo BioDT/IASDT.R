@@ -50,8 +50,9 @@
 #' @param CC_scenario Character vector. Climate scenarios for future
 #'   predictions. Available options are: `c("ssp126", "ssp370", "ssp585")`
 #'   (default).
-#' @param tar_predictions Logical. Whether to compress the add files into a
-#'   single `*.tar` file (without compression). Default: `TRUE`.
+#' @param tar_predictions Logical. Whether to compress tiff files for predicted
+#'   habitat suitability into a single `*.tar` file (without compression).
+#'   Default: `TRUE`.
 #' @param model_dir Character. Path to the directory containing cross-validated
 #'   models.
 #' @param CV_name Character. Cross-validation strategy. Valid values are
@@ -87,7 +88,7 @@ predict_maps <- function(
     path_model = NULL, hab_abb = NULL, env_file = ".env", n_cores = 8L,
     strategy = "multisession", clamp_pred = TRUE, fix_efforts = "q90",
     fix_rivers = "q90", pred_new_sites = TRUE, use_TF = TRUE, TF_environ = NULL,
-    TF_use_single = FALSE, LF_n_cores = n_cores, LF_check = FALSE,
+    TF_use_single = FALSE, n_cores_LF = n_cores, LF_check = FALSE,
     LF_temp_cleanup = TRUE, LF_only = FALSE, LF_commands_only = FALSE,
     temp_dir = "TEMP_Pred", temp_cleanup = TRUE, tar_predictions = TRUE,
     spatial_model = TRUE, n_cores_pred = n_cores,
@@ -97,9 +98,9 @@ predict_maps <- function(
     CC_scenario = c("ssp126", "ssp370", "ssp585")) {
 
   strategy <- .validate_strategy(strategy)
-  if (strategy == "sequential")  n_cores <- LF_n_cores <- 1L
+  if (strategy == "sequential")  n_cores <- n_cores_LF <- 1L
   n_cores <- .validate_n_cores(n_cores)
-  LF_n_cores <- .validate_n_cores(LF_n_cores)
+  n_cores_LF <- .validate_n_cores(n_cores_LF)
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -143,7 +144,7 @@ predict_maps <- function(
       "tar_predictions"))
   ecokit::check_args(
     args_all = AllArgs, args_type = "numeric",
-    args_to_check = c("n_cores", "LF_n_cores"))
+    args_to_check = c("n_cores", "n_cores_LF"))
 
   rm(AllArgs, envir = environment())
 
@@ -840,7 +841,7 @@ predict_maps <- function(
       model_name = paste0("LF_", hab_abb, "_Test"), temp_dir = temp_dir,
       temp_cleanup = temp_cleanup, use_TF = use_TF, TF_environ = TF_environ,
       LF_out_file = Path_Test_LF, TF_use_single = TF_use_single,
-      LF_only = TRUE, LF_n_cores = LF_n_cores, LF_check = LF_check,
+      LF_only = TRUE, n_cores_LF = n_cores_LF, LF_check = LF_check,
       LF_temp_cleanup = LF_temp_cleanup, LF_commands_only = LF_commands_only,
       evaluate = FALSE, verbose = TRUE, spatial_model = spatial_model)
 
@@ -1048,7 +1049,7 @@ predict_maps <- function(
               model_name = Model_Name_Train, temp_dir = temp_dir,
               temp_cleanup = temp_cleanup, use_TF = use_TF,
               TF_environ = TF_environ, TF_use_single = TF_use_single,
-              LF_return = TRUE, LF_n_cores = LF_n_cores, LF_check = LF_check,
+              LF_return = TRUE, n_cores_LF = n_cores_LF, LF_check = LF_check,
               LF_temp_cleanup = LF_temp_cleanup, LF_commands_only = FALSE,
               pred_directory = Path_Prediction, pred_PA = Train_PA,
               pred_XY = Train_XY, evaluate = evaluate, evaluation_name = NULL,
@@ -1090,7 +1091,7 @@ predict_maps <- function(
               temp_cleanup = temp_cleanup, use_TF = use_TF,
               TF_environ = TF_environ, TF_use_single = TF_use_single,
               LF_return = TRUE, LF_inputFile = Path_Test_LF,
-              LF_n_cores = LF_n_cores, LF_check = LF_check,
+              n_cores_LF = n_cores_LF, LF_check = LF_check,
               LF_temp_cleanup = LF_temp_cleanup, LF_commands_only = FALSE,
               verbose = FALSE, pred_directory = Path_Prediction,
               evaluate = FALSE, pred_XY = sf::st_drop_geometry(Test_XY),

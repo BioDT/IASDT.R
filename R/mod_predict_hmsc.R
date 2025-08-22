@@ -74,7 +74,7 @@ predict_hmsc <- function(
     temp_dir = "TEMP_Pred", temp_cleanup = TRUE, prediction_type = NULL,
     use_TF = TRUE, TF_environ = NULL, TF_use_single = FALSE, LF_out_file = NULL,
     LF_return = FALSE, LF_inputFile = NULL, LF_only = FALSE,
-    LF_n_cores = n_cores, LF_check = FALSE, LF_temp_cleanup = TRUE,
+    n_cores_LF = n_cores, LF_check = FALSE, LF_temp_cleanup = TRUE,
     LF_commands_only = FALSE, pred_directory = NULL, pred_PA = NULL,
     pred_XY = NULL, evaluate = FALSE, evaluation_name = NULL,
     evaluation_directory = "Evaluation", verbose = TRUE,
@@ -85,9 +85,9 @@ predict_hmsc <- function(
   .start_time <- lubridate::now(tzone = "CET")
 
   strategy <- .validate_strategy(strategy)
-  if (strategy == "sequential") n_cores <- LF_n_cores <- 1L
+  if (strategy == "sequential") n_cores <- n_cores_LF <- 1L
   n_cores <- .validate_n_cores(n_cores)
-  LF_n_cores <- .validate_n_cores(LF_n_cores)
+  n_cores_LF <- .validate_n_cores(n_cores_LF)
 
   # To avoid non-standard evaluation
   pred_XY <- pred_XY
@@ -429,7 +429,7 @@ predict_hmsc <- function(
         units_pred = levels(dfPiNew[, r]),
         units_model = levels(Mod_dfPi[, r]),
         postEta = postEta_file, post_alpha = post_alpha, LF_rL = rL[[r]],
-        LF_n_cores = LF_n_cores, strategy = strategy,
+        n_cores_LF = n_cores_LF, strategy = strategy,
         LF_temp_cleanup = LF_temp_cleanup, LF_out_file = LF_out_file,
         LF_return = LF_return, LF_check = LF_check,
         LF_commands_only = LF_commands_only, temp_dir = temp_dir,

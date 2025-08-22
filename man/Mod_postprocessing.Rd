@@ -12,11 +12,12 @@
 mod_postprocess_1_CPU(
   model_dir = NULL,
   hab_abb = NULL,
-  n_cores = 8L,
   strategy = "multisession",
+  future_max_size = 1500L,
+  n_cores = 8L,
   n_cores_pred = n_cores,
-  LF_n_cores = n_cores,
-  n_cores_VP = 10L,
+  n_cores_LF = n_cores,
+  n_cores_VP = n_cores,
   env_file = ".env",
   path_Hmsc = NULL,
   memory_per_cpu = "64G",
@@ -41,16 +42,15 @@ mod_postprocess_1_CPU(
   width_beta = 25,
   height_beta = 35,
   spatial_model = TRUE,
-  future_max_size = 1500L,
   tar_predictions = TRUE,
   plot_predictions = TRUE,
   is_cv_model = FALSE,
-  CC_models = c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0",
-    "UKESM1-0-LL"),
-  CC_scenario = c("ssp126", "ssp370", "ssp585"),
   clamp_pred = TRUE,
   fix_efforts = "q90",
-  fix_rivers = "q90"
+  fix_rivers = "q90",
+  CC_models = c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0",
+    "UKESM1-0-LL"),
+  CC_scenario = c("ssp126", "ssp370", "ssp585")
 )
 
 mod_prepare_TF(
@@ -68,9 +68,11 @@ mod_prepare_TF(
 mod_postprocess_2_CPU(
   model_dir = NULL,
   hab_abb = NULL,
+  strategy = "multisession",
   n_cores = 8L,
   n_cores_pred = n_cores,
-  strategy = "multisession",
+  n_cores_LF = n_cores,
+  n_cores_RC = n_cores,
   env_file = ".env",
   GPP_dist = NULL,
   use_trees = "Tree",
@@ -79,7 +81,6 @@ mod_postprocess_2_CPU(
   use_TF = TRUE,
   TF_environ = NULL,
   TF_use_single = FALSE,
-  LF_n_cores = n_cores,
   LF_check = FALSE,
   LF_temp_cleanup = TRUE,
   temp_cleanup = TRUE,
@@ -87,7 +88,6 @@ mod_postprocess_2_CPU(
   CC_models = c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0",
     "UKESM1-0-LL"),
   CC_scenario = c("ssp126", "ssp370", "ssp585"),
-  RC_n_cores = 8L,
   clamp_pred = TRUE,
   fix_efforts = "q90",
   fix_rivers = "q90",
@@ -115,7 +115,7 @@ mod_postprocess_CV_1_CPU(
   use_TF = TRUE,
   TF_use_single = FALSE,
   TF_environ = NULL,
-  LF_n_cores = n_cores,
+  n_cores_LF = n_cores,
   LF_only = TRUE,
   LF_temp_cleanup = TRUE,
   LF_check = FALSE,
@@ -137,7 +137,7 @@ mod_postprocess_CV_2_CPU(
   temp_cleanup = TRUE,
   LF_temp_cleanup = TRUE,
   TF_environ = NULL,
-  LF_n_cores = n_cores,
+  n_cores_LF = n_cores,
   LF_check = FALSE
 )
 }
@@ -148,21 +148,22 @@ mod_postprocess_CV_2_CPU(
 \href{https://www.preslia.cz/article/pdf?id=11548}{SynHab} habitat type. Valid
 values: \code{0}, \code{1}, \code{2}, \code{3}, \verb{4a}, \verb{4b}, \code{10}, \verb{12a}, \verb{12b}. See \href{https://doi.org/10.23855/preslia.2022.447}{Pysek et al.} for details.}
 
-\item{n_cores}{Integer. Number of CPU cores to use for parallel processing.
-Default: 8.}
-
 \item{strategy}{Character. The parallel processing strategy to use. Valid
 options are "sequential", "multisession" (default), "multicore", and
 "cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 
-\item{n_cores_pred}{Integer. Number of cores to use for predicting species'
-habitat suitability.}
+\item{future_max_size}{Numeric. Maximum allowed total size (in megabytes) of
+global variables identified. See \code{future.globals.maxSize} argument of
+\link[future:zzz-future.options]{future::future.options} for more details.}
 
-\item{LF_n_cores}{Integer. Number of cores to use for parallel processing of
-latent factor prediction. Defaults to 8L.}
-
-\item{n_cores_VP}{Integer. Number of cores to use for processing variance
-partitioning. Defaults to 10L.}
+\item{n_cores, n_cores_pred, n_cores_LF, n_cores_VP, n_cores_RC}{Integer. Number
+of cores to use for parallel processing. They are used for different
+processing steps: \code{n_cores} for merging chains and plotting convergence
+convergence diagnostics; \code{n_cores_pred} for predicting species' habitat
+suitability; \code{n_cores_LF} for predicting latent factors; \code{n_cores_VP} for
+processing variance partitioning; and \code{n_cores_RC} for response curve
+prediction. All default to \code{8L}. If \code{strategy = "sequential"}, all of these
+arguments are set to \code{1L}.}
 
 \item{env_file}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}
@@ -206,15 +207,13 @@ to \code{TRUE}.}
 \item{TF_use_single}{Logical. Whether to use single precision for the
 \code{TensorFlow} calculations. Defaults to \code{FALSE}.}
 
-\item{LF_temp_cleanup}{Logical. Whether to delete temporary files in the
-\code{temp_dir} directory after finishing the LF predictions.}
-
 \item{LF_check}{Logical. If \code{TRUE}, the function checks if the output files
 are already created and valid. If \code{FALSE}, the function will only check if
 the files exist without checking their integrity. Default is \code{FALSE}.}
 
-\item{temp_cleanup}{Logical. Whether to clean up temporary files. Defaults to
-\code{TRUE}.}
+\item{temp_cleanup, LF_temp_cleanup}{Logical. Whether to delete temporary
+files after finishing predicting latent factor or species distribution.
+Default: \code{TRUE}.}
 
 \item{TF_environ}{Character. Path to the Python environment. This argument is
 required if \code{use_TF} is \code{TRUE} under Windows. Defaults to \code{NULL}.}
@@ -226,29 +225,13 @@ Default: \code{TRUE}.}
 height of the generated heatmaps of the Omega and Beta parameters in
 centimetres.}
 
-\item{spatial_model}{Logical. Whether the model is spatial (\code{TRUE}) or not
-(\code{FALSE}). Defaults to \code{TRUE}.}
-
-\item{future_max_size}{Numeric. Maximum allowed total size (in megabytes) of
-global variables identified. See \code{future.globals.maxSize} argument of
-\link[future:zzz-future.options]{future::future.options} for more details.}
-
-\item{tar_predictions}{Logical. Whether to compress the add files into a
-single \verb{*.tar} file (without compression). Default: \code{TRUE}.}
-
-\item{plot_predictions}{Logical. Whether to plot species and species richness
-predictions as JPEG files (using \link{plot_prediction}). Defaults to \code{TRUE}.}
+\item{spatial_model, plot_LF}{Logical. Whether the model is spatial (\code{TRUE})
+or not (\code{FALSE}) and whether to plot latent factors for spatial models as
+JPEG files (using \link{plot_latent_factor}). Defaults to \code{TRUE}.}
 
 \item{is_cv_model}{Logical. Whether the model is a cross-validated model
 (\code{TRUE}) or fitted with the full dataset (\code{FALSE}; default). If \code{TRUE}, the
 explanatory and predictive power of the model will be computed.}
-
-\item{CC_models}{Character vector. Climate models for future predictions.
-Available options are \code{c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")} (default).}
-
-\item{CC_scenario}{Character vector. Climate scenarios for future
-predictions. Available options are: \code{c("ssp126", "ssp370", "ssp585")}
-(default).}
 
 \item{clamp_pred}{Logical indicating whether to clamp the sampling efforts at
 a single value. If \code{TRUE} (default), the \code{fix_efforts} argument must be
@@ -266,11 +249,16 @@ extremes. Required if \code{clamp_pred = TRUE}.}
 but for the river length predictor. If \code{NULL}, the river length is not
 fixed. Default: \code{q90}.}
 
-\item{process_VP}{Logical. Whether to prepares batch scripts for variance
-partitioning GPU computations on GPUs. Defaults to \code{TRUE}.}
+\item{CC_models}{Character vector. Climate models for future predictions.
+Available options are \code{c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")} (default).}
 
-\item{process_LF}{Logical. Whether to prepares batch scripts for latent
-factor predictions GPU computations on GPUs. Defaults to \code{TRUE}.}
+\item{CC_scenario}{Character vector. Climate scenarios for future
+predictions. Available options are: \code{c("ssp126", "ssp370", "ssp585")}
+(default).}
+
+\item{process_VP, process_LF}{Logical. Whether to prepares batch scripts for
+variance partitioning computations and latent factor predictions on GPUs.
+Defaults to \code{TRUE}.}
 
 \item{n_batch_files}{Integer. Number of output batch files to create. Must be
 less than or equal to the maximum job limit of the HPC environment.}
@@ -289,28 +277,20 @@ Defaults are \code{01:00:00} and \code{02:00:00} respectively.}
 \code{model_prefix_TF} is created in the \code{model_dir} to store the \code{TensorFlow}
 running commands. Defaults to \code{NULL}. This can not be \code{NULL}.}
 
-\item{RC_n_cores}{Integer. The number of cores to use for response curve
-prediction. Defaults to \code{8}.}
+\item{RC_prepare, RC_plot}{Logical. Whether to prepare the data for response
+curve prediction (using \link{resp_curv_prepare_data}) and plot the response
+curves as JPEG files. (using \link{resp_curv_plot_SR}, \link{resp_curv_plot_species},
+and \link{resp_curv_plot_species_all}). Defaults to \code{TRUE}.}
 
-\item{RC_prepare}{Logical. Whether to prepare the data for response curve
-prediction (using \link{resp_curv_prepare_data}). Defaults to \code{TRUE}.}
-
-\item{RC_plot}{Logical. Whether to plot the response curves as JPEG files
-(using \link{resp_curv_plot_SR}, \link{resp_curv_plot_species}, and
-\link{resp_curv_plot_species_all}). Defaults to \code{TRUE}.}
-
-\item{VP_prepare}{Logical. Whether to prepare the data for variance
-partitioning (using \link{variance_partitioning_compute}). Defaults to \code{TRUE}.}
-
-\item{VP_plot}{Logical. Whether to plot the variance partitioning results
+\item{VP_prepare, VP_plot}{Logical. Whether to prepare the data for variance
+partitioning (using \link{variance_partitioning_compute}) and plot its results
 (using \link{variance_partitioning_plot}). Defaults to \code{TRUE}.}
 
-\item{predict_suitability}{Logical. Whether to predict habitat suitability
-across different climate options (using \link{predict_maps}). Defaults to
-\code{TRUE}.}
-
-\item{plot_LF}{Logical. Whether to plot latent factors as JPEG files (using
-\link{plot_latent_factor}). Defaults to \code{TRUE}.}
+\item{predict_suitability, tar_predictions, plot_predictions}{Logical. Whether
+to predict habitat suitability across different climate options (using
+\link{predict_maps}), compress the resulted files into a single \verb{*.tar} file
+(without compression), or to plot species and species richness predictions
+as JPEG files (using \link{plot_prediction}). Defaults to \code{TRUE}.}
 
 \item{plot_internal_evaluation}{Logical. Whether to compute and visualise
 model internal evaluation (explanatory power) using \link{plot_evaluation}.

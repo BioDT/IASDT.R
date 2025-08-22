@@ -18,7 +18,7 @@ predict_maps(
   use_TF = TRUE,
   TF_environ = NULL,
   TF_use_single = FALSE,
-  LF_n_cores = n_cores,
+  n_cores_LF = n_cores,
   LF_check = FALSE,
   LF_temp_cleanup = TRUE,
   LF_only = FALSE,
@@ -43,7 +43,7 @@ predict_maps_CV(
   use_TF = TRUE,
   TF_environ = NULL,
   TF_use_single = FALSE,
-  LF_n_cores = n_cores,
+  n_cores_LF = n_cores,
   LF_check = FALSE,
   LF_temp_cleanup = TRUE,
   LF_only = FALSE,
@@ -96,7 +96,7 @@ required if \code{use_TF} is \code{TRUE} under Windows. Defaults to \code{NULL}.
 \item{TF_use_single}{Logical. Whether to use single precision for the
 \code{TensorFlow} calculations. Defaults to \code{FALSE}.}
 
-\item{LF_n_cores}{Integer. Number of cores to use for parallel processing of
+\item{n_cores_LF}{Integer. Number of cores to use for parallel processing of
 latent factor prediction. Defaults to 8L.}
 
 \item{LF_check}{Logical. If \code{TRUE}, the function checks if the output files
@@ -120,8 +120,9 @@ Python script. Default is \code{FALSE}.}
 \item{temp_cleanup}{Logical. Whether to clean up temporary files. Defaults to
 \code{TRUE}.}
 
-\item{tar_predictions}{Logical. Whether to compress the add files into a
-single \verb{*.tar} file (without compression). Default: \code{TRUE}.}
+\item{tar_predictions}{Logical. Whether to compress tiff files for predicted
+habitat suitability into a single \verb{*.tar} file (without compression).
+Default: \code{TRUE}.}
 
 \item{spatial_model}{Logical. Whether the fitted model is a spatial model.
 Defaults to \code{TRUE}.}

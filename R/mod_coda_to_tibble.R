@@ -26,8 +26,9 @@
 #' ecokit::load_packages(Hmsc, coda, dplyr)
 #'
 #' coda_object <- Hmsc::convertToCodaObject(Hmsc::TD$m)
-#' IASDT.R::coda_to_tibble(
-#'    coda_object = coda_object$Alpha[[1]], posterior_type = "Alpha")
+#' ecokit::ht(
+#'   IASDT.R::coda_to_tibble(
+#'     coda_object = coda_object$Alpha[[1]], posterior_type = "Alpha"))
 
 coda_to_tibble <- function(
     coda_object = NULL, posterior_type = NULL,

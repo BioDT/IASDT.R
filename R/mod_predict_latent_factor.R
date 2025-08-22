@@ -18,7 +18,7 @@
 #'   for latent factors
 #' @param LF_rL a HmscRandomLevel-class object that describes the random level
 #'   structure
-#' @param LF_n_cores Integer. Number of cores to use for parallel processing of
+#' @param n_cores_LF Integer. Number of cores to use for parallel processing of
 #'   latent factor prediction. Defaults to 8L.
 #' @param strategy Character. The parallel processing strategy to use. Valid
 #'   options are "sequential", "multisession" (default), "multicore", and
@@ -60,7 +60,7 @@
 #'   when working in parallel.
 #'
 #'   The main difference is that this function:
-#' - allow for parallel processing (`LF_n_cores` argument);
+#' - allow for parallel processing (`n_cores_LF` argument);
 #' - when `TensorFlow` is used (`use_TF = TRUE`), matrix
 #'   calculations are much faster, particularly when used on GPU. The following
 #'   Python modules are needed: `numpy`, `tensorflow`, `rdata`, `xarray`, and
@@ -73,7 +73,7 @@
 #'   called when needed.
 
 predict_latent_factor <- function(
-    units_pred, units_model, postEta, post_alpha, LF_rL, LF_n_cores = 8L,
+    units_pred, units_model, postEta, post_alpha, LF_rL, n_cores_LF = 8L,
     strategy = "multisession", temp_dir = "TEMP_Pred",
     LF_temp_cleanup = TRUE, model_name = NULL, use_TF = TRUE, TF_environ = NULL,
     TF_use_single = FALSE, LF_out_file = NULL, LF_return = FALSE,
@@ -83,9 +83,9 @@ predict_latent_factor <- function(
   # # ..................................................................... ###
 
   strategy <- .validate_strategy(strategy)
-  if (strategy == "sequential") n_cores <- LF_n_cores <- 1L
+  if (strategy == "sequential") n_cores <- n_cores_LF <- 1L
   n_cores <- .validate_n_cores(n_cores)
-  LF_n_cores <- .validate_n_cores(LF_n_cores)
+  n_cores_LF <- .validate_n_cores(n_cores_LF)
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -562,7 +562,7 @@ predict_latent_factor <- function(
         "All LF prediction files were already created",
         level = 1L, verbose = verbose)
     } else {
-      if (LF_n_cores == 1 || LF_commands_only) {
+      if (n_cores_LF == 1 || LF_commands_only) {
 
         if (LF_commands_only) {
           ecokit::cat_time(
@@ -634,7 +634,7 @@ predict_latent_factor <- function(
           "Predicting Latent Factor in parallel", level = 1L, verbose = verbose)
 
         ecokit::set_parallel(
-          n_cores = min(LF_n_cores, nrow(LF_Data)), level = 2L,
+          n_cores = min(n_cores_LF, nrow(LF_Data)), level = 2L,
           future_max_size = 800L, strategy = strategy, cat_timestamp = FALSE)
         withr::defer(future::plan("sequential", gc = TRUE))
 
@@ -707,7 +707,7 @@ predict_latent_factor <- function(
 
 
     ecokit::set_parallel(
-      n_cores = LF_n_cores, level = 2L, future_max_size = 800L,
+      n_cores = n_cores_LF, level = 2L, future_max_size = 800L,
       strategy = strategy, cat_timestamp = FALSE)
     withr::defer(future::plan("sequential", gc = TRUE))
 

@@ -67,11 +67,12 @@ cross-validated models. See details for more information.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mod_postprocess_1_CPU</span><span class="op">(</span></span>
 <span>  model_dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  hab_abb <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  n_cores <span class="op">=</span> <span class="fl">8L</span>,</span>
 <span>  strategy <span class="op">=</span> <span class="st">"multisession"</span>,</span>
+<span>  future_max_size <span class="op">=</span> <span class="fl">1500L</span>,</span>
+<span>  n_cores <span class="op">=</span> <span class="fl">8L</span>,</span>
 <span>  n_cores_pred <span class="op">=</span> <span class="va">n_cores</span>,</span>
-<span>  LF_n_cores <span class="op">=</span> <span class="va">n_cores</span>,</span>
-<span>  n_cores_VP <span class="op">=</span> <span class="fl">10L</span>,</span>
+<span>  n_cores_LF <span class="op">=</span> <span class="va">n_cores</span>,</span>
+<span>  n_cores_VP <span class="op">=</span> <span class="va">n_cores</span>,</span>
 <span>  env_file <span class="op">=</span> <span class="st">".env"</span>,</span>
 <span>  path_Hmsc <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  memory_per_cpu <span class="op">=</span> <span class="st">"64G"</span>,</span>
@@ -96,16 +97,15 @@ cross-validated models. See details for more information.</p>
 <span>  width_beta <span class="op">=</span> <span class="fl">25</span>,</span>
 <span>  height_beta <span class="op">=</span> <span class="fl">35</span>,</span>
 <span>  spatial_model <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  future_max_size <span class="op">=</span> <span class="fl">1500L</span>,</span>
 <span>  tar_predictions <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  plot_predictions <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  is_cv_model <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  CC_models <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"GFDL-ESM4"</span>, <span class="st">"IPSL-CM6A-LR"</span>, <span class="st">"MPI-ESM1-2-HR"</span>, <span class="st">"MRI-ESM2-0"</span>,</span>
-<span>    <span class="st">"UKESM1-0-LL"</span><span class="op">)</span>,</span>
-<span>  CC_scenario <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ssp126"</span>, <span class="st">"ssp370"</span>, <span class="st">"ssp585"</span><span class="op">)</span>,</span>
 <span>  clamp_pred <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  fix_efforts <span class="op">=</span> <span class="st">"q90"</span>,</span>
-<span>  fix_rivers <span class="op">=</span> <span class="st">"q90"</span></span>
+<span>  fix_rivers <span class="op">=</span> <span class="st">"q90"</span>,</span>
+<span>  CC_models <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"GFDL-ESM4"</span>, <span class="st">"IPSL-CM6A-LR"</span>, <span class="st">"MPI-ESM1-2-HR"</span>, <span class="st">"MRI-ESM2-0"</span>,</span>
+<span>    <span class="st">"UKESM1-0-LL"</span><span class="op">)</span>,</span>
+<span>  CC_scenario <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ssp126"</span>, <span class="st">"ssp370"</span>, <span class="st">"ssp585"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">mod_prepare_TF</span><span class="op">(</span></span>
@@ -123,9 +123,11 @@ cross-validated models. See details for more information.</p>
 <span><span class="fu">mod_postprocess_2_CPU</span><span class="op">(</span></span>
 <span>  model_dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  hab_abb <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  strategy <span class="op">=</span> <span class="st">"multisession"</span>,</span>
 <span>  n_cores <span class="op">=</span> <span class="fl">8L</span>,</span>
 <span>  n_cores_pred <span class="op">=</span> <span class="va">n_cores</span>,</span>
-<span>  strategy <span class="op">=</span> <span class="st">"multisession"</span>,</span>
+<span>  n_cores_LF <span class="op">=</span> <span class="va">n_cores</span>,</span>
+<span>  n_cores_RC <span class="op">=</span> <span class="va">n_cores</span>,</span>
 <span>  env_file <span class="op">=</span> <span class="st">".env"</span>,</span>
 <span>  GPP_dist <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  use_trees <span class="op">=</span> <span class="st">"Tree"</span>,</span>
@@ -134,7 +136,6 @@ cross-validated models. See details for more information.</p>
 <span>  use_TF <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  TF_environ <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  TF_use_single <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  LF_n_cores <span class="op">=</span> <span class="va">n_cores</span>,</span>
 <span>  LF_check <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  LF_temp_cleanup <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  temp_cleanup <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -142,7 +143,6 @@ cross-validated models. See details for more information.</p>
 <span>  CC_models <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"GFDL-ESM4"</span>, <span class="st">"IPSL-CM6A-LR"</span>, <span class="st">"MPI-ESM1-2-HR"</span>, <span class="st">"MRI-ESM2-0"</span>,</span>
 <span>    <span class="st">"UKESM1-0-LL"</span><span class="op">)</span>,</span>
 <span>  CC_scenario <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ssp126"</span>, <span class="st">"ssp370"</span>, <span class="st">"ssp585"</span><span class="op">)</span>,</span>
-<span>  RC_n_cores <span class="op">=</span> <span class="fl">8L</span>,</span>
 <span>  clamp_pred <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  fix_efforts <span class="op">=</span> <span class="st">"q90"</span>,</span>
 <span>  fix_rivers <span class="op">=</span> <span class="st">"q90"</span>,</span>
@@ -170,7 +170,7 @@ cross-validated models. See details for more information.</p>
 <span>  use_TF <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  TF_use_single <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  TF_environ <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  LF_n_cores <span class="op">=</span> <span class="va">n_cores</span>,</span>
+<span>  n_cores_LF <span class="op">=</span> <span class="va">n_cores</span>,</span>
 <span>  LF_only <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  LF_temp_cleanup <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  LF_check <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -192,7 +192,7 @@ cross-validated models. See details for more information.</p>
 <span>  temp_cleanup <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  LF_temp_cleanup <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  TF_environ <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  LF_n_cores <span class="op">=</span> <span class="va">n_cores</span>,</span>
+<span>  n_cores_LF <span class="op">=</span> <span class="va">n_cores</span>,</span>
 <span>  LF_check <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -211,30 +211,27 @@ cross-validated models. See details for more information.</p>
 values: <code>0</code>, <code>1</code>, <code>2</code>, <code>3</code>, <code>4a</code>, <code>4b</code>, <code>10</code>, <code>12a</code>, <code>12b</code>. See <a href="https://doi.org/10.23855/preslia.2022.447" class="external-link">Pysek et al.</a> for details.</p></dd>
 
 
-<dt id="arg-n-cores">n_cores<a class="anchor" aria-label="anchor" href="#arg-n-cores"></a></dt>
-<dd><p>Integer. Number of CPU cores to use for parallel processing.
-Default: 8.</p></dd>
-
-
 <dt id="arg-strategy">strategy<a class="anchor" aria-label="anchor" href="#arg-strategy"></a></dt>
 <dd><p>Character. The parallel processing strategy to use. Valid
 options are "sequential", "multisession" (default), "multicore", and
 "cluster". See <code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code> and <code><a href="https://elgabbas.github.io/ecokit/reference/set_parallel.html" class="external-link">ecokit::set_parallel()</a></code> for details.</p></dd>
 
 
-<dt id="arg-n-cores-pred">n_cores_pred<a class="anchor" aria-label="anchor" href="#arg-n-cores-pred"></a></dt>
-<dd><p>Integer. Number of cores to use for predicting species'
-habitat suitability.</p></dd>
+<dt id="arg-future-max-size">future_max_size<a class="anchor" aria-label="anchor" href="#arg-future-max-size"></a></dt>
+<dd><p>Numeric. Maximum allowed total size (in megabytes) of
+global variables identified. See <code>future.globals.maxSize</code> argument of
+<a href="https://future.futureverse.org/reference/zzz-future.options.html" class="external-link">future::future.options</a> for more details.</p></dd>
 
 
-<dt id="arg-lf-n-cores">LF_n_cores<a class="anchor" aria-label="anchor" href="#arg-lf-n-cores"></a></dt>
-<dd><p>Integer. Number of cores to use for parallel processing of
-latent factor prediction. Defaults to 8L.</p></dd>
-
-
-<dt id="arg-n-cores-vp">n_cores_VP<a class="anchor" aria-label="anchor" href="#arg-n-cores-vp"></a></dt>
-<dd><p>Integer. Number of cores to use for processing variance
-partitioning. Defaults to 10L.</p></dd>
+<dt id="arg-n-cores-n-cores-pred-n-cores-lf-n-cores-vp-n-cores-rc">n_cores, n_cores_pred, n_cores_LF, n_cores_VP, n_cores_RC<a class="anchor" aria-label="anchor" href="#arg-n-cores-n-cores-pred-n-cores-lf-n-cores-vp-n-cores-rc"></a></dt>
+<dd><p>Integer. Number
+of cores to use for parallel processing. They are used for different
+processing steps: <code>n_cores</code> for merging chains and plotting convergence
+convergence diagnostics; <code>n_cores_pred</code> for predicting species' habitat
+suitability; <code>n_cores_LF</code> for predicting latent factors; <code>n_cores_VP</code> for
+processing variance partitioning; and <code>n_cores_RC</code> for response curve
+prediction. All default to <code>8L</code>. If <code>strategy = "sequential"</code>, all of these
+arguments are set to <code>1L</code>.</p></dd>
 
 
 <dt id="arg-env-file">env_file<a class="anchor" aria-label="anchor" href="#arg-env-file"></a></dt>
@@ -305,20 +302,16 @@ to <code>TRUE</code>.</p></dd>
 <code>TensorFlow</code> calculations. Defaults to <code>FALSE</code>.</p></dd>
 
 
-<dt id="arg-lf-temp-cleanup">LF_temp_cleanup<a class="anchor" aria-label="anchor" href="#arg-lf-temp-cleanup"></a></dt>
-<dd><p>Logical. Whether to delete temporary files in the
-<code>temp_dir</code> directory after finishing the LF predictions.</p></dd>
-
-
 <dt id="arg-lf-check">LF_check<a class="anchor" aria-label="anchor" href="#arg-lf-check"></a></dt>
 <dd><p>Logical. If <code>TRUE</code>, the function checks if the output files
 are already created and valid. If <code>FALSE</code>, the function will only check if
 the files exist without checking their integrity. Default is <code>FALSE</code>.</p></dd>
 
 
-<dt id="arg-temp-cleanup">temp_cleanup<a class="anchor" aria-label="anchor" href="#arg-temp-cleanup"></a></dt>
-<dd><p>Logical. Whether to clean up temporary files. Defaults to
-<code>TRUE</code>.</p></dd>
+<dt id="arg-temp-cleanup-lf-temp-cleanup">temp_cleanup, LF_temp_cleanup<a class="anchor" aria-label="anchor" href="#arg-temp-cleanup-lf-temp-cleanup"></a></dt>
+<dd><p>Logical. Whether to delete temporary
+files after finishing predicting latent factor or species distribution.
+Default: <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-tf-environ">TF_environ<a class="anchor" aria-label="anchor" href="#arg-tf-environ"></a></dt>
@@ -337,42 +330,16 @@ height of the generated heatmaps of the Omega and Beta parameters in
 centimetres.</p></dd>
 
 
-<dt id="arg-spatial-model">spatial_model<a class="anchor" aria-label="anchor" href="#arg-spatial-model"></a></dt>
-<dd><p>Logical. Whether the model is spatial (<code>TRUE</code>) or not
-(<code>FALSE</code>). Defaults to <code>TRUE</code>.</p></dd>
-
-
-<dt id="arg-future-max-size">future_max_size<a class="anchor" aria-label="anchor" href="#arg-future-max-size"></a></dt>
-<dd><p>Numeric. Maximum allowed total size (in megabytes) of
-global variables identified. See <code>future.globals.maxSize</code> argument of
-<a href="https://future.futureverse.org/reference/zzz-future.options.html" class="external-link">future::future.options</a> for more details.</p></dd>
-
-
-<dt id="arg-tar-predictions">tar_predictions<a class="anchor" aria-label="anchor" href="#arg-tar-predictions"></a></dt>
-<dd><p>Logical. Whether to compress the add files into a
-single <code>*.tar</code> file (without compression). Default: <code>TRUE</code>.</p></dd>
-
-
-<dt id="arg-plot-predictions">plot_predictions<a class="anchor" aria-label="anchor" href="#arg-plot-predictions"></a></dt>
-<dd><p>Logical. Whether to plot species and species richness
-predictions as JPEG files (using <a href="plot_prediction.html">plot_prediction</a>). Defaults to <code>TRUE</code>.</p></dd>
+<dt id="arg-spatial-model-plot-lf">spatial_model, plot_LF<a class="anchor" aria-label="anchor" href="#arg-spatial-model-plot-lf"></a></dt>
+<dd><p>Logical. Whether the model is spatial (<code>TRUE</code>)
+or not (<code>FALSE</code>) and whether to plot latent factors for spatial models as
+JPEG files (using <a href="plot_latent_factor.html">plot_latent_factor</a>). Defaults to <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-is-cv-model">is_cv_model<a class="anchor" aria-label="anchor" href="#arg-is-cv-model"></a></dt>
 <dd><p>Logical. Whether the model is a cross-validated model
 (<code>TRUE</code>) or fitted with the full dataset (<code>FALSE</code>; default). If <code>TRUE</code>, the
 explanatory and predictive power of the model will be computed.</p></dd>
-
-
-<dt id="arg-cc-models">CC_models<a class="anchor" aria-label="anchor" href="#arg-cc-models"></a></dt>
-<dd><p>Character vector. Climate models for future predictions.
-Available options are <code>c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")</code> (default).</p></dd>
-
-
-<dt id="arg-cc-scenario">CC_scenario<a class="anchor" aria-label="anchor" href="#arg-cc-scenario"></a></dt>
-<dd><p>Character vector. Climate scenarios for future
-predictions. Available options are: <code>c("ssp126", "ssp370", "ssp585")</code>
-(default).</p></dd>
 
 
 <dt id="arg-clamp-pred">clamp_pred<a class="anchor" aria-label="anchor" href="#arg-clamp-pred"></a></dt>
@@ -397,14 +364,21 @@ but for the river length predictor. If <code>NULL</code>, the river length is no
 fixed. Default: <code>q90</code>.</p></dd>
 
 
-<dt id="arg-process-vp">process_VP<a class="anchor" aria-label="anchor" href="#arg-process-vp"></a></dt>
-<dd><p>Logical. Whether to prepares batch scripts for variance
-partitioning GPU computations on GPUs. Defaults to <code>TRUE</code>.</p></dd>
+<dt id="arg-cc-models">CC_models<a class="anchor" aria-label="anchor" href="#arg-cc-models"></a></dt>
+<dd><p>Character vector. Climate models for future predictions.
+Available options are <code>c("GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR", "MRI-ESM2-0", "UKESM1-0-LL")</code> (default).</p></dd>
 
 
-<dt id="arg-process-lf">process_LF<a class="anchor" aria-label="anchor" href="#arg-process-lf"></a></dt>
-<dd><p>Logical. Whether to prepares batch scripts for latent
-factor predictions GPU computations on GPUs. Defaults to <code>TRUE</code>.</p></dd>
+<dt id="arg-cc-scenario">CC_scenario<a class="anchor" aria-label="anchor" href="#arg-cc-scenario"></a></dt>
+<dd><p>Character vector. Climate scenarios for future
+predictions. Available options are: <code>c("ssp126", "ssp370", "ssp585")</code>
+(default).</p></dd>
+
+
+<dt id="arg-process-vp-process-lf">process_VP, process_LF<a class="anchor" aria-label="anchor" href="#arg-process-vp-process-lf"></a></dt>
+<dd><p>Logical. Whether to prepares batch scripts for
+variance partitioning computations and latent factor predictions on GPUs.
+Defaults to <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-n-batch-files">n_batch_files<a class="anchor" aria-label="anchor" href="#arg-n-batch-files"></a></dt>
@@ -434,41 +408,25 @@ Defaults are <code>01:00:00</code> and <code>02:00:00</code> respectively.</p></
 running commands. Defaults to <code>NULL</code>. This can not be <code>NULL</code>.</p></dd>
 
 
-<dt id="arg-rc-n-cores">RC_n_cores<a class="anchor" aria-label="anchor" href="#arg-rc-n-cores"></a></dt>
-<dd><p>Integer. The number of cores to use for response curve
-prediction. Defaults to <code>8</code>.</p></dd>
+<dt id="arg-rc-prepare-rc-plot">RC_prepare, RC_plot<a class="anchor" aria-label="anchor" href="#arg-rc-prepare-rc-plot"></a></dt>
+<dd><p>Logical. Whether to prepare the data for response
+curve prediction (using <a href="Response_curves.html">resp_curv_prepare_data</a>) and plot the response
+curves as JPEG files. (using <a href="Response_curves.html">resp_curv_plot_SR</a>, <a href="Response_curves.html">resp_curv_plot_species</a>,
+and <a href="Response_curves.html">resp_curv_plot_species_all</a>). Defaults to <code>TRUE</code>.</p></dd>
 
 
-<dt id="arg-rc-prepare">RC_prepare<a class="anchor" aria-label="anchor" href="#arg-rc-prepare"></a></dt>
-<dd><p>Logical. Whether to prepare the data for response curve
-prediction (using <a href="Response_curves.html">resp_curv_prepare_data</a>). Defaults to <code>TRUE</code>.</p></dd>
-
-
-<dt id="arg-rc-plot">RC_plot<a class="anchor" aria-label="anchor" href="#arg-rc-plot"></a></dt>
-<dd><p>Logical. Whether to plot the response curves as JPEG files
-(using <a href="Response_curves.html">resp_curv_plot_SR</a>, <a href="Response_curves.html">resp_curv_plot_species</a>, and
-<a href="Response_curves.html">resp_curv_plot_species_all</a>). Defaults to <code>TRUE</code>.</p></dd>
-
-
-<dt id="arg-vp-prepare">VP_prepare<a class="anchor" aria-label="anchor" href="#arg-vp-prepare"></a></dt>
+<dt id="arg-vp-prepare-vp-plot">VP_prepare, VP_plot<a class="anchor" aria-label="anchor" href="#arg-vp-prepare-vp-plot"></a></dt>
 <dd><p>Logical. Whether to prepare the data for variance
-partitioning (using <a href="Variance_partitioning.html">variance_partitioning_compute</a>). Defaults to <code>TRUE</code>.</p></dd>
-
-
-<dt id="arg-vp-plot">VP_plot<a class="anchor" aria-label="anchor" href="#arg-vp-plot"></a></dt>
-<dd><p>Logical. Whether to plot the variance partitioning results
+partitioning (using <a href="Variance_partitioning.html">variance_partitioning_compute</a>) and plot its results
 (using <a href="Variance_partitioning.html">variance_partitioning_plot</a>). Defaults to <code>TRUE</code>.</p></dd>
 
 
-<dt id="arg-predict-suitability">predict_suitability<a class="anchor" aria-label="anchor" href="#arg-predict-suitability"></a></dt>
-<dd><p>Logical. Whether to predict habitat suitability
-across different climate options (using <a href="Predict_Maps.html">predict_maps</a>). Defaults to
-<code>TRUE</code>.</p></dd>
-
-
-<dt id="arg-plot-lf">plot_LF<a class="anchor" aria-label="anchor" href="#arg-plot-lf"></a></dt>
-<dd><p>Logical. Whether to plot latent factors as JPEG files (using
-<a href="plot_latent_factor.html">plot_latent_factor</a>). Defaults to <code>TRUE</code>.</p></dd>
+<dt id="arg-predict-suitability-tar-predictions-plot-predictions">predict_suitability, tar_predictions, plot_predictions<a class="anchor" aria-label="anchor" href="#arg-predict-suitability-tar-predictions-plot-predictions"></a></dt>
+<dd><p>Logical. Whether
+to predict habitat suitability across different climate options (using
+<a href="Predict_Maps.html">predict_maps</a>), compress the resulted files into a single <code>*.tar</code> file
+(without compression), or to plot species and species richness predictions
+as JPEG files (using <a href="plot_prediction.html">plot_prediction</a>). Defaults to <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-plot-internal-evaluation">plot_internal_evaluation<a class="anchor" aria-label="anchor" href="#arg-plot-internal-evaluation"></a></dt>

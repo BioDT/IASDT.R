@@ -109,22 +109,22 @@ the <code>posterior_type</code> parameter.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">ecokit</span><span class="fu">::</span><span class="fu"><a href="https://elgabbas.github.io/ecokit/reference/load_packages.html" class="external-link">load_packages</a></span><span class="op">(</span><span class="va">Hmsc</span>, <span class="va">coda</span>, <span class="va">dplyr</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">coda_object</span> <span class="op">&lt;-</span> <span class="fu">Hmsc</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/Hmsc/man/convertToCodaObject.html" class="external-link">convertToCodaObject</a></span><span class="op">(</span><span class="fu">Hmsc</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/pkg/Hmsc/man/TD.html" class="external-link">TD</a></span><span class="op">$</span><span class="va">m</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">IASDT.R</span><span class="fu">::</span><span class="fu">coda_to_tibble</span><span class="op">(</span></span></span>
-<span class="r-in"><span>   coda_object <span class="op">=</span> <span class="va">coda_object</span><span class="op">$</span><span class="va">Alpha</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, posterior_type <span class="op">=</span> <span class="st">"Alpha"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 400 × 6</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    Alpha           AlphaNum Factor  Chain  Iter Value</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;fct&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 1</span> Alpha1[factor1] Alpha1   factor1 1        51     0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 2</span> Alpha1[factor1] Alpha1   factor1 1        52     0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 3</span> Alpha1[factor1] Alpha1   factor1 1        53     0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 4</span> Alpha1[factor1] Alpha1   factor1 1        54     0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 5</span> Alpha1[factor1] Alpha1   factor1 1        55     0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 6</span> Alpha1[factor1] Alpha1   factor1 1        56     0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 7</span> Alpha1[factor1] Alpha1   factor1 1        57     0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 8</span> Alpha1[factor1] Alpha1   factor1 1        58     0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;"> 9</span> Alpha1[factor1] Alpha1   factor1 1        59     0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> Alpha1[factor1] Alpha1   factor1 1        60     0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 390 more rows</span></span>
+<span class="r-in"><span><span class="fu">ecokit</span><span class="fu">::</span><span class="fu"><a href="https://elgabbas.github.io/ecokit/reference/ht.html" class="external-link">ht</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu">IASDT.R</span><span class="fu">::</span><span class="fu">coda_to_tibble</span><span class="op">(</span></span></span>
+<span class="r-in"><span>    coda_object <span class="op">=</span> <span class="va">coda_object</span><span class="op">$</span><span class="va">Alpha</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>, posterior_type <span class="op">=</span> <span class="st">"Alpha"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                Alpha AlphaNum  Factor  Chain  Iter Value</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>               &lt;fctr&gt;   &lt;fctr&gt;  &lt;fctr&gt; &lt;fctr&gt; &lt;int&gt; &lt;num&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   1: Alpha1[factor1]   Alpha1 factor1      1    51     0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2: Alpha1[factor1]   Alpha1 factor1      1    52     0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   3: Alpha1[factor1]   Alpha1 factor1      1    53     0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   4: Alpha1[factor1]   Alpha1 factor1      1    54     0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   5: Alpha1[factor1]   Alpha1 factor1      1    55     0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  ---                                                    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 396: Alpha1[factor2]   Alpha1 factor2      2   146     0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 397: Alpha1[factor2]   Alpha1 factor2      2   147     0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 398: Alpha1[factor2]   Alpha1 factor2      2   148     0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 399: Alpha1[factor2]   Alpha1 factor2      2   149     0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 400: Alpha1[factor2]   Alpha1 factor2      2   150     0</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

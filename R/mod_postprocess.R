@@ -634,6 +634,19 @@ mod_postprocess_1_CPU <- function(
 
   # ****************************************************************
 
+  ## Prepare scripts for computing variance partitioning -------
+  ecokit::info_chunk(
+    "Prepare scripts for computing variance partitioning",
+    line_char = "+", line_char_rep = 90L, cat_red = TRUE, cat_bold = TRUE,
+    cat_timestamp = FALSE, level = 1L)
+  IASDT.R::variance_partitioning_compute(
+    path_model = path_model, n_cores = n_cores_VP, use_TF = use_TF,
+    TF_environ = TF_environ, TF_use_single = TF_use_single,
+    temp_cleanup = temp_cleanup, chunk_size = 50L, verbose = TRUE,
+    VP_file = "VarPar", VP_commands_only = TRUE)
+
+  # ****************************************************************
+
   # Predicting latent factors or habitat suitability -------
 
   if (spatial_model) {
@@ -685,19 +698,6 @@ mod_postprocess_1_CPU <- function(
       IASDT.R::mod_evaluate_cv(model_dir = model_dir, cv_type = "CV_Dist")
     }
   }
-
-  # ****************************************************************
-
-  ## Prepare scripts for computing variance partitioning -------
-  ecokit::info_chunk(
-    "Prepare scripts for computing variance partitioning",
-    line_char = "+", line_char_rep = 90L, cat_red = TRUE, cat_bold = TRUE,
-    cat_timestamp = FALSE, level = 1L)
-  IASDT.R::variance_partitioning_compute(
-    path_model = path_model, n_cores = n_cores_VP, use_TF = use_TF,
-    TF_environ = TF_environ, TF_use_single = TF_use_single,
-    temp_cleanup = temp_cleanup, chunk_size = 50L, verbose = TRUE,
-    VP_file = "VarPar", VP_commands_only = TRUE)
 
   # ****************************************************************
 

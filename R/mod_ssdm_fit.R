@@ -247,7 +247,7 @@ fit_sdm_models <- function(
     ecokit::stop_ctx("Model directory does not exist", model_dir = model_dir)
   }
 
-  output_directory <- fs::path(model_dir, "sdm_models", sdm_method)
+  output_directory <- fs::path(model_dir, sdm_method)
   fs::dir_create(output_directory)
 
   model_results_name <- paste0(sdm_method, "_results")

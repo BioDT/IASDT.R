@@ -547,8 +547,7 @@ prepare_input_data <- function(
   }
 
   # path to save all models
-  sdm_model_dir <- fs::path(model_dir, "sdm_models")
-  species_data_dir <- fs::path(sdm_model_dir, "species_data")
+  species_data_dir <- fs::path(model_dir, "species_data")
   fs::dir_create(species_data_dir)
 
   # species modelling data

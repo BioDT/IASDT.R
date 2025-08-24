@@ -16,8 +16,8 @@
 #' - `plot_gelman_beta()`: Plots shrink factor for the **Beta** parameters
 #' - `plot_gelman_omega()`: Plots shrink factor for the **Omega** parameter
 #' - `plot_gelman_rho()`: Plots shrink factor for the **Rho** parameter
-#' @param path_coda Character or `mcmc.list`. Path to a file containing the coda
-#'   object, or an `mcmc.list` object representing MCMC samples.
+#' @param path_coda Character. Path to a file containing the coda object,
+#'   representing MCMC samples.
 #' @param alpha,beta,omega,rho Logical. If `TRUE`, plots the Gelman-Rubin
 #'   statistic for the respective model parameters (alpha, beta, omega, or rho).
 #'   Default: `TRUE` for all parameters.
@@ -43,9 +43,17 @@ plot_gelman <- function(
 
   .start_time <- lubridate::now(tzone = "CET")
 
-  # # ..................................................................... ###
-
   # Checking arguments --------
+  ecokit::check_args(args_to_check = "path_coda", args_type = "character")
+  ecokit::check_args(
+    args_to_check = c("n_omega", "plotting_alpha"), args_type = "numeric")
+  ecokit::check_args(
+    args_to_check = c("beta", "rho", "omega", "alpha"), args_type = "logical")
+
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Environment file is not found or invalid.", env_file = env_file)
+  }
 
   if (sum(alpha, beta, omega, rho) == 0) {
     ecokit::stop_ctx(
@@ -54,59 +62,12 @@ plot_gelman <- function(
       include_backtrace = TRUE)
   }
 
-  if (is.null(path_coda)) {
-    ecokit::stop_ctx(
-      "path_coda cannot be empty", path_coda = path_coda,
-      include_backtrace = TRUE)
-  }
-
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric",
-    args_to_check = c("n_omega", "plotting_alpha"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "logical",
-    args_to_check = c("beta", "rho", "omega", "alpha"))
-
-  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
-    ecokit::stop_ctx(
-      "Environment file is not found or invalid.", env_file = env_file)
-  }
-
-  rm(AllArgs, envir = environment())
-
   # # ..................................................................... ###
 
   # Loading coda object ------
 
-  if (inherits(path_coda, "character")) {
-
-    ecokit::cat_time("Loading coda object")
-    coda_object <- ecokit::load_as(path_coda)
-
-  } else {
-
-    if (!inherits(path_coda, "list")) {
-      ecokit::stop_ctx(
-        "`path_coda` is neither character path or a list",
-        path_coda = path_coda, class_path_coda = class(path_coda),
-        include_backtrace = TRUE)
-    }
-    if (!inherits(path_coda[[1]], "mcmc.list")) {
-      ecokit::stop_ctx(
-        "`path_coda` has no mcmc.list items",
-        path_coda = path_coda, class_path_coda = class(path_coda),
-        include_backtrace = TRUE)
-    }
-
-    coda_object <- path_coda
-    rm(path_coda, envir = environment())
-  }
+  ecokit::cat_time("Loading coda object")
+  coda_object <- ecokit::load_as(path_coda)
   names_coda <- names(coda_object)
 
   # # ..................................................................... ###
@@ -209,6 +170,8 @@ plot_gelman <- function(
 plot_gelman_alpha <- function(coda_object, plotting_alpha = 0.25) {
 
   # # ..................................................................... ###
+
+  ecokit::check_args(args_to_check = "plotting_alpha", args_type = "numeric")
 
   if (!inherits(coda_object, "mcmc.list")) {
     ecokit::stop_ctx(
@@ -341,6 +304,8 @@ plot_gelman_beta <- function(
     coda_object, env_file = ".env", plotting_alpha = 0.25) {
 
   # # ..................................................................... ###
+
+  ecokit::check_args(args_to_check = "plotting_alpha", args_type = "numeric")
 
   if (is.null(coda_object)) {
     ecokit::stop_ctx(
@@ -479,19 +444,21 @@ plot_gelman_omega <- function(
 
   # # ..................................................................... ###
 
-  if (is.null(coda_object)) {
-    ecokit::stop_ctx(
-      "`coda_object` cannot be empty", coda_object = coda_object,
-      include_backtrace = TRUE)
-  }
+  ecokit::check_args(
+    args_to_check = c("plotting_alpha", "n_omega"), args_type = "numeric")
 
-  if (!is.numeric(n_omega) || n_omega <= 0 || n_omega != as.integer(n_omega)) {
+  if (n_omega <= 0 || n_omega != as.integer(n_omega)) {
     ecokit::stop_ctx(
       "`n_omega` must be a positive integer.", n_omega = n_omega,
       include_backtrace = TRUE)
   }
   n_omega <- as.integer(n_omega)
 
+  if (is.null(coda_object)) {
+    ecokit::stop_ctx(
+      "`coda_object` cannot be empty", coda_object = coda_object,
+      include_backtrace = TRUE)
+  }
   if (!inherits(coda_object, "mcmc.list")) {
     ecokit::stop_ctx(
       "`coda_object` has to be of class mcmc.list",

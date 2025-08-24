@@ -66,9 +66,20 @@ mod_merge_chains <- function(
     model_info_name = NULL, print_incomplete = TRUE, from_JSON = FALSE,
     out_extension = "qs2") {
 
-  # # ..................................................................... ###
-
   .start_time <- lubridate::now(tzone = "CET")
+
+  # Checking arguments ----
+
+  ecokit::check_args(
+    args_to_check = c("model_dir", "out_extension"), args_type = "character")
+  ecokit::check_args(
+    args_to_check = c("print_incomplete", "from_JSON"), args_type = "logical")
+
+  strategy <- .validate_strategy(strategy)
+  if (strategy == "sequential") n_cores <- 1L
+  n_cores <- .validate_n_cores(n_cores)
+
+  # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -78,48 +89,10 @@ mod_merge_chains <- function(
 
   # # ..................................................................... ###
 
-  # Checking arguments ----
-
-  if (is.null(model_dir)) {
-    ecokit::stop_ctx(
-      "`model_dir` cannot be empty", model_dir = model_dir,
-      include_backtrace = TRUE)
-  }
-
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c("model_dir", "out_extension", "strategy"))
-
-  ecokit::check_args(
-    args_all = AllArgs, args_to_check = "n_cores", args_type = "numeric")
-
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "logical",
-    args_to_check = c("print_incomplete", "from_JSON"))
-
-  rm(AllArgs, envir = environment())
-
-  strategy <- .validate_strategy(strategy)
-  if (strategy == "sequential") n_cores <- 1L
-  n_cores <- .validate_n_cores(n_cores)
-
   if (!dir.exists(model_dir)) {
     ecokit::stop_ctx(
       "`model_dir` directory does not exist", model_dir = model_dir,
       include_backtrace = TRUE)
-  }
-
-  if (length(out_extension) != 1) {
-    ecokit::stop_ctx(
-      "`out_extension` must be a single string.",
-      out_extension = out_extension,
-      length_out_extension = length(out_extension), include_backtrace = TRUE)
   }
 
   if (!out_extension %in% c("qs2", "RData")) {
@@ -506,10 +479,22 @@ mod_merge_chains_CV <- function(
     CV_names = c("CV_Dist", "CV_Large"), from_JSON = FALSE,
     out_extension = "qs2") {
 
-  # # ..................................................................... ###
-
   ecokit::cat_time("Merge chains for cross-validated models")
   .start_time <- lubridate::now(tzone = "CET")
+
+  # # ..................................................................... ###
+
+  # Checking arguments ----
+
+  ecokit::check_args(
+    args_to_check = c("model_dir", "out_extension"), args_type = "character")
+  ecokit::check_args(args_to_check = "from_JSON", args_type = "logical")
+
+  strategy <- .validate_strategy(strategy)
+  if (strategy == "sequential") n_cores <- 1L
+  n_cores <- .validate_n_cores(n_cores)
+
+  # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
@@ -518,63 +503,9 @@ mod_merge_chains_CV <- function(
 
   # # ..................................................................... ###
 
-  # Checking arguments ----
-
-  if (is.null(model_dir)) {
-    ecokit::stop_ctx(
-      "`model_dir` cannot be empty", model_dir = model_dir,
-      include_backtrace = TRUE)
-  }
-
-  if (is.null(n_cores)) {
-    ecokit::stop_ctx(
-      "`n_cores` cannot be empty", n_cores = n_cores, include_backtrace = TRUE)
-  }
-
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c("model_dir", "out_extension", "strategy"))
-  ecokit::check_args(
-    args_all = AllArgs, args_to_check = "n_cores", args_type = "numeric")
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "logical", args_to_check = "from_JSON")
-  rm(AllArgs, envir = environment())
-
-  if (!is.numeric(n_cores) || length(n_cores) != 1 || n_cores <= 0) {
-    ecokit::stop_ctx(
-      "n_cores must be a single positive integer.", n_cores = n_cores,
-      include_backtrace = TRUE)
-  }
-
-  if (strategy == "sequential") {
-    n_cores <- 1L
-  }
-  if (length(strategy) != 1L) {
-    ecokit::stop_ctx(
-      "`strategy` must be a character vector of length 1",
-      strategy = strategy, length_strategy = length(strategy))
-  }
-  valid_strategy <- c("sequential", "multisession", "multicore", "cluster")
-  if (!strategy %in% valid_strategy) {
-    ecokit::stop_ctx("Invalid `strategy` value", strategy = strategy)
-  }
-
   if (!dir.exists(model_dir)) {
     ecokit::stop_ctx(
       "`model_dir` directory does not exist", model_dir = model_dir,
-      include_backtrace = TRUE)
-  }
-
-  if (length(out_extension) != 1) {
-    ecokit::stop_ctx(
-      "`out_extension` must be a single string.",
-      out_extension = out_extension, length_out_extension = out_extension,
       include_backtrace = TRUE)
   }
 

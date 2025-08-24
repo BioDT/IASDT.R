@@ -26,17 +26,20 @@ mod_fit_windows <- function(
     path_model = NULL, python_VE = NULL, n_cores = NULL,
     strategy = "multisession") {
 
+  # # |||||||||||||||||||||||||||||||||||
+  # # Check input arguments
+  # # |||||||||||||||||||||||||||||||||||
+
+  ecokit::check_args(
+    args_to_check = c("path_model", "python_VE"), args_type = "character")
+  strategy <- .validate_strategy(strategy)
+  if (strategy == "sequential") n_cores <- 1L
+  n_cores <- .validate_n_cores(n_cores)
+
   # exit the function if not running on Windows
   if (ecokit::os() != "Windows") {
     ecokit::stop_ctx(
       "This function is only for Windows OS.", OS = ecokit::os(),
-      include_backtrace = TRUE)
-  }
-
-  if (is.null(path_model) || is.null(python_VE) || is.null(n_cores)) {
-    ecokit::stop_ctx(
-      "`path_model`, `python_VE`, and `n_cores` cannot be empty",
-      path_model = path_model, python_VE = python_VE, n_cores = n_cores,
       include_backtrace = TRUE)
   }
 
@@ -65,29 +68,6 @@ mod_fit_windows <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Path_ModProg <- Command_WS <- Path_Hmsc_WS <- NULL
-
-  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-  # # |||||||||||||||||||||||||||||||||||
-  # # Check input arguments
-  # # |||||||||||||||||||||||||||||||||||
-
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c("Path_Hmsc_WS", "path_model", "strategy"))
-
-  ecokit::check_args(
-    args_all = AllArgs, args_to_check = "n_cores", args_type = "numeric")
-
-  strategy <- .validate_strategy(strategy)
-  if (strategy == "sequential") n_cores <- 1L
-  n_cores <- .validate_n_cores(n_cores)
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

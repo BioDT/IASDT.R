@@ -14,6 +14,23 @@ variance_partitioning_plot <- function(
 
   .start_time <- lubridate::now(tzone = "CET")
 
+  # # ..................................................................... ###
+  # # ..................................................................... ###
+
+  # Check input arguments ------
+
+  ecokit::check_args(
+    args_to_check = c("path_model", "VP_file"), args_type = "character")
+  ecokit::check_args(
+    args_to_check = c("use_TF", "spatial_model", "is_cv_model"),
+    args_type = "logical")
+  ecokit::check_args(
+    args_to_check = c("width", "height", "axis_text"), args_type = "numeric")
+  n_cores <- .validate_n_cores(n_cores)
+
+  # # ..................................................................... ###
+  # # ..................................................................... ###
+
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   IAS_ID <- Species_name <- Species <- Variable <- VP_Value <- species <-
@@ -22,26 +39,6 @@ variance_partitioning_plot <- function(
   # Set null device for `cairo`. This is to properly render the plots using
   # ggtext - https://github.com/wilkelab/cowplot/issues/73
   cowplot::set_null_device("cairo")
-
-  # # ..................................................................... ###
-  # # ..................................................................... ###
-
-  # Check input arguments ------
-
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs, function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c("env_file", "path_model"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "logical", args_to_check = "use_TF")
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric", args_to_check = "n_cores")
-  rm(AllArgs, envir = environment())
-
-  n_cores <- .validate_n_cores(n_cores)
 
   # # ..................................................................... ###
   # # ..................................................................... ###

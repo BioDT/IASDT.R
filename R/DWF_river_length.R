@@ -45,16 +45,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
   # Checking arguments ----
   ecokit::cat_time("Checking arguments")
   # # |||||||||||||||||||||||||||||||||||
-
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
-    stats::setNames(AllArgs)
-
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "character", args_to_check = "env_file")
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "logical", args_to_check = "cleanup")
-  rm(AllArgs, envir = environment())
+  ecokit::check_args(args_to_check = "cleanup", args_type = "logical")
 
   # # ..................................................................... ###
 

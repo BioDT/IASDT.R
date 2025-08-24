@@ -28,8 +28,8 @@ plot_gelman_omega(coda_object, n_omega = 1000L, plotting_alpha = 0.25)
 plot_gelman_rho(coda_object)
 }
 \arguments{
-\item{path_coda}{Character or \code{mcmc.list}. Path to a file containing the coda
-object, or an \code{mcmc.list} object representing MCMC samples.}
+\item{path_coda}{Character. Path to a file containing the coda object,
+representing MCMC samples.}
 
 \item{alpha, beta, omega, rho}{Logical. If \code{TRUE}, plots the Gelman-Rubin
 statistic for the respective model parameters (alpha, beta, omega, or rho).

@@ -71,20 +71,24 @@ convergence_plot <- function(
 
   # # ..................................................................... ###
 
+  # Check input arguments ------
+
+  ecokit::cat_time("Check input arguments")
+  ecokit::check_args(args_to_check = "spatial_model", args_type = "logical")
+  ecokit::check_args(
+    args_to_check = c("path_coda", "title", "margin_type"),
+    args_type = "character")
+  ecokit::check_args(
+    args_to_check = c("n_omega", "future_max_size", "pages_per_file"),
+    args_type = "numeric")
+
+  strategy <- .validate_strategy(strategy)
+  if (strategy == "sequential") n_cores <- 1L
+  n_cores <- .validate_n_cores(n_cores)
+
+  # # ..................................................................... ###
+
   .start_time <- lubridate::now(tzone = "CET")
-
-  if (is.null(path_coda)) {
-    ecokit::stop_ctx(
-      "`path_coda` cannot be empty",
-      path_coda = path_coda, include_backtrace = TRUE)
-  }
-
-  if (length(margin_type) != 1) {
-    ecokit::stop_ctx(
-      "`margin_type` must be a single value.",
-      margin_type = margin_type, length_margin_type = length(margin_type),
-      include_backtrace = TRUE)
-  }
 
   if (!margin_type %in% c("histogram", "density")) {
     ecokit::stop_ctx(
@@ -106,7 +110,7 @@ convergence_plot <- function(
   }
 
   # Validate n_omega
-  if (!is.numeric(n_omega) || length(n_omega) != 1 || n_omega <= 0) {
+  if (n_omega <= 0) {
     ecokit::stop_ctx(
       "`n_omega` must be a positive integer.",
       n_omega = n_omega, include_backtrace = TRUE)
@@ -120,30 +124,6 @@ convergence_plot <- function(
     Variable <- data <- PlotID <- File <- Page <- Iter <- Value <- Chain <-
     y <- label <- Var_Sp2 <- Species_name <- Species_File <- Path_PA <-
     is_intercept <- Var_Sp_File <- description <- LQ <- NULL
-
-  # # ..................................................................... ###
-
-  # Check input arguments ------
-
-  ecokit::cat_time("Check input arguments")
-
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c("path_coda", "strategy"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric",
-    args_to_check = c("future_max_size", "pages_per_file"))
-  rm(AllArgs, envir = environment())
-
-  strategy <- .validate_strategy(strategy)
-  if (strategy == "sequential") n_cores <- 1L
-  n_cores <- .validate_n_cores(n_cores)
 
   # # ..................................................................... ###
 

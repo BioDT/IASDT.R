@@ -80,22 +80,13 @@ EASIN_process <- function(
 
   # Checking arguments ----
   ecokit::cat_time("Checking arguments")
-
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
-    stats::setNames(AllArgs)
-
   ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c("env_file", "strategy"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "logical",
     args_to_check = c(
-      "extract_taxa", "extract_data", "verbose", "plot", "delete_chunks"))
+      "extract_taxa", "extract_data", "verbose", "plot", "delete_chunks"),
+    args_type = "logical")
   ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric",
-    args_to_check = c(
-      "DownTries", "n_cores", "sleep_time", "n_search", "start_year"))
+    args_to_check = c("DownTries", "sleep_time", "n_search", "start_year"),
+    args_type = "numeric")
 
   strategy <- .validate_strategy(strategy)
   if (strategy == "sequential") n_cores <- 1L

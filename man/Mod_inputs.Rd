@@ -212,7 +212,7 @@ Default: 8.}
 options are "sequential", "multisession" (default), "multicore", and
 "cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 
-\item{MCMC_n_chains}{Integer. Number of model chains. Default: 4.}
+\item{MCMC_n_chains}{Integer. Number of model chains. Default: 4L.}
 
 \item{MCMC_thin}{Integer vector. Thinning value(s) in MCMC sampling. If more
 than one value is provided, a separate model will be fitted at each value

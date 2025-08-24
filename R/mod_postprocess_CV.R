@@ -26,24 +26,14 @@ mod_postprocess_CV_1_CPU <- function(
 
   # Check input arguments ----
 
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-
   ecokit::check_args(
-    args_all = AllArgs, args_type = "logical",
     args_to_check = c(
       "from_JSON", "use_TF", "TF_use_single", "LF_only", "LF_temp_cleanup",
-      "LF_check", "temp_cleanup", "strategy"))
+      "LF_check", "temp_cleanup"),
+    args_type = "logical")
   ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c("model_dir", "env_file", "partition_name", "LF_runtime"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric",
-    args_to_check = c("n_cores", "n_cores_LF", "n_batch_files"))
-  rm(AllArgs, envir = environment())
+    args_to_check = c("model_dir", "partition_name"), args_type = "character")
+  ecokit::check_args(args_to_check = "n_batch_files", args_type = "numeric")
 
   if (n_batch_files <= 0) {
     ecokit::stop_ctx(
@@ -55,6 +45,7 @@ mod_postprocess_CV_1_CPU <- function(
   if (strategy == "sequential") n_cores <- n_cores_LF <- 1L
   n_cores <- .validate_n_cores(n_cores)
   n_cores_LF <- .validate_n_cores(n_cores_LF)
+  LF_runtime <- .validate_slurm_runtime(LF_runtime)
 
   if (!dir.exists(model_dir)) {
     ecokit::stop_ctx(
@@ -348,38 +339,17 @@ mod_postprocess_CV_2_CPU <- function(
     TF_use_single = FALSE, temp_cleanup = TRUE, LF_temp_cleanup = TRUE,
     TF_environ = NULL, n_cores_LF = n_cores, LF_check = FALSE) {
 
-  # # ..................................................................... ###
-  # # ..................................................................... ###
-
   .start_time <- lubridate::now(tzone = "CET")
-
-  # Avoid "no visible binding for global variable" message
-  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  CV <- CV_name <- n_grids <- Sp <- IAS_ID <- pred_mean <- pred <- pred_sd <-
-    mean_minus <- mean_plus <- summary_vals <- ias_id <- n_grids_pres_mean <-
-    data <- hab_abb <- hab_name <- NULL
 
   # # ..................................................................... ###
   # # ..................................................................... ###
 
   # Check input arguments ----
 
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-
   ecokit::check_args(
-    args_all = AllArgs, args_type = "logical",
-    args_to_check = c("use_TF", "TF_use_single", "LF_temp_cleanup", "LF_check"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c("model_dir", "env_file", "strategy"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric",
-    args_to_check = c("n_cores", "n_cores_LF"))
-  rm(AllArgs, envir = environment())
+    args_to_check = c("use_TF", "TF_use_single", "LF_temp_cleanup", "LF_check"),
+    args_type = "logical")
+  ecokit::check_args(args_to_check = "model_dir", args_type = "character")
 
   strategy <- .validate_strategy(strategy)
   if (strategy == "sequential") n_cores <- n_cores_LF <- 1L
@@ -399,6 +369,15 @@ mod_postprocess_CV_2_CPU <- function(
     ecokit::stop_ctx(
       "Environment file is not found or invalid.", env_file = env_file)
   }
+
+  # # ..................................................................... ###
+  # # ..................................................................... ###
+
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  CV <- CV_name <- n_grids <- Sp <- IAS_ID <- pred_mean <- pred <- pred_sd <-
+    mean_minus <- mean_plus <- summary_vals <- ias_id <- n_grids_pres_mean <-
+    data <- hab_abb <- hab_name <- NULL
 
   # # ..................................................................... ###
   # # ..................................................................... ###

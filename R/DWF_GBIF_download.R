@@ -20,19 +20,13 @@ GBIF_download <- function(
   # Checking arguments ----
   ecokit::cat_time("Checking arguments")
 
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
-    stats::setNames(AllArgs)
-
+  ecokit::check_args("r_environ", args_type = "character")
   ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c("r_environ", "env_file"))
+    args_to_check = c("request", "download", "split_chunks"),
+    args_type = "logical")
   ecokit::check_args(
-    args_all = AllArgs, args_type = "logical",
-    args_to_check = c("request", "download", "split_chunks"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric",
-    args_to_check = c("chunk_size", "boundaries", "start_year"))
+    args_to_check = c("chunk_size", "start_year", "boundaries"),
+    args_type = "numeric", arg_length = c(1L, 1L, 4L))
 
   # # ..................................................................... ###
 

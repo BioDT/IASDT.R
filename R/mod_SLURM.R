@@ -54,16 +54,20 @@ mod_SLURM <- function(
     path_Hmsc = NULL, command_prefix = "Commands2Fit",
     SLURM_prefix = "Bash_Fit", SLURM_path_out = NULL) {
 
+  # character arguments
+  ecokit::check_args(
+    args_to_check = c(
+      "model_dir", "job_name", "HPC_partition", "path_Hmsc",
+      "command_prefix", "SLURM_prefix"),
+    args_type = "character")
+  # numeric arguments
+  ecokit::check_args(
+    args_to_check = c("gpus_per_node", "cpus_per_task", "ntasks"),
+    args_type = "numeric")
+
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   ProjNum <- Path_GPU_Check <- NULL
-
-  if (is.null(model_dir) || is.null(job_name) || is.null(path_Hmsc)) {
-    ecokit::stop_ctx(
-      "`model_dir`, `job_name`, and `path_Hmsc` cannot be empty",
-      model_dir = model_dir, job_name = job_name,
-      path_Hmsc = path_Hmsc, include_backtrace = TRUE)
-  }
 
   # Validate memory_per_cpu and job_runtime
   memory_per_cpu <- .validate_slurm_ram(memory_per_cpu)
@@ -87,28 +91,6 @@ mod_SLURM <- function(
   ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
-
-  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-
-  # character arguments
-  CharArgs <- c(
-    "model_dir", "job_name", "HPC_partition", "path_Hmsc",
-    "ProjNum", "Path_GPU_Check", "command_prefix", "SLURM_prefix")
-  ecokit::check_args(
-    args_all = AllArgs, args_to_check = CharArgs, args_type = "character")
-
-  # numeric arguments
-  NumericArgs <- c("gpus_per_node", "cpus_per_task", "ntasks")
-  ecokit::check_args(
-    args_all = AllArgs, args_to_check = NumericArgs, args_type = "numeric")
-
-  rm(AllArgs, envir = environment())
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

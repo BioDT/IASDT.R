@@ -80,27 +80,12 @@ efforts_process <- function(
   # Checking arguments ----
   ecokit::cat_time("Checking arguments")
 
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
-    stats::setNames(AllArgs)
-
+  ecokit::check_args(args_to_check = "r_environ", args_type = "character")
   ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c("r_environ", "env_file", "strategy"))
+    args_to_check = c("request", "download"), args_type = "logical")
   ecokit::check_args(
-    args_all = AllArgs, args_type = "logical",
-    args_to_check = c("request", "download"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric",
-    args_to_check = c("n_cores", "boundaries", "start_year"))
-
-  # Validate boundaries argument
-  if (length(boundaries) != 4) {
-    ecokit::stop_ctx(
-      "`boundaries` must be a numeric vector of length 4.",
-      boundaries = boundaries, length_boundaries = length(boundaries),
-      include_backtrace = TRUE)
-  }
+    args_to_check = c("boundaries", "start_year", "chunk_size"),
+    arg_length = c(4L, 1L, 1L), args_type = "numeric")
 
   # Validate chunk_size
   if (!is.numeric(chunk_size) || chunk_size <= 0) {

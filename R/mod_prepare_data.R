@@ -15,37 +15,28 @@ mod_prepare_data <- function(
 
   # # ..................................................................... ###
 
+  # # |||||||||||||||||||||||||||||||||||
+  # Check input parameters ----
+  # # |||||||||||||||||||||||||||||||||||
+
+  hab_abb <- .validate_hab_abb(as.character(hab_abb))
+  ecokit::check_args(args_to_check = "directory_name", args_type = "character")
+  ecokit::check_args(
+    args_to_check = c("min_efforts_n_species", "n_pres_per_species"),
+    args_type = "numeric")
+  ecokit::check_args(
+    args_to_check = c(
+      "exclude_cultivated", "exclude_0_habitat", "verbose_progress"),
+    args_type = "logical")
+
+  # # ..................................................................... ###
+
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   species_ID <- Species_File <- PA <- Path_Rivers <- cell <- Path_PA <-
     Path_Grid <- Path_Grid_Ref <- Path_CLC <- Path_Roads <- Path_Rail <-
     Path_Bias <- Path_CHELSA <- path_model <- EU_Bound <- SpPA <- NPres <-
     Grid_R <- IAS_ID <- Path_Soil <- Path_Wetness <- NULL
-
-  # # ..................................................................... ###
-
-  # # |||||||||||||||||||||||||||||||||||
-  # Check input parameters ----
-  # # |||||||||||||||||||||||||||||||||||
-
-  hab_abb <- .validate_hab_abb(as.character(hab_abb))
-
-  ecokit::cat_time("Checking input arguments", verbose = verbose_progress)
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-  CharArgs <- c("env_file", "hab_abb", "directory_name")
-  ecokit::check_args(
-    args_all = AllArgs, args_to_check = CharArgs, args_type = "character")
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric",
-    args_to_check = c("min_efforts_n_species", "n_pres_per_species"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "logical",
-    args_to_check = c(
-      "exclude_cultivated", "exclude_0_habitat", "verbose_progress"))
 
   # # ..................................................................... ###
 

@@ -127,6 +127,38 @@ fit_sdm_models <- function(
 
   .start_time <- lubridate::now(tzone = "CET")
 
+  # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  # Check input arguments -------
+
+  ecokit::cat_time("Check input arguments")
+  ecokit::check_args(
+    args_to_check = c("sdm_method", "model_dir", "cv_type"),
+    args_type = "character")
+  ecokit::check_args(
+    args_to_check = c("clamp_pred", "copy_maxent_html"), args_type = "logical")
+  ecokit::check_args(args_to_check = "future_max_size", args_type = "numeric")
+
+  hab_abb <- .validate_hab_abb(as.character(hab_abb))
+  n_cores <- .validate_n_cores(n_cores)
+
+  if (future_max_size <= 0) {
+    ecokit::stop_ctx(
+      "future_max_size must be a positive integer of length 1",
+      future_max_size = future_max_size)
+  }
+
+  # |||||||||||||||||||||||||||||||||||||||||||
+
+  # cv_type
+  valid_cv_types <- c("CV_Dist", "CV_Large")
+  if (!cv_type %in% valid_cv_types) {
+    ecokit::stop_ctx(
+      "Invalid CV type", cv_type = cv_type, valid_cv_types = valid_cv_types)
+  }
+
+  # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
   summary_data <- packages <- path_grid <- mod_method <- cv_fold <- preds <-
     pred_mean <- pred_w_mean <- species_name <- method_is_glm <- output_path <-
     evaluation_testing <- auc_test <- summary_prediction_path <-
@@ -142,43 +174,6 @@ fit_sdm_models <- function(
 
   # Ensure that svm2 method is registered
   copy_svm2()
-
-  # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-  # Check input arguments -------
-
-  ecokit::cat_time("Check input arguments")
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c(
-      "sdm_method", "model_dir", "cv_type", "env_file", "hab_abb"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "logical",
-    args_to_check = c("clamp_pred", "copy_maxent_html"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric",
-    args_to_check = "future_max_size")
-  rm(AllArgs, envir = environment())
-
-  # |||||||||||||||||||||||||||||||||||||||||||
-
-  # hab_abb
-  hab_abb <- .validate_hab_abb(as.character(hab_abb))
-
-  # |||||||||||||||||||||||||||||||||||||||||||
-
-  # cv_type
-  valid_cv_types <- c("CV_Dist", "CV_Large")
-  if (!cv_type %in% valid_cv_types) {
-    ecokit::stop_ctx(
-      "Invalid CV type", cv_type = cv_type, valid_cv_types = valid_cv_types)
-  }
 
   # |||||||||||||||||||||||||||||||||||||||||||
 
@@ -211,23 +206,6 @@ fit_sdm_models <- function(
     ecokit::cat_time(
       "No specific model settings found, using default settings", level = 1L)
     model_settings <- list()
-  }
-
-  # |||||||||||||||||||||||||||||||||||||||||||
-
-  # n_cores
-  n_cores <- .validate_n_cores(n_cores)
-
-  # |||||||||||||||||||||||||||||||||||||||||||
-
-  # future_max_size
-
-  if (is.na(future_max_size) || !is.numeric(future_max_size) ||
-      length(future_max_size) != 1L || future_max_size <= 0) {
-    ecokit::stop_ctx(
-      "future_max_size must be a positive integer of length 1",
-      future_max_size = future_max_size,
-      class_future_max_size = class(future_max_size))
   }
 
   # |||||||||||||||||||||||||||||||||||||||||||

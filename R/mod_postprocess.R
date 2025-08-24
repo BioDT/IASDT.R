@@ -211,33 +211,24 @@ mod_postprocess_1_CPU <- function(
 
   .start_time <- lubridate::now(tzone = "CET")
 
-  species_name <- non_focal_variables <- NULL
-
   # ****************************************************************
 
   # Check input arguments ----
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
+  ecokit::check_args(
+    args_to_check = c("model_dir", "use_trees", "path_Hmsc"),
+    args_type = "character")
 
   ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c("model_dir", "use_trees", "path_Hmsc"))
-
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "logical",
     args_to_check = c(
-      "from_JSON", "pred_new_sites", "temp_cleanup", "spatial_model",
-      "use_TF", "LF_check", "LF_temp_cleanup", "TF_use_single",
-      "tar_predictions", "plot_predictions"))
-
+      "from_JSON", "use_TF", "TF_use_single", "LF_temp_cleanup", "LF_check",
+      "temp_cleanup", "pred_new_sites", "spatial_model", "tar_predictions",
+      "plot_predictions", "clamp_pred", "is_cv_model"),
+    args_type = "logical")
   ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric",
     args_to_check = c(
-      "n_omega", "GPP_dist", "MCMC_n_samples", "MCMC_thin", "n_grid"))
-  rm(AllArgs, envir = environment())
+      "future_max_size", "n_omega", "MCMC_n_samples", "MCMC_thin", "n_grid",
+      "height_omega", "width_omega", "width_beta", "height_beta"),
+    args_type = "numeric")
 
   hab_abb <- .validate_hab_abb(as.character(hab_abb))
 
@@ -283,6 +274,8 @@ mod_postprocess_1_CPU <- function(
   job_runtime <- .validate_slurm_runtime(job_runtime)
 
   # ****************************************************************
+
+  species_name <- non_focal_variables <- NULL
 
   ecokit::record_arguments(
     out_path = fs::path(model_dir, "Args_mod_postprocess_1_CPU.RData"))
@@ -737,23 +730,13 @@ mod_prepare_TF <- function(
   # ****************************************************************
 
   # Check input arguments ----
-
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-
   ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
     args_to_check = c(
-      "LF_runtime", "VP_runtime", "partition_name", "env_file", "model_prefix"))
+      "LF_runtime", "VP_runtime", "partition_name", "model_prefix"),
+    args_type = "character")
+  ecokit::check_args(args_to_check = "n_batch_files", args_type = "numeric")
   ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric", args_to_check = "n_batch_files")
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "logical",
-    args_to_check = c("process_VP", "process_LF"))
-  rm(AllArgs, envir = environment())
+    args_to_check = c("process_VP", "process_LF"), args_type = "logical")
 
   if (n_batch_files <= 0) {
     ecokit::stop_ctx(
@@ -1142,6 +1125,19 @@ mod_postprocess_2_CPU <- function(
 
   # Check input arguments ----
 
+  ecokit::check_args(
+    args_to_check = c("model_dir", "use_trees"), args_type = "character")
+  ecokit::check_args(
+    args_to_check = c(
+      "use_TF", "clamp_pred", "temp_cleanup", "RC_prepare", "tar_predictions",
+      "RC_plot", "VP_prepare", "VP_plot", "predict_suitability", "LF_check",
+      "plot_predictions", "plot_LF", "plot_internal_evaluation",
+      "spatial_model", "is_cv_model",  "LF_temp_cleanup", "pred_new_sites"),
+    args_type = "logical")
+  ecokit::check_args(
+    args_to_check = c("GPP_dist", "MCMC_n_samples", "MCMC_thin", "n_grid"),
+    args_type = "numeric")
+
   hab_abb <- .validate_hab_abb(as.character(hab_abb))
 
   strategy <- .validate_strategy(strategy)
@@ -1152,28 +1148,6 @@ mod_postprocess_2_CPU <- function(
   n_cores_LF <- .validate_n_cores(n_cores_LF)
   n_cores_RC <- .validate_n_cores(n_cores_RC)
   n_cores_pred <- .validate_n_cores(n_cores_pred)
-
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c(
-      "hab_abb", "env_file", "model_dir", "use_trees", "strategy"))
-
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "logical",
-    args_to_check = c("use_TF", "clamp_pred", "pred_new_sites"))
-
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric",
-    args_to_check = c(
-      "n_cores", "GPP_dist", "MCMC_n_samples", "MCMC_thin", "n_grid",
-      "n_cores_LF", "n_cores_RC"))
-  rm(AllArgs, envir = environment())
 
   if (!ecokit::check_env_file(env_file, warning = FALSE)) {
     ecokit::stop_ctx(

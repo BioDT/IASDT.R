@@ -35,40 +35,15 @@ convergence_plot_all <- function(
 
   .start_time <- lubridate::now(tzone = "CET")
 
-  if (is.null(model_dir)) {
-    ecokit::stop_ctx(
-      "`model_dir` must not be NULL",
-      model_dir = model_dir, include_backtrace = TRUE)
-  }
-
-  # # ..................................................................... ###
-
-  # Avoid "no visible binding for global variable" message
-  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  GPP_Thin <- M_Name_Fit <- rL <- M_thin <- M_samples <- Omega_Gelman <-
-    Omega_ESS <- Beta_Gelman <- Beta_ESS <- ESS2 <- Path_Trace_Alpha <- NULL
-
-  # # ..................................................................... ###
-
   # Check input arguments ------
 
   ecokit::cat_time("Check input arguments")
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
-    stats::setNames(AllArgs)
-
   ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c("model_dir", "margin_type", "strategy"))
+    args_to_check = c("model_dir", "margin_type"), args_type = "character")
   ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric", args_to_check = "n_omega")
-  rm(AllArgs, envir = environment())
-
-  if (length(margin_type) != 1) {
-    ecokit::stop_ctx(
-      "`margin_type` must be a single value.", margin_type = margin_type,
-      include_backtrace = TRUE)
-  }
+    args_to_check = c("n_omega", "n_rc_alpha"),
+    args_type = "numeric", arg_length = c(1L, 2L))
+  ecokit::check_args(args_to_check = "spatial_model", args_type = "logical")
 
   if (!margin_type %in% c("histogram", "density")) {
     ecokit::stop_ctx(
@@ -79,6 +54,13 @@ convergence_plot_all <- function(
   strategy <- .validate_strategy(strategy)
   if (strategy == "sequential") n_cores <- 1L
   n_cores <- .validate_n_cores(n_cores)
+
+  # # ..................................................................... ###
+
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  GPP_Thin <- M_Name_Fit <- rL <- M_thin <- M_samples <- Omega_Gelman <-
+    Omega_ESS <- Beta_Gelman <- Beta_ESS <- ESS2 <- Path_Trace_Alpha <- NULL
 
   # # ..................................................................... ###
 

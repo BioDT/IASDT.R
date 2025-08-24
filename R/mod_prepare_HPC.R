@@ -89,7 +89,7 @@
 #' @param strategy Character. The parallel processing strategy to use. Valid
 #'   options are "sequential", "multisession" (default), "multicore", and
 #'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
-#' @param MCMC_n_chains Integer. Number of model chains. Default: 4.
+#' @param MCMC_n_chains Integer. Number of model chains. Default: 4L.
 #' @param MCMC_thin Integer vector. Thinning value(s) in MCMC sampling. If more
 #'   than one value is provided, a separate model will be fitted at each value
 #'   of thinning.
@@ -197,29 +197,49 @@ mod_prepare_HPC <- function(
     path_Hmsc = NULL, check_python = FALSE, to_JSON = FALSE, precision = 64L,
     ...) {
 
+  .start_time <- lubridate::now(tzone = "CET")
+
   # # ..................................................................... ###
 
   # # |||||||||||||||||||||||||||||||||||
   # Initial checking -----
   # # |||||||||||||||||||||||||||||||||||
 
-  .start_time <- lubridate::now(tzone = "CET")
+  ecokit::cat_time("Checking input arguments", verbose = verbose_progress)
 
-  CheckNULL <- c(
-    "directory_name", "n_pres_per_species", "MCMC_thin", "MCMC_samples",
-    "memory_per_cpu", "path_Hmsc", "hab_abb")
-  IsNull <- purrr::map_lgl(CheckNULL, ~ is.null(get(.x)))
+  ecokit::check_args(
+    args_type = "character", args_to_check = c("directory_name", "path_Hmsc"))
 
-  if (any(IsNull)) {
-    ecokit::stop_ctx(
-      paste0(
-        paste0("`", CheckNULL[which(IsNull)], "`", collapse = ", "),
-        " can not be empty"),
-      sum_IsNull = sum(IsNull), directory_name = directory_name,
-      n_pres_per_species = n_pres_per_species, MCMC_thin = MCMC_thin,
-      MCMC_samples = MCMC_samples, memory_per_cpu = memory_per_cpu,
-      path_Hmsc = path_Hmsc, hab_abb = hab_abb, include_backtrace = TRUE)
+  LogicArgs <- c(
+    "use_phylo_tree", "no_phylo_tree",
+    "exclude_0_habitat", "skip_fitted", "verbose_progress", "to_JSON",
+    "CV_SAC", "check_python", "overwrite_rds", "SLURM_prepare",
+    "exclude_cultivated", "GPP", "efforts_as_predictor",
+    "road_rail_as_predictor", "habitat_as_predictor", "river_as_predictor",
+    "soil_as_predictor", "wetness_as_predictor")
+  ecokit::check_args(args_to_check = LogicArgs, args_type = "logical")
+
+  NumericArgs <- c(
+    "MCMC_n_chains", "MCMC_verbose", "n_array_jobs", "n_pres_per_species",
+    "min_efforts_n_species", "MCMC_transient_factor", "CV_n_folds",
+    "CV_n_grids", "CV_n_rows", "CV_n_columns", "precision")
+  ecokit::check_args(args_to_check = NumericArgs, args_type = "numeric")
+
+  if (SLURM_prepare) {
+    # Validate memory_per_cpu and job_runtime
+    memory_per_cpu <- .validate_slurm_ram(memory_per_cpu)
+    job_runtime <- .validate_slurm_runtime(job_runtime)
   }
+
+  # Phylogenetic tree options
+  if (isFALSE(use_phylo_tree) && isFALSE(no_phylo_tree)) {
+    ecokit::stop_ctx(
+      "At least one of `use_phylo_tree` or `no_phylo_tree` has to be true",
+      use_phylo_tree = use_phylo_tree, no_phylo_tree = no_phylo_tree,
+      include_backtrace = TRUE)
+  }
+
+  rm(LogicArgs, NumericArgs, envir = environment())
 
   if (!(precision %in% c(32, 64))) {
     ecokit::stop_ctx(
@@ -244,22 +264,29 @@ mod_prepare_HPC <- function(
       MCMC_thin = MCMC_thin, include_backtrace = TRUE)
   }
 
-  if (!all(is.numeric(n_pres_per_species)) || n_pres_per_species <= 0) {
-    ecokit::stop_ctx(
-      "`n_pres_per_species` should be numeric and greater than zero",
-      n_pres_per_species = n_pres_per_species, include_backtrace = TRUE)
-  }
-
-  if (!all(is.numeric(min_efforts_n_species)) || min_efforts_n_species <= 0) {
+  if (min_efforts_n_species <= 0) {
     ecokit::stop_ctx(
       "`min_efforts_n_species` should be numeric and greater than zero",
       min_efforts_n_species = min_efforts_n_species, include_backtrace = TRUE)
   }
 
-  if (!is.numeric(n_species_per_grid) || n_species_per_grid < 0) {
+  if (n_species_per_grid < 0) {
     ecokit::stop_ctx(
       "`n_species_per_grid` has to be integer >= 0",
       n_species_per_grid = n_species_per_grid, include_backtrace = TRUE)
+  }
+
+  if (GPP) {
+    if (is.null(GPP_dists)) {
+      ecokit::stop_ctx(
+        "`GPP_dists` can not be empty", GPP_dists = GPP_dists,
+        include_backtrace = TRUE)
+    }
+    if (!all(is.numeric(GPP_dists)) || any(GPP_dists <= 0)) {
+      ecokit::stop_ctx(
+        "`GPP_dists` should be numeric and greater than zero",
+        GPP_dists = GPP_dists, include_backtrace = TRUE)
+    }
   }
 
   # # ..................................................................... ###
@@ -439,90 +466,6 @@ mod_prepare_HPC <- function(
     packages = c(
       "dplyr", "sf", "Hmsc", "jsonify", "magrittr", "IASDT.R", "ecokit"),
     strategy = strategy)
-
-  # # ..................................................................... ###
-
-  # # |||||||||||||||||||||||||||||||||||
-  # Check input arguments ----
-  # # |||||||||||||||||||||||||||||||||||
-
-  ecokit::cat_time("Checking input arguments", verbose = verbose_progress)
-
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-
-  CharArgs <- c(
-    "hab_abb", "directory_name", "path_Hmsc", "env_file", "bio_variables")
-  ecokit::check_args(
-    args_all = AllArgs, args_to_check = CharArgs, args_type = "character")
-
-  LogicArgs <- c(
-    "use_phylo_tree", "no_phylo_tree",
-    "exclude_0_habitat", "skip_fitted", "verbose_progress", "to_JSON",
-    "CV_SAC", "check_python", "overwrite_rds", "SLURM_prepare",
-    "exclude_cultivated", "GPP", "efforts_as_predictor",
-    "road_rail_as_predictor", "habitat_as_predictor", "river_as_predictor",
-    "soil_as_predictor", "wetness_as_predictor")
-  ecokit::check_args(
-    args_all = AllArgs, args_to_check = LogicArgs, args_type = "logical")
-
-  NumericArgs <- c(
-    "n_cores", "MCMC_n_chains", "MCMC_thin", "MCMC_samples", "MCMC_verbose",
-    "n_array_jobs", "n_pres_per_species", "min_efforts_n_species",
-    "MCMC_transient_factor", "CV_n_folds", "CV_n_grids", "CV_n_rows",
-    "CV_n_columns", "precision")
-
-  if (GPP) {
-    NumericArgs <- c(NumericArgs, "GPP_dists")
-  }
-  ecokit::check_args(
-    args_all = AllArgs, args_to_check = NumericArgs, args_type = "numeric")
-
-
-  if (SLURM_prepare) {
-    ecokit::check_args(
-      args_all = AllArgs, args_type = "character",
-      args_to_check = c("memory_per_cpu", "job_runtime"))
-
-    # Validate memory_per_cpu and job_runtime
-    memory_per_cpu <- .validate_slurm_ram(memory_per_cpu)
-    job_runtime <- .validate_slurm_runtime(job_runtime)
-  }
-
-  # Phylogenetic tree options
-  if (isFALSE(use_phylo_tree) && isFALSE(no_phylo_tree)) {
-    ecokit::stop_ctx(
-      "At least one of `use_phylo_tree` or `no_phylo_tree` has to be true",
-      use_phylo_tree = use_phylo_tree, no_phylo_tree = no_phylo_tree,
-      include_backtrace = TRUE)
-  }
-
-  NumArgsInvalid <- purrr::map_lgl(.x = NumericArgs, .f = ~ all(get(.x) < 1))
-  if (any(NumArgsInvalid)) {
-    ecokit::stop_ctx(
-      "Some parameter(s) can not be < 1",
-      NumArgsInvalid = NumericArgs[NumArgsInvalid], include_backtrace = TRUE)
-  }
-
-  rm(AllArgs, CharArgs, LogicArgs, NumericArgs, envir = environment())
-
-  # # ..................................................................... ###
-
-  if (GPP) {
-    if (is.null(GPP_dists)) {
-      ecokit::stop_ctx(
-        "`GPP_dists` can not be empty", GPP_dists = GPP_dists,
-        include_backtrace = TRUE)
-    }
-    if (!all(is.numeric(GPP_dists)) || any(GPP_dists <= 0)) {
-      ecokit::stop_ctx(
-        "`GPP_dists` should be numeric and greater than zero",
-        GPP_dists = GPP_dists, include_backtrace = TRUE)
-    }
-  }
 
   # # ..................................................................... ###
 

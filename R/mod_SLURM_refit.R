@@ -17,16 +17,19 @@ mod_SLURM_refit <- function(
 
   # # ..................................................................... ###
 
-  NullVarsNames <- c("model_dir", "path_Hmsc")
-  NullVars <- which(purrr::map_lgl(.x = NullVarsNames, .f = ~ is.null(get(.x))))
+  # Checking arguments -----
 
-  if (length(NullVars) > 0) {
-    ecokit::stop_ctx(
-      paste0(toString(NullVarsNames[NullVars]), " cannot be missing."),
-      NullVars = NullVars, length_NullVars = length(NullVars),
-      Vars = NullVarsNames[NullVars],
-      include_backtrace = TRUE)
-  }
+  ecokit::check_args(
+    args_to_check = c(
+      "HPC_partition", "model_dir", "path_Hmsc",
+      "SLURM_prefix", "refit_prefix"),
+    args_type = "character")
+  ecokit::check_args(
+    args_to_check = c(
+      "n_array_jobs", "ntasks", "cpus_per_task", "gpus_per_node"),
+    args_type = "numeric")
+  ecokit::check_args(
+    args_to_check = c("cat_job_info", "SLURM_prepare"), args_type = "logical")
 
   # # ..................................................................... ###
 
@@ -41,25 +44,6 @@ mod_SLURM_refit <- function(
   }
 
   # # ..................................................................... ###
-
-  # Checking arguments -----
-
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(.x = AllArgs, .f = get, envir = environment()) %>%
-    stats::setNames(AllArgs)
-
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c(
-      "HPC_partition", "job_name", "model_dir", "path_Hmsc", "SLURM_prefix",
-      "refit_prefix"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric",
-    args_to_check = c(
-      "n_array_jobs", "ntasks", "cpus_per_task", "gpus_per_node"))
-  ecokit::check_args(
-    args_all = AllArgs, args_to_check = "cat_job_info", args_type = "logical")
-  rm(AllArgs, envir = environment())
 
   if (!ecokit::check_env_file(env_file, warning = FALSE)) {
     ecokit::stop_ctx(

@@ -15,16 +15,7 @@ predict_maps_CV <- function(
     LF_check = FALSE, LF_temp_cleanup = TRUE, LF_only = FALSE,
     LF_commands_only = FALSE, temp_cleanup = TRUE) {
 
-  # # ..................................................................... ###
-  # # ..................................................................... ###
-
   .start_time <- lubridate::now(tzone = "CET")
-
-  # Avoid "no visible binding for global variable" message
-  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  x <- y <- Path_Grid <- ias_id <- taxon_name <- species_name <- sp_type <-
-    type <- n_grids_pres <- n_grids_abs <- Sp <- IAS_ID <- ncells <-
-    layer_name <- tif_path <- class <- order <- family <- NULL
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -32,31 +23,28 @@ predict_maps_CV <- function(
   # Check input arguments ----
   ecokit::cat_time("Checking input arguments")
 
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-
   ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c("CV_name", "model_dir", "env_file", "strategy"))
+    args_to_check = c("CV_name", "model_dir"), args_type = "character")
   ecokit::check_args(
-    args_all = AllArgs, args_type = "logical",
     args_to_check = c(
       "use_TF", "TF_use_single", "LF_check", "LF_temp_cleanup", "LF_only",
-      "LF_commands_only", "temp_cleanup"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric",
-    args_to_check = c("n_cores", "CV_fold", "n_cores_LF"))
-
-  rm(AllArgs, envir = environment())
+      "LF_commands_only", "temp_cleanup"),
+    args_type = "logical")
 
   CV_name <- .validate_cv_name(CV_name)
   n_cores <- .validate_n_cores(n_cores)
   n_cores_LF <- .validate_n_cores(n_cores_LF)
   strategy <- .validate_strategy(strategy)
   if (strategy == "sequential") n_cores <- n_cores_LF <- 1L
+
+  # # ..................................................................... ###
+  # # ..................................................................... ###
+
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  x <- y <- Path_Grid <- ias_id <- taxon_name <- species_name <- sp_type <-
+    type <- n_grids_pres <- n_grids_abs <- Sp <- IAS_ID <- ncells <-
+    layer_name <- tif_path <- class <- order <- family <- NULL
 
   # # ..................................................................... ###
   # # ..................................................................... ###

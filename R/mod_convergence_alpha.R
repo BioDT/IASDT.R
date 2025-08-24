@@ -13,6 +13,15 @@ convergence_alpha <- function(
     add_title = TRUE, chain_colors = NULL, margin_type = "histogram",
     n_chains = NULL, n_samples = NULL) {
 
+  # Checking arguments
+  ecokit::check_args(
+    args_to_check = c("title", "margin_type"), args_type = "character")
+  ecokit::check_args(
+    args_to_check = c("n_rc_alpha", "n_samples", "n_chains"),
+    args_type = "numeric", arg_length = c(2L, 1L, 1L))
+  ecokit::check_args(
+    args_to_check = c("add_footer", "add_title"), args_type = "logical")
+
   temp_file <- fs::file_temp(ext = "pdf")
   grDevices::cairo_pdf(temp_file)
   on.exit({
@@ -27,24 +36,15 @@ convergence_alpha <- function(
       include_backtrace = TRUE)
   }
 
-  if (length(margin_type) != 1) {
-    ecokit::stop_ctx(
-      "`margin_type` must be a single string.",
-      margin_type = margin_type, length_margin_type = length(margin_type),
-      include_backtrace = TRUE)
-  }
-
   if (!margin_type %in% c("histogram", "density")) {
     ecokit::stop_ctx(
       "`margin_type` must be either 'histogram' or 'density'.",
       margin_type = margin_type, include_backtrace = TRUE)
   }
 
-  if (!is.numeric(n_chains) || !is.numeric(n_samples) ||
-      length(n_chains) != 1 || length(n_samples) != 1 ||
-      n_chains < 1 || n_samples < 1) {
+  if (n_chains < 1 || n_samples < 1) {
     ecokit::stop_ctx(
-      "n_chains and n_samples should be positive numeric vectors of length 1",
+      "`n_chains` and `n_samples` should be positive numeric values",
       n_chains = n_chains, n_samples = n_samples)
   }
 
@@ -53,16 +53,6 @@ convergence_alpha <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Factor <- Value <- PointEst <- UpperCI <- NULL
-
-  # # ..................................................................... ###
-
-  # Checking arguments
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
-    stats::setNames(AllArgs)
-
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "character", args_to_check = "title")
 
   # # ..................................................................... ###
 

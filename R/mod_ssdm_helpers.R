@@ -458,36 +458,23 @@ prepare_input_data <- function(
     climate_models = "all", climate_scenarios = "all",
     climate_periods = "all", n_cores = 8) {
 
+
+  # # ..................................................................... ###
+
+  # Check input arguments ----
+  ecokit::check_args(
+    args_to_check = c("model_dir", "cv_type"), args_type = "character")
+  ecokit::check_args(args_to_check = "clamp_pred", args_type = "logical")
+  hab_abb <- .validate_hab_abb(as.character(hab_abb))
+  n_cores <- .validate_n_cores(n_cores)
+
+  # # ..................................................................... ###
+
   Name <- TimePeriod <- ClimateScenario <- ClimateModel <- pred_df <- cv <-
     CellCode <- FilePath <- path_rail <- path_roads <- path_clc <- path_bias <-
     path_rivers <- path_chelsa <- pred_data <- quadratic <- CellNum <-
     variable <- climate_name <- species_name <- valid_species <- data_path <-
     path_wetness <- path_soil <- NULL
-
-  # # ..................................................................... ###
-
-  # Check input arguments ----
-  all_args <- ls(envir = environment())
-  all_args <- purrr::map(
-    all_args,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(all_args)
-
-  ecokit::check_args(
-    args_all = all_args, args_type = "character",
-    args_to_check = c(
-      "model_dir", "cv_type", "env_file", "hab_abb",
-      "fix_efforts", "fix_rivers"))
-  ecokit::check_args(
-    args_all = all_args, args_type = "logical", args_to_check = "clamp_pred")
-  ecokit::check_args(
-    args_all = all_args, args_type = "numeric", args_to_check = "n_cores")
-  rm(all_args, envir = environment())
-
-  # |||||||||||||||||||||||||||||||||||||||||||
-
-  ## n_cores ----
-  n_cores <- .validate_n_cores(n_cores)
 
   # |||||||||||||||||||||||||||||||||||||||||||
 
@@ -592,8 +579,6 @@ prepare_input_data <- function(
     env_file = env_file, env_variables_data = env_vars_to_read)
   rm(env_vars_to_read, envir = environment())
 
-  ## Habitat types -----
-  hab_abb <- .validate_hab_abb(as.character(hab_abb))
 
   ## clamp_pred / fix_efforts / fix_rivers -------
   if (clamp_pred) {

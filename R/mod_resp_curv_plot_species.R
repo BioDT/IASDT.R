@@ -12,43 +12,25 @@
 resp_curv_plot_species <- function(
     model_dir = NULL, n_cores = 20, env_file = ".env", return_data = FALSE) {
 
-  # # ..................................................................... ###
-
   .start_time <- lubridate::now(tzone = "CET")
-
-  # Avoid "no visible binding for global variable" message
-  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_PA <- NCells_Naturalized <- NFV <- Coords <- Species <- Prefix <-
-    Data <- RC_Path_Prob <- Variable <- IAS_ID <- VarDesc <- VarDesc2 <-
-    RC_File <- NULL
 
   # # ..................................................................... ###
 
   # Check arguments
 
   ecokit::cat_time("Check arguments")
-
-  if (is.null(model_dir)) {
-    ecokit::stop_ctx(
-      "`model_dir` cannot be NULL", model_dir = model_dir,
-      include_backtrace = TRUE)
-  }
-
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c("model_dir", "env_file"))
-
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric", args_to_check = "n_cores")
-  rm(AllArgs, envir = environment())
+  ecokit::check_args(args_to_check = "model_dir", args_type = "character")
+  ecokit::check_args(args_to_check = "return_data", args_type = "logical")
 
   n_cores <- .validate_n_cores(n_cores)
+
+  # # ..................................................................... ###
+
+  # Avoid "no visible binding for global variable" message
+  # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
+  Path_PA <- NCells_Naturalized <- NFV <- Coords <- Species <- Prefix <-
+    Data <- RC_Path_Prob <- Variable <- IAS_ID <- VarDesc <- VarDesc2 <-
+    RC_File <- NULL
 
   # # ..................................................................... ###
 

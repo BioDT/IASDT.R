@@ -14,18 +14,6 @@ EASIN_plot <- function(env_file = ".env") {
 
   .PlotStartTime <- lubridate::now(tzone = "CET")
 
-  # Checking arguments ----
-  ecokit::cat_time("Checking arguments", level = 1L)
-
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
-    stats::setNames(AllArgs)
-
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "character", args_to_check = "env_file")
-
-  # # ..................................................................... ###
-
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Path_EASIN_Summary <- EU_Bound <- NULL

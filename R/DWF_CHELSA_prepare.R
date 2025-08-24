@@ -15,23 +15,10 @@ CHELSA_prepare <- function(
 
   # # ..................................................................... ###
 
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-
   ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c("env_file", "other_variables", "strategy"))
+    args_to_check = c("download", "overwrite"), args_type = "logical")
   ecokit::check_args(
-    args_all = AllArgs, args_type = "logical",
-    args_to_check = c("download", "overwrite"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric",
-    args_to_check = c("sleep", "download_attempts", "n_cores"))
-
-  rm(AllArgs, envir = environment())
+    args_to_check = c("sleep", "download_attempts"), args_type = "numeric")
 
   if (!ecokit::check_env_file(env_file, warning = FALSE)) {
     ecokit::stop_ctx(

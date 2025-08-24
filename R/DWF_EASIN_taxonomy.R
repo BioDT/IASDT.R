@@ -15,16 +15,9 @@ EASIN_taxonomy <- function(
   # # ..................................................................... ###
 
   # Checking arguments ----
-
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
-    stats::setNames(AllArgs)
-
   ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c("kingdom", "phylum", "env_file"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric", args_to_check = "n_search")
+    args_to_check = c("kingdom", "phylum"), args_type = "character")
+  ecokit::check_args(args_to_check = "n_search", args_type = "numeric")
 
   # # ..................................................................... ###
 

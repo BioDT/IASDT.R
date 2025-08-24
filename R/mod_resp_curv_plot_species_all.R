@@ -11,9 +11,23 @@
 resp_curv_plot_species_all <- function(
     model_dir = NULL, n_cores = 8L, return_data = FALSE, plotting_alpha = 0.3) {
 
-  # # ..................................................................... ###
-
   ecokit::cat_time("Plotting species response curves")
+
+  # # ..................................................................... ###
+  # Check arguments
+
+  ecokit::cat_time("Check arguments", level = 1L)
+
+  ecokit::check_args(args_to_check = "model_dir", args_type = "character")
+  ecokit::check_args(args_to_check = "plotting_alpha", args_type = "numeric")
+  ecokit::check_args(args_to_check = "return_data", args_type = "logical")
+
+  if (plotting_alpha < 0 || plotting_alpha > 1) {
+    ecokit::stop_ctx(
+      "`plotting_alpha` must be between 0 and 1",
+      plotting_alpha = plotting_alpha, include_backtrace = TRUE)
+  }
+
   n_cores <- .validate_n_cores(n_cores)
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -23,38 +37,6 @@ resp_curv_plot_species_all <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Coords <- RC_Path_Prob <- NFV <- Data <- DT <- Variable <- Variable2 <- i <-
     VarDesc <- VarDesc2 <- NULL
-
-  # # ..................................................................... ###
-
-  # Check arguments
-
-  ecokit::cat_time("Check arguments", level = 1L)
-
-  if (is.null(model_dir)) {
-    ecokit::stop_ctx(
-      "`model_dir` cannot be NULL", model_dir = model_dir,
-      include_backtrace = TRUE)
-  }
-
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = "model_dir")
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric",
-    args_to_check = c("n_cores", "plotting_alpha"))
-  rm(AllArgs, envir = environment())
-
-  if (plotting_alpha < 0 || plotting_alpha > 1) {
-    ecokit::stop_ctx(
-      "`plotting_alpha` must be between 0 and 1",
-      plotting_alpha = plotting_alpha, include_backtrace = TRUE)
-  }
 
   # # ..................................................................... ###
 

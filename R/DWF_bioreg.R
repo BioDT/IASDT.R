@@ -39,14 +39,14 @@ bioreg_process <- function(env_file = ".env") {
   # Check input arguments ------
   ecokit::cat_time("Check input arguments")
 
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "character", args_to_check = "env_file")
-  rm(AllArgs, envir = environment())
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Environment file is not found or invalid.", env_file = env_file)
+  }
+
+  # # ..................................................................... ###
+
+  # Check system commands ------
 
   if (isFALSE(ecokit::check_system_command("curl"))) {
     ecokit::stop_ctx(
@@ -57,11 +57,6 @@ bioreg_process <- function(env_file = ".env") {
     ecokit::stop_ctx(
       "`unzip` is required for extracting data but was not found.",
       include_backtrace = TRUE)
-  }
-
-  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
-    ecokit::stop_ctx(
-      "Environment file is not found or invalid.", env_file = env_file)
   }
 
   # # ..................................................................... ###

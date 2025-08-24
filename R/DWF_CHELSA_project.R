@@ -13,18 +13,7 @@ CHELSA_project <- function(
 
   # Checking input arguments -----
 
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-
-  ecokit::check_args(
-    args_all = AllArgs, args_to_check = "env_file", args_type = "character")
-  ecokit::check_args(
-    args_all = AllArgs, args_to_check = "compression_level",
-    args_type = "numeric")
-  rm(AllArgs, envir = environment())
+  ecokit::check_args(args_to_check = "compression_level", args_type = "numeric")
 
   if (is.null(metadata)) {
     ecokit::stop_ctx(

@@ -71,27 +71,11 @@ CHELSA_process <- function(
 
   ecokit::cat_time("Checking input arguments")
 
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-
-  CharArgs <- c("env_file", "other_variables", "strategy")
-  ecokit::check_args(
-    args_all = AllArgs, args_to_check = CharArgs, args_type = "character")
-
   LogicArgs <- c("download", "overwrite", "overwrite_processed")
-  ecokit::check_args(
-    args_all = AllArgs, args_to_check = LogicArgs, args_type = "logical")
+  ecokit::check_args(args_to_check = LogicArgs, args_type = "logical")
 
-  NumericArgs <- c(
-    "download_n_cores", "compression_level",
-    "sleep", "download_attempts", "n_cores")
-  ecokit::check_args(
-    args_all = AllArgs, args_to_check = NumericArgs, args_type = "numeric")
-
-  rm(AllArgs, CharArgs, LogicArgs, NumericArgs, envir = environment())
+  NumericArgs <- c("compression_level", "sleep", "download_attempts")
+  ecokit::check_args(args_to_check = NumericArgs, args_type = "numeric")
 
   strategy <- .validate_strategy(strategy)
   if (strategy == "sequential") n_cores <- download_n_cores <- 1L

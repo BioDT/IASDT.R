@@ -13,6 +13,9 @@ resp_curv_plot_SR <- function(
 
   .start_time <- lubridate::now(tzone = "CET")
 
+  ecokit::check_args(args_to_check = "model_dir", args_type = "character")
+  ecokit::check_args(args_to_check = "verbose", args_type = "logical")
+
   strategy <- .validate_strategy(strategy)
   if (strategy == "sequential") n_cores <- 1L
   n_cores <- .validate_n_cores(n_cores)
@@ -25,18 +28,6 @@ resp_curv_plot_SR <- function(
     RC_Path_SR <- RC_Path_Orig <- RC_Path_Prob <- DT <- data <- XVals <-
     Pred <- Q975 <- Q25 <- Q50 <- X <- Y <- Variable2 <- Var2 <-
     Variable1 <- NULL
-
-  # # ..................................................................... ###
-
-  ecokit::cat_time("Check input arguments", verbose = verbose)
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "character", args_to_check = "model_dir")
-  rm(AllArgs, envir = environment())
 
   # # ..................................................................... ###
 

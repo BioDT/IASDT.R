@@ -65,32 +65,13 @@ mod_CV_fit <- function(
   # Check input parameters -----
   ecokit::cat_time("Check input parameters")
 
-  NullVarsNames <- c("path_model", "path_Hmsc")
-  NullVars <- which(purrr::map_lgl(.x = NullVarsNames, .f = ~ is.null(get(.x))))
-
-  if (length(NullVars) > 0) {
-    NullVarsNames[NullVars]
-    ecokit::stop_ctx(
-      paste0(toString(NullVarsNames[NullVars]), " cannot be NULL"),
-      NullVars = NullVars, length_NullVars = length(NullVars),
-      include_backtrace = TRUE)
-  }
-
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    .x = AllArgs,
-    .f = function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-
   # character arguments
   ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c("path_model", "job_name", "path_Hmsc"))
-
+    args_to_check = c("path_model", "job_name", "path_Hmsc"),
+    args_type = "character")
   # numeric arguments
   ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric",
-    args_to_check = c("gpus_per_node", "cpus_per_task", "ntasks"))
+    args_to_check = c("to_JSON", "SLURM_prepare"), args_type = "logical")
 
   if (!(precision %in% c(32, 64))) {
     ecokit::stop_ctx(
@@ -108,8 +89,6 @@ mod_CV_fit <- function(
     ecokit::stop_ctx(
       "Environment file is not found or invalid.", env_file = env_file)
   }
-
-  rm(AllArgs, NullVarsNames, NullVars, envir = environment())
 
   if (SLURM_prepare) {
     # Validate memory_per_cpu

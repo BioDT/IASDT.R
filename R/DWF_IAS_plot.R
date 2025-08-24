@@ -12,25 +12,10 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
 
   # # ..................................................................... ###
 
-  Species2 <- ecokit::replace_space(species)
-
   # Checking arguments ----
+  ecokit::check_args(args_to_check = "species", args_type = "character")
 
-  if (is.null(species)) {
-    ecokit::stop_ctx(
-      "species cannot be empty", species = species, include_backtrace = TRUE)
-  }
-
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
-    stats::setNames(AllArgs)
-
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c("species", "env_file"))
-
-  rm(AllArgs, envir = environment())
-  invisible(gc())
+  Species2 <- ecokit::replace_space(species)
 
   # # ..................................................................... ###
 

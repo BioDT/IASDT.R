@@ -51,6 +51,25 @@ resp_curv_prepare_data <- function(
     LF_check = FALSE, LF_temp_cleanup = TRUE, LF_commands_only = FALSE,
     temp_dir = "TEMP_Pred", temp_cleanup = TRUE, verbose = TRUE) {
 
+  .start_time <- lubridate::now(tzone = "CET")
+
+  # # ..................................................................... ###
+
+  # Check input arguments ------
+
+  ecokit::cat_time("Check input arguments", verbose = verbose)
+
+  ecokit::check_args(
+    args_to_check = c("path_model", "temp_dir"), args_type = "character")
+  ecokit::check_args(
+    args_to_check = c("n_grid", "probabilities"),
+    args_type = "numeric", arg_length = c(1L, 3L))
+  ecokit::check_args(
+    args_to_check = c(
+      "LF_check", "use_TF", "verbose", "LF_temp_cleanup",
+      "LF_commands_only", "temp_cleanup"),
+    args_type = "logical")
+
   strategy <- .validate_strategy(strategy)
   if (strategy == "sequential") n_cores <- n_cores_LF <- 1L
   n_cores <- .validate_n_cores(n_cores)
@@ -58,55 +77,17 @@ resp_curv_prepare_data <- function(
 
   # # ..................................................................... ###
 
-  .start_time <- lubridate::now(tzone = "CET")
-
-  if (is.null(path_model)) {
-    ecokit::stop_ctx(
-      "`path_model` cannot be NULL", path_model = path_model,
-      include_backtrace = TRUE)
-  }
-
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   ResCurvDT <- Variable <- RC_DT_Name <- SampleID <- Species <- SR <- MM <-
     NFV <- RC_DT_Path_Orig <- VarName <- RC_DT_Path_Prob <-
     RC_DT_Path_SR <- Coords <- NULL
 
-  # # ..................................................................... ###
-
-  # Check input arguments ------
-
-  ecokit::cat_time("Check input arguments", verbose = verbose)
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(.x = AllArgs, .f = get, envir = environment()) %>%
-    stats::setNames(AllArgs)
-
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c("path_model", "temp_dir"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric",
-    args_to_check = c("n_cores", "n_cores_LF", "n_grid", "probabilities"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "logical", args_to_check = "use_TF")
-  rm(AllArgs, envir = environment())
-
-  if (!is.numeric(n_cores) || n_cores < 1) {
-    ecokit::stop_ctx(
-      "`n_cores` must be greater than 0", n_cores = n_cores,
-      include_backtrace = TRUE)
-  }
-  if (!is.numeric(n_cores_LF) || n_cores_LF < 1) {
-    ecokit::stop_ctx(
-      "`n_cores_LF` must be greater than 0", n_cores_LF = n_cores_LF,
-      include_backtrace = TRUE)
-  }
   if (any(probabilities > 1) || any(probabilities < 0)) {
     ecokit::stop_ctx(
       "`probabilities` must be between 0 and 1", probabilities = probabilities,
       include_backtrace = TRUE)
   }
-
   probabilities <- sort(probabilities)
 
   # # ..................................................................... ###

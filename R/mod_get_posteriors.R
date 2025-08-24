@@ -20,25 +20,16 @@
 
 mod_get_posteriors <- function(path_posterior = NULL, from_JSON = FALSE) {
 
-  # Check if path_posterior is empty
-  if (is.null(path_posterior)) {
-    ecokit::stop_ctx(
-      "`path_posterior` cannot be empty", path_posterior = path_posterior,
-      include_backtrace = TRUE)
-  }
-
   # Checking arguments
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
+  ecokit::check_args(
+    args_to_check = "path_posterior", args_type = "character")
+  ecokit::check_args(args_to_check = "from_JSON", args_type = "logical")
 
-  ecokit::check_args(
-    args_all = AllArgs, args_to_check = "path_posterior",
-    args_type = "character")
-  ecokit::check_args(
-    args_all = AllArgs, args_to_check = "from_JSON", args_type = "logical")
+  if (!ecokit::check_data(path_posterior)) {
+    ecokit::stop_ctx(
+      "path_posterior does not exist or invalid",
+      path_posterior = path_posterior)
+  }
 
   if (from_JSON) {
     Out <- readRDS(file = path_posterior) %>%

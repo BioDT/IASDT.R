@@ -97,18 +97,33 @@ predict_maps <- function(
       "MRI-ESM2-0", "UKESM1-0-LL"),
     CC_scenario = c("ssp126", "ssp370", "ssp585")) {
 
+  .start_time <- lubridate::now(tzone = "CET")
+
+  # # ..................................................................... ###
+  # # ..................................................................... ###
+
+  # Check input arguments ----
+
+  ecokit::cat_time("Checking input arguments")
+
+  ecokit::check_args(
+    args_to_check = c("path_model", "temp_dir"), args_type = "character")
+  ecokit::check_args(
+    args_to_check = c(
+      "clamp_pred", "pred_new_sites", "use_TF", "TF_use_single", "LF_check",
+      "LF_temp_cleanup", "LF_only", "LF_commands_only", "temp_cleanup",
+      "tar_predictions", "spatial_model"),
+    args_type = "logical")
+
   strategy <- .validate_strategy(strategy)
   if (strategy == "sequential")  n_cores <- n_cores_LF <- 1L
   n_cores <- .validate_n_cores(n_cores)
   n_cores_LF <- .validate_n_cores(n_cores_LF)
 
-  # # ..................................................................... ###
-  # # ..................................................................... ###
-
-  .start_time <- lubridate::now(tzone = "CET")
-
-  # # ..................................................................... ###
-  # # ..................................................................... ###
+  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
+    ecokit::stop_ctx(
+      "Environment file is not found or invalid.", env_file = env_file)
+  }
 
   hab_abb <- .validate_hab_abb(as.character(hab_abb))
 
@@ -119,39 +134,6 @@ predict_maps <- function(
     stringr::str_subset(paste0("^", hab_abb, "_")) %>%
     stringr::str_remove(paste0("^", hab_abb, "_")) %>%
     stringr::str_replace_all("_", " ")
-
-  # # ..................................................................... ###
-  # # ..................................................................... ###
-
-  # Check input arguments ----
-
-  ecokit::cat_time("Checking input arguments")
-
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(
-    AllArgs,
-    function(x) get(x, envir = parent.env(env = environment()))) %>%
-    stats::setNames(AllArgs)
-
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c("hab_abb", "env_file", "path_model", "temp_dir"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "logical",
-    args_to_check = c(
-      "clamp_pred", "pred_new_sites", "use_TF", "TF_use_single", "LF_check",
-      "LF_temp_cleanup", "LF_only", "LF_commands_only", "temp_cleanup",
-      "tar_predictions"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric",
-    args_to_check = c("n_cores", "n_cores_LF"))
-
-  rm(AllArgs, envir = environment())
-
-  if (!ecokit::check_env_file(env_file, warning = FALSE)) {
-    ecokit::stop_ctx(
-      "Environment file is not found or invalid.", env_file = env_file)
-  }
 
   # # ..................................................................... ###
   # # ..................................................................... ###

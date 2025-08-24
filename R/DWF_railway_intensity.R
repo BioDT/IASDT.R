@@ -36,19 +36,7 @@ railway_intensity <- function(
   # Checking arguments ----
   ecokit::cat_time("Checking arguments")
 
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
-    stats::setNames(AllArgs)
-
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c("env_file", "strategy"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "logical", args_to_check = "download")
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric", args_to_check = "n_cores")
-
-  rm(AllArgs, envir = environment())
+  ecokit::check_args(args_to_check = "delete_processed", args_type = "logical")
 
   strategy <- .validate_strategy(strategy)
   if (strategy == "sequential") n_cores <- 1L

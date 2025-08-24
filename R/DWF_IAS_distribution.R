@@ -14,29 +14,17 @@ IAS_distribution <- function(
   # # ..................................................................... ###
 
   .start_time <- lubridate::now(tzone = "CET")
-
-  if (is.null(species) || is.na(species) || species == "") {
-    ecokit::stop_ctx(
-      "`species` cannot be empty", species = species, include_backtrace = TRUE)
-  }
-
   ecokit::info_chunk(species, verbose = verbose)
 
   # # ..................................................................... ###
 
   # Checking arguments ----
-  ecokit::cat_time("Checking arguments", verbose = verbose)
+  ecokit::check_args(args_to_check = "verbose", args_type = "logical")
 
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
-    stats::setNames(AllArgs)
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c("species", "env_file"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "logical", args_to_check = "verbose")
-  rm(AllArgs, envir = environment())
-  invisible(gc())
+  if (is.null(species) || is.na(species) || species == "") {
+    ecokit::stop_ctx(
+      "`species` cannot be empty", species = species, include_backtrace = TRUE)
+  }
 
   # # ..................................................................... ###
 

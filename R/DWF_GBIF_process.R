@@ -87,20 +87,14 @@ GBIF_process <- function(
   # Checking arguments ----
 
   ecokit::cat_time("Checking arguments")
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
-    stats::setNames(AllArgs)
-
+  ecokit::check_args(args_to_check = "Renviron", args_type = "character")
   ecokit::check_args(
-    args_all = AllArgs, args_type = "character",
-    args_to_check = c("env_file", "Renviron", "strategy"))
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "logical",
     args_to_check = c(
-      "request", "download", "split_chunks", "overwrite", "delete_chunks"))
+      "request", "download", "split_chunks", "overwrite", "delete_chunks"),
+    args_type = "logical")
   ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric",
-    args_to_check = c("start_year", "boundaries", "chunk_size", "n_cores"))
+    args_to_check = c("boundaries", "start_year", "chunk_size"),
+    args_type = "numeric", arg_length = c(4L, 1L, 1L))
 
   strategy <- .validate_strategy(strategy)
   if (strategy == "sequential") n_cores <- 1L

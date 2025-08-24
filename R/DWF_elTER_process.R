@@ -28,14 +28,7 @@ eLTER_process <- function(env_file = ".env", start_year = 1981) {
   # # ..................................................................... ###
 
   # Checking arguments ----
-  AllArgs <- ls(envir = environment())
-  AllArgs <- purrr::map(AllArgs, get, envir = environment()) %>%
-    stats::setNames(AllArgs)
-
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "character", args_to_check = "env_file")
-  ecokit::check_args(
-    args_all = AllArgs, args_type = "numeric", args_to_check = "start_year")
+  ecokit::check_args(args_to_check = "start_year", args_type = "numeric")
 
   # # ..................................................................... ###
 

@@ -75,6 +75,20 @@ variance_partitioning_compute <- function(
   ecokit::load_packages(package_list = "foreach")
   withr::defer(doParallel::stopImplicitCluster())
 
+
+  # # .................................................................... ###
+
+  # Create folder for variance partitioning results
+  Path_VarPar <- fs::path(
+    dirname(dirname(path_model)),
+    "Model_Postprocessing", "Variance_Partitioning")
+  fs::dir_create(Path_VarPar)
+
+  File_VarPar <- fs::path(Path_VarPar, paste0(VP_file, ".RData"))
+  if (ecokit::check_data(File_VarPar)) {
+    return(ecokit::load_as(File_VarPar))
+  }
+
   # # .................................................................... ###
 
   # Check if the virtual environment and Python scripts exist
@@ -160,14 +174,6 @@ variance_partitioning_compute <- function(
   }
 
   Model <- ecokit::load_as(path_model)
-
-  # # .................................................................... ###
-
-  # Create folder for variance partitioning results
-  Path_VarPar <- fs::path(
-    dirname(dirname(path_model)),
-    "Model_Postprocessing", "Variance_Partitioning")
-  fs::dir_create(Path_VarPar)
 
   # # .................................................................... ###
 
@@ -1050,8 +1056,6 @@ variance_partitioning_compute <- function(
 
   # Save the results
   ecokit::cat_time("Save the variance partitioning results", verbose = verbose)
-
-  File_VarPar <- fs::path(Path_VarPar, paste0(VP_file, ".RData"))
   ecokit::save_as(object = VP, object_name = VP_file, out_path = File_VarPar)
 
   VP$File <- File_VarPar

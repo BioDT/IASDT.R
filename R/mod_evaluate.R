@@ -15,9 +15,7 @@
 mod_evaluate_cv <- function(model_dir = NULL, cv_type = "CV_Dist") {
 
   metric <- AUC <- TjurR2 <- Boyce <- RMSE <- n_pres <- n_abs <- species <-
-    evaluation_type <- training_RMSE <- testing_RMSE <- training_AUC <-
-    testing_AUC <- training_TjurR2 <- testing_TjurR2 <- training_Boyce <-
-    testing_Boyce <- NULL
+    evaluation_type <- value <- training <- testing <- NULL
 
   # Validate inputs -------
   cv_type <- .validate_cv_name(cv_type)
@@ -122,9 +120,11 @@ mod_evaluate_cv <- function(model_dir = NULL, cv_type = "CV_Dist") {
       names_to = "metric", values_to = "value") %>%
     dplyr::mutate(
       metric = dplyr::case_when(
-        metric == "TjurR2" ~ "Tjur-r<sup>2</sup>",
+        metric == "TjurR2" ~ "Tjur-R<sup>2</sup>",
         metric == "Boyce" ~ "Boyce index",
-        .default = metric))
+        .default = metric)) %>%
+    # exclude NA metrics; e.g. if there is no testing evaluation data
+    dplyr::filter(!is.na(value))
 
   y_min <- min(plotting_data$value, na.rm = TRUE)
   y_max <- max(plotting_data$value, na.rm = TRUE)
@@ -169,25 +169,55 @@ mod_evaluate_cv <- function(model_dir = NULL, cv_type = "CV_Dist") {
   print(final_plot)
   grDevices::dev.off()
 
+  # Explanatory vs predictive power
   plot_limits <- range(
     c(
       evaluation_data$RMSE, evaluation_data$TjurR2,
-      evaluation_data$AUC, evaluation_data$Boyce))
-  ggplot2::ggplot(evaluation_data_wide) +
-    ggplot2::geom_point(
-      ggplot2::aes(training_AUC, testing_AUC), colour = "#E69F00") +
-    ggplot2::geom_point(
-      ggplot2::aes(training_TjurR2, testing_TjurR2), colour = "#56B4E9") +
-    ggplot2::geom_point(
-      ggplot2::aes(training_Boyce, testing_Boyce), colour = "#009E73") +
-    ggplot2::geom_point(
-      ggplot2::aes(training_RMSE, testing_RMSE), colour = "#D55E00") +
-    ggplot2::coord_equal() +
-    ggplot2::scale_x_continuous(limits = plot_limits) +
-    ggplot2::scale_y_continuous(limits = plot_limits) +
-    ggplot2::geom_abline(slope = 1, linetype = 2) +
+      evaluation_data$AUC, evaluation_data$Boyce),
+    na.rm = TRUE)
+
+  point_cols <- c(
+    AUC = "#e66101", `Tjur-R<sup>2</sup>` = "#fdb863",
+    `Boyce index` = "#b2abd2", RMSE = "#5e3c99")
+
+  training_vs_testing <- plotting_data %>%
+    dplyr::select(species, cv_type, cv_fold, metric, evaluation_type, value) %>%
+    tidyr::pivot_wider(
+      id_cols = c(species, cv_type, cv_fold, metric),
+      names_from = evaluation_type, values_from = value) %>%
+    dplyr::filter(!is.na(training), !is.na(testing)) %>%
+    ggplot2::ggplot(ggplot2::aes(x = training, y = testing, colour = metric)) +
+    ggplot2::geom_abline(slope = 1, linetype = 2, colour = "lightgrey") +
+    ggplot2::geom_point(size = 2, alpha = 0.75, shape = 16) +
     ggplot2::labs(x = "Explanatory power", y = "Predictive power") +
-    ggplot2::theme_bw()
+    ggplot2::coord_equal(
+      expand = FALSE, xlim = plot_limits, ylim = plot_limits, clip = "off") +
+    ggplot2::scale_color_manual(
+      values = point_cols, name = NULL,
+      guide = ggplot2::guide_legend(
+        override.aes = list(size = 4, alpha = 1, shape = 16))) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(
+      plot.margin = ggplot2::margin(t = 5, r = 15, b = 2, l = 5),
+      axis.title = ggplot2::element_text(size = 18, face = "bold"),
+      axis.text = ggplot2::element_text(size = 14),
+      legend.position = "inside",
+      legend.direction = "horizontal",
+      legend.position.inside = c(0.22, 0.975),
+      legend.key.width = grid::unit(0.5, "lines"),
+      legend.key.height = grid::unit(0.5, "lines"),
+      legend.spacing.x = grid::unit(0, "pt"),
+      legend.background = ggplot2::element_blank(),
+      legend.title = ggplot2::element_blank(),
+      legend.text = ggtext::element_markdown(size = 18))
+
+  ragg::agg_jpeg(
+    filename = fs::path(
+      model_dir, "Model_Evaluation", "training_vs_testing.jpeg"),
+    width = 30.5, height = 30, res = 600, quality = 100, units = "cm")
+  print(training_vs_testing)
+  grDevices::dev.off()
+
 
   return(invisible(evaluation_path))
 
@@ -262,8 +292,8 @@ plot_panel <- function(data, x_var, eval_type, y_min, y_max) {
     .default = x_var)
 
   point_cols <- c(
-    AUC = "#E69F00", `Tjur-r<sup>2</sup>` = "#56B4E9",
-    `Boyce index` = "#009E73", RMSE = "#D55E00")
+    AUC = "#e66101", `Tjur-R<sup>2</sup>` = "#fdb863",
+    `Boyce index` = "#b2abd2", RMSE = "#5e3c99")
 
   plot <- data %>%
     dplyr::filter(evaluation_type == eval_type) %>%

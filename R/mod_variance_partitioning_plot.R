@@ -160,7 +160,7 @@ variance_partitioning_plot <- function(
 
   file_varpar <- fs::path(path_varpar, paste0(VP_file, ".RData"))
 
-  if (ecokit::check_data(file_varpar)) {
+  if (ecokit::check_data(file_varpar, warning = FALSE)) {
 
     ecokit::cat_time(
       "Loading variance partitioning data", level = 1L, cat_timestamp = FALSE)
@@ -227,7 +227,8 @@ variance_partitioning_plot <- function(
   # Calculate mean Variance partitioning per variable and prepare labels for the
   # plot
   varpar_mean <- varpar_data %>%
-    dplyr::summarise(VP_Value = mean(VP_Value), .by = "Variable") %>%
+    dplyr::summarise(
+      VP_Value = mean(VP_Value, na.rm = TRUE), .by = "Variable") %>%
     dplyr::arrange(dplyr::desc(VP_Value)) %>%
     dplyr::mutate(
       Label = dplyr::case_when(
@@ -514,7 +515,8 @@ variance_partitioning_plot <- function(
     dplyr::mutate(VP_Value = VP_Value * TjurR2)
 
   varpar_raw_mean_train <- varpar_data_raw_train %>%
-    dplyr::summarise(VP_Value = mean(VP_Value), .by = "Variable") %>%
+    dplyr::summarise(
+      VP_Value = mean(VP_Value, na.rm = TRUE), .by = "Variable") %>%
     dplyr::arrange(dplyr::desc(VP_Value)) %>%
     dplyr::mutate(
       Label = dplyr::case_when(
@@ -681,7 +683,6 @@ variance_partitioning_plot <- function(
   # # ..................................................................... ###
   # # ..................................................................... ###
 
-
   if (is_cv_model) {
 
     # Raw variance partitioning - testing ----
@@ -709,7 +710,8 @@ variance_partitioning_plot <- function(
       dplyr::mutate(VP_Value = VP_Value * TjurR2)
 
     varpar_raw_mean_test <- varpar_data_raw_test %>%
-      dplyr::summarise(VP_Value = mean(VP_Value), .by = "Variable") %>%
+      dplyr::summarise(
+        VP_Value = mean(VP_Value, na.rm = TRUE), .by = "Variable") %>%
       dplyr::arrange(dplyr::desc(VP_Value)) %>%
       dplyr::mutate(
         Label = dplyr::case_when(
@@ -734,7 +736,11 @@ variance_partitioning_plot <- function(
       dplyr::arrange(Variable, VP_Value) %>%
       dplyr::mutate(Species_name = factor(Species_name, sp_order)) %>%
       dplyr::left_join(varpar_raw_mean_test, by = "Variable") %>%
-      dplyr::mutate(Species_name = as.character(Species_name))
+      dplyr::mutate(
+        Species_name = as.character(Species_name),
+        # replace NAs with zero for cases for which there is no testing
+        # evaluation data
+        VP_Value = ifelse(is.na(VP_Value), 0, VP_Value))
 
     # Plotting data for relative variance partitioning - original species order
     data_raw_test_orig <- data_raw_test %>%

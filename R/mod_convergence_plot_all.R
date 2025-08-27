@@ -441,8 +441,8 @@ convergence_plot_all <- function(
         paste0(
           "Gelman and Rubin's convergence diagnostic ",
           "<sub>(only values between 0.9 and 1.1)</sub>")) +
-      ggplot2::ylim(c(0.9, 1.1)) +
-      Theme
+    ggplot2::coord_cartesian(ylim = c(0.9, 1.1)) +
+    Theme
 
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
@@ -566,8 +566,8 @@ convergence_plot_all <- function(
       paste0(
         "Gelman and Rubin's convergence diagnostic ",
         "<sub>(only values between 0.9 and 1.1)</sub>")) +
-    ggplot2::ylim(c(0.9, 1.1)) +
-    Theme
+      ggplot2::coord_cartesian(ylim = c(0.9, 1.1)) +
+      Theme
 
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly

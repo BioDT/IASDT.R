@@ -37,7 +37,7 @@
 #' @param VP_commands_only Logical. If `TRUE`, returns the commands to run the
 #'   Python script. Default is `FALSE`. Only relevant when `use_TF` is `TRUE`.
 #' @param VP_file Character. Name of the output file to save the results.
-#'   Default: `VarPar`.
+#'   Default: `varpar`.
 #' @param env_file Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @param width,height Numeric. Width and height of the output plot in
@@ -59,7 +59,7 @@
 variance_partitioning_compute <- function(
     path_model, group = NULL, group_names = NULL, start = 1L, na.ignore = FALSE,
     n_cores = 8L, use_TF = TRUE, TF_environ = NULL, TF_use_single = FALSE,
-    temp_cleanup = TRUE, chunk_size = 50L, verbose = TRUE, VP_file = "VarPar",
+    temp_cleanup = TRUE, chunk_size = 50L, verbose = TRUE, VP_file = "varpar",
     VP_commands_only = FALSE) {
 
   x <- NULL

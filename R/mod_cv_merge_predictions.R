@@ -220,7 +220,7 @@ cv_merge_predictions <- function(
     lim <- max(abs(min_value), abs(max_value))
 
     label_plusminus <- function(x) {
-      sign_char <- dplyr::case_when(x > 0 ~ "+", x < 0 ~ "−", .default =  " ")
+      sign_char <- dplyr::case_when(x > 0 ~ "+", x < 0 ~ "-", .default =  " ")
       num_str <- as.character(abs(x))
       max_digits <- max(nchar(as.character(abs(x)))) + 1
       num_str_padded <- stringr::str_pad(

@@ -608,7 +608,8 @@ cv_plot_panel2 <- function(
 
       m_data <- plot_ex %>%
         dplyr::select(
-          all_of(c("species", "cv_type", "cv_fold", "evaluation_type", m))) %>%
+          tidyselect::all_of(
+            c("species", "cv_type", "cv_fold", "evaluation_type", m))) %>%
         dplyr::rename(value = !!m) %>%
         tidyr::pivot_wider(names_from = evaluation_type, values_from = value)
 

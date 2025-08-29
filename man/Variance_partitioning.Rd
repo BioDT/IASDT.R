@@ -20,7 +20,7 @@ variance_partitioning_compute(
   temp_cleanup = TRUE,
   chunk_size = 50L,
   verbose = TRUE,
-  VP_file = "VarPar",
+  VP_file = "varpar",
   VP_commands_only = FALSE
 )
 
@@ -77,7 +77,7 @@ parallel. Only relevant for \code{TensorFlow}. Default: \code{50}.}
 \item{verbose}{Logical. Whether to print progress messages. Default: \code{TRUE}.}
 
 \item{VP_file}{Character. Name of the output file to save the results.
-Default: \code{VarPar}.}
+Default: \code{varpar}.}
 
 \item{VP_commands_only}{Logical. If \code{TRUE}, returns the commands to run the
 Python script. Default is \code{FALSE}. Only relevant when \code{use_TF} is \code{TRUE}.}

@@ -99,6 +99,7 @@ reference:
   - plot_prediction
   - mod_cv_evaluate
   - mod_cv_evaluate_plot
+  - mod_cv_merge_predictions
   - mod_postprocessing
   - plot_evaluation
   - parameter_heatmap

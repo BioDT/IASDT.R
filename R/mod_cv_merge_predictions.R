@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# cv_merge_predictions ----
+# mod_cv_merge_predictions ----
 ## |------------------------------------------------------------------------| #
 
 #' Merge Cross-Validation Predictions and Generate Summary Maps
@@ -21,7 +21,7 @@
 #' @author Ahmed El-Gabbas
 #' @export
 
-cv_merge_predictions <- function(
+mod_cv_merge_predictions <- function(
     model_prefix = NULL, n_cv_folds = 4L, hab_abb = NULL,
     spatial_model = NULL, n_cores = 8L, clamp = c("clamp", "no_clamp")) {
 

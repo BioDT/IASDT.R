@@ -93,7 +93,7 @@ variance_partitioning_plot <- function(
     ecokit::cat_time(
       "Loading training and testing evaluation data", level = 1L,
       cat_timestamp = FALSE)
-    path_eval <- fs::path(eval_dir, "Eval_testing_data.RData")
+    path_eval <- fs::path(eval_dir, "eval_cv_data.RData")
     if (!ecokit::check_data(path_eval, warning = FALSE)) {
       ecokit::stop_ctx(
         "Model evaluation file is not found: ", path_root = path_root,

@@ -688,7 +688,7 @@ mod_postprocess_1_CPU <- function(
         level = 1L, line_char = "+", line_char_rep = 60L, cat_red = TRUE,
         cat_bold = TRUE, cat_timestamp = FALSE)
 
-      IASDT.R::mod_evaluate_cv(model_dir = model_dir, cv_type = "CV_Dist")
+      IASDT.R::mod_cv_evaluate(model_dir = model_dir, cv_type = "CV_Dist")
     }
   }
 
@@ -1386,7 +1386,7 @@ mod_postprocess_2_CPU <- function(
           "Evaluating explanatory and predictive power of the model",
           level = 1L, line_char = "+", line_char_rep = 60L, cat_red = TRUE,
           cat_bold = TRUE, cat_timestamp = FALSE)
-        IASDT.R::mod_evaluate_cv(model_dir = model_dir, cv_type = "CV_Dist")
+        IASDT.R::mod_cv_evaluate(model_dir = model_dir, cv_type = "CV_Dist")
       }
     }
 

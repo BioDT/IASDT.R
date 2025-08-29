@@ -43,7 +43,9 @@
 <url><loc>https://biodt.github.io/IASDT.R/reference/index.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/install_hmsc_windows.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/mod_CV_prepare.html</loc></url>
-<url><loc>https://biodt.github.io/IASDT.R/reference/mod_evaluate_cv.html</loc></url>
+<url><loc>https://biodt.github.io/IASDT.R/reference/mod_cv_evaluate.html</loc></url>
+<url><loc>https://biodt.github.io/IASDT.R/reference/mod_cv_evaluate_plot.html</loc></url>
+<url><loc>https://biodt.github.io/IASDT.R/reference/mod_cv_merge_predictions.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/mod_fit_windows.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/mod_get_posteriors.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/pipe.html</loc></url>

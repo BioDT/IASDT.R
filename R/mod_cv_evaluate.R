@@ -611,7 +611,11 @@ cv_plot_panel2 <- function(
           tidyselect::all_of(
             c("species", "cv_type", "cv_fold", "evaluation_type", m))) %>%
         dplyr::rename(value = !!m) %>%
-        tidyr::pivot_wider(names_from = evaluation_type, values_from = value)
+        tidyr::pivot_wider(
+          names_from = evaluation_type, values_from = value) %>%
+        # Exclude missing values; e.g. for species with no testing data in
+        # spatial cross-validation
+        dplyr::filter(!is.na(testing), !is.na(training))
 
       points_df <- dplyr::filter(m_data, !cv_fold %in% c("mean", "sd"))
 

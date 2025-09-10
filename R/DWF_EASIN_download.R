@@ -98,6 +98,7 @@ EASIN_download <- function(
 
       # nolint start
       Skip <- (Chunk - 1) * n_search
+      # `exclude/dps/1` excludes GBIF observations
       URL <- stringr::str_glue(
         "{EASIN_URL}/{species_key}/exclude/dps/1/{Skip}/{n_search}")
       # nolint end

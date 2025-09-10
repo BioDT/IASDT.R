@@ -108,10 +108,12 @@ GBIF_process <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_GBIF <- Path_GBIF_Interim <- Species_name <- institutionCode <-
+  Path_GBIF <- Path_GBIF_Interim <- Species_name <- institutionCode <- n_obs <-
     TaxaInfo <- species <- CellCode <- iNaturalist <- IAS_ID <- taxon_name <-
-    Species_name2 <- Species_File <- Others <- Path_Grid <- SummMap <-
-    SummMapGG <- Title <- LegendLabel <- n <- EU_Bound <- NULL
+    Species_name2 <- Species_File <- Others <- Path_Grid <- summ_map <-
+    summ_map_gg <- plot_title <- legend_label <- n <- EU_Bound <- publisher <-
+    Longitude_3035 <- Latitude_3035 <- sp_data <- partner_map <-
+    partner_id <- NULL
 
   # # ..................................................................... ###
 
@@ -166,8 +168,9 @@ GBIF_process <- function(
   GBIF_Metadata <- ecokit::load_as(GBIF_Metadata)
 
   TaxaList <- ecokit::load_as(TaxaInfo)
-  Path_SpData <- fs::path(Path_GBIF, "Sp_Data")
-  fs::dir_create(Path_SpData)
+  path_sp_data <- fs::path(Path_GBIF, "Sp_Data")
+  path_publishers <- fs::path(Path_GBIF, "summary_publishers")
+  fs::dir_create(c(path_sp_data, path_publishers))
 
   # Grid_10_Land_Crop_sf
   GridSf <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
@@ -431,6 +434,7 @@ GBIF_process <- function(
   # # ................................... ###
 
   ## Plot_GBIF_Summary -----
+
   ecokit::cat_time("Plotting summary maps", level = 1L)
 
   GBIF_date <- GBIF_Metadata$StatusDetailed$modified %>%
@@ -444,45 +448,47 @@ GBIF_process <- function(
 
   rm(GBIF_date, GBIF_DOI, GBIF_Grid, GBIF_Metadata, envir = environment())
 
+  # Plotting limits
+  x_limit <- c(2600000, 6700000)
+  y_limit <- c(1450000, 5420000)
+
+  plotting_theme <- ggplot2::theme_bw() +
+    ggplot2::theme(
+      plot.margin = ggplot2::margin(0, 0.1, 0, 0.1, "cm"),
+      plot.title = ggplot2::element_text(
+        size = 12, color = "blue", face = "bold", hjust = 0.5,
+        margin = ggplot2::margin(0, 0, 0, 0)),
+      strip.text = ggplot2::element_text(size = 6, face = "bold"),
+      legend.key.size = grid::unit(0.8, "cm"),
+      legend.key.width = grid::unit(0.6, "cm"),
+      legend.position = "inside",
+      legend.position.inside = c(0.92, 0.75),
+      legend.background = ggplot2::element_rect(fill = "transparent"),
+      legend.text = ggplot2::element_text(size = 8),
+      legend.box.spacing = grid::unit(0, "pt"),
+      legend.title = ggplot2::element_text(
+        color = "blue", size = 7, face = "bold", hjust = 0.5),
+      axis.text.x = ggplot2::element_text(size = 7),
+      axis.text.y = ggplot2::element_text(size = 7, hjust = 0.5, angle = 90),
+      axis.ticks = ggplot2::element_line(colour = "blue", linewidth = 0.25),
+      axis.ticks.length = grid::unit(0.04, "cm"),
+      panel.spacing = grid::unit(0.3, "lines"),
+      panel.grid.minor = ggplot2::element_blank(),
+      panel.grid.major = ggplot2::element_line(
+        linewidth = 0.1, colour = "grey40", linetype = 2),
+      panel.border = ggplot2::element_blank(),
+      panel.ontop = TRUE, panel.background = ggplot2::element_rect(fill = NA))
+
+
   Plot_GBIF_Summary <- function(
-    RstrMap, Title, LegendLabel = NULL, EU_map = EuroBound) {
-
-    # Plotting limits
-    Xlim <- c(2600000, 6700000)
-    Ylim <- c(1450000, 5420000)
-
-    PlottingTheme <- ggplot2::theme_bw() +
-      ggplot2::theme(
-        plot.margin = ggplot2::margin(0, 0.1, 0, 0.1, "cm"),
-        plot.title = ggplot2::element_text(
-          size = 12, color = "blue", face = "bold", hjust = 0.5,
-          margin = ggplot2::margin(0, 0, 0, 0)),
-        strip.text = ggplot2::element_text(size = 6, face = "bold"),
-        legend.key.size = grid::unit(0.8, "cm"),
-        legend.key.width = grid::unit(0.6, "cm"),
-        legend.position = "inside",
-        legend.position.inside = c(0.92, 0.75),
-        legend.background = ggplot2::element_rect(fill = "transparent"),
-        legend.text = ggplot2::element_text(size = 8),
-        legend.box.spacing = grid::unit(0, "pt"),
-        legend.title = ggplot2::element_text(
-          color = "blue", size = 7, face = "bold", hjust = 0.5),
-        axis.text.x = ggplot2::element_text(size = 7),
-        axis.text.y = ggplot2::element_text(size = 7, hjust = 0.5, angle = 90),
-        axis.ticks = ggplot2::element_line(colour = "blue", linewidth = 0.25),
-        axis.ticks.length = grid::unit(0.04, "cm"),
-        panel.spacing = grid::unit(0.3, "lines"),
-        panel.grid.minor = ggplot2::element_blank(),
-        panel.grid.major = ggplot2::element_line(
-          linewidth = 0.1, colour = "grey40", linetype = 2),
-        panel.border = ggplot2::element_blank(),
-        panel.ontop = TRUE, panel.background = ggplot2::element_rect(fill = NA))
+    r_map, plot_title, legend_label = NULL, EU_map = EuroBound,
+    plot_theme = plotting_theme, xlim = x_limit, ylim = y_limit) {
 
     OutMap <- ggplot2::ggplot() +
       ggplot2::geom_sf(
         EU_map, mapping = ggplot2::aes(), color = "grey30", linewidth = 0.1,
         fill = "grey95", inherit.aes = TRUE) +
-      tidyterra::geom_spatraster(data = terra::trim(RstrMap), maxcell = Inf) +
+      tidyterra::geom_spatraster(data = terra::trim(r_map), maxcell = Inf) +
       paletteer::scale_fill_paletteer_c(
         na.value = "transparent", "viridis::plasma",
         breaks = ecokit::integer_breaks()) +
@@ -490,11 +496,11 @@ GBIF_process <- function(
         EU_map, mapping = ggplot2::aes(), color = "grey40", linewidth = 0.075,
         fill = "transparent", inherit.aes = TRUE) +
       ggplot2::scale_x_continuous(
-        expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim) +
+        expand = ggplot2::expansion(mult = c(0, 0)), limits = xlim) +
       ggplot2::scale_y_continuous(
-        expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
-      PlottingTheme +
-      ggplot2::labs(title = Title, fill = LegendLabel)
+        expand = ggplot2::expansion(mult = c(0, 0)), limits = ylim) +
+      plot_theme +
+      ggplot2::labs(title = plot_title, fill = legend_label)
 
     return(OutMap)
   }
@@ -511,23 +517,23 @@ GBIF_process <- function(
   # Plotting summary maps
   Plot <- tibble::tibble(
     # tibble for plotting information
-    SummMap = list(
+    summ_map = list(
       terra::unwrap(GBIF_NObs) / 1000, terra::unwrap(GBIF_NObs_log),
       terra::unwrap(GBIF_NSp) / 100, terra::unwrap(GBIF_NSp_Log)),
-    Title = c(
+    plot_title = c(
       "Number of observations", "Number of observations (log10)",
       "Number of IAS", "Number of IAS (log10)"),
-    LegendLabel = c("\u00D7 1000", "log10", "\u00D7 100", "Log10")) %>%
+    legend_label = c("\u00D7 1000", "log10", "\u00D7 100", "Log10")) %>%
     # add the ggplot object as column to the data
     dplyr::mutate(
-      SummMapGG = purrr::pmap(
-        .l = list(SummMap, Title, LegendLabel),
-        .f = function(SummMap, Title, LegendLabel) {
-          Plot_GBIF_Summary(SummMap, Title, LegendLabel)
-        }
-      )
-    ) %>%
-    dplyr::pull(SummMapGG) %>%
+      summ_map_gg = purrr::pmap(
+        .l = list(summ_map, plot_title, legend_label),
+        .f = function(summ_map, plot_title, legend_label) {
+          Plot_GBIF_Summary(
+            summ_map, plot_title, legend_label,
+            plotting_theme, x_limit, y_limit)
+        })) %>%
+    dplyr::pull(summ_map_gg) %>%
     # Plot the four panels together on a single figure
     cowplot::plot_grid(plotlist = ., ncol = 2, nrow = 2) %>%
     # add the common title
@@ -566,28 +572,105 @@ GBIF_process <- function(
     .x = SpList,
     .f = ~ {
       # Filter data on this species
-      SpName <- ecokit::replace_space(.x) %>%
+      sp_name <- ecokit::replace_space(.x) %>%
         # replace non-ascii multiplication symbol with x
         stringr::str_replace_all("\u00D7", "x") %>%
         stringr::str_replace_all("-", "")
 
-      SpData <- dplyr::filter(GBIF_Data, Species_name == .x)
-      OutFileSF <- fs::path(Path_SpData, paste0(SpName, ".RData"))
+      sp_data <- dplyr::filter(GBIF_Data, Species_name == .x)
+      outfile_sf <- fs::path(path_sp_data, paste0(sp_name, ".RData"))
 
       # Save if there is data
-      if (nrow(SpData) > 0) {
+      if (nrow(sp_data) > 0) {
         ecokit::save_as(
-          object = SpData, object_name = SpName, out_path = OutFileSF)
+          object = sp_data, object_name = sp_name, out_path = outfile_sf)
       }
       return(invisible(NULL))
     },
     .progress = FALSE)
 
-  rm(
-    GBIF_Data, GBIF_NObs, GBIF_NObs_log, GBIF_NSp, GBIF_NSp_Log,
-    envir = environment())
+  # # ..................................................................... ###
+
+  # Number of species per publisher --------
+
+  n_species_publisher <- GBIF_Data %>%
+    sf::st_drop_geometry() %>%
+    dplyr::distinct(
+      IAS_ID, publisher, CellCode, Longitude_3035, Latitude_3035) %>%
+    tidyr::nest(sp_data = -publisher) %>%
+    dplyr::mutate(n_obs = purrr::map_int(sp_data, nrow)) %>%
+    dplyr::arrange(dplyr::desc(n_obs)) %>%
+    dplyr::mutate(
+      partner_id = dplyr::row_number(),
+      partner_map = purrr::map(
+        .x = sp_data,
+        .f = ~{
+          dplyr::summarise(
+            .x,
+            n_species = length(unique(IAS_ID)),
+            .by = c(CellCode, Longitude_3035, Latitude_3035)) %>%
+            sf::st_as_sf(
+              coords = c("Longitude_3035", "Latitude_3035"), crs = 3035) %>%
+            dplyr::select(-CellCode) %>%
+            terra::rasterize(
+              terra::unwrap(Grid_10_Land_Crop), field = "n_species")
+        })) %>%
+    dplyr::select(-sp_data, -n_obs)
   invisible(gc())
 
+  n_species_publisher <- n_species_publisher %>%
+    dplyr::mutate(
+      partner_map_gg = purrr::pmap(
+        .l = list(publisher, partner_map, partner_id),
+        .f = function(publisher, partner_map, partner_id) {
+
+          partner_id2 <- stringr::str_pad(partner_id, width = 3, pad = "0")
+
+          ragg::agg_jpeg(
+            filename = fs::path(
+              path_publishers,
+              paste("n_sp_per_publisher_", partner_id2, ".jpeg")),
+            width = 25, height = 25, res = 600, quality = 100, units = "cm")
+
+          Plot <- ggplot2::ggplot() +
+            ggplot2::geom_sf(
+              EuroBound, mapping = ggplot2::aes(), color = "grey30",
+              linewidth = 0.1, fill = "grey95", inherit.aes = TRUE) +
+            tidyterra::geom_spatraster(
+              data = terra::trim(partner_map), maxcell = Inf) +
+            paletteer::scale_fill_paletteer_c(
+              na.value = "transparent", "viridis::plasma",
+              breaks = ecokit::integer_breaks()) +
+            ggplot2::geom_sf(
+              EuroBound, mapping = ggplot2::aes(), color = "grey40",
+              linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
+            ggplot2::scale_x_continuous(
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = x_limit) +
+            ggplot2::scale_y_continuous(
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = y_limit) +
+            plotting_theme +
+            ggplot2::labs(title = publisher, fill = "n_species")
+          print(Plot)
+          grDevices::dev.off()
+
+          return(NULL)
+        }
+      ))
+
+  n_species_publisher <- n_species_publisher %>%
+    dplyr::mutate(
+      partner_map_gg = NULL,
+      partner_map = purrr::map(partner_map, terra::wrap))
+  ecokit::save_as(
+    object = n_species_publisher, object_name = "n_species_publisher",
+    out_path = fs::path(Path_GBIF, "n_species_publisher.RData"))
+
+  rm(
+    GBIF_Data, GBIF_NObs, GBIF_NObs_log, GBIF_NSp, GBIF_NSp_Log,
+    n_species_publisher, envir = environment())
+  invisible(gc())
+
+  # # ..................................................................... ###
 
   # Grid / raster / plotting ----
   ecokit::cat_time("Split species data - grid + raster + plot", level = 1L)

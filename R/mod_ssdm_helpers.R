@@ -458,7 +458,6 @@ prepare_input_data <- function(
     climate_models = "all", climate_scenarios = "all",
     climate_periods = "all", n_cores = 8) {
 
-
   # # ..................................................................... ###
 
   # Check input arguments ----
@@ -474,7 +473,7 @@ prepare_input_data <- function(
     CellCode <- FilePath <- path_rail <- path_roads <- path_clc <- path_bias <-
     path_rivers <- path_chelsa <- pred_data <- quadratic <- CellNum <-
     variable <- climate_name <- species_name <- valid_species <- data_path <-
-    path_wetness <- path_soil <- NULL
+    path_wetness <- path_soil <- method_type <- NULL
 
   # |||||||||||||||||||||||||||||||||||||||||||
 
@@ -787,8 +786,6 @@ prepare_input_data <- function(
       X = species_names,
       FUN = function(species_name) {
 
-        method_is_glm <- NULL
-
         species_data_file <- fs::path(
           species_data_dir, paste0("data_", species_name, ".qs2"))
 
@@ -799,16 +796,17 @@ prepare_input_data <- function(
         }
 
         species_modelling_data <- tidyr::expand_grid(
-          cv = seq_len(n_cv_folds), method_is_glm = c(TRUE, FALSE)) %>%
+          cv = seq_len(n_cv_folds),
+          method_type = c("glm", "maxent", "others")) %>%
           dplyr::mutate(
             model_form = purrr::map2(
-              .x = cv, .y = method_is_glm,
+              .x = cv, .y = method_type,
               .f = ~ {
 
                 valid_species <- TRUE
 
                 # model formula
-                if (.y) {
+                if (.y == "glm") {
                   if (length(q_preds) == 0L) {
                     # No quadratic terms, use linear predictors only
                     model_formula <- paste(
@@ -840,10 +838,28 @@ prepare_input_data <- function(
                   model_formula, env = baseenv())
 
                 # Training and testing data
+                
+                # To make comparisons between `Hmsc` jSDMs and single-species
+                # SDMs valid, the same training and testing data are used for
+                # all model types; i.e., no pseudo-absences are generated and
+                # all non-presence grid cells are considered absences. This is
+                # for all model types except MaxEnt where presences are added
+                # to background points in the training data
+
                 training_data <- modelling_data %>%
                   dplyr::filter(cv_fold != .x) %>%
                   dplyr::select(
                     tidyselect::all_of(c(species_name, predictor_names_local)))
+                
+                if (.y == "maxent") {
+                  pres_as_backgrounds <- training_data %>%
+                    dplyr::filter(!!rlang::sym(species_name) == 1) %>%
+                    dplyr::mutate(!!species_name := 0)
+                  training_data <- dplyr::bind_rows(
+                    training_data, pres_as_backgrounds)
+                  rm(pres_as_backgrounds)
+                }
+
                 testing_data <- modelling_data %>%
                   dplyr::filter(cv_fold == .x) %>%
                   dplyr::select(
@@ -1584,12 +1600,21 @@ fit_predict_internal <- function(
     line_id, sdm_method, model_data, model_settings,
     input_data, output_directory, path_grid_r, copy_maxent_html = TRUE) {
 
-  pred_data <- climate_name <- method_is_glm <- cv <- NULL
+  pred_data <- climate_name <- cv <- method_type <- NULL
 
   species_name <- model_data$species_name[[line_id]]
   cv_fold <- model_data$cv[[line_id]]
+
   model_DT <- ecokit::load_as(model_data$data_path[[line_id]]) %>%
-    dplyr::filter(method_is_glm == (sdm_method == "glm"), cv == cv_fold)
+    dplyr::filter(cv == cv_fold)
+  if (sdm_method == "glm") {
+    model_DT <- dplyr::filter(model_DT, method_type == "glm")
+  } else if (sdm_method == "maxent") {
+    model_DT <- dplyr::filter(model_DT, method_type == "maxent")
+  } else {
+    model_DT <- dplyr::filter(model_DT, method_type == "others")
+  }
+
   base_model_name <- paste0(sdm_method, "_", species_name, "_cv", cv_fold)
 
   if (nrow(model_DT) != 1) {

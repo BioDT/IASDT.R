@@ -160,7 +160,7 @@ fit_sdm_models <- function(
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   summary_data <- packages <- path_grid <- mod_method <- cv_fold <- preds <-
-    pred_mean <- pred_w_mean <- species_name <- method_is_glm <- output_path <-
+    pred_mean <- pred_w_mean <- species_name <- output_path <- method_type <-
     evaluation_testing <- auc_test <- summary_prediction_path <-
     climate_name <- pred_mean_okay <- pred_w_mean_okay <- richness_map <-
     pred_type <- cv <- preds_summ <- NULL
@@ -322,10 +322,7 @@ fit_sdm_models <- function(
     cv_folds <- ecokit::load_as(model_data$data_path[[1]]) %>%
       dplyr::pull(cv) %>%
       unique()
-    model_data <- dplyr::mutate(
-      model_data, method_is_glm = (sdm_method == "glm")) %>%
-      tidyr::expand_grid(cv = cv_folds)
-
+    model_data <- tidyr::expand_grid(model_data, cv = cv_folds)
     invisible(gc())
 
     # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -380,7 +377,7 @@ fit_sdm_models <- function(
       tidyr::unnest("data2") %>%
       dplyr::select(
         species_name, sdm_method, cv_fold = cv, tidyselect::everything(),
-        -method_is_glm)
+        -method_type)
 
     ecokit::save_as(
       object = model_results, object_name = model_results_name,

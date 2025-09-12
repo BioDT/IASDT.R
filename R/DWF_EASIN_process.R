@@ -82,10 +82,11 @@ EASIN_process <- function(
   ecokit::cat_time("Checking arguments")
   ecokit::check_args(
     args_to_check = c(
-      "extract_taxa", "extract_data", "verbose", "plot", "delete_chunks"),
+      "extract_taxa", "extract_data", "plot", "delete_chunks"),
     args_type = "logical")
   ecokit::check_args(
-    args_to_check = c("DownTries", "sleep_time", "n_search", "start_year"),
+    args_to_check = c(
+      "n_download_attempts", "sleep_time", "n_search", "start_year"),
     args_type = "numeric")
 
   strategy <- .validate_strategy(strategy)

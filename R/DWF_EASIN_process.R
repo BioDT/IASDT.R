@@ -306,13 +306,13 @@ EASIN_process <- function(
         break
       }
 
-      ecokit::cat_time(paste0("Try number: ", ry_n), level = 1L)
+      ecokit::cat_time(paste0("Try number: ", try_n), level = 1L)
       ecokit::cat_time(
         paste0(
           "There are ", length(not_processed), " EASIN taxa to be downloaded"),
         level = 2L)
 
-      if (ry_n > n_download_attempts) {
+      if (try_n > n_download_attempts) {
         ecokit::cat_time(
           paste0(
             "Download failed for ", length(not_processed),

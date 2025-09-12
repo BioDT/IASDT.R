@@ -65,7 +65,7 @@ EASIN_download <- function(
   path_out <- fs::path(path_EASIN, paste0(species_key, ".RData"))
 
   # Ensure that the directory for temporary files exist
-  fs::dir_create(fs::path(path_EASIN, "FileParts"))
+  fs::dir_create(fs::path(path_EASIN, "file_parts"))
 
   # Check if species data already available
   out_file_exists <- ecokit::check_data(path_out, warning = FALSE)
@@ -90,7 +90,7 @@ EASIN_download <- function(
         species_key, "_", stringr::str_pad(chunk_n, width = 5, pad = "0"))
 
       path_part <- fs::path(
-        path_EASIN, "FileParts", paste0(object_out, ".RData"))
+        path_EASIN, "file_parts", paste0(object_out, ".RData"))
 
       if (ecokit::check_data(path_part, warning = FALSE)) {
         next
@@ -156,7 +156,7 @@ EASIN_download <- function(
     }
 
     chunk_list <- list.files(
-      fs::path(path_EASIN, "FileParts"),
+      fs::path(path_EASIN, "file_parts"),
       paste0("^", species_key, ".+"), full.names = TRUE)
 
     ecokit::save_as(

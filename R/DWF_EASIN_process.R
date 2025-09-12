@@ -39,7 +39,7 @@
 #' @param sleep_time Integer. Number of seconds to pause between each data
 #'   retrieval request to prevent overloading the server. Default: 5 second.
 #' @param delete_chunks Logical. Whether to delete temporary files for data
-#'   chunks from the `FileParts` subdirectory. Defaults to `TRUE`.
+#'   chunks from the `file_parts` subdirectory. Defaults to `TRUE`.
 #' @param return_data Logical. If `TRUE`, returns data as a dataframe;
 #'   otherwise, saves to disk and returns `invisible(NULL)`. Default: `FALSE`.
 #' @param kingdom Character. Taxonomic kingdom to query. Default: `"Plantae"`.
@@ -151,7 +151,7 @@ EASIN_process <- function(
   path_EASIN_data <- fs::path(path_EASIN, "species_data")
   path_EASIN_grid <- fs::path(path_EASIN, "species_grid")
   path_EASIN_r <- fs::path(path_EASIN, "species_raster")
-  path_EASIN_summary <- fs::path(path_EASIN, "EASIN_summary")
+  path_EASIN_summary <- fs::path(path_EASIN, "summary")
 
   fs::dir_create(
     c(
@@ -555,7 +555,7 @@ EASIN_process <- function(
   save(EASIN_n_sp_partner, file = path_n_sp_partner)
 
   if (delete_chunks) {
-    fs::dir_delete(fs::path(path_EASIN_interim, "FileParts"))
+    fs::dir_delete(fs::path(path_EASIN_interim, "file_parts"))
   }
 
   # # ..................................................................... ###

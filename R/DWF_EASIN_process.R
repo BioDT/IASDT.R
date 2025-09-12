@@ -292,7 +292,7 @@ EASIN_process <- function(
     ecokit::cat_time("Processing EASIN data", level = 1L)
 
     # Start downloading, allow for a maximum of `NumDownTries` trials
-    ry_n <- 0
+    try_n <- 0
 
     # Start downloading ----
     repeat {

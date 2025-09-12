@@ -144,10 +144,11 @@ GBIF_process <- function(
   pkg_to_export <- ecokit::load_packages_future(
     packages = c(
       "IASDT.R", "purrr", "tibble", "terra", "tidyr", "dplyr", "readr",
-      "stringr", "bit64", "tidyselect", "fs", "sf", "ecokit",
-      "ggplot2", "tidyterra", "magrittr", "ragg", "cowplot", "grid"),
+      "stringr", "bit64", "tidyselect", "fs", "sf", "ecokit", "paletteer",
+      "ggplot2", "tidyterra", "magrittr", "ragg", "cowplot", "grid", "scales",
+      "viridis"),
     strategy = strategy)
-
+  
   # # ..................................................................... ###
 
   # request / download GBIF data and split data into chunks -----

@@ -150,7 +150,7 @@ EASIN_process <- function(
 
   path_EASIN_data <- fs::path(path_EASIN, "species_data")
   path_EASIN_grid <- fs::path(path_EASIN, "species_grid")
-  path_EASIN_r <- fs::path(path_EASIN, "species_r")
+  path_EASIN_r <- fs::path(path_EASIN, "species_raster")
   path_EASIN_summary <- fs::path(path_EASIN, "EASIN_summary")
 
   fs::dir_create(
@@ -611,9 +611,9 @@ EASIN_process <- function(
         data_r$PA <- terra::as.int(data_r > 0)
         ecokit::save_as(
           object = terra::wrap(data_r),
-          object_name = paste0(names(EASIN_data_2)[.x], "_r"),
+          object_name = paste0(names(EASIN_data_2)[.x], "_raster"),
           out_path = fs::path(
-            path_EASIN_r, paste0(names(EASIN_data_2)[.x], "_r.RData")))
+            path_EASIN_r, paste0(names(EASIN_data_2)[.x], "_raster.RData")))
 
         return(invisible(NULL))
       }, .progress = FALSE)

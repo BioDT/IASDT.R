@@ -87,7 +87,7 @@ GBIF_process <- function(
   # Checking arguments ----
 
   ecokit::cat_time("Checking arguments")
-  ecokit::check_args(args_to_check = "Renviron", args_type = "character")
+  ecokit::check_args(args_to_check = "r_environ", args_type = "character")
   ecokit::check_args(
     args_to_check = c(
       "request", "download", "split_chunks", "overwrite", "delete_chunks"),

@@ -555,7 +555,8 @@ EASIN_process <- function(
   save(EASIN_n_sp_partner, file = path_n_sp_partner)
 
   if (delete_chunks) {
-    fs::dir_delete(fs::path(path_EASIN_interim, "file_parts"))
+    try(
+      fs::dir_delete(fs::path(path_EASIN_interim, "file_parts")), silent = TRUE)
   }
 
   # # ..................................................................... ###

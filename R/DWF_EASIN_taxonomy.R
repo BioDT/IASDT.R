@@ -45,14 +45,14 @@ EASIN_taxonomy <- function(
   # Use the API; loop until reaching the end of the list
   # Only search for plant species
 
-  TimeStartTaxa <- lubridate::now(tzone = "CET")
+  time_start_taxa <- lubridate::now(tzone = "CET")
 
   # start at the first species: skip = 0
   Skip <- 0
   # current step ID
   ID <- 0
   # a list to store the taxonomy list
-  EASIN_Taxa <- list()
+  EASIN_taxa <- list()
 
   repeat {
     ID <- ID + 1
@@ -63,38 +63,38 @@ EASIN_taxonomy <- function(
       "{EASIN_URL}/kingdom/{kingdom}/skip/{Skip}/take/{n_search}")
 
     # Extract species data as tibble
-    Data <- try(RCurl::getURL(URL, .mapUnicode = FALSE), silent = TRUE)
-    if (inherits(Data, "try-error")) {
+    taxa_data <- try(RCurl::getURL(URL, .mapUnicode = FALSE), silent = TRUE)
+    if (inherits(taxa_data, "try-error")) {
       break
     }
 
-    Data <- dplyr::tibble(jsonlite::fromJSON(Data, flatten = TRUE))
+    taxa_data <- dplyr::tibble(jsonlite::fromJSON(taxa_data, flatten = TRUE))
 
     # If there is no data, break the loop
-    if (nrow(Data) == 0) {
+    if (nrow(taxa_data) == 0) {
       break
     }
 
-    EASIN_Taxa[[ID]] <- Data
+    EASIN_taxa[[ID]] <- taxa_data
     Skip <- Skip + n_search
 
     # If the number of rows of the data < n_search, break the loop
-    if (nrow(Data) < n_search) {
+    if (nrow(taxa_data) < n_search) {
       break
     }
-    rm(Data, URL, envir = environment())
+    rm(taxa_data, URL, envir = environment())
   }
 
   # Merging data ----
-  EASIN_Taxa <- dplyr::bind_rows(EASIN_Taxa) %>%
+  EASIN_taxa <- dplyr::bind_rows(EASIN_taxa) %>%
     # Only keep vascular plants; Although I searched only for plant taxa, there
     # are still some non-vascular plant species, even for non-plant species.
     dplyr::filter(Kingdom == !!kingdom, Phylum == !!phylum)
 
 
   ecokit::cat_diff(
-    init_time = TimeStartTaxa,
+    init_time = time_start_taxa,
     prefix = "Extracting EASIN taxonomy was finished in ", level = 2L)
 
-  return(EASIN_Taxa)
+  return(EASIN_taxa)
 }

@@ -21,7 +21,7 @@ EASIN_download <- function(
       include_backtrace = TRUE)
   }
 
-  Path_EASIN <- NULL
+  path_EASIN <- NULL
 
   # # ..................................................................... ###
 
@@ -50,7 +50,7 @@ EASIN_download <- function(
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
     "EASIN_URL", "DP_R_EASIN_data_url", FALSE, FALSE,
-    "Path_EASIN", "DP_R_EASIN_interim", FALSE, FALSE)
+    "path_EASIN", "DP_R_EASIN_interim", FALSE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
@@ -62,82 +62,84 @@ EASIN_download <- function(
   withr::local_options(list(scipen = 999, timeout = timeout))
 
   # Output file for the merged datasets
-  Path_Out <- fs::path(Path_EASIN, paste0(species_key, ".RData"))
+  path_out <- fs::path(path_EASIN, paste0(species_key, ".RData"))
 
   # Ensure that the directory for temporary files exist
-  fs::dir_create(fs::path(Path_EASIN, "FileParts"))
+  fs::dir_create(fs::path(path_EASIN, "FileParts"))
 
   # Check if species data already available
-  OutFileExist <- ecokit::check_data(Path_Out, warning = FALSE)
+  out_file_exists <- ecokit::check_data(path_out, warning = FALSE)
 
-  if (OutFileExist && verbose) {
+  if (out_file_exists && verbose) {
     ecokit::cat_time("Output file already exists")
   }
 
   # # ..................................................................... ###
 
-  if (isFALSE(OutFileExist)) {
+  if (isFALSE(out_file_exists)) {
     # Download chunk data
     if (verbose) {
       ecokit::cat_time("Download chunk data")
     }
-    Chunk <- 0L
+    chunk_n <- 0L
 
     repeat {
-      Chunk <- Chunk + 1
+      chunk_n <- chunk_n + 1
 
-      Obj_Out <- paste0(
-        species_key, "_", stringr::str_pad(Chunk, width = 5, pad = "0"))
+      object_out <- paste0(
+        species_key, "_", stringr::str_pad(chunk_n, width = 5, pad = "0"))
 
-      Path_Part <- fs::path(
-        Path_EASIN, "FileParts", paste0(Obj_Out, ".RData"))
+      path_part <- fs::path(
+        path_EASIN, "FileParts", paste0(object_out, ".RData"))
 
-      if (ecokit::check_data(Path_Part, warning = FALSE)) {
+      if (ecokit::check_data(path_part, warning = FALSE)) {
         next
       }
 
       # nolint start
-      Skip <- (Chunk - 1) * n_search
+      Skip <- (chunk_n - 1) * n_search
       # `exclude/dps/1` excludes GBIF observations
       URL <- stringr::str_glue(
         "{EASIN_URL}/{species_key}/exclude/dps/1/{Skip}/{n_search}")
       # nolint end
 
-      DownTry <- 0
-      while (DownTry <= n_attempts) {
-        DownTry <- DownTry + 1
+      download_try <- 0
+      while (download_try <= n_attempts) {
+        download_try <- download_try + 1
 
-        ChunkDT <- try(
+        chunk_data <- try(
           {
-            ChunkDT0 <- RCurl::getURL(URL, .mapUnicode = FALSE)
+            chunk_data_raw <- RCurl::getURL(URL, .mapUnicode = FALSE)
             # Error <- stringr::str_detect(
-            #   ChunkDT0, pattern = "An error occurred while")
-            NoObs <- stringr::str_detect(
-              ChunkDT0, pattern = "There are no results based on your")
-            ChunkDT0
+            #   chunk_data_raw, pattern = "An error occurred while")
+            n_obs <- stringr::str_detect(
+              chunk_data_raw, pattern = "There are no results based on your")
+            chunk_data_raw
           },
           silent = TRUE)
 
-        if (NoObs) {
+        if (n_obs) {
           break
         }
 
-        ChunkDT <- tibble::tibble(jsonlite::fromJSON(ChunkDT, flatten = TRUE))
+        chunk_data <- tibble::tibble(
+          jsonlite::fromJSON(chunk_data, flatten = TRUE))
 
-        if (inherits(ChunkDT, "data.frame")) {
+        if (inherits(chunk_data, "data.frame")) {
           if (verbose) {
             ecokit::cat_time(
-              paste0("Chunk ", Chunk, " - attempt ", DownTry), level = 1L)
+              paste0(
+                "chunk ", chunk_n, " - attempt ", download_try), level = 1L)
           }
           break
         }
       }
 
-      if (inherits(ChunkDT, "data.frame")) {
+      if (inherits(chunk_data, "data.frame")) {
         ecokit::save_as(
-          object = ChunkDT, object_name = Obj_Out, out_path = Path_Part)
+          object = chunk_data, object_name = object_out, out_path = path_part)
 
-        if (nrow(ChunkDT) < n_search) {
+        if (nrow(chunk_data) < n_search) {
           break
         }
       } else {
@@ -153,26 +155,26 @@ EASIN_download <- function(
       ecokit::cat_time("Save taxa data")
     }
 
-    ChunkList <- list.files(
-      fs::path(Path_EASIN, "FileParts"),
+    chunk_list <- list.files(
+      fs::path(path_EASIN, "FileParts"),
       paste0("^", species_key, ".+"), full.names = TRUE)
 
     ecokit::save_as(
-      object = purrr::map_dfr(ChunkList, ecokit::load_as),
-      object_name = species_key, out_path = Path_Out)
+      object = purrr::map_dfr(chunk_list, ecokit::load_as),
+      object_name = species_key, out_path = path_out)
 
     if (delete_chunks) {
       if (verbose) {
         ecokit::cat_time("Delete chunks")
       }
-      fs::file_delete(ChunkList)
+      fs::file_delete(chunk_list)
     }
   }
 
   # # ..................................................................... ###
 
-  if (return_data && file.exists(Path_Out)) {
-    return(ecokit::load_as(Path_Out))
+  if (return_data && file.exists(path_out)) {
+    return(ecokit::load_as(path_out))
   } else {
     return(invisible(NULL))
   }

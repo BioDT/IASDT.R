@@ -55,12 +55,11 @@ EASIN_plot <- function(env_file = ".env") {
   ## EASIN summary maps -----
   ecokit::cat_time("EASIN summary maps", level = 2L)
   path_n_species <- fs::path(path_EASIN_summary, "EASIN_n_species.RData")
-  path_n_sp_partner <- fs::path(
-    path_EASIN_summary, "EASIN_n_sp_per_partner.RData")
+  path_n_sp_partner <- fs::path(path_EASIN_summary, "EASIN_n_sp_partner.RData")
 
   path_n_obs <- fs::path(path_EASIN_summary, "EASIN_n_obs.RData")
   path_n_obs_partner <- fs::path(
-    path_EASIN_summary, "EASIN_n_obs_per_partner.RData")
+    path_EASIN_summary, "EASIN_n_obs_partner.RData")
 
   path_summary_maps <- c(
     path_n_species, path_n_sp_partner, path_n_obs, path_n_obs_partner)

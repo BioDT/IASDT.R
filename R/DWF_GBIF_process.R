@@ -148,7 +148,7 @@ GBIF_process <- function(
       "ggplot2", "tidyterra", "magrittr", "ragg", "cowplot", "grid", "scales",
       "viridis"),
     strategy = strategy)
-  
+
   # # ..................................................................... ###
 
   # request / download GBIF data and split data into chunks -----

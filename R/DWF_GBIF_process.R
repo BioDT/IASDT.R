@@ -108,12 +108,12 @@ GBIF_process <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_GBIF <- Path_GBIF_Interim <- Species_name <- institutionCode <- n_obs <-
-    TaxaInfo <- species <- CellCode <- iNaturalist <- IAS_ID <- taxon_name <-
-    Species_name2 <- Species_File <- Others <- Path_Grid <- summ_map <-
-    summ_map_gg <- plot_title <- legend_label <- n <- EU_Bound <- publisher <-
+  path_GBIF <- path_GBIF_interim <- Species_name <- n_obs <- publisher_type <-
+    taxa_info <- species <- CellCode <- IAS_ID <- taxon_name <- others <-
+    Species_name2 <- Species_File <- path_grid <- summ_map <- summ_map_gg <-
+    plot_title <- legend_label <- n <- EU_borders <- publisher <-
     Longitude_3035 <- Latitude_3035 <- sp_data <- partner_map <-
-    partner_id <- NULL
+    partner_id <- citizen_science <- NULL
 
   # # ..................................................................... ###
 
@@ -127,12 +127,12 @@ GBIF_process <- function(
 
   EnvVars2Read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
-    "Path_GBIF", "DP_R_GBIF_processed", FALSE, FALSE,
-    "Path_GBIF_Interim", "DP_R_GBIF_interim", FALSE, FALSE,
-    "EU_Bound", "DP_R_EUBound", FALSE, TRUE,
+    "path_grid", "DP_R_Grid_processed", TRUE, FALSE,
+    "path_GBIF", "DP_R_GBIF_processed", FALSE, FALSE,
+    "path_GBIF_interim", "DP_R_GBIF_interim", FALSE, FALSE,
+    "EU_borders", "DP_R_EUBound", FALSE, TRUE,
     "CountryCodes", "DP_R_Countrycodes", FALSE, TRUE,
-    "TaxaInfo", "DP_R_Taxa_info_rdata", FALSE, TRUE)
+    "taxa_info", "DP_R_Taxa_info_rdata", FALSE, TRUE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = EnvVars2Read)
@@ -159,37 +159,38 @@ GBIF_process <- function(
 
   # # ..................................................................... ###
 
-  GBIF_Metadata <- fs::path(Path_GBIF, "GBIF_Metadata.RData")
-  if (!file.exists(GBIF_Metadata)) {
+  GBIF_metadata <- fs::path(path_GBIF, "GBIF_metadata.RData")
+  if (!file.exists(GBIF_metadata)) {
     ecokit::stop_ctx(
-      "GBIF metadata file does not exist", GBIF_Metadata = GBIF_Metadata,
+      "GBIF metadata file does not exist", GBIF_metadata = GBIF_metadata,
       include_backtrace = TRUE)
   }
-  GBIF_Metadata <- ecokit::load_as(GBIF_Metadata)
+  GBIF_metadata <- ecokit::load_as(GBIF_metadata)
 
-  TaxaList <- ecokit::load_as(TaxaInfo)
-  path_sp_data <- fs::path(Path_GBIF, "Sp_Data")
-  path_publishers <- fs::path(Path_GBIF, "summary_publishers")
+  taxa_list <- ecokit::load_as(taxa_info)
+  path_sp_data <- fs::path(path_GBIF, "species_data")
+  path_publishers <- fs::path(path_GBIF, "n_species_per_publisher")
   fs::dir_create(c(path_sp_data, path_publishers))
 
   # Grid_10_Land_Crop_sf
-  GridSf <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
-  if (!file.exists(GridSf)) {
+  grid_sf <- fs::path(path_grid, "Grid_10_Land_Crop_sf.RData")
+  if (!file.exists(grid_sf)) {
     ecokit::stop_ctx(
-      "Reference grid (sf) file not found", GridSf = GridSf,
+      "Reference grid (sf) file not found", grid_sf = grid_sf,
       include_backtrace = TRUE)
   }
-  GridSf <- ecokit::load_as(GridSf)
+  grid_sf <- ecokit::load_as(grid_sf)
 
   # Grid_10_Land_Crop
-  GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
-  if (!file.exists(GridR)) {
+  grid_r <- fs::path(path_grid, "Grid_10_Land_Crop.RData")
+  if (!file.exists(grid_r)) {
     ecokit::stop_ctx(
-      "Reference grid file not found", GridR = GridR, include_backtrace = TRUE)
+      "Reference grid file not found", grid_r = grid_r,
+      include_backtrace = TRUE)
   }
-  GridR <- ecokit::load_as(GridR, unwrap_r = TRUE)
+  grid_r <- ecokit::load_as(grid_r, unwrap_r = TRUE)
 
-  EuroBound <- ecokit::load_as(EU_Bound) %>%
+  EU_borders <- ecokit::load_as(EU_borders) %>%
     magrittr::extract2("Bound_sf_Eur_s") %>%
     magrittr::extract2("L_03")
 
@@ -203,7 +204,7 @@ GBIF_process <- function(
   .StartTimeChunks <- lubridate::now(tzone = "CET")
 
   ChunkList <- list.files(
-    path = Path_GBIF_Interim, pattern = "Chunk_.+.txt", full.names = TRUE)
+    path = path_GBIF_interim, pattern = "Chunk_.+.txt", full.names = TRUE)
   ChunkListRData <- stringr::str_replace_all(ChunkList, ".txt$", ".RData")
 
   if (n_cores == 1) {
@@ -218,7 +219,7 @@ GBIF_process <- function(
   ecokit::cat_time(
     "Processing chunks in parallel, save each as RData files", level = 1L)
 
-  GBIF_Data <- future.apply::future_lapply(
+  GBIF_data <- future.apply::future_lapply(
     X = ChunkList,
     FUN = function(x) {
       IASDT.R::GBIF_read_chunk(
@@ -235,12 +236,12 @@ GBIF_process <- function(
   ecokit::cat_time("Reading processed chunks into a single dataset", level = 1L)
 
   if (all(file.exists(ChunkListRData))) {
-    GBIF_Data <- future.apply::future_lapply(
+    GBIF_data <- future.apply::future_lapply(
       X = ChunkListRData, FUN = ecokit::load_as,
       future.scheduling = Inf, future.seed = TRUE) %>%
       dplyr::bind_rows() %>%
       # merge with taxa standardization results
-      dplyr::left_join(TaxaList, by = "speciesKey") %>%
+      dplyr::left_join(taxa_list, by = "speciesKey") %>%
       # arrange by species name
       dplyr::arrange(Species_name)
   } else {
@@ -256,7 +257,7 @@ GBIF_process <- function(
 
   ecokit::cat_time(
     paste0(
-      "A total of ", format(nrow(GBIF_Data), big.mark = ","), " observations"),
+      "A total of ", format(nrow(GBIF_data), big.mark = ","), " observations"),
     level = 2L, cat_timestamp = FALSE)
 
 
@@ -265,60 +266,49 @@ GBIF_process <- function(
     future::plan("sequential", gc = TRUE)
   }
 
-  ecokit::cat_time("Saving `GBIF_Data` to disk", level = 1L)
+  ecokit::cat_time("Saving `GBIF_data` to disk", level = 1L)
   ecokit::save_as(
-    object = GBIF_Data, out_path = fs::path(Path_GBIF, "GBIF_Data.qs2"),
+    object = GBIF_data, out_path = fs::path(path_GBIF, "GBIF_data.qs2"),
     n_threads = 5L)
 
-  rm(TaxaList, envir = environment())
+  rm(taxa_list, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
 
-  # iNaturalist unique grids ----
+  # Citizen science unique grids ----
 
-  ecokit::cat_time("iNaturalist unique grids")
+  ecokit::cat_time("Citizen science unique grids")
 
   ecokit::cat_time("Prepare input data for summarising", level = 1L)
-  iNaturalist_Others <- sf::st_drop_geometry(GBIF_Data) %>%
-    dplyr::distinct(species, CellCode, institutionCode) %>%
-    dplyr::mutate(
-      institutionCode = tidyr::replace_na(institutionCode, ""),
-      institutionCode = institutionCode == "iNaturalist",
-      institutionCode = dplyr::if_else(
-        institutionCode, "iNaturalist", "Others"))
+  citizen_others <- sf::st_drop_geometry(GBIF_data) %>%
+    dplyr::distinct(species, CellCode, publisher_type)
 
   ecokit::cat_time(
-    "Number of unique iNaturalist grid cells per species", level = 1L)
-  iNaturalist_Unique <- iNaturalist_Others %>%
+    "Number of unique citizen science grid cells per species", level = 1L)
+  citizen_unique <- citizen_others %>%
     dplyr::group_by(species, CellCode) %>%
     tidyr::pivot_wider(
-      names_from = institutionCode, values_from = institutionCode,
+      names_from = publisher_type, values_from = publisher_type,
       values_fn = unique) %>%
     dplyr::ungroup() %>%
-    dplyr::filter(is.na(Others), iNaturalist == "iNaturalist") %>%
+    dplyr::filter(is.na(others) & citizen_science == "citizen_science") %>%
     dplyr::count(species) %>%
-    dplyr::rename(iNaturalist_Unique = n)
+    dplyr::rename(citizen_science_unique = n)
 
   ecokit::cat_time(
-    "Number of grid cells for iNaturalist and other data sources",
+    "Number of grid cells for citizen science and other data sources",
     level = 1L)
+  citizen_count <- dplyr::count(citizen_others, species, publisher_type) %>%
+    tidyr::pivot_wider(names_from = publisher_type, values_from = n) %>%
+    dplyr::select(species, citizen_science, others) %>%
+    dplyr::left_join(citizen_unique, by = "species") %>%
+    dplyr::select(species, others, tidyselect::everything())
 
-  iNaturalist_Count <- iNaturalist_Others %>%
-    dplyr::count(species, institutionCode) %>%
-    tidyr::pivot_wider(names_from = institutionCode, values_from = n) %>%
-    dplyr::select(species, iNaturalist, Others) %>%
-    dplyr::left_join(iNaturalist_Unique, by = "species") %>%
-    dplyr::select(species, Others, tidyselect::everything())
+  ecokit::cat_time("Save citizen science summary data", level = 1L)
+  save(citizen_count, file = fs::path(path_GBIF, "citizen_count.RData"))
 
-  ecokit::cat_time("Save iNaturalist summary data", level = 1L)
-  save(
-    iNaturalist_Count,
-    file = fs::path(Path_GBIF, "iNaturalist_Count.RData"))
-
-  rm(
-    iNaturalist_Others, iNaturalist_Unique, iNaturalist_Count,
-    envir = environment())
+  rm(citizen_others, citizen_unique, citizen_count, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -326,18 +316,18 @@ GBIF_process <- function(
   # Covert GBIF data to presence-only grids ----
 
   ecokit::cat_time("Covert GBIF data to presence-only grids")
-  GBIF_Grid <- sf::st_drop_geometry(GBIF_Data) %>%
+  GBIF_grid <- sf::st_drop_geometry(GBIF_data) %>%
     # only unique combinations between species and grid ID
     dplyr::distinct(
       IAS_ID, taxon_name, Species_name, Species_name2,
-      Species_File, CellCode) %>%
+      Species_File, CellCode, publisher_type) %>%
     # add polygons for grids
-    dplyr::left_join(GridSf, by = "CellCode") %>%
+    dplyr::left_join(grid_sf, by = "CellCode") %>%
     # ensure that the data is sf object
     sf::st_as_sf()
 
   ecokit::cat_time("Save presence-only grids", level = 1L)
-  save(GBIF_Grid, file = fs::path(Path_GBIF, "GBIF_Grid.RData"))
+  save(GBIF_grid, file = fs::path(path_GBIF, "GBIF_grid.RData"))
   invisible(gc())
 
   # # ..................................................................... ###
@@ -347,29 +337,31 @@ GBIF_process <- function(
   ecokit::cat_time("# observations or grid cells per species")
 
   ecokit::cat_time("# observations per species", level = 1L)
-  SpNObs <- sf::st_drop_geometry(GBIF_Data) %>%
+  species_n_obs <- sf::st_drop_geometry(GBIF_data) %>%
     dplyr::count(IAS_ID, taxon_name, Species_name) %>%
-    dplyr::rename(GBIF_NumOcc = n)
+    dplyr::rename(GBIF_n_obs = n)
 
   ecokit::cat_time("# grids per species", level = 1L)
-  SpNGrids <- sf::st_drop_geometry(GBIF_Grid) %>%
+  species_n_grids <- dplyr::select(GBIF_grid, -publisher_type) %>%
+    sf::st_drop_geometry() %>%
+    dplyr::distinct(IAS_ID, taxon_name, Species_name, CellCode) %>%
     dplyr::count(IAS_ID, taxon_name, Species_name) %>%
-    dplyr::rename(GBIF_NumGrids = n)
+    dplyr::rename(GBIF_n_grids = n)
 
   ecokit::cat_time(
     "Merge number of observations and grids per species", level = 1L)
-  GBIF_NObsNGrid <- dplyr::full_join(
-    SpNObs, SpNGrids,
+  GBIF_n_obs_n_grid <- dplyr::full_join(
+    species_n_obs, species_n_grids,
     by = c("IAS_ID", "taxon_name", "Species_name"))
 
   ecokit::cat_time("Save as RData", level = 1L)
-  save(GBIF_NObsNGrid, file = fs::path(Path_GBIF, "GBIF_NObsNGrid.RData"))
+  save(GBIF_n_obs_n_grid, file = fs::path(path_GBIF, "GBIF_n_obs_n_grid.RData"))
 
   ecokit::cat_time("Save as xlsx", level = 1L)
   writexl::write_xlsx(
-    x = GBIF_NObsNGrid, path = fs::path(Path_GBIF, "GBIF_NObsNGrid.xlsx"))
+    x = GBIF_n_obs_n_grid, path = fs::path(path_GBIF, "GBIF_n_obs_n_grid.xlsx"))
 
-  rm(GBIF_NObsNGrid, SpNObs, SpNGrids, envir = environment())
+  rm(GBIF_n_obs_n_grid, species_n_obs, species_n_grids, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -380,26 +372,43 @@ GBIF_process <- function(
   ## Number of observations per grid  ----
 
   ecokit::cat_time("Number of observations per grid cell", level = 1L)
-  GBIF_NObs <- sf::st_drop_geometry(GBIF_Data) %>%
+  GBIF_n_obs <- sf::st_drop_geometry(GBIF_data) %>%
     dplyr::count(CellCode) %>%
-    dplyr::left_join(GridSf, by = "CellCode") %>%
+    dplyr::left_join(grid_sf, by = "CellCode") %>%
     sf::st_as_sf() %>%
     terra::vect() %>%
-    terra::rasterize(y = GridR, field = "n") %>%
-    terra::mask(GridR) %>%
+    terra::rasterize(y = grid_r, field = "n") %>%
+    terra::mask(grid_r) %>%
     stats::setNames("NumObs") %>%
+    ecokit::set_raster_crs(crs = "epsg:3035") %>%
+    terra::wrap()
+  GBIF_n_obs_log <- terra::unwrap(GBIF_n_obs) %>%
+    log10() %>%
     ecokit::set_raster_crs(crs = "epsg:3035") %>%
     terra::wrap()
 
   ecokit::cat_time(
-    "Number of observations per grid cell (log scale)", level = 1L)
-  GBIF_NObs_log <- terra::unwrap(GBIF_NObs) %>%
+    "Number of citizen science observations per grid cell", level = 1L)
+  GBIF_cz_n_obs <- sf::st_drop_geometry(GBIF_data) %>%
+    dplyr::filter(publisher_type == "citizen_science") %>%
+    dplyr::count(CellCode) %>%
+    dplyr::left_join(grid_sf, by = "CellCode") %>%
+    sf::st_as_sf() %>%
+    terra::vect() %>%
+    terra::rasterize(y = grid_r, field = "n") %>%
+    terra::mask(grid_r) %>%
+    stats::setNames("NumObs") %>%
+    ecokit::set_raster_crs(crs = "epsg:3035") %>%
+    terra::wrap()
+  GBIF_cz_n_obs_log <- terra::unwrap(GBIF_cz_n_obs) %>%
     log10() %>%
     ecokit::set_raster_crs(crs = "epsg:3035") %>%
     terra::wrap()
 
   ecokit::cat_time("Save as RData", level = 2L)
-  save(GBIF_NObs, GBIF_NObs_log, file = fs::path(Path_GBIF, "GBIF_NObs.RData"))
+  save(
+    GBIF_n_obs, GBIF_n_obs_log, GBIF_cz_n_obs, GBIF_cz_n_obs_log,
+    file = fs::path(path_GBIF, "GBIF_n_obs.RData"))
 
   invisible(gc())
 
@@ -408,45 +417,63 @@ GBIF_process <- function(
   ## Number of species per grid cell -----
 
   ecokit::cat_time("Number of IAS per grid cell", level = 1L)
-  GBIF_NSp <- sf::st_drop_geometry(GBIF_Grid) %>%
+  GBIF_n_species <- sf::st_drop_geometry(GBIF_grid) %>%
     dplyr::count(CellCode) %>%
-    dplyr::left_join(GridSf, by = "CellCode") %>%
+    dplyr::left_join(grid_sf, by = "CellCode") %>%
     sf::st_as_sf() %>%
     terra::vect() %>%
-    terra::rasterize(y = GridR, field = "n") %>%
-    terra::mask(GridR) %>%
+    terra::rasterize(y = grid_r, field = "n") %>%
+    terra::mask(grid_r) %>%
     stats::setNames("NumSpecies") %>%
     ecokit::set_raster_crs(crs = "epsg:3035") %>%
     terra::wrap()
+  GBIF_n_species_log <- terra::unwrap(GBIF_n_species) %>%
+    log10() %>%
+    ecokit::set_raster_crs(crs = "epsg:3035") %>%
+    terra::wrap()
 
-  ecokit::cat_time("Number of IAS per grid cell (log)", level = 1L)
-  GBIF_NSp_Log <- terra::unwrap(GBIF_NSp) %>%
+  ecokit::cat_time("Number of CZ IAS per grid cell", level = 1L)
+  GBIF_cz_n_species <- sf::st_drop_geometry(GBIF_grid) %>%
+    dplyr::filter(publisher_type == "citizen_science") %>%
+    dplyr::count(CellCode) %>%
+    dplyr::left_join(grid_sf, by = "CellCode") %>%
+    sf::st_as_sf() %>%
+    terra::vect() %>%
+    terra::rasterize(y = grid_r, field = "n") %>%
+    terra::mask(grid_r) %>%
+    stats::setNames("NumSpecies") %>%
+    ecokit::set_raster_crs(crs = "epsg:3035") %>%
+    terra::wrap()
+  GBIF_cz_n_species_log <- terra::unwrap(GBIF_cz_n_species) %>%
     log10() %>%
     ecokit::set_raster_crs(crs = "epsg:3035") %>%
     terra::wrap()
 
   ecokit::cat_time("Save as RData", level = 2L)
-  save(GBIF_NSp, GBIF_NSp_Log, file = fs::path(Path_GBIF, "GBIF_NSp.RData"))
+  save(
+    GBIF_n_species, GBIF_n_species_log,
+    GBIF_cz_n_species, GBIF_cz_n_species_log,
+    file = fs::path(path_GBIF, "GBIF_n_species.RData"))
 
-  rm(GridSf, GridR, envir = environment())
+  rm(grid_sf, envir = environment())
   invisible(gc())
 
   # # ................................... ###
 
-  ## Plot_GBIF_Summary -----
+  ## Plot_GBIF_summary -----
 
   ecokit::cat_time("Plotting summary maps", level = 1L)
 
-  GBIF_date <- GBIF_Metadata$StatusDetailed$modified %>%
+  GBIF_date <- GBIF_metadata$GBIF_status$modified %>%
     lubridate::date() %>%
     format("%d %B %Y")
 
-  GBIF_DOI <- GBIF_Metadata$StatusDetailed$doi
+  GBIF_DOI <- GBIF_metadata$GBIF_status$doi
   plot_tag <- format(Sys.Date(), "%d %B %Y")
   plot_tag <- stringr::str_glue(
     "DOI: {GBIF_DOI} ({GBIF_date})\nLast update: {plot_tag}")
 
-  rm(GBIF_date, GBIF_DOI, GBIF_Grid, GBIF_Metadata, envir = environment())
+  rm(GBIF_date, GBIF_DOI, GBIF_grid, GBIF_metadata, envir = environment())
 
   # Plotting limits
   x_limit <- c(2600000, 6700000)
@@ -480,8 +507,8 @@ GBIF_process <- function(
       panel.ontop = TRUE, panel.background = ggplot2::element_rect(fill = NA))
 
 
-  Plot_GBIF_Summary <- function(
-    r_map, plot_title, legend_label = NULL, EU_map = EuroBound,
+  plot_GBIF_summary <- function(
+    r_map, plot_title, legend_label = NULL, EU_map = EU_borders,
     plot_theme = plotting_theme, xlim = x_limit, ylim = y_limit) {
 
     OutMap <- ggplot2::ggplot() +
@@ -506,55 +533,53 @@ GBIF_process <- function(
   }
 
   # a common main title of the figure
-  MainTitle <- cowplot::ggdraw() +
+  main_title <- cowplot::ggdraw() +
     cowplot::draw_label(
-      label = "Summary of IAS data (GBIF)", fontface = "bold", hjust = 0.5) +
+      label = "Summary of naturalised alien plant species (NAPS) data (GBIF)",
+      fontface = "bold", hjust = 0.5) +
     cowplot::draw_label(
       label = plot_tag, fontface = "italic", color = "grey", x = 0.98,
       y = 0.35, size = 8, hjust = 1) +
     ggplot2::theme(plot.margin = ggplot2::margin(0, 0, 0.4, 0))
 
   # Plotting summary maps
-  Plot <- tibble::tibble(
+  GBIF_summary_plot <- tibble::tibble(
     # tibble for plotting information
     summ_map = list(
-      terra::unwrap(GBIF_NObs) / 1000, terra::unwrap(GBIF_NObs_log),
-      terra::unwrap(GBIF_NSp) / 100, terra::unwrap(GBIF_NSp_Log)),
+      terra::unwrap(GBIF_n_obs) / 1000, terra::unwrap(GBIF_n_obs_log),
+      terra::unwrap(GBIF_n_species) / 100, terra::unwrap(GBIF_n_species_log)),
     plot_title = c(
       "Number of observations", "Number of observations (log10)",
-      "Number of IAS", "Number of IAS (log10)"),
+      "Number of NAPS", "Number of NAPS (log10)"),
     legend_label = c("\u00D7 1000", "log10", "\u00D7 100", "Log10")) %>%
     # add the ggplot object as column to the data
     dplyr::mutate(
       summ_map_gg = purrr::pmap(
         .l = list(summ_map, plot_title, legend_label),
         .f = function(summ_map, plot_title, legend_label) {
-          Plot_GBIF_Summary(
-            summ_map, plot_title, legend_label,
-            plotting_theme, x_limit, y_limit)
+          plot_GBIF_summary(
+            r_map = summ_map, plot_title = plot_title,
+            legend_label = legend_label)
         })) %>%
     dplyr::pull(summ_map_gg) %>%
     # Plot the four panels together on a single figure
     cowplot::plot_grid(plotlist = ., ncol = 2, nrow = 2) %>%
     # add the common title
-    cowplot::plot_grid(MainTitle, ., ncol = 1, rel_heights = c(0.035, 1))
+    cowplot::plot_grid(main_title, ., ncol = 1, rel_heights = c(0.035, 1))
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   ragg::agg_jpeg(
-    filename = fs::path(Path_GBIF, "GBIF_Summary.jpeg"),
+    filename = fs::path(path_GBIF, "GBIF_summary.jpeg"),
     width = 25, height = 25.8, res = 600, quality = 100, units = "cm")
-  print(Plot)
+  print(GBIF_summary_plot)
   grDevices::dev.off()
-
-  rm(EuroBound, envir = environment())
-  invisible(gc())
 
   # # ..................................................................... ###
 
   # Species-specific data ----
   ecokit::cat_time("Species-specific data")
 
-  SpList <- sf::st_drop_geometry(GBIF_Data) %>%
+  species_list <- sf::st_drop_geometry(GBIF_data) %>%
     dplyr::distinct(Species_name) %>%
     dplyr::pull(Species_name) %>%
     sort()
@@ -564,37 +589,34 @@ GBIF_process <- function(
 
   # On LUMI, extracting species data in parallel using `furrr::future_walk` took
   # much longer time than working sequentially `purrr::walk` due to the
-  # existence of the very large `GBIF_Data` object. Although it is possible to
+  # existence of the very large `GBIF_data` object. Although it is possible to
   # integrate following chunk in the `GBIF_species_data` function, it would be
   # much faster to implement the following sequentially, then process species
-  # maps in parallel later on, after the deletion of the `GBIF_Data` object
+  # maps in parallel later on, after the deletion of the `GBIF_data` object
   purrr::walk(
-    .x = SpList,
+    .x = species_list,
     .f = ~ {
       # Filter data on this species
-      sp_name <- ecokit::replace_space(.x) %>%
-        # replace non-ascii multiplication symbol with x
-        stringr::str_replace_all("\u00D7", "x") %>%
-        stringr::str_replace_all("-", "")
-
-      sp_data <- dplyr::filter(GBIF_Data, Species_name == .x)
-      outfile_sf <- fs::path(path_sp_data, paste0(sp_name, ".RData"))
+      sp_data <- dplyr::filter(GBIF_data, Species_name == .x)
 
       # Save if there is data
       if (nrow(sp_data) > 0) {
+        sp_name <- ecokit::replace_space(.x) %>%
+          # replace non-ascii multiplication symbol with x
+          stringr::str_replace_all("\u00D7", "x") %>%
+          stringr::str_replace_all("-", "")
+        outfile_sf <- fs::path(path_sp_data, paste0(sp_name, ".RData"))
         ecokit::save_as(
           object = sp_data, object_name = sp_name, out_path = outfile_sf)
       }
       return(invisible(NULL))
-    },
-    .progress = FALSE)
+    })
 
   # # ..................................................................... ###
 
   # Number of species per publisher --------
 
-  n_species_publisher <- GBIF_Data %>%
-    sf::st_drop_geometry() %>%
+  n_species_publisher <- sf::st_drop_geometry(GBIF_data) %>%
     dplyr::distinct(
       IAS_ID, publisher, CellCode, Longitude_3035, Latitude_3035) %>%
     tidyr::nest(sp_data = -publisher) %>%
@@ -606,14 +628,12 @@ GBIF_process <- function(
         .x = sp_data,
         .f = ~{
           dplyr::summarise(
-            .x,
-            n_species = length(unique(IAS_ID)),
+            .x, n_species = length(unique(IAS_ID)),
             .by = c(CellCode, Longitude_3035, Latitude_3035)) %>%
             sf::st_as_sf(
               coords = c("Longitude_3035", "Latitude_3035"), crs = 3035) %>%
             dplyr::select(-CellCode) %>%
-            terra::rasterize(
-              terra::unwrap(Grid_10_Land_Crop), field = "n_species")
+            terra::rasterize(grid_r, field = "n_species")
         })) %>%
     dplyr::select(-sp_data, -n_obs)
   invisible(gc())
@@ -626,15 +646,9 @@ GBIF_process <- function(
 
           partner_id2 <- stringr::str_pad(partner_id, width = 3, pad = "0")
 
-          ragg::agg_jpeg(
-            filename = fs::path(
-              path_publishers,
-              paste("n_sp_per_publisher_", partner_id2, ".jpeg")),
-            width = 25, height = 25, res = 600, quality = 100, units = "cm")
-
-          Plot <- ggplot2::ggplot() +
+          publisher_plot <- ggplot2::ggplot() +
             ggplot2::geom_sf(
-              EuroBound, mapping = ggplot2::aes(), color = "grey30",
+              EU_borders, mapping = ggplot2::aes(), color = "grey30",
               linewidth = 0.1, fill = "grey95", inherit.aes = TRUE) +
             tidyterra::geom_spatraster(
               data = terra::trim(partner_map), maxcell = Inf) +
@@ -642,7 +656,7 @@ GBIF_process <- function(
               na.value = "transparent", "viridis::plasma",
               breaks = ecokit::integer_breaks()) +
             ggplot2::geom_sf(
-              EuroBound, mapping = ggplot2::aes(), color = "grey40",
+              EU_borders, mapping = ggplot2::aes(), color = "grey40",
               linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
             ggplot2::scale_x_continuous(
               expand = ggplot2::expansion(mult = c(0, 0)), limits = x_limit) +
@@ -650,24 +664,29 @@ GBIF_process <- function(
               expand = ggplot2::expansion(mult = c(0, 0)), limits = y_limit) +
             plotting_theme +
             ggplot2::labs(title = publisher, fill = "n_species")
-          print(Plot)
+
+          ragg::agg_jpeg(
+            filename = fs::path(
+              path_publishers,
+              paste("n_sp_per_publisher_", partner_id2, ".jpeg")),
+            width = 25, height = 25, res = 600, quality = 100, units = "cm")
+          print(publisher_plot)
           grDevices::dev.off()
 
-          return(NULL)
-        }
-      ))
+          invisible(return(NULL))
+        }))
 
   n_species_publisher <- n_species_publisher %>%
     dplyr::mutate(
-      partner_map_gg = NULL,
+      partner_map_gg = NULL, partner_id = NULL,
       partner_map = purrr::map(partner_map, terra::wrap))
   ecokit::save_as(
     object = n_species_publisher, object_name = "n_species_publisher",
-    out_path = fs::path(Path_GBIF, "n_species_publisher.RData"))
+    out_path = fs::path(path_GBIF, "n_species_publisher.RData"))
 
   rm(
-    GBIF_Data, GBIF_NObs, GBIF_NObs_log, GBIF_NSp, GBIF_NSp_Log,
-    n_species_publisher, envir = environment())
+    GBIF_data, GBIF_n_obs, GBIF_n_obs_log, GBIF_n_species, GBIF_n_species_log,
+    n_species_publisher, grid_r, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -687,7 +706,7 @@ GBIF_process <- function(
   ecokit::cat_time("Splitting species data in parallel", level = 2L)
 
   sp_data_tmp <- future.apply::future_lapply(
-    X = SpList,
+    X = species_list,
     FUN = IASDT.R::GBIF_species_data, env_file = env_file,
     verbose = FALSE, plot_tag = plot_tag,
     future.scheduling = Inf, future.seed = TRUE,
@@ -704,9 +723,9 @@ GBIF_process <- function(
   # Clean up chunk files ----
   if (delete_chunks) {
     ecokit::cat_time("Clean up - remove temporary chunk files")
-    list.files(Path_GBIF_Interim, full.names = TRUE) %>%
+    list.files(path_GBIF_interim, full.names = TRUE) %>%
       fs::file_delete()
-    fs::dir_delete(Path_GBIF_Interim)
+    fs::dir_delete(path_GBIF_interim)
   }
 
   # # ..................................................................... ###

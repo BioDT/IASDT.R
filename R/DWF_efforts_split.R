@@ -85,7 +85,7 @@ efforts_split <- function(
     "taxonRank", "decimalLatitude", "decimalLongitude",
     "coordinateUncertaintyInMeters", "speciesKey")
 
-  SelectedCols <- "unzip -p {path_zip} {CSV_File} | head -n 1" %>%
+  selected_columns <- "unzip -p {path_zip} {CSV_File} | head -n 1" %>%
     stringr::str_glue() %>%
     ecokit::system_command() %>%
     # Split the first row into column names. Data is tab-separated
@@ -101,7 +101,7 @@ efforts_split <- function(
   # nolint end
 
   Command <- stringr::str_glue(
-    'unzip -p {path_zip} {CSV_File} | cut -f{SelectedCols} -d "\t" | \\
+    'unzip -p {path_zip} {CSV_File} | cut -f{selected_columns} -d "\t" | \\
     sed -n "1!p" | split -l {chunk_size} -a 4 -d - {OutPrefix} \\
     --additional-suffix=.txt')
 

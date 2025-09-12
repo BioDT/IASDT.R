@@ -109,7 +109,7 @@ IAS_distribution <- function(
 
   ecokit::cat_time(
     "Check path for EASIN and GBIF data", level = 2L, verbose = verbose)
-  Path_GBIF_DT <- fs::path(Path_GBIF, "Sp_Data")
+  Path_GBIF_DT <- fs::path(Path_GBIF, "species_data")
   Path_EASIN <- fs::path(Path_EASIN, "Sp_DT")
 
   if (!dir.exists(Path_GBIF_DT)) {
@@ -271,7 +271,7 @@ IAS_distribution <- function(
   # Path for the current species GBIF data
   Path_GBIF_D <- fs::path(Path_GBIF_DT, paste0(Sp_File, ".RData"))
   Path_GBIF_R <- fs::path(
-    Path_GBIF, "Sp_Raster", paste0(Sp_File, "_Raster.RData"))
+    Path_GBIF, "species_raster", paste0(Sp_File, "_raster.RData"))
 
   if (all(file.exists(Path_GBIF_D, Path_GBIF_R))) {
     # GBIF data as sf object
@@ -637,7 +637,7 @@ IAS_distribution <- function(
   ecokit::cat_time(
     "# unique iNaturalist grid cells", level = 1L, verbose = verbose)
 
-  iNatur_DT <- fs::path(Path_GBIF, "iNaturalist_Count.RData") %>%
+  iNatur_DT <- fs::path(Path_GBIF, "iNaturalist_count.RData") %>%
     ecokit::load_as() %>%
     dplyr::filter(species == !!species)
 
@@ -743,4 +743,99 @@ IAS_distribution <- function(
 
   return(tibble::tibble(species = species, PA_summary = out_qs2))
 
+}
+
+# # |------------------------------------------------------------------------| #
+# update_citizen ----
+## |------------------------------------------------------------------------| #
+
+#' Update species distribution raster with citizen science data within a
+#' distance threshold
+#'
+#' Adds presence grid cells from a citizen science raster (`r1`) to an existing
+#' species distribution raster (`r2`) only if the citizen science cell is within
+#' `dist_km` kilometers of any existing cell in `r2`, but not within 500 meters
+#' of any existing cell in `r2`. This avoids including isolated citizen science
+#' presences that are too far from known presences.
+#'
+#' @param r1 SpatRaster. Binary raster (0, 1, NA) representing citizen science
+#'   presences.
+#' @param r2 SpatRaster. Binary raster (0, 1, NA) representing merged/primary
+#'   species distribution.
+#' @param dist_km numeric. Maximum distance (in kilometers) to allow new citizen
+#'   science presences to be added to `r2`.
+#' @return SpatRaster. Updated raster with citizen science presences added under
+#'   the specified constraints.
+#' @keywords internal
+#' @noRd
+
+update_citizen <- function(r1, r2, dist_km = 100) {
+
+  if (!inherits(r1, "SpatRaster") || !inherits(r2, "SpatRaster")) {
+    ecokit::stop_ctx(
+      "r1 and r2 must be SpatRaster objects", include_backtrace = TRUE,
+      class_r1 = class(r1), class_r2 = class(r2))
+  }
+  if (terra::nlyr(r1) != 1 || terra::nlyr(r2) != 1) {
+    ecokit::stop_ctx(
+      "r1 and r2 must be single layer SpatRaster objects",
+      include_backtrace = TRUE,
+      nlyr_r1 = terra::nlyr(r1), nlyr_r2 = terra::nlyr(r2))
+  }
+  if (!all(terra::ext(r1) == terra::ext(r2))) {
+    ecokit::stop_ctx(
+      "r1 and r2 must have the same extent",
+      include_backtrace = TRUE, ext_r1 = as.character(terra::ext(r1)),
+      ext_r2 = as.character(terra::ext(r2)))
+  }
+  if (!all(terra::res(r1) == terra::res(r2))) {
+    ecokit::stop_ctx(
+      "r1 and r2 must have the same resolution",
+      include_backtrace = TRUE)
+  }
+  if (!all(unique(terra::values(r1)) %in% c(NaN, 0, 1))) {
+    ecokit::stop_ctx(
+      "r1 must be a binary raster with values of 0, 1, or NA",
+      include_backtrace = TRUE)
+  }
+  if (!all(unique(terra::values(r2)) %in% c(NaN, 0, 1))) {
+    ecokit::stop_ctx(
+      "r2 must be a binary raster with values of 0, 1, or NA",
+      include_backtrace = TRUE)
+  }
+
+  # Convert r1 and r2 to sf points
+  r1_sf <- terra::classify(r1 == 1, cbind(0, NA)) %>%
+    stats::setNames("r1") %>%
+    as.data.frame(xy = TRUE) %>%
+    dplyr::filter(r1 == 1) %>%
+    sf::st_as_sf(coords = c("x", "y"), crs = terra::crs(r1))
+
+  r2_sf <- terra::classify(r2 == 1, cbind(0, NA)) %>%
+    stats::setNames("r2") %>%
+    as.data.frame(xy = TRUE) %>%
+    dplyr::filter(r2 == 1) %>%
+    sf::st_as_sf(coords = c("x", "y"), crs = terra::crs(r1))
+
+  # Identify points in r1_sf within dist_km of any point in r2_sf
+  # but not within 500 m of any point in r2_sf
+  points_to_add <- sf::st_filter(
+    x = r1_sf, y = r2_sf,
+    .predicate = sf::st_is_within_distance, dist = dist_km * 1000)
+  if (nrow(points_to_add) == 0) {
+    return(r2)
+  }
+
+  # exclude overlapped points with r2_sf
+  points_to_add <- dplyr::filter(
+    points_to_add,
+    rowSums(
+      sf::st_is_within_distance(
+        points_to_add, r2_sf, dist = 500, sparse = FALSE)) == 0)
+  if (nrow(points_to_add) == 0) {
+    return(r2)
+  }
+
+  # Rasterize the points to add back to r2
+  terra::rasterize(points_to_add, r2, field = 1, update = TRUE)
 }

@@ -109,7 +109,7 @@ GBIF_download <- function(
 
     # a new DOI will be created; a couple of hours waiting time is expected
 
-    GBIF_Request <- rgbif::occ_download(
+    GBIF_request <- rgbif::occ_download(
       # list of species keys
       rgbif::pred_in("taxonKey", TaxaList$speciesKey),
       # Only with coordinates & no spatial issues
@@ -126,23 +126,23 @@ GBIF_download <- function(
     )
 
     ecokit::cat_time("Save data request", level = 1L)
-    save(GBIF_Request, file = fs::path(Path_GBIF, "GBIF_Request.RData"))
+    save(GBIF_request, file = fs::path(Path_GBIF, "GBIF_request.RData"))
 
     # Waiting for data to be ready ------
     ecokit::cat_time("Waiting for data to be ready", level = 1L)
-    StatusDetailed <- rgbif::occ_download_wait(GBIF_Request)
+    GBIF_status <- rgbif::occ_download_wait(GBIF_request)
 
     ecokit::cat_diff(
       init_time = .StartTimeRequest,
       prefix = "Requesting GBIF data took ", level = 1L)
 
     ecokit::cat_time("Save status details", level = 1L)
-    save(StatusDetailed, file = fs::path(Path_GBIF, "StatusDetailed.RData"))
+    save(GBIF_status, file = fs::path(Path_GBIF, "GBIF_status.RData"))
 
     ecokit::cat_time("Data is ready - status summary:", ... = "\n", level = 1L)
-    print(rgbif::occ_download_meta(key = StatusDetailed$key))
+    print(rgbif::occ_download_meta(key = GBIF_status$key))
   } else {
-    Path_Request <- fs::path(Path_GBIF, "GBIF_Request.RData")
+    Path_Request <- fs::path(Path_GBIF, "GBIF_request.RData")
 
     if (!file.exists(Path_Request)) {
       ecokit::stop_ctx(
@@ -151,9 +151,9 @@ GBIF_download <- function(
     }
 
     ecokit::cat_time("Loading previous GBIF request", level = 1L)
-    GBIF_Request <- ecokit::load_as(Path_Request)
+    GBIF_request <- ecokit::load_as(Path_Request)
 
-    Path_Status <- fs::path(Path_GBIF, "StatusDetailed.RData")
+    Path_Status <- fs::path(Path_GBIF, "GBIF_status.RData")
 
     if (!file.exists(Path_Status)) {
       ecokit::stop_ctx(
@@ -164,7 +164,7 @@ GBIF_download <- function(
     ecokit::cat_time(
       "Loading `status` information from a previous data request",
       level = 1L)
-    StatusDetailed <- ecokit::load_as(Path_Status)
+    GBIF_status <- ecokit::load_as(Path_Status)
   }
 
   # # ..................................................................... ###
@@ -179,7 +179,7 @@ GBIF_download <- function(
     .StartTimeDownload <- lubridate::now(tzone = "CET")
 
     Dwn <- rgbif::occ_download_get(
-      GBIF_Request, path = Path_GBIF_Raw, overwrite = FALSE) %>%
+      GBIF_request, path = Path_GBIF_Raw, overwrite = FALSE) %>%
       suppressMessages()
 
     ecokit::cat_time(
@@ -192,33 +192,33 @@ GBIF_download <- function(
 
     # Extract/save metadata info
     ecokit::cat_time("Extract and save metadata info", level = 1L)
-    GBIF_Metadata <- list(
-      GBIF_Request = GBIF_Request,
-      StatusDetailed = StatusDetailed,
-      Citation = attr(GBIF_Request, "citation"),
-      DwnKey = StatusDetailed$key,
-      DOI = StatusDetailed$doi,
-      CreatedTime = StatusDetailed$created,
-      ModTime = StatusDetailed$modified,
-      DownLink = StatusDetailed$downloadLink,
-      FileSizeM = StatusDetailed$size / (1024 * 1024),
-      NRecordsM = StatusDetailed$totalRecords / 1e6,
-      NDatasets = StatusDetailed$numberDatasets,
-      Status = StatusDetailed$status,
-      DwnPath = as.character(Dwn))
+    GBIF_metadata <- list(
+      GBIF_request = GBIF_request,
+      GBIF_status = GBIF_status,
+      citation = attr(GBIF_request, "citation"),
+      download_key = GBIF_status$key,
+      DOI = GBIF_status$doi,
+      created_time = GBIF_status$created,
+      modified_time = GBIF_status$modified,
+      download_link = GBIF_status$downloadLink,
+      file_size_mb = GBIF_status$size / (1024 * 1024),
+      n_records_millions = GBIF_status$totalRecords / 1e6,
+      n_datasets = GBIF_status$numberDatasets,
+      status = GBIF_status$status,
+      download_path = as.character(Dwn))
 
-    save(GBIF_Metadata, file = fs::path(Path_GBIF, "GBIF_Metadata.RData"))
+    save(GBIF_metadata, file = fs::path(Path_GBIF, "GBIF_metadata.RData"))
   } else {
     ecokit::cat_time("Data was NOT downloaded", level = 1L)
 
-    GBIF_Metadata <- fs::path(Path_GBIF, "GBIF_Metadata.RData")
-    if (!file.exists(GBIF_Metadata)) {
+    GBIF_metadata <- fs::path(Path_GBIF, "GBIF_metadata.RData")
+    if (!file.exists(GBIF_metadata)) {
       ecokit::stop_ctx(
-        "GBIF metadata file does not exist", GBIF_Metadata = GBIF_Metadata,
+        "GBIF metadata file does not exist", GBIF_metadata = GBIF_metadata,
         include_backtrace = TRUE)
     }
 
-    GBIF_Metadata <- ecokit::load_as(GBIF_Metadata)
+    GBIF_metadata <- ecokit::load_as(GBIF_metadata)
   }
 
   # # ..................................................................... ###
@@ -244,7 +244,7 @@ GBIF_download <- function(
   lgl_cols <- c("hasCoordinate", "hasGeospatialIssues")
 
   # Names of selected columns
-  SelectedCols <- c(
+  selected_columns <- c(
     # data / source ID
     "gbifID", "datasetKey", "catalogNumber", "occurrenceID", "basisOfRecord",
     "publisher", "ownerInstitutionCode", "institutionCode", "datasetName",
@@ -279,10 +279,10 @@ GBIF_download <- function(
     dplyr::mutate(SortID = seq_len(dplyr::n()))
 
 
-  SelectedCols <-
+  selected_columns <-
     # extract column names and their numbers from the zipped file without
     # extraction read first line
-    "unzip -p {GBIF_Metadata$DwnPath} occurrence.txt | head -n 1" %>%
+    "unzip -p {GBIF_metadata$download_path} occurrence.txt | head -n 1" %>%
     stringr::str_glue() %>%
     ecokit::system_command() %>%
     # Split the first row into column names. Data is tab-separated
@@ -292,7 +292,7 @@ GBIF_download <- function(
     # column number in the original data
     dplyr::mutate(ID = seq_len(dplyr::n())) %>%
     # only keep information for selected columns
-    dplyr::right_join(SelectedCols, by = "Col") %>%
+    dplyr::right_join(selected_columns, by = "Col") %>%
     dplyr::mutate(
       # add information on column classes
       Class = dplyr::case_when(
@@ -317,12 +317,12 @@ GBIF_download <- function(
         Col = "LineNum", ID = 1L, SortID = 1L, Class = "integer"),
       .)
 
-  SortCols <- dplyr::pull(dplyr::arrange(SelectedCols, SortID), Col)
+  SortCols <- dplyr::pull(dplyr::arrange(selected_columns, SortID), Col)
 
   save(
-    SelectedCols, Int_cols, Int64_cols, Dbl_cols, lgl_cols,
+    selected_columns, Int_cols, Int64_cols, Dbl_cols, lgl_cols,
     SortCols, CountryCodes,
-    file = fs::path(Path_GBIF, "SelectedCols.RData"))
+    file = fs::path(Path_GBIF, "selected_columns.RData"))
 
   # # ..................................................................... ###
 
@@ -342,8 +342,8 @@ GBIF_download <- function(
     chunk_size <- format(chunk_size, scientific = FALSE)
 
     paste0(
-      "unzip -p {GBIF_Metadata$DwnPath} occurrence.txt |",
-      ' nl -w1 -n "ln" -s "\t" | cut -f{stringr::str_c(SelectedCols$ID, ',
+      "unzip -p {GBIF_metadata$download_path} occurrence.txt |",
+      ' nl -w1 -n "ln" -s "\t" | cut -f{stringr::str_c(selected_columns$ID, ',
       'collapse = ",")} -d "\t" | sed -n "1!p" | split -l {chunk_size} ',
       '-a 3 -d - "{Path_GBIF_Interim}/Chunk_" --additional-suffix=.txt') %>%
       stringr::str_glue() %>%

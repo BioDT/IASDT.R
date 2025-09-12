@@ -54,7 +54,7 @@ GBIF_read_chunk <- function(
   CLC_Tif <- SynHab_desc <- CLC_CW <- Longitude <- Latitude <- UncertainKm <-
     CountryCodes <- countryName <- hasCoordinate <- hasGeospatialIssues <-
     phylum <- phylumKey <- Path_Grid <- occurrenceStatus <- Value <-
-    Path_GBIF <- SelectedCols <- Int_cols <- lgl_cols <- Dbl_cols <-
+    Path_GBIF <- selected_columns <- Int_cols <- lgl_cols <- Dbl_cols <-
     Int64_cols <- coordinatePrecision <- NDecLong <- NDecLat <- year <-
     taxonRank <- SortCols <- CellCode <- NULL
 
@@ -79,7 +79,7 @@ GBIF_read_chunk <- function(
     env_file = env_file, env_variables_data = EnvVars2Read)
   rm(EnvVars2Read, envir = environment())
 
-  load(fs::path(Path_GBIF, "SelectedCols.RData"))
+  load(fs::path(Path_GBIF, "selected_columns.RData"))
 
   # # ..................................................................... ###
 
@@ -109,12 +109,17 @@ GBIF_read_chunk <- function(
     file = CLC_CW, show_col_types = FALSE, progress = FALSE) %>%
     dplyr::select(-SynHab_desc)
 
+  # publishers for citizen science data
+  cz_publishers <- c(
+    "Pl@ntNet", "iNaturalist.org", "Observation.org", "naturgucker.de",
+    "iSpot", "BioDiversity4All", "Questagame")
+
   ChunkData <- readr::read_lines(chunk_file, progress = FALSE) %>%
     # read the data by lines and convert to tibble
     dplyr::tibble(Data = .) %>%
     # split into columns and assign column names
     tidyr::separate_wider_delim(
-      cols = "Data", delim = "\t", names = SelectedCols$Col) %>%
+      cols = "Data", delim = "\t", names = selected_columns$Col) %>%
     # Convert classes for some columns
     dplyr::mutate(
       # convert empty strings to NA
@@ -128,7 +133,11 @@ GBIF_read_chunk <- function(
       dplyr::across(tidyselect::all_of(Dbl_cols), as.double),
       dplyr::across(tidyselect::all_of(Int64_cols), bit64::as.integer64),
       # convert uncertainty to kilometre
-      UncertainKm = UncertainKm / 1000) %>%
+      UncertainKm = UncertainKm / 1000,
+      # publisher type: citizen science vs others
+      publisher_type = dplyr::case_when(
+        publisher %in% cz_publishers ~ "citizen_science",
+        .default = "others")) %>%
     # filtering data
     dplyr::filter(
       # exclude occurrences with empty coordinates
@@ -171,6 +180,8 @@ GBIF_read_chunk <- function(
       -hasCoordinate, -hasGeospatialIssues, -phylum, -phylumKey,
       -occurrenceStatus)
 
+  rm(cz_publishers, envir = environment())
+
   if (nrow(ChunkData) > 0) {
     # Extract CLC data for occurrences (original data at resolution of 100 m)
     # extract coordinates
@@ -189,7 +200,6 @@ GBIF_read_chunk <- function(
       dplyr::select(-Value) %>%
       # merge with cleaned dataset
       dplyr::bind_cols(ChunkData, .)
-
 
     if (save_RData) {
       ChunkOutName <- stringr::str_remove_all(basename(chunk_file), ".txt$")

@@ -838,7 +838,7 @@ prepare_input_data <- function(
                   model_formula, env = baseenv())
 
                 # Training and testing data
-                
+
                 # To make comparisons between `Hmsc` jSDMs and single-species
                 # SDMs valid, the same training and testing data are used for
                 # all model types; i.e., no pseudo-absences are generated and
@@ -850,7 +850,7 @@ prepare_input_data <- function(
                   dplyr::filter(cv_fold != .x) %>%
                   dplyr::select(
                     tidyselect::all_of(c(species_name, predictor_names_local)))
-                
+
                 if (.y == "maxent") {
                   pres_as_backgrounds <- training_data %>%
                     dplyr::filter(!!rlang::sym(species_name) == 1) %>%

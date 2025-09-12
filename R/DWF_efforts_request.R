@@ -101,7 +101,7 @@ efforts_request <- function(
     level = 1L)
 
   # Extract taxonomic info for vascular plants orders
-  SelectedCols <- c(
+  selected_columns <- c(
     "class", "classKey", "order", "orderKey", "numDescendants")
 
   Efforts_AllRequests <- rgbif::name_backbone("Tracheophyta") %>%
@@ -109,7 +109,7 @@ efforts_request <- function(
     rgbif::name_lookup(rank = "ORDER", higherTaxonKey = .) %>%
     # Get info on order names
     magrittr::extract2("data") %>%
-    dplyr::select(tidyselect::all_of(SelectedCols)) %>%
+    dplyr::select(tidyselect::all_of(selected_columns)) %>%
     dplyr::mutate(
       Request = furrr::future_map(
         .x = orderKey,
@@ -189,7 +189,7 @@ efforts_request <- function(
         lubridate::as_date)) %>%
     dplyr::ungroup() %>%
     # how to cite data
-    dplyr::mutate(Citation = purrr::map_chr(Request, attr, "citation"))
+    dplyr::mutate(citation = purrr::map_chr(Request, attr, "citation"))
 
   ecokit::cat_time("Requesting efforts data was finished", level = 2L)
 

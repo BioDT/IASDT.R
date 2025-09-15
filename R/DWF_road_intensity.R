@@ -214,7 +214,7 @@ road_intensity <- function(env_file = ".env") {
   extract_road_summary <- function(road_type, road_name, Function = "length") {
     summary_map <- list.files(
       path = path_road, full.names = TRUE,
-      pattern = paste0("^road_sf_", road_type, "_.+RData")) %>%
+      pattern = paste0("^road_sf_", road_type, "_.+qs2")) %>%
       ecokit::load_as(unwrap_r = TRUE) %>%
       terra::rasterizeGeom(y = grid_ref, fun = Function, unit = "km") %>%
       terra::mask(mask = grid_ref) %>%
@@ -224,18 +224,23 @@ road_intensity <- function(env_file = ".env") {
 
   ecokit::cat_time("1 - Highways", level = 2L)
   grip_1 <- extract_road_summary(road_type = 1, road_name = "Highways")
+  invisible(gc())
 
   ecokit::cat_time("2 - Primary", level = 2L)
   grip_2 <- extract_road_summary(road_type = 2, road_name = "Primary")
+  invisible(gc())
 
   ecokit::cat_time("3 - Secondary", level = 2L)
   grip_3 <- extract_road_summary(road_type = 3, road_name = "Secondary")
+  invisible(gc())
 
   ecokit::cat_time("4 - Tertiary", level = 2L)
   grip_4 <- extract_road_summary(road_type = 4, road_name = "Tertiary")
+  invisible(gc())
 
   ecokit::cat_time("5 - Local", level = 2L)
   grip_5 <- extract_road_summary(road_type = 5, road_name = "Local")
+  invisible(gc())
 
   ecokit::cat_time("All roads", level = 2L)
   road_length <- (grip_1 + grip_2 + grip_3 + grip_4 + grip_5) %>%
@@ -274,8 +279,8 @@ road_intensity <- function(env_file = ".env") {
     .x = as.list(road_length),
     .f = ~ {
       ecokit::cat_time(names(.x), level = 2L)
-      Road_Points <- terra::as.points(terra::classify(.x, cbind(0, NA)))
-      terra::distance(x = .x, y = Road_Points, unit = "km") %>%
+      road_points <- terra::as.points(terra::classify(.x, cbind(0, NA)))
+      terra::distance(x = .x, y = road_points, unit = "km") %>%
         terra::mask(grid_ref) %>%
         stats::setNames(paste0("road_distance_", names(.x))) %>%
         # Ensure that values are read from memory
@@ -339,8 +344,8 @@ road_intensity <- function(env_file = ".env") {
   plots_length <- purrr::map(
     .x = terra::as.list(road_length),
     .f = ~ {
-      Road <- log10(terra::classify(.x, cbind(0, NA)))
-      Title <- names(.x) %>%
+      road_to_plot <- log10(terra::classify(.x, cbind(0, NA)))
+      plot_title <- names(.x) %>%
         stringr::str_remove("road_distance_") %>%
         stringr::str_replace("_", " - ") %>%
         paste(" roads")
@@ -350,7 +355,7 @@ road_intensity <- function(env_file = ".env") {
           EU_boundaries,
           mapping = ggplot2::aes(), color = "grey75",
           linewidth = 0.075, fill = "grey98") +
-        tidyterra::geom_spatraster(data = Road, maxcell = Inf) +
+        tidyterra::geom_spatraster(data = road_to_plot, maxcell = Inf) +
         ggplot2::geom_sf(
           EU_boundaries,
           mapping = ggplot2::aes(), color = "grey30",
@@ -363,10 +368,9 @@ road_intensity <- function(env_file = ".env") {
         ggplot2::scale_y_continuous(
           expand = ggplot2::expansion(mult = c(0, 0)),
           limits = c(1450000, 5420000)) +
-        ggplot2::labs(title = Title, fill = "log10") +
+        ggplot2::labs(title = plot_title, fill = "log10") +
         plot_theme
-    }
-  )
+    })
 
   plots_length <- patchwork::wrap_plots(plots_length, ncol = 3, nrow = 2) +
     patchwork::plot_annotation(
@@ -412,8 +416,7 @@ road_intensity <- function(env_file = ".env") {
           limits = c(1450000, 5420000)) +
         ggplot2::labs(title = paste0(names(.x), " roads"), fill = "km") +
         plot_theme
-    }
-  )
+    })
 
   plots_distance <- patchwork::wrap_plots(plots_distance, ncol = 3, nrow = 2) +
     patchwork::plot_annotation(

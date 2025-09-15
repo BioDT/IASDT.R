@@ -247,17 +247,18 @@ EASIN_process <- function(
       dplyr::distinct() %>%
       # Extract species name (exclude authors)
       dplyr::mutate(species_name = stringr::word(taxon_name, 1, 2)) %>%
-      dplyr::rename(EASIN_Name = Name)
+      dplyr::rename(EASIN_name = Name)
 
     ecokit::cat_time("Check EASIN taxa not in the list", level = 1L)
     # EASIN taxa not in the reference list
-    new_EASIN_taxa <- setdiff(EASIN_taxa$EASIN_Name, EASIN_ref$Name)
+    new_EASIN_taxa <- setdiff(EASIN_taxa$EASIN_name, EASIN_ref$Name)
     if (length(new_EASIN_taxa) > 0) {
       tibble::tibble(NewTaxa = new_EASIN_taxa) %>%
         readr::write_tsv(
           file = fs::path(path_EASIN, "new_EASIN_taxa.txt"),
           progress = FALSE)
     }
+
     ## Save EASIN taxa - RData ----
     ecokit::cat_time("Save EASIN taxa - RData", level = 1L)
     save(EASIN_taxa, file = path_EASIN_taxa)
@@ -320,6 +321,7 @@ EASIN_process <- function(
         break
       }
 
+      # not_processedID
       data_download <- try(
         future.apply::future_lapply(
           X = not_processed, FUN = IASDT.R::EASIN_download, env_file = env_file,

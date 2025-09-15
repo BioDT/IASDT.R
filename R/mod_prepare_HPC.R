@@ -210,20 +210,20 @@ mod_prepare_HPC <- function(
   ecokit::check_args(
     args_type = "character", args_to_check = c("directory_name", "path_Hmsc"))
 
-  LogicArgs <- c(
+  logical_args <- c(
     "use_phylo_tree", "no_phylo_tree",
     "exclude_0_habitat", "skip_fitted", "verbose_progress", "to_JSON",
     "CV_SAC", "check_python", "overwrite_rds", "SLURM_prepare",
     "exclude_cultivated", "GPP", "efforts_as_predictor",
     "road_rail_as_predictor", "habitat_as_predictor", "river_as_predictor",
     "soil_as_predictor", "wetness_as_predictor")
-  ecokit::check_args(args_to_check = LogicArgs, args_type = "logical")
+  ecokit::check_args(args_to_check = logical_args, args_type = "logical")
 
-  NumericArgs <- c(
+  numeric_args <- c(
     "MCMC_n_chains", "MCMC_verbose", "n_array_jobs", "n_pres_per_species",
     "min_efforts_n_species", "MCMC_transient_factor", "CV_n_folds",
     "CV_n_grids", "CV_n_rows", "CV_n_columns", "precision")
-  ecokit::check_args(args_to_check = NumericArgs, args_type = "numeric")
+  ecokit::check_args(args_to_check = numeric_args, args_type = "numeric")
 
   if (SLURM_prepare) {
     # Validate memory_per_cpu and job_runtime
@@ -239,7 +239,7 @@ mod_prepare_HPC <- function(
       include_backtrace = TRUE)
   }
 
-  rm(LogicArgs, NumericArgs, envir = environment())
+  rm(logical_args, numeric_args, envir = environment())
 
   if (!(precision %in% c(32, 64))) {
     ecokit::stop_ctx(
@@ -293,14 +293,14 @@ mod_prepare_HPC <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  NCells <- Sp <- IAS_ID <- x <- y <- Country <- M_thin <- rL <-
+  NCells <- Sp <- ias_id <- x <- y <- country <- M_thin <- rL <-
     M_Name_init <- rL2 <- M_samples <- M4HPC_Path <- M_transient <-
-    M_Name_Fit <- Chain <- Post_Missing <- Command_HPC <- Command_WS <-
-    Post_Path <- Path_ModProg <- TaxaInfoFile <- Path_Grid <- EU_Bound <-
-    Path_PA <- NAME_ENGL <- NSp <- Species_File <- File <- ias_id <-
+    M_Name_Fit <- chain <- Post_Missing <- Command_HPC <- Command_WS <-
+    Post_Path <- Path_ModProg <- taxa_info_file <- Path_Grid <- EU_Bound <-
+    Path_PA <- NAME_ENGL <- NSp <- species_file <- File <- ias_id <-
     PA_file <- PA_model_file <- path_model <- NULL
 
-  Path_Python <- fs::path(path_Hmsc, "Scripts", "python.exe")
+  path_python <- fs::path(path_Hmsc, "Scripts", "python.exe")
 
   ecokit::info_chunk(
     paste0("Preparing data for Hmsc-HPC models - ", directory_name),
@@ -319,25 +319,25 @@ mod_prepare_HPC <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "TaxaInfoFile", "DP_R_Taxa_info", FALSE, TRUE,
-    "EU_Bound", "DP_R_EUBound", FALSE, TRUE,
-    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
-    "path_model", "DP_R_Model_path", FALSE, FALSE,
+    "taxa_info_file", "DP_R_taxa_info", FALSE, TRUE,
+    "EU_Bound", "DP_R_country_boundaries", FALSE, TRUE,
+    "Path_Grid", "DP_R_grid_processed", TRUE, FALSE,
+    "path_model", "DP_R_model_root_path", FALSE, FALSE,
     "Path_PA", "DP_R_PA", TRUE, FALSE)
 
   # Check if Python executable exists
-  if (check_python && !file.exists(Path_Python) && Sys.info()[1] == "Windows") {
+  if (check_python && !file.exists(path_python) && Sys.info()[1] == "Windows") {
     ecokit::stop_ctx(
-      "Python executable does not exist", Path_Python = Path_Python,
+      "Python executable does not exist", path_python = path_python,
       include_backtrace = TRUE)
   }
 
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
 
   # Validate structure of CV_fit list argument
@@ -443,7 +443,7 @@ mod_prepare_HPC <- function(
   }
   fs::dir_create(path_model)
 
-  Path_GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
+  Path_GridR <- fs::path(Path_Grid, "grid_10_land_crop.RData")
   if (!file.exists(Path_GridR)) {
     ecokit::stop_ctx(
       "Path for the Europe boundaries does not exist", Path_GridR = Path_GridR,
@@ -575,7 +575,7 @@ mod_prepare_HPC <- function(
 
   if (!is.null(model_country)) {
 
-    ValidCountries <- model_country %in% unique(DT_All$Country)
+    ValidCountries <- model_country %in% unique(DT_All$country)
 
     if (!all(ValidCountries)) {
       ecokit::stop_ctx(
@@ -589,7 +589,7 @@ mod_prepare_HPC <- function(
         "Subsetting data to: ", paste(sort(model_country), collapse = " & ")),
       level = 1L, verbose = verbose_progress)
 
-    Sample_ExclSp <- dplyr::filter(DT_All, Country %in% model_country) %>%
+    Sample_ExclSp <- dplyr::filter(DT_All, country %in% model_country) %>%
       dplyr::summarise(
         dplyr::across(tidyselect::starts_with("Sp_"), sum)) %>%
       tidyr::pivot_longer(
@@ -601,7 +601,7 @@ mod_prepare_HPC <- function(
     ecokit::cat_time(
       paste0(length(Sample_ExclSp), " species are excluded"), level = 1L,
       verbose = verbose_progress)
-    DT_All <- dplyr::filter(DT_All, Country %in% model_country) %>%
+    DT_All <- dplyr::filter(DT_All, country %in% model_country) %>%
       dplyr::select(-tidyselect::all_of(Sample_ExclSp))
 
     # # |||||||||||||||||||||||||||||||||||
@@ -880,7 +880,7 @@ mod_prepare_HPC <- function(
   # cross-validation data to be saved
   DT_CV <- DT_All %>%
     dplyr::select(
-      tidyselect::all_of(c("CellNum", "CellCode", "Country")),
+      tidyselect::all_of(c("CellNum", "CellCode", "country")),
       tidyselect::starts_with("CV"))
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -902,26 +902,26 @@ mod_prepare_HPC <- function(
     ecokit::cat_time(
       "Save species summary", level = 1L, cat_timestamp = FALSE,
       verbose = verbose_progress)
-    SpSummary <- fs::path(Path_PA, "Sp_PA_Summary_DF.RData")
-    if (!file.exists(SpSummary)) {
+    sp_summary <- fs::path(Path_PA, "sp_pa_summary_df.RData")
+    if (!file.exists(sp_summary)) {
       ecokit::stop_ctx(
-        "SpSummary file does not exist", SpSummary = SpSummary,
+        "sp_summary file does not exist", sp_summary = sp_summary,
         include_backtrace = TRUE)
     }
-    SpSummary <- ecokit::load_as(SpSummary) %>%
-      dplyr::arrange(IAS_ID) %>%
+    sp_summary <- ecokit::load_as(sp_summary) %>%
+      dplyr::arrange(ias_id) %>%
       dplyr::mutate(
-        IAS_ID = stringr::str_pad(IAS_ID, pad = "0", width = 4),
-        IAS_ID = paste0("Sp_", IAS_ID)) %>%
-      dplyr::filter(IAS_ID %in% names(DT_y))
+        ias_id = stringr::str_pad(ias_id, pad = "0", width = 4),
+        ias_id = paste0("Sp_", ias_id)) %>%
+      dplyr::filter(ias_id %in% names(DT_y))
 
-    save(SpSummary, file = fs::path(path_model, "SpSummary.RData"))
+    save(sp_summary, file = fs::path(path_model, "sp_summary.RData"))
 
   } else {
 
     fs::file_copy(
-      fs::path(CV_fit_inherit, "SpSummary.RData"),
-      fs::path(path_model, "SpSummary.RData"), overwrite = TRUE)
+      fs::path(CV_fit_inherit, "sp_summary.RData"),
+      fs::path(path_model, "sp_summary.RData"), overwrite = TRUE)
 
   }
 
@@ -987,16 +987,16 @@ mod_prepare_HPC <- function(
   if (use_phylo_tree) {
     # Taxonomy as a proxy for phylogeny
     plant.tree <- readr::read_tsv(
-      file = TaxaInfoFile, show_col_types = FALSE, progress = FALSE) %>%
+      file = taxa_info_file, show_col_types = FALSE, progress = FALSE) %>%
       dplyr::mutate(
-        IAS_ID = stringr::str_pad(IAS_ID, pad = "0", width = 4),
-        IAS_ID = paste0("Sp_", IAS_ID),
-        taxon_name = NULL, Species_name = NULL, Species_name2 = NULL,
-        Species_File = NULL, Species = NULL) %>%
-      dplyr::filter(IAS_ID %in% names(DT_y)) %>%
+        ias_id = stringr::str_pad(ias_id, pad = "0", width = 4),
+        ias_id = paste0("Sp_", ias_id),
+        taxon_name = NULL, species_name = NULL, species_name2 = NULL,
+        species_file = NULL, Species = NULL) %>%
+      dplyr::filter(ias_id %in% names(DT_y)) %>%
       dplyr::mutate(dplyr::across(tidyselect::everything(), factor)) %>%
       ape::as.phylo(
-        ~Class / Order / Family / Genus / IAS_ID, data = ., collapse = FALSE)
+        ~class / order / family / genus / ias_id, data = ., collapse = FALSE)
 
     plant.tree$edge.length <- rep(1, length(plant.tree$edge))
   } else {
@@ -1386,14 +1386,14 @@ mod_prepare_HPC <- function(
     "Prepare Hmsc-HPC fitting commands", verbose = verbose_progress)
 
   Model_Info <- Model_Info %>%
-    dplyr::mutate(Chain = list(seq_len(MCMC_n_chains))) %>%
-    tidyr::unnest_longer("Chain") %>%
+    dplyr::mutate(chain = list(seq_len(MCMC_n_chains))) %>%
+    tidyr::unnest_longer("chain") %>%
     dplyr::arrange(M_Name_Fit) %>%
     dplyr::mutate(
       M_Chain = purrr::pmap(
-        .l = list(M_Name_Fit, M4HPC_Path, Chain,
+        .l = list(M_Name_Fit, M4HPC_Path, chain,
                   M_transient, M_samples, M_thin),
-        .f = function(M_Name_Fit, M4HPC_Path, Chain,
+        .f = function(M_Name_Fit, M4HPC_Path, chain,
                       M_transient, M_samples, M_thin) {
 
           # Turn off scientific notation
@@ -1406,12 +1406,12 @@ mod_prepare_HPC <- function(
           # Path for posterior sampling
           Path_Post <- fs::path(
             path_model, "Model_Fitting_HPC",
-            paste0(M_Name_Fit, "_Chain", Chain, "_post.rds"))
+            paste0(M_Name_Fit, "_Chain", chain, "_post.rds"))
 
           # Path for progress
           Path_Prog <- fs::path(
             path_model, "Model_Fitting_HPC",
-            paste0(M_Name_Fit, "_Chain", Chain, "_Progress.txt"))
+            paste0(M_Name_Fit, "_Chain", chain, "_Progress.txt"))
 
           Post_Missing <- isFALSE(file.exists(Path_Post))
 
@@ -1419,7 +1419,7 @@ mod_prepare_HPC <- function(
           Path_Model2_4cmd <- ecokit::normalize_path(Path_Model2)
           Path_Post_4cmd <- ecokit::normalize_path(Path_Post)
           Path_Prog_4cmd <- ecokit::normalize_path(Path_Prog)
-          Path_Python <- ecokit::normalize_path(Path_Python)
+          path_python <- ecokit::normalize_path(path_python)
 
           # `TF_ENABLE_ONEDNN_OPTS=0` is used to disable the following warning:
           #
@@ -1439,7 +1439,7 @@ mod_prepare_HPC <- function(
             "/usr/bin/time -v ", # nolint: absolute_paths_linter
 
             # Not needed as the python path is exported - check `setup-env.sh`
-            # Path_Python,
+            # path_python,
 
             "python3 -m hmsc.run_gibbs_sampler",
             " --input ", Path_Model2_4cmd,
@@ -1448,13 +1448,13 @@ mod_prepare_HPC <- function(
             " --transient ", M_transient,
             " --thin ", M_thin,
             " --verbose ", MCMC_verbose,
-            " --chain ", (Chain - 1),
+            " --chain ", (chain - 1),
             " --fp ", precision,
             " >& ", Path_Prog_4cmd)
 
           Command_WS <- paste0(
             "set TF_CPP_MIN_LOG_LEVEL=3 && set TF_ENABLE_ONEDNN_OPTS=0 && ",
-            Path_Python,
+            path_python,
             " -m hmsc.run_gibbs_sampler",
             " --input ", Path_Model2_4cmd,
             " --output ", Path_Post_4cmd,
@@ -1462,7 +1462,7 @@ mod_prepare_HPC <- function(
             " --transient ", M_transient,
             " --thin ", M_thin,
             " --verbose ", MCMC_verbose,
-            " --chain ", (Chain - 1),
+            " --chain ", (chain - 1),
             " --fp ", precision,
             " > ", Path_Prog_4cmd,
             " 2>&1")
@@ -1570,30 +1570,28 @@ mod_prepare_HPC <- function(
 
   ecokit::cat_time("Save data to disk", verbose = verbose_progress)
 
-  SetChainName <- function(Obj, Chain) {
-    if (is.null(Obj) || is.null(Chain)) {
+  set_chain_name <- function(object, chain) {
+    if (is.null(object) || is.null(chain)) {
       ecokit::stop_ctx(
-        "Obj and Chain cannot be empty", Obj = Obj, Chain = Chain,
+        "object and chain cannot be empty", object = object, chain = chain,
         include_backtrace = TRUE)
     }
-    Obj %>%
-      unlist() %>%
-      as.vector() %>%
-      stats::setNames(paste0("Chain", unlist(Chain)))
+    as.vector(unlist(object)) %>%
+      stats::setNames(paste0("chain", unlist(chain)))
   }
 
   Model_Info <- Model_Info %>%
     tidyr::nest(
       Post_Path = Post_Path, Path_ModProg = Path_ModProg,
-      Chain = Chain, Command_HPC = Command_HPC, Command_WS = Command_WS,
+      chain = chain, Command_HPC = Command_HPC, Command_WS = Command_WS,
       Post_Missing = Post_Missing) %>%
     dplyr::mutate(
-      Post_Path = purrr::map2(Post_Path, Chain, SetChainName),
-      Chain = purrr::map2(Chain, Chain, SetChainName),
-      Command_HPC = purrr::map2(Command_HPC, Chain, SetChainName),
-      Command_WS = purrr::map2(Command_WS, Chain, SetChainName),
-      Path_ModProg = purrr::map2(Path_ModProg, Chain, SetChainName),
-      Post_Missing = purrr::map2(Post_Missing, Chain, SetChainName),
+      Post_Path = purrr::map2(Post_Path, chain, set_chain_name),
+      chain = purrr::map2(chain, chain, set_chain_name),
+      Command_HPC = purrr::map2(Command_HPC, chain, set_chain_name),
+      Command_WS = purrr::map2(Command_WS, chain, set_chain_name),
+      Path_ModProg = purrr::map2(Path_ModProg, chain, set_chain_name),
+      Post_Missing = purrr::map2(Post_Missing, chain, set_chain_name),
       Post_Aligned = NA)
 
   save(Model_Info, file = Path_ModelDT)
@@ -1637,18 +1635,18 @@ mod_prepare_HPC <- function(
     model_mask <- ecokit::load_as(Path_GridR, unwrap_r = TRUE) %>%
       terra::rasterize(xy_all, .)
     # Whether to use masked (exclude_cultivated) or full PA
-    PA_layer <- dplyr::if_else(exclude_cultivated, "PA_Masked", "PA")
+    PA_layer <- dplyr::if_else(exclude_cultivated, "PA_masked", "PA")
 
     ecokit::cat_time(
       "Processing and exporting maps as tif files", level = 1L,
       verbose = verbose_progress)
 
-    Mod_PA <- SpSummary %>%
+    Mod_PA <- sp_summary %>%
       # Select only species name and ID
-      dplyr::select(ias_id = IAS_ID, Species_File) %>%
+      dplyr::select(ias_id = ias_id, species_file) %>%
       dplyr::mutate(
         # Path storing PA maps as raster files
-        File = fs::path(Path_PA, "PA_RData", paste0(Species_File, "_PA.RData")),
+        File = fs::path(Path_PA, "PA_rdata", paste0(species_file, "_PA.RData")),
         Map_Sp = purrr::map2(
           .x = File, .y = ias_id,
           .f = ~ {
@@ -1674,7 +1672,7 @@ mod_prepare_HPC <- function(
               PA_model_file = PA_model_file)
           })) %>%
       tidyr::unnest(cols = "Map_Sp") %>%
-      dplyr::select(-tidyselect::all_of(c("Species_File", "File")))
+      dplyr::select(-tidyselect::all_of(c("species_file", "File")))
 
     ecokit::cat_time(
       "Calculate species richness - full", level = 1L,

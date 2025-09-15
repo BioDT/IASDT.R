@@ -67,21 +67,21 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "Path_Rivers", "DP_R_Rivers_processed", FALSE, FALSE,
-    "Path_Rivers_Raw", "DP_R_Rivers_raw", FALSE, FALSE,
-    "Path_Rivers_Interim", "DP_R_Rivers_interim", FALSE, FALSE,
-    "Path_Rivers_Zip", "DP_R_Rivers_zip", FALSE, TRUE,
-    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE)
+    "Path_Rivers", "DP_R_rivers_processed", FALSE, FALSE,
+    "Path_Rivers_Raw", "DP_R_rivers_raw", FALSE, FALSE,
+    "Path_Rivers_Interim", "DP_R_rivers_interim", FALSE, FALSE,
+    "Path_Rivers_Zip", "DP_R_rivers_zip", FALSE, TRUE,
+    "Path_Grid", "DP_R_grid_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
   fs::dir_create(c(Path_Rivers, Path_Rivers_Raw, Path_Rivers_Interim))
 
-  RefGrid <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
+  RefGrid <- fs::path(Path_Grid, "grid_10_land_crop.RData")
   if (!file.exists(RefGrid)) {
     ecokit::stop_ctx(
       "The reference grid file does not exist", RefGrid = RefGrid,
@@ -146,7 +146,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
   ecokit::cat_time("Processing river network files")
   # # |||||||||||||||||||||||||||||||||||
 
-  River_Lengths <- list.files(
+  river_lengths <- list.files(
     Path_Rivers_Interim, pattern = ".+_GPKG.zip", full.names = TRUE) %>%
     purrr::map(
       .f = ~ {
@@ -166,7 +166,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
           ecokit::cat_time(
             "GPKG file was already processed as sf",
             level = 2L, cat_timestamp = FALSE)
-          River_sf <- ecokit::load_as(File_Sf)
+          river_sf <- ecokit::load_as(File_Sf)
 
         } else {
 
@@ -216,7 +216,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
           ecokit::cat_time(
             "Read the gpkg files as sf", level = 2L, cat_timestamp = FALSE)
 
-          River_sf <- sf::st_read(
+          river_sf <- sf::st_read(
             # Read the gpkg files
             dsn = gpkg_Files$path2, quiet = TRUE,
             # Select only `STRAHLER` (STRAHLER number) and `Shape` (line
@@ -241,7 +241,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
           ecokit::cat_time(
             "Saving processed data as sf", level = 2L, cat_timestamp = FALSE)
           ecokit::save_as(
-            object = River_sf, object_name = "River_sf", out_path = File_Sf)
+            object = river_sf, object_name = "river_sf", out_path = File_Sf)
         }
 
         # # .................................. #
@@ -250,7 +250,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
         # Rasterize the river network data
         ecokit::cat_time("Rasterizing", level = 2L, cat_timestamp = FALSE)
 
-        River_sf %>%
+        river_sf %>%
           dplyr::mutate(
             # Calculate length of rivers per grid cell
             River = purrr::map2(
@@ -278,7 +278,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
   ecokit::cat_time("Merging rasterized gpkg data")
   # # |||||||||||||||||||||||||||||||||||
 
-  River_Lengths <- River_Lengths %>%
+  river_lengths <- river_lengths %>%
     # Calculate the total length of rivers of all files
     dplyr::summarise(
       dplyr::across(
@@ -313,15 +313,15 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
   # Save as RData
   ecokit::cat_time("Save as RData", level = 1L, cat_timestamp = FALSE)
   ecokit::save_as(
-    object = terra::wrap(River_Lengths), object_name = "river_length",
-    out_path = fs::path(Path_Rivers, "River_Lengths.RData"))
+    object = terra::wrap(river_lengths), object_name = "river_length",
+    out_path = fs::path(Path_Rivers, "river_lengths.RData"))
 
   # Save as tif files
   ecokit::cat_time("Save as tif files", level = 1L, cat_timestamp = FALSE)
   terra::writeRaster(
-    x = River_Lengths,
+    x = river_lengths,
     filename = fs::path(
-      Path_Rivers, paste0("Rivers_", names(River_Lengths), ".tif")),
+      Path_Rivers, paste0("Rivers_", names(river_lengths), ".tif")),
     overwrite = TRUE)
 
   # # ..................................................................... ###
@@ -332,7 +332,7 @@ river_length <- function(env_file = ".env", cleanup = FALSE) {
   # # |||||||||||||||||||||||||||||||||||
 
   RiverPlots <- purrr::map(
-    .x = as.list(River_Lengths),
+    .x = as.list(river_lengths),
     .f = ~ {
       ggplot2::ggplot() +
         tidyterra::geom_spatraster(data = .x, maxcell = Inf) +

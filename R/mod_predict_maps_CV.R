@@ -43,7 +43,7 @@ predict_maps_CV <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   x <- y <- Path_Grid <- ias_id <- taxon_name <- species_name <- sp_type <-
-    type <- n_grids_pres <- n_grids_abs <- Sp <- IAS_ID <- ncells <-
+    type <- n_grids_pres <- n_grids_abs <- Sp <- ias_id <- ncells <-
     layer_name <- tif_path <- class <- order <- family <- NULL
 
   # # ..................................................................... ###
@@ -58,15 +58,15 @@ predict_maps_CV <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE)
+    "Path_Grid", "DP_R_grid_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
-  Path_GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
+  Path_GridR <- fs::path(Path_Grid, "grid_10_land_crop.RData")
   if (!file.exists(Path_GridR)) {
     ecokit::stop_ctx(
       "Path for the Europe boundaries does not exist", Path_GridR = Path_GridR,
@@ -288,7 +288,7 @@ predict_maps_CV <- function(
     # loading evaluation data
     Eval_data <- ecokit::load_as(Prediction_sf$Eval_Path) %>%
       dplyr::select(-Sp) %>%
-      dplyr::rename(ias_id = IAS_ID)
+      dplyr::rename(ias_id = ias_id)
 
     # loading prediction data
     Prediction_sf <- ecokit::load_as(Prediction_sf$Pred_Path)

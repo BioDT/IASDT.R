@@ -149,17 +149,17 @@ predict_latent_factor <- function(
   # loaded at locations for model fitting. This distinction facilitate the
   # processing.
 
-  AllTraining <- sum(indNew) == 0
-  AllNew <- sum(indOld) == 0
+  all_training <- sum(indNew) == 0
+  all_new <- sum(indOld) == 0
 
-  # Either AllTraining or AllNew should be TRUE
-  if (sum(AllTraining, AllNew) != 1) {
+  # Either all_training or all_new should be TRUE
+  if (sum(all_training, all_new) != 1) {
     ecokit::stop_ctx(
       "The input sites should be either all training sites or all new sites.",
-      sum = sum(AllTraining, AllNew), include_backtrace = TRUE)
+      sum = sum(all_training, all_new), include_backtrace = TRUE)
   }
 
-  if (AllTraining) {
+  if (all_training) {
     # If all input sites are for training sites, use LF info from the model
     # directly
     ecokit::cat_time(
@@ -1036,7 +1036,7 @@ plot_latent_factor <- function(path_model = NULL, env_file = ".env") {
 
   # # ..................................................................... ###
 
-  Path_Grid <- NULL
+  path_grid <- NULL
 
   # Environment variables ----
 
@@ -1045,15 +1045,15 @@ plot_latent_factor <- function(path_model = NULL, env_file = ".env") {
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE)
+    "path_grid", "DP_R_grid_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
-  Grid10 <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData") %>%
+  grid_10 <- fs::path(path_grid, "grid_10_land_crop.RData") %>%
     ecokit::load_as(unwrap_r = TRUE)
 
   # # ..................................................................... ###
@@ -1074,7 +1074,7 @@ plot_latent_factor <- function(path_model = NULL, env_file = ".env") {
     cbind.data.frame(Model_Coords, .) %>%
     sf::st_as_sf(coords = c("x", "y"), crs = 3035)
   Eta_Mean_R <- terra::rasterize(
-    Eta_Mean, Grid10, field = names(Eta_Mean)[-ncol(Eta_Mean)],
+    Eta_Mean, grid_10, field = names(Eta_Mean)[-ncol(Eta_Mean)],
     fun = "mean") %>%
     stats::setNames(stringr::str_remove(names(.), "_mean")) %>%
     stats::setNames(stringr::str_replace(names(.), "LF_", "Latent factor "))

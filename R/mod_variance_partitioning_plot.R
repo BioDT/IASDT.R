@@ -33,8 +33,8 @@ variance_partitioning_plot <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  IAS_ID <- Species_name <- Species <- Variable <- VP_Value <- species <-
-    TaxaInfoFile <- Sp <- TjurR2 <- Label <- VP_Sum <- evaluation_type <- NULL
+  ias_id <- species_name <- Species <- Variable <- VP_Value <- species <-
+    taxa_info_file <- Sp <- TjurR2 <- Label <- VP_Sum <- evaluation_type <- NULL
 
   # Set null device for `cairo`. This is to properly render the plots using
   # ggtext - https://github.com/wilkelab/cowplot/issues/73
@@ -54,16 +54,16 @@ variance_partitioning_plot <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "TaxaInfoFile", "DP_R_Taxa_info_rdata", FALSE, TRUE)
+    "taxa_info_file", "DP_R_taxa_info_rdata", FALSE, TRUE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
-  SpList <- ecokit::load_as(TaxaInfoFile) %>%
-    dplyr::select(Species = IAS_ID, Species_name) %>%
+  SpList <- ecokit::load_as(taxa_info_file) %>%
+    dplyr::select(Species = ias_id, species_name) %>%
     dplyr::distinct() %>%
     dplyr::mutate(
       Species = stringr::str_pad(string = Species, width = 4, pad = "0"),
@@ -138,8 +138,8 @@ variance_partitioning_plot <- function(
 
     mod_eval_train <- ecokit::load_as(path_eval_train) %>%
       # filter out the species that are not in the model
-      dplyr::filter(stringr::str_starts(IAS_ID, "Sp_")) %>%
-      dplyr::rename(Species = IAS_ID) %>%
+      dplyr::filter(stringr::str_starts(ias_id, "Sp_")) %>%
+      dplyr::rename(Species = ias_id) %>%
       dplyr::select(-Sp) %>%
       dplyr::left_join(SpList, by = "Species")
 
@@ -254,54 +254,54 @@ variance_partitioning_plot <- function(
   sp_order <- varpar_data %>%
     dplyr::mutate(Variable = factor(Variable, var_order)) %>%
     dplyr::summarise(
-      VP_Value = sum(VP_Value), .by = c(Species_name, Variable)) %>%
+      VP_Value = sum(VP_Value), .by = c(species_name, Variable)) %>%
     dplyr::arrange(Variable, dplyr::desc(VP_Value)) %>%
-    dplyr::distinct(Species_name) %>%
-    dplyr::pull(Species_name)
+    dplyr::distinct(species_name) %>%
+    dplyr::pull(species_name)
 
   # Order species by total variance, excluding the spatial random effect
   sp_order_nonspatial <- varpar_data %>%
     dplyr::filter(!startsWith(Variable, "Random")) %>%
     dplyr::summarise(
-      VP_Value = sum(VP_Value), .by = c("Species", "Species_name")) %>%
+      VP_Value = sum(VP_Value), .by = c("Species", "species_name")) %>%
     dplyr::arrange(dplyr::desc(VP_Value)) %>%
-    dplyr::distinct(Species_name) %>%
-    dplyr::pull(Species_name)
+    dplyr::distinct(species_name) %>%
+    dplyr::pull(species_name)
 
 
   # Plotting data for variance partitioning
 
   # 1. ordered by mean variance partitioning per Variable
   data_relative <- dplyr::arrange(varpar_data, Variable, VP_Value) %>%
-    dplyr::mutate(Species_name = factor(Species_name, sp_order)) %>%
+    dplyr::mutate(species_name = factor(species_name, sp_order)) %>%
     dplyr::left_join(varpar_mean, by = "Variable")
 
   # 2. original species order
-  sp_order_orig <- dplyr::distinct(varpar_data, Species, Species_name) %>%
+  sp_order_orig <- dplyr::distinct(varpar_data, Species, species_name) %>%
     dplyr::arrange(Species) %>%
-    dplyr::pull(Species_name)
+    dplyr::pull(species_name)
   data_relative_orig <- data_relative %>%
-    dplyr::mutate(Species_name = factor(Species_name, sp_order_orig))
+    dplyr::mutate(species_name = factor(species_name, sp_order_orig))
 
   # 3a. ordered by Tjur-R2 - training evaluation
   sp_order_tjurr2_train <- mod_eval_train %>%
     dplyr::arrange(dplyr::desc(TjurR2)) %>%
-    dplyr::pull(Species_name)
+    dplyr::pull(species_name)
   data_relative_tjurr2_train <- data_relative %>%
-    dplyr::mutate(Species_name = factor(Species_name, sp_order_tjurr2_train))
+    dplyr::mutate(species_name = factor(species_name, sp_order_tjurr2_train))
 
   # 3b. ordered by Tjur-R2 - testing evaluation
   if (is_cv_model) {
     sp_order_tjurr2_test <- mod_eval_test %>%
       dplyr::arrange(dplyr::desc(TjurR2)) %>%
-      dplyr::pull(Species_name)
+      dplyr::pull(species_name)
     data_relative_tjurr2_test <- data_relative %>%
-      dplyr::mutate(Species_name = factor(Species_name, sp_order_tjurr2_test))
+      dplyr::mutate(species_name = factor(species_name, sp_order_tjurr2_test))
   }
 
   # 4. ordered by total variance partitioning, excluding spatial random effect
   data_relative_nonspatial <- data_relative %>%
-    dplyr::mutate(Species_name = factor(Species_name, sp_order_nonspatial))
+    dplyr::mutate(species_name = factor(species_name, sp_order_nonspatial))
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
 
@@ -324,7 +324,7 @@ variance_partitioning_plot <- function(
 
   plot_relative <- data_relative %>%
     ggplot2::ggplot(
-      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label)) +
+      mapping = ggplot2::aes(x = VP_Value, y = species_name, fill = Label)) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
     ggplot2::ylab("Species") +
@@ -357,7 +357,7 @@ variance_partitioning_plot <- function(
 
   plot_relative_orig <- data_relative_orig %>%
     ggplot2::ggplot(
-      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label),
+      mapping = ggplot2::aes(x = VP_Value, y = species_name, fill = Label),
       environment = emptyenv()) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
@@ -390,7 +390,7 @@ variance_partitioning_plot <- function(
 
   plot_relative_tjurr2_train <- data_relative_tjurr2_train %>%
     ggplot2::ggplot(
-      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label),
+      mapping = ggplot2::aes(x = VP_Value, y = species_name, fill = Label),
       environment = emptyenv()) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
@@ -426,7 +426,7 @@ variance_partitioning_plot <- function(
 
     plot_relative_tjurr2_test <- data_relative_tjurr2_test %>%
       ggplot2::ggplot(
-        mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label),
+        mapping = ggplot2::aes(x = VP_Value, y = species_name, fill = Label),
         environment = emptyenv()) +
       ggplot2::geom_bar(stat = "identity", width = 1) +
       ggplot2::theme_classic() +
@@ -465,7 +465,7 @@ variance_partitioning_plot <- function(
 
   plot_relative_nonspatial <- data_relative_nonspatial %>%
     ggplot2::ggplot(
-      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label),
+      mapping = ggplot2::aes(x = VP_Value, y = species_name, fill = Label),
       environment = emptyenv()) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
@@ -539,34 +539,34 @@ variance_partitioning_plot <- function(
   # variance partitioning per Variable
   data_raw_train <- varpar_data_raw_train %>%
     dplyr::arrange(Variable, VP_Value) %>%
-    dplyr::mutate(Species_name = factor(Species_name, sp_order)) %>%
+    dplyr::mutate(species_name = factor(species_name, sp_order)) %>%
     dplyr::left_join(varpar_raw_mean_train, by = "Variable") %>%
-    dplyr::mutate(Species_name = as.character(Species_name))
+    dplyr::mutate(species_name = as.character(species_name))
 
   # Plotting data for relative variance partitioning - original species order
   data_raw_train_orig <- data_raw_train %>%
-    dplyr::mutate(Species_name = factor(Species_name, sp_order_orig))
+    dplyr::mutate(species_name = factor(species_name, sp_order_orig))
 
   # Plotting data for relative variance partitioning - original species order
   sp_order_total_raw_train <- data_raw_train %>%
     dplyr::summarize(
-      VP_Sum = sum(VP_Value), .by = c(Species, Species_name)) %>%
+      VP_Sum = sum(VP_Value), .by = c(Species, species_name)) %>%
     dplyr::arrange(dplyr::desc(VP_Sum)) %>%
-    dplyr::pull(Species_name)
+    dplyr::pull(species_name)
   data_raw_train_total_raw_train <- data_raw_train %>%
-    dplyr::mutate(Species_name = factor(Species_name, sp_order_total_raw_train))
+    dplyr::mutate(species_name = factor(species_name, sp_order_total_raw_train))
 
   # Order species by total variance, excluding the spatial random effect
   sp_order_raw_train_nonspatial <- data_raw_train %>%
     dplyr::filter(!startsWith(Variable, "Random")) %>%
     dplyr::summarise(
-      VP_Value = sum(VP_Value), .by = c("Species", "Species_name")) %>%
+      VP_Value = sum(VP_Value), .by = c("Species", "species_name")) %>%
     dplyr::arrange(dplyr::desc(VP_Value)) %>%
-    dplyr::distinct(Species_name) %>%
-    dplyr::pull(Species_name)
+    dplyr::distinct(species_name) %>%
+    dplyr::pull(species_name)
   data_raw_train_nonspatial <- data_raw_train %>%
     dplyr::mutate(
-      Species_name = factor(Species_name, sp_order_raw_train_nonspatial))
+      species_name = factor(species_name, sp_order_raw_train_nonspatial))
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
 
@@ -586,7 +586,7 @@ variance_partitioning_plot <- function(
 
   plot_raw_train <- data_raw_train_orig %>%
     ggplot2::ggplot(
-      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label),
+      mapping = ggplot2::aes(x = VP_Value, y = species_name, fill = Label),
       environment = emptyenv()) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
@@ -621,7 +621,7 @@ variance_partitioning_plot <- function(
 
   plot_raw_train_total_raw <- data_raw_train_total_raw_train %>%
     ggplot2::ggplot(
-      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label),
+      mapping = ggplot2::aes(x = VP_Value, y = species_name, fill = Label),
       environment = emptyenv()) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
@@ -658,7 +658,7 @@ variance_partitioning_plot <- function(
 
   plot_raw_train_nonspatial <- data_raw_train_nonspatial %>%
     ggplot2::ggplot(
-      mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label),
+      mapping = ggplot2::aes(x = VP_Value, y = species_name, fill = Label),
       environment = emptyenv()) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
@@ -734,39 +734,39 @@ variance_partitioning_plot <- function(
     # variance partitioning per Variable
     data_raw_test <- varpar_data_raw_test %>%
       dplyr::arrange(Variable, VP_Value) %>%
-      dplyr::mutate(Species_name = factor(Species_name, sp_order)) %>%
+      dplyr::mutate(species_name = factor(species_name, sp_order)) %>%
       dplyr::left_join(varpar_raw_mean_test, by = "Variable") %>%
       dplyr::mutate(
-        Species_name = as.character(Species_name),
+        species_name = as.character(species_name),
         # replace NAs with zero for cases for which there is no testing
         # evaluation data
         VP_Value = ifelse(is.na(VP_Value), 0, VP_Value))
 
     # Plotting data for relative variance partitioning - original species order
     data_raw_test_orig <- data_raw_test %>%
-      dplyr::mutate(Species_name = factor(Species_name, sp_order_orig))
+      dplyr::mutate(species_name = factor(species_name, sp_order_orig))
 
     # Plotting data for relative variance partitioning - original species order
     sp_order_total_raw_test <- data_raw_test %>%
       dplyr::summarize(
-        VP_Sum = sum(VP_Value), .by = c(Species, Species_name)) %>%
+        VP_Sum = sum(VP_Value), .by = c(Species, species_name)) %>%
       dplyr::arrange(dplyr::desc(VP_Sum)) %>%
-      dplyr::pull(Species_name)
+      dplyr::pull(species_name)
     data_raw_test_total_raw_test <- data_raw_test %>%
       dplyr::mutate(
-        Species_name = factor(Species_name, sp_order_total_raw_test))
+        species_name = factor(species_name, sp_order_total_raw_test))
 
     # Order species by total variance, excluding the spatial random effect
     sp_order_raw_test_nonspatial <- data_raw_test %>%
       dplyr::filter(!startsWith(Variable, "Random")) %>%
       dplyr::summarise(
-        VP_Value = sum(VP_Value), .by = c("Species", "Species_name")) %>%
+        VP_Value = sum(VP_Value), .by = c("Species", "species_name")) %>%
       dplyr::arrange(dplyr::desc(VP_Value)) %>%
-      dplyr::distinct(Species_name) %>%
-      dplyr::pull(Species_name)
+      dplyr::distinct(species_name) %>%
+      dplyr::pull(species_name)
     data_raw_test_nonspatial <- data_raw_test %>%
       dplyr::mutate(
-        Species_name = factor(Species_name, sp_order_raw_test_nonspatial))
+        species_name = factor(species_name, sp_order_raw_test_nonspatial))
 
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
 
@@ -786,7 +786,7 @@ variance_partitioning_plot <- function(
 
     plot_raw_test <- data_raw_test_orig %>%
       ggplot2::ggplot(
-        mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label),
+        mapping = ggplot2::aes(x = VP_Value, y = species_name, fill = Label),
         environment = emptyenv()) +
       ggplot2::geom_bar(stat = "identity", width = 1) +
       ggplot2::theme_classic() +
@@ -822,7 +822,7 @@ variance_partitioning_plot <- function(
 
     plot_raw_test_total_raw <- data_raw_test_total_raw_test %>%
       ggplot2::ggplot(
-        mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label),
+        mapping = ggplot2::aes(x = VP_Value, y = species_name, fill = Label),
         environment = emptyenv()) +
       ggplot2::geom_bar(stat = "identity", width = 1) +
       ggplot2::theme_classic() +
@@ -859,7 +859,7 @@ variance_partitioning_plot <- function(
 
     plot_raw_test_nonspatial <- data_raw_test_nonspatial %>%
       ggplot2::ggplot(
-        mapping = ggplot2::aes(x = VP_Value, y = Species_name, fill = Label),
+        mapping = ggplot2::aes(x = VP_Value, y = species_name, fill = Label),
         environment = emptyenv()) +
       ggplot2::geom_bar(stat = "identity", width = 1) +
       ggplot2::theme_classic() +

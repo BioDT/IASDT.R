@@ -120,10 +120,11 @@ convergence_plot <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  SpComb <- `2.5%` <- `97.5%` <- Class <- Order <- Family <- DT <- IAS_ID <-
-    Variable <- data <- PlotID <- File <- Page <- Iter <- Value <- Chain <-
-    y <- label <- Var_Sp2 <- Species_name <- Species_File <- Path_PA <-
-    is_intercept <- Var_Sp_File <- description <- LQ <- NULL
+  species_combs <- `2.5%` <- `97.5%` <- class <- order <- family <- DT <-
+    ias_id <- Variable <- data <- plot_id <- File <- page <- Iter <- Value <-
+    Chain <- y <- label <- var_sp_2 <- species_name <- species_file <-
+    Path_PA <- is_intercept <- var_sp_file <- description <-
+    linear_quadratic <- NULL
 
   # # ..................................................................... ###
 
@@ -145,24 +146,24 @@ convergence_plot <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
     "Path_PA", "DP_R_PA", TRUE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
-  SpSummary <- fs::path(Path_PA, "Sp_PA_Summary_DF.csv")
-  if (!file.exists(SpSummary)) {
+  sp_summary <- fs::path(Path_PA, "sp_pa_summary_df.RData")
+  if (!file.exists(sp_summary)) {
     ecokit::stop_ctx(
-      "SpSummary file does not exist", SpSummary = SpSummary,
+      "sp_summary file does not exist", sp_summary = sp_summary,
       include_backtrace = TRUE)
   }
 
-  SpSummary <- readr::read_csv(
-    file = SpSummary, show_col_types = FALSE, progress = FALSE) %>%
-    dplyr::select(Species = Species_name, Species_File)
+  sp_summary <- readr::read_csv(
+    file = sp_summary, show_col_types = FALSE, progress = FALSE) %>%
+    dplyr::select(species = species_name, species_file)
 
   # # ..................................................................... ###
 
@@ -187,14 +188,14 @@ convergence_plot <- function(
   }
 
   ecokit::cat_time("Loading coda object", level = 1L)
-  Coda_Obj <- ecokit::load_as(path_coda)
-  names_coda <- names(Coda_Obj)
+  coda_obj <- ecokit::load_as(path_coda)
+  names_coda <- names(coda_obj)
 
   # Number of chains
-  n_chains <- length(Coda_Obj$Beta)
+  n_chains <- length(coda_obj$Beta)
 
   # Number of samples
-  n_samples <- nrow(Coda_Obj$Beta[[1]])
+  n_samples <- nrow(coda_obj$Beta[[1]])
 
   #  Plotting colours
   define_chain_colors <- FALSE
@@ -262,7 +263,7 @@ convergence_plot <- function(
     "soil", "soil bulk density",
     "wetness", "topographic wetness index")
 
-  model_terms <- attr(Coda_Obj$Beta[[1]], "dimnames") %>%
+  model_terms <- attr(coda_obj$Beta[[1]], "dimnames") %>%
     unlist() %>%
     stringr::str_remove_all("^B\\[|, Sp_\\d{4}\\]$") %>%
     unique() %>%
@@ -273,14 +274,14 @@ convergence_plot <- function(
     stringr::str_trim()
   model_vars <- dplyr::bind_cols(Variable = model_vars, term = model_terms) %>%
     dplyr::mutate(
-      LQ = dplyr::case_when(
+      linear_quadratic = dplyr::case_when(
         stringr::str_detect(term, "raw = TRUE\\)1") ~ "L",
         stringr::str_detect(term, "raw = TRUE\\)2") ~ "Q",
         .default = "L_only")) %>%
     dplyr::left_join(vars_desc, by = "Variable") %>%
     dplyr::mutate(
       Variable = purrr::map2_chr(
-        .x = Variable, .y = LQ,
+        .x = Variable, .y = linear_quadratic,
         .f = ~ {
           dplyr::case_when(
             .y == "L" ~ paste0(.x, "_L"),
@@ -288,7 +289,7 @@ convergence_plot <- function(
             .default = .x)
         }),
       description = purrr::map2_chr(
-        .x = description, .y = LQ,
+        .x = description, .y = linear_quadratic,
         .f = ~{
           desc <- stringr::str_to_sentence(.x)
           desc <- dplyr::case_when(
@@ -303,7 +304,7 @@ convergence_plot <- function(
         }),
       Variable = stringr::str_replace(
         Variable, "\\(Intercept\\)", "Intercept"),
-      LQ = NULL) %>%
+      linear_quadratic = NULL) %>%
     arrange_vars()
 
   # # ..................................................................... ###
@@ -313,8 +314,8 @@ convergence_plot <- function(
   if ("Rho" %in% names_coda) {
 
     ecokit::cat_time("Rho")
-    PlotObj_Rho <- IASDT.R::convergence_rho(
-      posterior = Coda_Obj, title = title, chain_colors = chain_colors,
+    plot_obj_rho <- IASDT.R::convergence_rho(
+      posterior = coda_obj, title = title, chain_colors = chain_colors,
       n_chains = n_chains, n_samples = n_samples)
 
     # Using ggplot2::ggsave directly does not show non-ascii characters
@@ -322,11 +323,11 @@ convergence_plot <- function(
     grDevices::cairo_pdf(
       filename = fs::path(dir_convergence, "convergence_rho.pdf"),
       width = 18, height = 12, onefile = TRUE)
-    plot(PlotObj_Rho)
+    plot(plot_obj_rho)
     grDevices::dev.off()
 
-    Coda_Obj$Rho <- NULL
-    rm(PlotObj_Rho, envir = environment())
+    coda_obj$Rho <- NULL
+    rm(plot_obj_rho, envir = environment())
     invisible(gc())
   }
 
@@ -339,7 +340,7 @@ convergence_plot <- function(
     ecokit::cat_time("Alpha")
 
     # Ensure that all latent factors of the model are plotted
-    n_lf <- ncol(Coda_Obj$Alpha[[1]][[1]])
+    n_lf <- ncol(coda_obj$Alpha[[1]][[1]])
     n_rc_alpha <- n_rc$alpha
     if ((n_rc_alpha[1] * n_rc_alpha[2]) < n_lf) {
       if (n_rc_alpha[1] == 1) {
@@ -349,8 +350,8 @@ convergence_plot <- function(
       }
     }
 
-    PlotObj_Alpha <- IASDT.R::convergence_alpha(
-      posterior = Coda_Obj, title = title, n_rc_alpha = n_rc_alpha,
+    plot_obj_alpha <- IASDT.R::convergence_alpha(
+      posterior = coda_obj, title = title, n_rc_alpha = n_rc_alpha,
       add_footer = FALSE, add_title = FALSE, chain_colors = chain_colors,
       n_chains = n_chains, n_samples = n_samples)
 
@@ -359,17 +360,17 @@ convergence_plot <- function(
     grDevices::cairo_pdf(
       filename = fs::path(dir_convergence, "convergence_alpha.pdf"),
       width = 18, height = 14, onefile = TRUE)
-    print(PlotObj_Alpha)
+    print(plot_obj_alpha)
     grDevices::dev.off()
 
-    rm(PlotObj_Alpha, n_rc_alpha, envir = environment())
+    rm(plot_obj_alpha, n_rc_alpha, envir = environment())
   }
 
-  if ("Alpha" %in% names_coda) Coda_Obj$Alpha <- NULL
+  if ("Alpha" %in% names_coda) coda_obj$Alpha <- NULL
 
-  Obj_Omega <- Coda_Obj$Omega[[1]]
-  Obj_Beta <- Coda_Obj$Beta
-  rm(Coda_Obj, envir = environment())
+  obj_omega <- coda_obj$Omega[[1]]
+  obj_beta <- coda_obj$Beta
+  rm(coda_obj, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -381,28 +382,28 @@ convergence_plot <- function(
     ecokit::cat_time("Omega")
 
     ecokit::cat_time("Coda to tibble", level = 1L)
-    OmegaDF <- IASDT.R::coda_to_tibble(
-      coda_object = Obj_Omega, posterior_type = "omega", n_omega = n_omega,
+    omega_df <- IASDT.R::coda_to_tibble(
+      coda_object = obj_omega, posterior_type = "omega", n_omega = n_omega,
       env_file = env_file)
     invisible(gc())
-    SelectedCombs <- unique(OmegaDF$SpComb)
+    selected_combinations <- unique(omega_df$species_combs)
 
     ecokit::cat_time("Prepare confidence interval data", level = 1L)
-    CI <- purrr::map(.x = Obj_Omega, .f = ~ .x[, SelectedCombs]) %>%
+    ci <- purrr::map(.x = obj_omega, .f = ~ .x[, selected_combinations]) %>%
       coda::mcmc.list() %>%
       summary(quantiles = c(0.025, 0.975)) %>%
       magrittr::extract2("quantiles") %>%
       as.data.frame() %>%
-      tibble::as_tibble(rownames = "SpComb") %>%
-      stats::setNames(c("SpComb", "CI_25", "CI_975"))
+      tibble::as_tibble(rownames = "species_combs") %>%
+      stats::setNames(c("species_combs", "ci_25", "ci_975"))
 
-    OmegaDF <- dplyr::left_join(OmegaDF, CI, by = "SpComb")
-    OmegaNames <- attr(Obj_Omega[[1]], "dimnames")[[2]]
+    omega_df <- dplyr::left_join(omega_df, ci, by = "species_combs")
+    omega_names <- attr(obj_omega[[1]], "dimnames")[[2]]
 
     # Prepare omega plots
     ecokit::cat_time("Prepare omega plots", level = 1L)
 
-    PlotObj_Omega <- purrr::map_dfr(
+    plot_obj_omega <- purrr::map_dfr(
       .x = seq_len(n_omega),
       .f = function(x) {
 
@@ -415,45 +416,47 @@ convergence_plot <- function(
         },
         add = TRUE)
 
-        CombData <- dplyr::filter(OmegaDF, SpComb == SelectedCombs[x])
-        CurrPost <- purrr::map(
-          .x = Obj_Omega, .f = ~ .x[, which(OmegaNames == CombData$SpComb)]) %>%
+        comb_data <- dplyr::filter(
+          omega_df, species_combs == selected_combinations[x])
+        curr_post <- purrr::map(
+          .x = obj_omega,
+          .f = ~ .x[, which(omega_names == comb_data$species_combs)]) %>%
           coda::as.mcmc.list()
 
-        ## Gelman convergence diagnostic
-        Label_Gelman <- try(
-          coda::gelman.diag(CurrPost, multivariate = FALSE), silent = TRUE)
+        ## gelman convergence diagnostic
+        label_gelman <- try(
+          coda::gelman.diag(curr_post, multivariate = FALSE), silent = TRUE)
 
-        if (inherits(Label_Gelman, "try-error")) {
-          Label_Gelman <- coda::gelman.diag(
-            CurrPost, multivariate = FALSE, autoburnin = FALSE)
+        if (inherits(label_gelman, "try-error")) {
+          label_gelman <- coda::gelman.diag(
+            curr_post, multivariate = FALSE, autoburnin = FALSE)
         }
 
-        Label_Gelman <- round(Label_Gelman$psrf[[1]], 3) %>%
+        label_gelman <- round(label_gelman$psrf[[1]], 3) %>%
           paste0("<b><i>Gelman convergence diagnostic:</i></b> ", .) %>%
           data.frame(x = -Inf, y = Inf, label = .)
 
         ## Effective sample size
-        Label_ESS <- round((coda::effectiveSize(CurrPost) / n_chains), 1) %>%
+        label_ess <- round((coda::effectiveSize(curr_post) / n_chains), 1) %>%
           paste0(
             "<b><i>Mean effective sample size:</i></b> ", ., " / ", n_samples)
-        CurrCI <- dplyr::select(CombData, c("CI_25", "CI_975")) %>%
+        curr_ci <- dplyr::select(comb_data, c("ci_25", "ci_975")) %>%
           unlist() %>%
           round(2)
-        Label_CI <- paste0(
+        label_ci <- paste0(
           "<b><i>95% credible interval:</i></b> ",
-          paste(CurrCI, collapse = " to "))
-        Label_ESS_CI <- data.frame(
-          x = -Inf, y = -Inf, label = paste0(Label_ESS, "<br>", Label_CI))
+          paste(curr_ci, collapse = " to "))
+        label_ess_ci <- data.frame(
+          x = -Inf, y = -Inf, label = paste0(label_ess, "<br>", label_ci))
 
-        Label_Panel <- sort(c(CombData$IAS1, CombData$IAS2)) %>%
+        label_panel <- sort(c(comb_data$IAS1, comb_data$IAS2)) %>%
           paste0("<i>", ., "</i>") %>%
           paste(collapse = " & <br>") %>%
           paste0(" ") %>%
           data.frame(x = Inf, y = Inf, label = .)
 
-        Plot <- ggplot2::ggplot(
-          data = CombData$DT[[1]], environment = emptyenv(),
+        plot <- ggplot2::ggplot(
+          data = comb_data$DT[[1]], environment = emptyenv(),
           mapping = ggplot2::aes(
             x = Iter, y = Value, color = factor(Chain))) +
           ggplot2::geom_line(linewidth = 0.15, alpha = 0.6) +
@@ -461,7 +464,7 @@ convergence_plot <- function(
             method = "loess", formula = y ~ x, se = FALSE, linewidth = 0.8) +
           ggplot2::geom_point(alpha = 0) +
           ggplot2::geom_hline(
-            yintercept = CurrCI, linetype = "dashed", color = "black",
+            yintercept = curr_ci, linetype = "dashed", color = "black",
             linewidth = 1) +
           # Ensure that y-axis always show 0
           ggplot2::geom_hline(
@@ -472,16 +475,16 @@ convergence_plot <- function(
           ggplot2::scale_y_continuous(expand = c(0, 0)) +
           ggtext::geom_richtext(
             mapping = ggplot2::aes(x = x, y = y, label = label), size = 5,
-            data = Label_Panel, inherit.aes = FALSE, colour = "blue",
+            data = label_panel, inherit.aes = FALSE, colour = "blue",
             hjust = 1, vjust = 1, lineheight = 0, fill = NA,
             label.color = NA) +
           ggtext::geom_richtext(
             mapping = ggplot2::aes(x = x, y = y, label = label),
-            data = Label_Gelman, inherit.aes = FALSE, size = 6, hjust = 0,
+            data = label_gelman, inherit.aes = FALSE, size = 6, hjust = 0,
             vjust = 1, lineheight = 0, fill = NA, label.color = NA) +
           ggtext::geom_richtext(
             mapping = ggplot2::aes(x = x, y = y, label = label),
-            data = Label_ESS_CI, inherit.aes = FALSE, size = 6, hjust = 0,
+            data = label_ess_ci, inherit.aes = FALSE, size = 6, hjust = 0,
             vjust = 0, lineheight = 0, fill = NA, label.color = NA) +
           ggplot2::labs(x = NULL, y = NULL) +
           ggplot2::theme_bw() +
@@ -490,24 +493,27 @@ convergence_plot <- function(
             legend.position = "none")
 
         if (margin_type == "histogram") {
-          Plot <- ggExtra::ggMarginal(
-            p = Plot, type = margin_type, margins = "y", size = 6,
+          plot <- ggExtra::ggMarginal(
+            p = plot, type = margin_type, margins = "y", size = 6,
             color = "steelblue4", fill = "steelblue4", bins = 100)
         } else {
-          Plot <- ggExtra::ggMarginal(
-            p = Plot, type = margin_type, margins = "y", size = 6,
+          plot <- ggExtra::ggMarginal(
+            p = plot, type = margin_type, margins = "y", size = 6,
             color = "steelblue4")
         }
         # Making marginal background matching the plot background
         # https://stackoverflow.com/a/78196022/3652584
-        Plot$layout$t[1] <- 1
-        Plot$layout$r[1] <- max(Plot$layout$r)
+        plot$layout$t[1] <- 1
+        plot$layout$r[1] <- max(plot$layout$r)
 
-        return(tibble::tibble(SpComb = CombData$SpComb, Plot = list(Plot)))
+        return(tibble::tibble(
+          species_combs = comb_data$species_combs, plot = list(plot)))
       }
     )
 
-    rm(OmegaDF, Obj_Omega, SelectedCombs, CI, OmegaNames, envir = environment())
+    rm(
+      omega_df, obj_omega, selected_combinations, ci, omega_names,
+      envir = environment())
     invisible(gc())
 
     # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
@@ -515,17 +521,18 @@ convergence_plot <- function(
     ecokit::cat_time("Arrange plots", level = 1L)
     n_rc_omega <- n_rc$omega
 
-    OmegaPlotList <- tibble::tibble(PlotID = seq_len(nrow(PlotObj_Omega))) %>%
+    omega_plot_list <- tibble::tibble(
+      plot_id = seq_len(nrow(plot_obj_omega))) %>%
       dplyr::mutate(
         File = ceiling(
-          PlotID / (pages_per_file * n_rc_omega[2] * n_rc_omega[1])),
-        Page = ceiling(PlotID / (n_rc_omega[2] * n_rc_omega[1]))) %>%
-      tidyr::nest(.by = c("File", "Page"), .key = "PlotID") %>%
+          plot_id / (pages_per_file * n_rc_omega[2] * n_rc_omega[1])),
+        page = ceiling(plot_id / (n_rc_omega[2] * n_rc_omega[1]))) %>%
+      tidyr::nest(.by = c("File", "page"), .key = "plot_id") %>%
       dplyr::mutate(
-        PlotID = purrr::map(PlotID, ~ unlist(as.vector(.x))),
-        PlotID = purrr::pmap(
-          .l = list(File, Page, PlotID),
-          .f = function(File, Page, PlotID) {
+        plot_id = purrr::map(plot_id, ~ unlist(as.vector(.x))),
+        plot_id = purrr::pmap(
+          .l = list(File, page, plot_id),
+          .f = function(File, page, plot_id) {
 
             PlotTitle <- ggplot2::ggplot(environment = emptyenv()) +
               ggplot2::labs(
@@ -533,8 +540,8 @@ convergence_plot <- function(
                   "Convergence of the omega parameter ---  a sample of ",
                   n_omega, " species pairs"),
                 subtitle = paste0(
-                  "   File ", File, " | Page ",
-                  (Page - ((File - 1) * pages_per_file)))) +
+                  "   File ", File, " | page ",
+                  (page - ((File - 1) * pages_per_file)))) +
               ggplot2::theme_minimal() +
               ggplot2::theme(
                 text = ggplot2::element_text(family = "sans"),
@@ -546,7 +553,7 @@ convergence_plot <- function(
 
             ecokit::quietly({
               plot <- cowplot::plot_grid(
-                plotlist = PlotObj_Omega$Plot[PlotID],
+                plotlist = plot_obj_omega$plot[plot_id],
                 ncol = n_rc_omega[2], nrow = n_rc_omega[1], align = "hv")
             },
             "Removed [0-9]+ rows containing non-finite outside the scale range")
@@ -567,27 +574,27 @@ convergence_plot <- function(
     ecokit::cat_time(
       paste0(
         "Saving omega convergence plots for ", n_omega,
-        " species associations to ", length(unique(OmegaPlotList$File)),
+        " species associations to ", length(unique(omega_plot_list$File)),
         " pdf files"),
       level = 2L, cat_timestamp = FALSE)
 
     purrr::walk(
-      .x = seq_along(unique(OmegaPlotList$File)),
+      .x = seq_along(unique(omega_plot_list$File)),
       .f = ~ {
         invisible({
-          CurrPlotOrder <- dplyr::filter(OmegaPlotList, File == .x)
+          CurrPlotOrder <- dplyr::filter(omega_plot_list, File == .x)
           file_omega <- fs::path(
             dir_convergence, paste0("convergence_omega_", .x, ".pdf"))
           grDevices::cairo_pdf(
             filename = file_omega, width = 18,
             height = 13.5, onefile = TRUE)
           purrr::map(
-            CurrPlotOrder$PlotID, grid::grid.draw, recording = FALSE)
+            CurrPlotOrder$plot_id, grid::grid.draw, recording = FALSE)
           grDevices::dev.off()
         })
       })
 
-    rm(OmegaPlotList, PlotObj_Omega, n_rc_omega, envir = environment())
+    rm(omega_plot_list, plot_obj_omega, n_rc_omega, envir = environment())
     invisible(gc())
   }
 
@@ -598,22 +605,22 @@ convergence_plot <- function(
   ecokit::cat_time("Beta")
 
   ecokit::cat_time("Prepare trace plots", level = 1L)
-  BetaNames <- attr(Obj_Beta[[1]], "dimnames")[[2]]
+  beta_names <- attr(obj_beta[[1]], "dimnames")[[2]]
 
   ecokit::cat_time("Prepare 95% credible interval data", level = 2L)
-  CI <- summary(Obj_Beta, quantiles = c(0.025, 0.975))$quantiles %>%
+  ci <- summary(obj_beta, quantiles = c(0.025, 0.975))$quantiles %>%
     as.data.frame() %>%
     tibble::as_tibble(rownames = "Var_Sp") %>%
-    dplyr::rename(CI_025 = `2.5%`, CI_975 = `97.5%`)
+    dplyr::rename(ci_025 = `2.5%`, ci_975 = `97.5%`)
 
   ecokit::cat_time("Coda to tibble", level = 2L)
   beta_data <- IASDT.R::coda_to_tibble(
-    coda_object = Obj_Beta, posterior_type = "beta", env_file = env_file) %>%
-    dplyr::left_join(CI, by = "Var_Sp")
+    coda_object = obj_beta, posterior_type = "beta", env_file = env_file) %>%
+    dplyr::left_join(ci, by = "Var_Sp")
 
   # Variable ranges
   ecokit::cat_time("Variable ranges", level = 2L)
-  VarRanges <- dplyr::arrange(beta_data, Variable, IAS_ID) %>%
+  vars_ranges <- dplyr::arrange(beta_data, Variable, ias_id) %>%
     dplyr::select(Variable, DT) %>%
     dplyr::mutate(
       Range = purrr::map(.x = DT, .f = ~ range(dplyr::pull(.x, Value)))) %>%
@@ -626,7 +633,7 @@ convergence_plot <- function(
           dplyr::pull(.x, Range) %>%
             as.vector() %>%
             range() %>%
-            purrr::set_names(c("Var_Min", "Var_Max"))
+            purrr::set_names(c("var_min", "var_max"))
         })) %>%
     dplyr::select(-data) %>%
     ecokit::arrange_alphanum(Variable) %>%
@@ -635,20 +642,20 @@ convergence_plot <- function(
 
   # Species taxonomy
   ecokit::cat_time("Species taxonomy", level = 2L)
-  SpeciesTaxonomy <- IASDT.R::get_species_name(env_file = env_file) %>%
-    dplyr::select(IAS_ID, Class, Order, Family)
+  species_taxonomy <- IASDT.R::get_species_name(env_file = env_file) %>%
+    dplyr::select(ias_id, class, order, family)
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
 
   ecokit::cat_time("Preparing plotting data", level = 2L)
 
   beta_data <- beta_data %>%
-    dplyr::left_join(VarRanges, by = "Variable") %>%
-    dplyr::left_join(SpeciesTaxonomy, by = "IAS_ID") %>%
+    dplyr::left_join(vars_ranges, by = "Variable") %>%
+    dplyr::left_join(species_taxonomy, by = "ias_id") %>%
     dplyr::left_join(model_vars, by = "Variable") %>%
     dplyr::mutate(
-      Var_Sp2 = paste0(Variable, "_", IAS_ID),
-      Var_Sp_File = fs::path(dir_beta_data, paste0(Var_Sp2, ".qs2")))
+      var_sp_2 = paste0(Variable, "_", ias_id),
+      var_sp_file = fs::path(dir_beta_data, paste0(var_sp_2, ".qs2")))
 
   purrr::walk(
     .x = seq_len(nrow(beta_data)),
@@ -656,36 +663,36 @@ convergence_plot <- function(
 
       option_data <- beta_data[.x, ]
 
-      if (ecokit::check_data(option_data$Var_Sp_File, warning = FALSE)) {
+      if (ecokit::check_data(option_data$var_sp_file, warning = FALSE)) {
         return(NULL)
       }
 
-      Beta_ID <- which(BetaNames == option_data$Var_Sp)
-      post_mcmc <- coda::as.mcmc.list(Obj_Beta[, Beta_ID])
+      Beta_ID <- which(beta_names == option_data$Var_Sp)
+      post_mcmc <- coda::as.mcmc.list(obj_beta[, Beta_ID])
 
-      Gelman <- try(
+      gelman <- try(
         coda::gelman.diag(post_mcmc, multivariate = FALSE), silent = TRUE)
-      if (inherits(Gelman, "try-error")) {
-        Gelman <- coda::gelman.diag(
+      if (inherits(gelman, "try-error")) {
+        gelman <- coda::gelman.diag(
           post_mcmc, multivariate = FALSE, autoburnin = FALSE)
       }
 
-      ESS <- as.vector(coda::effectiveSize(post_mcmc))
+      ess <- as.vector(coda::effectiveSize(post_mcmc))
 
       output <- option_data %>%
         dplyr::mutate(
-          Gelman = list(Gelman), ESS = ESS,
+          gelman = list(gelman), ess = ess,
           Beta_ID = Beta_ID, post_mcmc = list(post_mcmc)) %>%
         dplyr::rename(plotting_data = DT)
-      ecokit::save_as(object = output, out_path = option_data$Var_Sp_File)
+      ecokit::save_as(object = output, out_path = option_data$var_sp_file)
       return(NULL)
     })
 
-  Cols2remove <- c("DT", "CI_025", "CI_975", "Var_Min", "Var_Max")
-  beta_data <- dplyr::select(beta_data, -tidyselect::all_of(Cols2remove))
+  columns_to_remove <- c("DT", "ci_025", "ci_975", "var_min", "var_max")
+  beta_data <- dplyr::select(beta_data, -tidyselect::all_of(columns_to_remove))
 
   rm(
-    CI, VarRanges, SpeciesTaxonomy, Cols2remove, Obj_Beta, BetaNames,
+    ci, vars_ranges, species_taxonomy, columns_to_remove, obj_beta, beta_names,
     envir = environment())
   invisible(gc())
 
@@ -707,12 +714,12 @@ convergence_plot <- function(
     chain_colors = NULL, plot_title = NULL) {
 
     x <- NULL
-    Var_Sp_File <- data_option$Var_Sp_File
+    var_sp_file <- data_option$var_sp_file
 
     # check if input data exists
-    if (isFALSE(ecokit::check_data(Var_Sp_File, warning = FALSE))) {
+    if (isFALSE(ecokit::check_data(var_sp_file, warning = FALSE))) {
       ecokit::stop_ctx(
-        "File does not exist.", Var_Sp_File = Var_Sp_File,
+        "File does not exist.", var_sp_file = var_sp_file,
         include_backtrace = TRUE)
     }
 
@@ -724,39 +731,40 @@ convergence_plot <- function(
     },
     add = TRUE)
 
-    DT_all <- ecokit::load_as(Var_Sp_File)
-    if (is.null(DT_all) || !inherits(DT_all, "data.frame")) {
+    data_all <- ecokit::load_as(var_sp_file)
+    if (is.null(data_all) || !inherits(data_all, "data.frame")) {
       ecokit::stop_ctx(
-        "Loaded data is invalid", Var_Sp_File = Var_Sp_File,
-        DT_all = DT_all, class_DT_all = class(DT_all), include_backtrace = TRUE)
+        "Loaded data is invalid", var_sp_file = var_sp_file,
+        data_all = data_all, class_data_all = class(data_all),
+        include_backtrace = TRUE)
     }
 
-    ## Gelman convergence diagnostic
-    Label_Gelman <- round(DT_all$Gelman[[1]]$psrf, 3) %>%
+    ## gelman convergence diagnostic
+    label_gelman <- round(data_all$gelman[[1]]$psrf, 3) %>%
       paste(collapse = " / ") %>%
-      paste0("<b><i>Gelman convergence diagnostic:</i></b> ", .) %>%
+      paste0("<b><i>gelman convergence diagnostic:</i></b> ", .) %>%
       data.frame(x = Inf, y = -Inf, label = .)
 
-    ## Effective sample size / CI
-    Label_ESS <- paste0(
+    ## Effective sample size / ci
+    label_ess <- paste0(
       "<b><i>Mean effective sample size:</i></b> ",
-      round(DT_all$ESS / n_chains), " / ", n_samples)
+      round(data_all$ess / n_chains), " / ", n_samples)
 
-    CurrCI <- c(DT_all$CI_025, DT_all$CI_975)
-    Label_CI <- paste(round(CurrCI, 4), collapse = " to ") %>%
+    curr_ci <- c(data_all$ci_025, data_all$ci_975)
+    label_ci <- paste(round(curr_ci, 4), collapse = " to ") %>%
       paste0("<b><i>95% credible interval:</i></b> ", .)
-    Label_ESS_CI <- data.frame(
-      x = -Inf, y = -Inf, label = paste0(Label_ESS, "<br>", Label_CI))
+    label_ess_ci <- data.frame(
+      x = -Inf, y = -Inf, label = paste0(label_ess, "<br>", label_ci))
 
-    Plot <- ggplot2::ggplot(
-      data = DT_all$plotting_data[[1]], environment = emptyenv(),
+    plot <- ggplot2::ggplot(
+      data = data_all$plotting_data[[1]], environment = emptyenv(),
       mapping = ggplot2::aes(x = Iter, y = Value, color = factor(Chain))) +
       ggplot2::geom_line(linewidth = 0.15, alpha = 0.6) +
       ggplot2::geom_smooth(
         method = "loess", formula = y ~ x, se = FALSE, linewidth = 0.8) +
       ggplot2::geom_point(alpha = 0) +
       ggplot2::geom_hline(
-        yintercept = CurrCI, linetype = "dashed", color = "black",
+        yintercept = curr_ci, linetype = "dashed", color = "black",
         linewidth = 1) +
       # Ensure that y-axis always show 0
       ggplot2::geom_hline(
@@ -766,11 +774,11 @@ convergence_plot <- function(
       ggplot2::scale_x_continuous(expand = c(0, 0)) +
       ggtext::geom_richtext(
         mapping = ggplot2::aes(x = x, y = y, label = label),
-        data = Label_Gelman, inherit.aes = FALSE, size = 3.5, hjust = 1,
+        data = label_gelman, inherit.aes = FALSE, size = 3.5, hjust = 1,
         vjust = -1.5, lineheight = 0, fill = NA, label.color = NA) +
       ggtext::geom_richtext(
         mapping = ggplot2::aes(x = x, y = y, label = label),
-        data = Label_ESS_CI, inherit.aes = FALSE, size = 3.5, hjust = 0,
+        data = label_ess_ci, inherit.aes = FALSE, size = 3.5, hjust = 0,
         vjust = 0, lineheight = 0, fill = NA, label.color = NA) +
       ggplot2::labs(x = NULL, y = NULL) +
       ggplot2::theme_bw() +
@@ -780,36 +788,36 @@ convergence_plot <- function(
         axis.text = ggplot2::element_text(size = 12))
 
     if (add_taxonomy) {
-      Label_Panel <- data.frame(
+      label_panel <- data.frame(
         x = Inf, y = Inf,
-        label = paste0("<br><b><i>", DT_all$Species, "</i></b>"))
-      PanelTitle <- c(DT_all$Class, DT_all$Order, DT_all$Family) %>%
+        label = paste0("<br><b><i>", data_all$species, "</i></b>"))
+      panel_title <- c(data_all$class, data_all$order, data_all$family) %>%
         paste(collapse = " | ") %>%
         paste0("<b>", ., "</b>") %>%
-        paste0("<br>", DT_all$IAS_ID) %>%
+        paste0("<br>", data_all$ias_id) %>%
         data.frame(x = -Inf, y = Inf, label = .)
 
-      Plot <- Plot +
+      plot <- plot +
         ggtext::geom_richtext(
           mapping = ggplot2::aes(x = x, y = y, label = label),
-          data = Label_Panel, inherit.aes = FALSE, colour = "blue", hjust = 1,
+          data = label_panel, inherit.aes = FALSE, colour = "blue", hjust = 1,
           vjust = 1, lineheight = 0, fill = NA, label.color = NA) +
         ggtext::geom_richtext(
           mapping = ggplot2::aes(x = x, y = y, label = label),
-          data = PanelTitle, inherit.aes = FALSE, hjust = 0, vjust = 1,
+          data = panel_title, inherit.aes = FALSE, hjust = 0, vjust = 1,
           lineheight = 0, fill = NA, label.color = NA)
     }
 
     if (fixed_y) {
-      vars_limits <- c(DT_all$Var_Min, DT_all$Var_Max)
+      vars_limits <- c(data_all$var_min, data_all$var_max)
       ecokit::quietly({
-        Plot <- Plot + ggplot2::scale_y_continuous(limits = vars_limits)
+        plot <- plot + ggplot2::scale_y_continuous(limits = vars_limits)
       },
       "Scale for \\w+ is already present.")
     }
 
     if (!is.null(plot_title)) {
-      Plot <- Plot +
+      plot <- plot +
         ggplot2::ggtitle(plot_title) +
         ggplot2::theme(
           plot.title.position = "panel",
@@ -819,16 +827,16 @@ convergence_plot <- function(
     }
 
     if (margin_type == "histogram") {
-      Plot <- ggExtra::ggMarginal(
-        p = Plot, type = margin_type, margins = "y", size = 6,
+      plot <- ggExtra::ggMarginal(
+        p = plot, type = margin_type, margins = "y", size = 6,
         color = "steelblue4", fill = "steelblue4", bins = 100)
     } else {
-      Plot <- ggExtra::ggMarginal(
-        p = Plot, type = margin_type, margins = "y", size = 6,
+      plot <- ggExtra::ggMarginal(
+        p = plot, type = margin_type, margins = "y", size = 6,
         color = "steelblue4")
     }
 
-    return(Plot)
+    return(plot)
   }
 
   # *******************************************************************
@@ -842,8 +850,8 @@ convergence_plot <- function(
 
   plots_by_variable <- beta_data %>%
     dplyr::mutate(Variable = factor(Variable, levels = model_vars$Variable)) %>%
-    dplyr::arrange(IAS_ID) %>%
-    dplyr::select(Variable, Var_Sp_File, description) %>%
+    dplyr::arrange(ias_id) %>%
+    dplyr::select(Variable, var_sp_file, description) %>%
     tidyr::nest(var_data = -c("Variable", "description")) %>%
     dplyr::mutate(Variable = as.character(Variable))
 
@@ -888,10 +896,10 @@ convergence_plot <- function(
 
       plot_list <- tibble::tibble(plot_id = seq_len(length(data_list))) %>%
         dplyr::mutate(
-          Page = ceiling(plot_id / (n_rc_beta[2] * n_rc_beta[1]))) %>%
-        tidyr::nest(.by = "Page", .key = "plot_id") %>%
+          page = ceiling(plot_id / (n_rc_beta[2] * n_rc_beta[1]))) %>%
+        tidyr::nest(.by = "page", .key = "plot_id") %>%
         dplyr::mutate(
-          Plot = purrr::map(
+          plot = purrr::map(
             .x = plot_id,
             .f = function(z) {
               cowplot::plot_grid(
@@ -907,7 +915,7 @@ convergence_plot <- function(
           "convergence_beta_", plots_by_variable$Variable[x], "_free_y.pdf"))
       grDevices::cairo_pdf(
         filename = file_free_y, width = 18, height = 13, onefile = TRUE)
-      purrr::walk(plot_list$Plot, grid::grid.draw, recording = FALSE)
+      purrr::walk(plot_list$plot, grid::grid.draw, recording = FALSE)
       grDevices::dev.off()
 
       rm(plot_title, plots, plot_list, envir = environment())
@@ -936,10 +944,10 @@ convergence_plot <- function(
 
       plot_list <- tibble::tibble(plot_id = seq_len(length(data_list))) %>%
         dplyr::mutate(
-          Page = ceiling(plot_id / (n_rc_beta[2] * n_rc_beta[1]))) %>%
-        tidyr::nest(.by = "Page", .key = "plot_id") %>%
+          page = ceiling(plot_id / (n_rc_beta[2] * n_rc_beta[1]))) %>%
+        tidyr::nest(.by = "page", .key = "plot_id") %>%
         dplyr::mutate(
-          Plot = purrr::map(
+          plot = purrr::map(
             .x = plot_id,
             .f = function(z) {
               cowplot::plot_grid(
@@ -956,7 +964,7 @@ convergence_plot <- function(
 
       grDevices::cairo_pdf(
         filename = file_fixed_y, width = 18, height = 13, onefile = TRUE)
-      purrr::walk(plot_list$Plot, grid::grid.draw, recording = FALSE)
+      purrr::walk(plot_list$plot, grid::grid.draw, recording = FALSE)
       grDevices::dev.off()
 
       invisible(NULL)
@@ -981,13 +989,13 @@ convergence_plot <- function(
 
   ecokit::cat_time("Trace plots, grouped by species", level = 1L)
   cols_to_keep <- c(
-    "Species", "Variable", "Class", "Order", "Family", "IAS_ID",
-    "Var_Sp_File", "description")
+    "species", "Variable", "class", "order", "family", "ias_id",
+    "var_sp_file", "description")
 
   plots_by_species <- beta_data %>%
-    dplyr::arrange(Variable, IAS_ID) %>%
+    dplyr::arrange(Variable, ias_id) %>%
     dplyr::select(tidyselect::all_of(cols_to_keep)) %>%
-    tidyr::nest(var_data = -c("Class", "Order", "Family", "Species", "IAS_ID"))
+    tidyr::nest(var_data = -c("class", "order", "family", "species", "ias_id"))
 
   # Prepare working in parallel
   if (n_cores == 1) {
@@ -1006,11 +1014,11 @@ convergence_plot <- function(
       n_rc_beta <- n_rc$beta
 
       n_per_page <- n_rc_beta[1] * n_rc_beta[2]
-      title_text <- paste0("<i>", plots_by_species$Species[[x]], "</i>")
+      title_text <- paste0("<i>", plots_by_species$species[[x]], "</i>")
       subtitle_text <- paste0(
-        "**Class:** ", plots_by_species$Class[[x]], " / **Order:** ",
-        plots_by_species$Order[[x]], " / **Family:** ",
-        plots_by_species$Family[[x]])
+        "**Class:** ", plots_by_species$class[[x]], " / **Order:** ",
+        plots_by_species$order[[x]], " / **Family:** ",
+        plots_by_species$family[[x]])
 
       variable_order <- model_vars$Variable %>%
         stringr::str_subset("Intercept", negate = TRUE) %>%
@@ -1026,7 +1034,7 @@ convergence_plot <- function(
         .x = seq_len(nrow(species_data)),
         .f = function(y) {
           plot0 <- plot_beta(
-            data_option = ecokit::load_as(species_data$Var_Sp_File[y]),
+            data_option = ecokit::load_as(species_data$var_sp_file[y]),
             fixed_y = FALSE, n_chains = n_chains, n_samples = n_samples,
             chain_colors = chain_colors, add_taxonomy = FALSE,
             plot_title = species_data$description[y])
@@ -1048,7 +1056,7 @@ convergence_plot <- function(
           size = 5, hjust = 0, vjust = 1, fill = NA, label.color = NA,
           colour = "darkblue") +
         ggtext::geom_richtext(
-          ggplot2::aes(x = 0.9, y = 0.95, label = plots_by_species$IAS_ID[[x]]),
+          ggplot2::aes(x = 0.9, y = 0.95, label = plots_by_species$ias_id[[x]]),
           size = 5, hjust = 0, vjust = 1, fill = NA, label.color = NA,
           colour = "red", fontface = "bold") +
         ggplot2::theme_void() +
@@ -1070,7 +1078,7 @@ convergence_plot <- function(
 
       file_free_y <- fs::path(
         dir_convergence_by_sp,
-        paste0("convergence_beta_", plots_by_species$Species[x], ".pdf"))
+        paste0("convergence_beta_", plots_by_species$species[x], ".pdf"))
       grDevices::cairo_pdf(
         filename = file_free_y, width = 18, height = 13, onefile = TRUE)
       purrr::walk(plot_list, grid::grid.draw, recording = FALSE)
@@ -1125,7 +1133,7 @@ convergence_beta_ranges <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Variable <- Var_Sp_File <- max_val <- min_val <- Chain <- NULL
+  Variable <- var_sp_file <- max_val <- min_val <- Chain <- NULL
 
   # # ..................................................................... ###
 
@@ -1163,11 +1171,11 @@ convergence_beta_ranges <- function(
   # Load beta parameter information -----
 
   # calculate minimum and maximum value for combination of species and cv
-  keep_vars <- c("Variable", "Chain", "Species", "min_val", "max_val")
+  keep_vars <- c("Variable", "Chain", "species", "min_val", "max_val")
   Beta_ranges <- beta_data %>%
     dplyr::mutate(
       min_max = purrr::map(
-        .x = Var_Sp_File,
+        .x = var_sp_file,
         .f = ~ {
           ecokit::load_as(.x) %>%
             dplyr::pull("plotting_data") %>%
@@ -1180,7 +1188,7 @@ convergence_beta_ranges <- function(
     dplyr::select(tidyselect::all_of(keep_vars)) %>%
     dplyr::summarise(
       min_val = min(min_val), max_val = max(max_val),
-      .by = c("Variable", "Chain", "Species"))
+      .by = c("Variable", "Chain", "species"))
 
   fct_levels <- unique(
     c("Intercept", gtools::mixedsort(unique(Beta_ranges$Variable))))

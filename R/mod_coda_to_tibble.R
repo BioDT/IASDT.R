@@ -37,8 +37,8 @@ coda_to_tibble <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Chain <- Iter <- Alpha <- AlphaNum <- Factor <- CHAIN <- ITER <-
-    Value <- IAS_ID <- Species_name <- Var_Sp <- Variable <- Species <-
-    SpComb <- Sp1 <- IAS1 <- Sp2 <- IAS2 <- TaxaInfoFile <- NULL
+    Value <- ias_id <- species_name <- Var_Sp <- Variable <- Species <-
+    species_combs <- Sp1 <- IAS1 <- Sp2 <- IAS2 <- taxa_info_file <- NULL
 
   # # |||||||||||||||||||||||||||||||||||||||
   # Check missing arguments ----
@@ -84,7 +84,7 @@ coda_to_tibble <- function(
       dplyr::mutate(Chain = factor(Chain), Iter = as.integer(Iter)) %>%
       dplyr::arrange(Chain, Iter) %>%
       tidyr::pivot_longer(
-        -c(Chain, Iter), names_to = "SpComb", values_to = "Value")
+        -c(Chain, Iter), names_to = "species_combs", values_to = "Value")
   } else {
     Coda <- as.matrix(coda_object, iter = TRUE, chain = TRUE) %>%
       tibble::as_tibble() %>%
@@ -142,20 +142,20 @@ coda_to_tibble <- function(
         "Environment file is not found or invalid.", env_file = env_file)
     }
 
-    EnvVars2Read <- tibble::tribble(
+    env_vars_to_read <- tibble::tribble(
       ~var_name, ~value, ~check_dir, ~check_file,
-      "TaxaInfoFile", "DP_R_Taxa_info", FALSE, TRUE)
+      "taxa_info_file", "DP_R_taxa_info", FALSE, TRUE)
     # Assign environment variables and check file and paths
     ecokit::assign_env_vars(
-      env_file = env_file, env_variables_data = EnvVars2Read)
-    rm(EnvVars2Read, envir = environment())
+      env_file = env_file, env_variables_data = env_vars_to_read)
+    rm(env_vars_to_read, envir = environment())
 
     SpeciesNames <- readr::read_tsv(
-      file = TaxaInfoFile, show_col_types = FALSE, progress = FALSE) %>%
-      dplyr::select(IAS_ID, Species = Species_name) %>%
+      file = taxa_info_file, show_col_types = FALSE, progress = FALSE) %>%
+      dplyr::select(ias_id, Species = species_name) %>%
       dplyr::mutate(
-        IAS_ID = stringr::str_pad(IAS_ID, pad = "0", width = 4),
-        IAS_ID = paste0("Sp_", IAS_ID))
+        ias_id = stringr::str_pad(ias_id, pad = "0", width = 4),
+        ias_id = paste0("Sp_", ias_id))
 
     Coda <- tidyr::pivot_longer(
       Coda, -c(Chain, Iter), names_to = "Var_Sp", values_to = "Value")
@@ -173,7 +173,7 @@ coda_to_tibble <- function(
               stringr::str_split(",", simplify = TRUE) %>%
               as.data.frame() %>%
               tibble::as_tibble() %>%
-              stats::setNames(c("Variable", "IAS_ID")) %>%
+              stats::setNames(c("Variable", "ias_id")) %>%
               dplyr::mutate_all(stringr::str_trim) %>%
               dplyr::mutate(
                 Variable = purrr::map_chr(
@@ -185,17 +185,17 @@ coda_to_tibble <- function(
                   }))
           })) %>%
       tidyr::unnest_wider("Species") %>%
-      dplyr::left_join(SpeciesNames, by = "IAS_ID")
+      dplyr::left_join(SpeciesNames, by = "ias_id")
 
 
 
     Coda <- VarSp %>%
       dplyr::right_join(Coda, by = "Var_Sp") %>%
       dplyr::select(
-        Var_Sp, Variable, Species, IAS_ID, Chain, Iter, Value,
+        Var_Sp, Variable, Species, ias_id, Chain, Iter, Value,
         dplyr::everything()) %>%
-      tidyr::nest(DT = -c(Variable, IAS_ID, Species, Var_Sp)) %>%
-      dplyr::arrange(Variable, IAS_ID)
+      tidyr::nest(DT = -c(Variable, ias_id, Species, Var_Sp)) %>%
+      dplyr::arrange(Variable, ias_id)
   }
 
   # # |||||||||||||||||||||||||||||||||||||||
@@ -205,30 +205,30 @@ coda_to_tibble <- function(
   if (posterior_type == "omega") {
 
     IAS <- IASDT.R::get_species_name(env_file = env_file) %>%      # nolint: object_name_linter
-      dplyr::select(IAS_ID, Species_name)
+      dplyr::select(ias_id, species_name)
 
-    Coda <- tibble::tibble(SpComb = unique(Coda$SpComb)) %>%
+    Coda <- tibble::tibble(species_combs = unique(Coda$species_combs)) %>%
       dplyr::mutate(
         SP = purrr::map(
-          .x = SpComb,
+          .x = species_combs,
           .f = ~{
             IAS_N <- stringr::str_remove_all(.x, "Omega1\\[|\\]") %>%
               stringr::str_split(",| ", simplify = TRUE) %>%
               as.character() %>%
               stringr::str_subset("^Sp_") %>%
               purrr::set_names(c("Sp1", "Sp2"))
-            IAS1 <- dplyr::filter(IAS, IAS_ID == IAS_N[1])$Species_name
-            IAS2 <- dplyr::filter(IAS, IAS_ID == IAS_N[2])$Species_name
+            IAS1 <- dplyr::filter(IAS, ias_id == IAS_N[1])$species_name
+            IAS2 <- dplyr::filter(IAS, ias_id == IAS_N[2])$species_name
 
             return(c(IAS_N, IAS1 = IAS1, IAS2 = IAS2))
           })) %>%
       tidyr::unnest_wider("SP") %>%
-      dplyr::right_join(Coda, by = "SpComb") %>%
+      dplyr::right_join(Coda, by = "species_combs") %>%
       dplyr::select(
-        SpComb, Sp1, IAS1, Sp2, IAS2, Chain, Iter, Value,
+        species_combs, Sp1, IAS1, Sp2, IAS2, Chain, Iter, Value,
         dplyr::everything()) %>%
-      tidyr::nest(DT = -c(SpComb, Sp1, IAS1, Sp2, IAS2)) %>%
-      dplyr::arrange(SpComb)
+      tidyr::nest(DT = -c(species_combs, Sp1, IAS1, Sp2, IAS2)) %>%
+      dplyr::arrange(species_combs)
 
   }
   return(Coda)

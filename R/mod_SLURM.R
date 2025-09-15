@@ -82,15 +82,15 @@ mod_SLURM <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "ProjNum", "DP_R_LUMI_gpu", FALSE, FALSE,
-    "Path_GPU_Check", "DP_R_LUMI_gpu_check", FALSE, Sys.info()[1] != "Windows")
+    "ProjNum", "DP_R_lumi_gpu", FALSE, FALSE,
+    "Path_GPU_Check", "DP_R_lumi_gpu_check", FALSE, Sys.info()[1] != "Windows")
 
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -223,10 +223,10 @@ mod_SLURM <- function(
       cat2("# -----------------------------------------------------------")
       cat2("# Some checking")
       cat2("# -----------------------------------------------------------")
-      cat2("Path_Python=$(which python3)")
+      cat2("path_python=$(which python3)")
       cat2(paste0(
         'echo -e "Some Checking:\\n  >>  Working directory',
-        ": $PWD\\n  >>  Python path:       $Path_Python\\n  >>  ",
+        ": $PWD\\n  >>  Python path:       $path_python\\n  >>  ",
         'Checking GPU:      $(python3 $PythonCheckGPU)\\n"'))
       cat2("")
 

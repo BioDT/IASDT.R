@@ -56,7 +56,7 @@ reference:
 
 - title: Prepare abiotic data
   contents:
-  - CLC_process
+  - clc_process
   - CHELSA_variables
   - CHELSA_data
   - efforts_data

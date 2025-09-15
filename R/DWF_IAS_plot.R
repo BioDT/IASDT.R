@@ -21,8 +21,9 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_Grid_Ref <- Path_Grid <- Path_TaxaInfo_RData <- Path_PA <- NAME_ENGL <-
-    Path_TaxaInfo <- EU_Bound <- Species_name2 <- CellCode <- x <- y <- NULL
+  path_grid_ref <- path_grid <- path_taxa_info_rdata <- Path_PA <- NAME_ENGL <-
+    path_taxa_info <- EU_boundaries <- species_name2 <- CellCode <- x <-
+    y <- NULL
 
   # # ..................................................................... ###
 
@@ -33,131 +34,135 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
-    "Path_Grid_Ref", "DP_R_Grid_raw", TRUE, FALSE,
-    "EU_Bound", "DP_R_EUBound", FALSE, TRUE,
+    "path_grid", "DP_R_grid_processed", TRUE, FALSE,
+    "path_grid_ref", "DP_R_grid_raw", TRUE, FALSE,
+    "EU_boundaries", "DP_R_country_boundaries", FALSE, TRUE,
     "Path_PA", "DP_R_PA", FALSE, FALSE,
-    "Path_TaxaInfo_RData", "DP_R_Taxa_info_rdata", FALSE, TRUE,
-    "Path_TaxaInfo", "DP_R_Taxa_info", FALSE, TRUE)
+    "path_taxa_info_rdata", "DP_R_taxa_info_rdata", FALSE, TRUE,
+    "path_taxa_info", "DP_R_taxa_info", FALSE, TRUE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
+    env_file = env_file, env_variables_data = env_vars_to_read)
 
-  rm(EnvVars2Read, envir = environment())
+  rm(env_vars_to_read, envir = environment())
   invisible(gc())
 
   # Summary information for the current species
-  SpInfo <- ecokit::load_as(Path_TaxaInfo_RData)
-  if (nrow(SpInfo) == 0) {
+  species_info <- ecokit::load_as(path_taxa_info_rdata)
+  if (nrow(species_info) == 0) {
     ecokit::stop_ctx(
       "Species information could not be found",
-      Path_TaxaInfo_RData = Path_TaxaInfo_RData,
-      SpInfo = SpInfo, nrow_SpInfo = nrow(SpInfo), include_backtrace = TRUE)
+      path_taxa_info_rdata = path_taxa_info_rdata,
+      species_info = species_info, nrow_species_info = nrow(species_info),
+      include_backtrace = TRUE)
   }
-  if (!species %in% SpInfo$Species_name) {
+  if (!species %in% species_info$species_name) {
     ecokit::stop_ctx(
       "Species name not found in the list of species",
       species = species, include_backtrace = TRUE)
   }
 
-  SpInfo <- dplyr::filter(SpInfo, Species_name2 == Species2) %>%
+  species_info <- dplyr::filter(species_info, species_name2 == Species2) %>%
     dplyr::select(-"speciesKey") %>%
     dplyr::distinct()
 
   # # ..................................................................... ###
 
   # Check / create directories
-  Path_Summary <- fs::path(Path_PA, "PA_summary")
-  path_JPEG <- fs::path(Path_PA, "Distribution_JPEG")
-  if (!fs::dir_exists(path_JPEG)) {
-    fs::dir_create(path_JPEG)
+  path_summary <- fs::path(Path_PA, "PA_summary")
+  path_jpeg <- fs::path(Path_PA, "distribution_jpeg")
+  if (!fs::dir_exists(path_jpeg)) {
+    fs::dir_create(path_jpeg)
   }
-  out_path <- fs::path(path_JPEG, paste0(SpInfo$Species_File[1], ".jpeg"))
+  out_path <- fs::path(path_jpeg, paste0(species_info$species_file[1], ".jpeg"))
 
   # Loading species data
   selected_columns <- c(
-    "NCells_All", "GBIF_Gr100", "EASIN_Gr100", "eLTER_Gr100",
-    "BioRegsSumm_N", "BioRegsSumm_Min", "BioRegsSumm_Max", "BioRegsSumm_Mean",
-    "species_ID", "PA_Map", "Countries2Exclude",
-    "GBIF", "GBIF_Unique", "EASIN", "EASIN_Unique", "eLTER", "eLTER_Unique",
-    "NCells_Naturalized", "GBIF_Masked", "GBIF_Masked_Unique",
-    "EASIN_Masked", "EASIN_Masked_Unique", "eLTER_Masked",
-    "eLTER_Masked_Unique")
+    "n_cells_all", "GBIF_grid100", "EASIN_grid100", "eLTER_grid100",
+    "bioreg_summ_n", "bioreg_summ_min", "bioreg_summ_max", "bioreg_summ_mean",
+    "species_id", "PA_map", "countries_to_exclude",
+    "GBIF", "GBIF_unique", "EASIN", "EASIN_unique", "eLTER", "eLTER_unique",
+    "n_cells_naturalized", "GBIF_masked", "GBIF_masked_unique",
+    "EASIN_masked", "EASIN_masked_unique", "eLTER_masked",
+    "eLTER_masked_unique")
 
-  SpData <- fs::path(Path_Summary, paste0(SpInfo$Species_File[1], ".qs2"))
-  if (!file.exists(SpData)) {
+  species_data <- fs::path(
+    path_summary, paste0(species_info$species_file[1], ".qs2"))
+  if (!file.exists(species_data)) {
     return(invisible(NULL))
   }
-  SpData <- ecokit::load_as(SpData) %>%
+  species_data <- ecokit::load_as(species_data) %>%
     dplyr::select(tidyselect::all_of(selected_columns))
   invisible(gc())
 
-  if (SpData$NCells_All == 0) {
+  if (species_data$n_cells_all == 0) {
     return(invisible(NULL))
   }
 
-  CountryBound <- ecokit::load_as(EU_Bound) %>%
+  country_boundaries <- ecokit::load_as(EU_boundaries) %>%
     magrittr::extract2("Bound_sf_Eur_s") %>%
     magrittr::extract2("L_10")
-  LastUpdate <- paste0("Last update: ", format(Sys.Date(), "%d %B %Y"))
+  last_update <- paste0("Last update: ", format(Sys.Date(), "%d %B %Y"))
 
 
-  Grid_100_sf <- fs::path(Path_Grid_Ref, "Grid_100_sf.RData") %>%
+  grid_100_sf <- fs::path(path_grid_ref, "grid_100_sf.RData") %>%
     ecokit::load_as() %>%
-    magrittr::extract2("Grid_100_sf_s")
+    magrittr::extract2("grid_100_sf_s")
 
   # Location of legend
-  Legend_GBIF <- dplyr::filter(Grid_100_sf, CellCode == "100kmE27N45")
-  Legend_EASIN <- dplyr::filter(Grid_100_sf, CellCode == "100kmE27N44")
-  Legend_eLTER <- dplyr::filter(Grid_100_sf, CellCode == "100kmE27N43")
+  legend_GBIF <- dplyr::filter(grid_100_sf, CellCode == "100kmE27N45")
+  legend_EASIN <- dplyr::filter(grid_100_sf, CellCode == "100kmE27N44")
+  legend_eLTER <- dplyr::filter(grid_100_sf, CellCode == "100kmE27N43")
 
-  rm(SpInfo, Grid_100_sf, envir = environment())
+  rm(species_info, grid_100_sf, envir = environment())
   invisible(gc())
 
   # the study area as simple feature object for plotting
-  Grid10_Sf <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData") %>%
+  grid10_sf <- fs::path(path_grid, "grid_10_land_crop_sf.RData") %>%
     ecokit::load_as()
 
-  GBIF_Gr100 <- SpData$GBIF_Gr100[[1]]
-  EASIN_Gr100 <- SpData$EASIN_Gr100[[1]]
-  eLTER_Gr100 <- SpData$eLTER_Gr100[[1]]
+  GBIF_grid100 <- species_data$GBIF_grid100[[1]]
+  EASIN_grid100 <- species_data$EASIN_grid100[[1]]
+  eLTER_grid100 <- species_data$eLTER_grid100[[1]]
 
-  SpData <- dplyr::select(
-    SpData, -tidyselect::all_of(c("GBIF_Gr100", "EASIN_Gr100", "eLTER_Gr100")))
+  species_data <- dplyr::select(
+    species_data,
+    -tidyselect::all_of(c("GBIF_grid100", "EASIN_grid100", "eLTER_grid100")))
   invisible(gc())
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Biogeographical regions ----
-  BioRegAnnotation <- paste0(
-    "Observed from ", SpData$BioRegsSumm_N,
+  bioreg_annotation <- paste0(
+    "Observed from ", species_data$bioreg_summ_min,
     " biogeographical regions\n# presence grid cells per region ranges from ",
-    SpData$BioRegsSumm_Min, " to ", SpData$BioRegsSumm_Max, "; mean: ",
-    SpData$BioRegsSumm_Mean)
+    species_data$bioreg_summ_min, " to ",
+    species_data$bioreg_summ_max, "; mean: ",
+    species_data$bioreg_summ_mean)
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Figure title ----
 
-  IAS_ID <- unique(SpData$species_ID)
-  MapTitle <- readr::read_tsv(
-    file = Path_TaxaInfo, show_col_types = FALSE, progress = FALSE) %>%
-    dplyr::filter(Species_name2 == Species2) %>%
-    dplyr::select(tidyselect::all_of(c("Class", "Order", "Family"))) %>%
+  ias_id <- unique(species_data$species_id)
+  map_title <- readr::read_tsv(
+    file = path_taxa_info, show_col_types = FALSE, progress = FALSE) %>%
+    dplyr::filter(species_name2 == Species2) %>%
+    dplyr::select(tidyselect::all_of(c("class", "order", "family"))) %>%
     unlist() %>%
     stringr::str_c(collapse = " / ") %>%
     paste0(
-      "   <span style='font-size: 14pt; color:blue;'><b><i>", IAS_ID,
+      "   <span style='font-size: 14pt; color:blue;'><b><i>", ias_id,
       " \u2014 ", species, "</i></b></span>   (", ., ")")
 
-  rm(Path_TaxaInfo, envir = environment())
+  rm(path_taxa_info, envir = environment())
   invisible(gc())
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||
 
-  # Plotting theme ----
+  # plotting theme ----
 
   plot_theme <- ggplot2::theme_bw() +
     ggplot2::theme(
@@ -183,112 +188,112 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
   # # |||||||||||||||||||||||||||||||||||||||||||||||||
 
   # map to be plotted ----
-  sp_PA <- terra::unwrap(SpData$PA_Map[[1]]) %>%
+  sp_PA <- terra::unwrap(species_data$PA_map[[1]]) %>%
     terra::classify(cbind(0, NA)) %>%
     terra::as.factor() %>%
     as.data.frame(xy = TRUE) %>%
     stats::setNames(c("x", "y", "species"))
-  SpData$PA_Map <- NULL
+  species_data$PA_map <- NULL
 
-  BoundExclude <- ecokit::load_as(EU_Bound) %>%
+  exclude_boundary <- ecokit::load_as(EU_boundaries) %>%
     magrittr::extract2("Bound_sf_Eur") %>%
     magrittr::extract2("L_10") %>%
-    dplyr::filter(NAME_ENGL %in% SpData$Countries2Exclude[[1]]) %>%
+    dplyr::filter(NAME_ENGL %in% species_data$countries_to_exclude[[1]]) %>%
     dplyr::select("NAME_ENGL")
 
-  rm(EU_Bound, envir = environment())
+  rm(EU_boundaries, envir = environment())
   invisible(gc())
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Figure subtitle ----
 
-  NGrids_All <- paste0(
+  n_grids_all <- paste0(
     "<span style='font-size: 12pt; color:red;'><b>All data:</b></span> ",
-    scales::label_comma()(SpData$NCells_All),
+    scales::label_comma()(species_data$n_cells_all),
     " presence grid cells</b> \u2014 <b>GBIF</b> (",
-    scales::label_comma()(SpData$GBIF), " / ",
-    scales::label_comma()(SpData$GBIF_Unique), ") \u2014 <b>EASIN</b> (",
-    scales::label_comma()(SpData$EASIN), " / ",
-    scales::label_comma()(SpData$EASIN_Unique), ") \u2014 <b>eLTER</b> (",
-    scales::label_comma()(SpData$eLTER), " / ",
-    scales::label_comma()(SpData$eLTER_Unique), ")<br>",
+    scales::label_comma()(species_data$GBIF), " / ",
+    scales::label_comma()(species_data$GBIF_unique), ") \u2014 <b>EASIN</b> (",
+    scales::label_comma()(species_data$EASIN), " / ",
+    scales::label_comma()(species_data$EASIN_unique), ") \u2014 <b>eLTER</b> (",
+    scales::label_comma()(species_data$eLTER), " / ",
+    scales::label_comma()(species_data$eLTER_unique), ")<br>",
     "<span style='font-size: 12pt; color:red;'><b>Final data: </span>",
-    scales::label_comma()(SpData$NCells_Naturalized),
+    scales::label_comma()(species_data$n_cells_Naturalized),
     " presence grid cells</b> \u2014 <b>GBIF</b> (",
-    scales::label_comma()(SpData$GBIF_Masked), " / ",
-    scales::label_comma()(SpData$GBIF_Masked_Unique),
+    scales::label_comma()(species_data$GBIF_masked), " / ",
+    scales::label_comma()(species_data$GBIF_masked_unique),
     ") \u2014 <b>EASIN</b> (",
-    scales::label_comma()(SpData$EASIN_Masked), " / ",
-    scales::label_comma()(SpData$EASIN_Masked_Unique),
+    scales::label_comma()(species_data$EASIN_masked), " / ",
+    scales::label_comma()(species_data$EASIN_masked_unique),
     ") \u2014 <b>eLTER</b> (",
-    scales::label_comma()(SpData$eLTER_Masked), " / ",
-    scales::label_comma()(SpData$eLTER_Masked_Unique), ")\n")
+    scales::label_comma()(species_data$eLTER_masked), " / ",
+    scales::label_comma()(species_data$eLTER_masked_unique), ")\n")
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||
 
   # ggplot object -----
 
-  Plot <- ggplot2::ggplot() +
+  plot <- ggplot2::ggplot() +
     # country boundaries
     ggplot2::geom_sf(
-      CountryBound, mapping = ggplot2::aes(), color = "grey",
+      country_boundaries, mapping = ggplot2::aes(), color = "grey",
       linewidth = 0.2, fill = scales::alpha("grey", 0.2)) +
     # the study area
     ggplot2::geom_sf(
-      Grid10_Sf, mapping = ggplot2::aes(), color = "lightgrey",
+      grid10_sf, mapping = ggplot2::aes(), color = "lightgrey",
       fill = "lightgrey", linewidth = 0.15)
 
-  if (nrow(BoundExclude) > 0) {
-    Plot <- Plot +
+  if (nrow(exclude_boundary) > 0) {
+    plot <- plot +
       # Countries to exclude
       ggplot2::geom_sf(
-        BoundExclude, mapping = ggplot2::aes(), color = "grey90",
+        exclude_boundary, mapping = ggplot2::aes(), color = "grey90",
         linewidth = 0.1, fill = scales::alpha("red", 0.2))
   }
 
   # presence grids at 100 km resolution
-  if (nrow(GBIF_Gr100) > 0) {
-    Plot <- Plot +
+  if (nrow(GBIF_grid100) > 0) {
+    plot <- plot +
       ggplot2::geom_sf(
-      GBIF_Gr100, mapping = ggplot2::aes(), color = "transparent",
-      fill = scales::alpha("blue", 0.2), linewidth = 0.15)
+        GBIF_grid100, mapping = ggplot2::aes(), color = "transparent",
+        fill = scales::alpha("blue", 0.2), linewidth = 0.15)
   }
 
   # PA grid at 10 km resolution
-  Plot <- Plot +
+  plot <- plot +
     ggplot2::geom_tile(
-    data = sp_PA, mapping = ggplot2::aes(x = x, y = y, fill = species)) +
+      data = sp_PA, mapping = ggplot2::aes(x = x, y = y, fill = species)) +
     ggplot2::scale_fill_manual(
       values = c("blue", "transparent"), na.value = "transparent")
 
-  if (nrow(EASIN_Gr100) > 0) {
-    Plot <- Plot +
+  if (nrow(EASIN_grid100) > 0) {
+    plot <- plot +
       ggplot2::geom_sf(
-        EASIN_Gr100, mapping = ggplot2::aes(), color = "red",
+        EASIN_grid100, mapping = ggplot2::aes(), color = "red",
         fill = "transparent", linewidth = 0.65)
   }
-  if (nrow(eLTER_Gr100) > 0) {
-    Plot <- Plot +
+  if (nrow(eLTER_grid100) > 0) {
+    plot <- plot +
       ggplot2::geom_sf(
-        eLTER_Gr100, mapping = ggplot2::aes(), color = "darkgreen",
+        eLTER_grid100, mapping = ggplot2::aes(), color = "darkgreen",
         fill = "transparent", linewidth = 0.65, linetype = "dotdash")
   }
 
-  Plot <- Plot +
+  plot <- plot +
     # country boundaries
     ggplot2::geom_sf(
-      CountryBound, mapping = ggplot2::aes(), color = "black",
+      country_boundaries, mapping = ggplot2::aes(), color = "black",
       linewidth = 0.2, fill = "transparent") +
     # legends for data type
     ggplot2::geom_sf(
-      Legend_GBIF, mapping = ggplot2::aes(), color = "transparent",
+      legend_GBIF, mapping = ggplot2::aes(), color = "transparent",
       fill = scales::alpha("blue", 0.2), linewidth = 0.15) +
     ggplot2::geom_sf(
-      Legend_EASIN, mapping = ggplot2::aes(), color = "red",
+      legend_EASIN, mapping = ggplot2::aes(), color = "red",
       fill = "transparent", linewidth = 0.65) +
     ggplot2::geom_sf(
-      Legend_eLTER, mapping = ggplot2::aes(), color = "darkgreen",
+      legend_eLTER, mapping = ggplot2::aes(), color = "darkgreen",
       fill = "transparent", linewidth = 0.65, linetype = "dotdash") +
     ggplot2::geom_text(
       mapping = ggplot2::aes(
@@ -309,12 +314,12 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
     ggplot2::scale_y_continuous(
       expand = ggplot2::expansion(mult = c(0, 0)),
       limits = c(1450000, 5410000)) +
-    ggplot2::labs(title = MapTitle, subtitle = NGrids_All, fill = NULL) +
+    ggplot2::labs(title = map_title, subtitle = n_grids_all, fill = NULL) +
     plot_theme
 
   rm(
-    SpData, Grid10_Sf, GBIF_Gr100, EASIN_Gr100, eLTER_Gr100,
-    BoundExclude, Legend_GBIF, Legend_EASIN, Legend_eLTER,
+    species_data, grid10_sf, GBIF_grid100, EASIN_grid100, eLTER_grid100,
+    exclude_boundary, legend_GBIF, legend_EASIN, legend_eLTER,
     envir = environment())
   invisible(gc())
 
@@ -337,12 +342,12 @@ IAS_plot <- function(species = NULL, env_file = ".env") {
   ragg::agg_jpeg(
     filename = out_path, width = 25, height = 26.5,
     res = 600, quality = 100, units = "cm")
-  print(Plot)
+  print(plot)
   grid::grid.text(
-    label = LastUpdate, x = 0.98, y = 0.975, hjust = 1, vjust = 1,
+    label = last_update, x = 0.98, y = 0.975, hjust = 1, vjust = 1,
     gp = grid::gpar(col = "grey65", fontsize = 12))
   grid::grid.text(
-    label = BioRegAnnotation, x = 0.02, y = 0.9, hjust = 0, vjust = 0,
+    label = bioreg_annotation, x = 0.02, y = 0.9, hjust = 0, vjust = 0,
     gp = grid::gpar(col = "grey65", fontsize = 10, lineheight = 0.7))
 
   grDevices::dev.off()

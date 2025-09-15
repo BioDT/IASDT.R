@@ -108,9 +108,9 @@ GBIF_process <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  path_GBIF <- path_GBIF_interim <- Species_name <- n_obs <- publisher_type <-
-    taxa_info <- species <- CellCode <- IAS_ID <- taxon_name <- others <-
-    Species_name2 <- Species_File <- path_grid <- summ_map <- summ_map_gg <-
+  path_GBIF <- path_GBIF_interim <- species_name <- n_obs <- publisher_type <-
+    taxa_info <- species <- CellCode <- ias_id <- taxon_name <- others <-
+    species_name2 <- species_file <- path_grid <- summ_map <- summ_map_gg <-
     plot_title <- legend_label <- n <- EU_borders <- publisher <-
     Longitude_3035 <- Latitude_3035 <- sp_data <- partner_map <-
     partner_id <- citizen_science <- NULL
@@ -125,18 +125,17 @@ GBIF_process <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "path_grid", "DP_R_Grid_processed", TRUE, FALSE,
-    "path_GBIF", "DP_R_GBIF_processed", FALSE, FALSE,
-    "path_GBIF_interim", "DP_R_GBIF_interim", FALSE, FALSE,
-    "EU_borders", "DP_R_EUBound", FALSE, TRUE,
-    "CountryCodes", "DP_R_Countrycodes", FALSE, TRUE,
-    "taxa_info", "DP_R_Taxa_info_rdata", FALSE, TRUE)
+    "path_grid", "DP_R_grid_processed", TRUE, FALSE,
+    "path_GBIF", "DP_R_gbif_processed", FALSE, FALSE,
+    "path_GBIF_interim", "DP_R_gbif_interim", FALSE, FALSE,
+    "EU_borders", "DP_R_country_boundaries", FALSE, TRUE,
+    "taxa_info", "DP_R_taxa_info_rdata", FALSE, TRUE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
   # # ..................................................................... ###
 
@@ -173,8 +172,8 @@ GBIF_process <- function(
   path_publishers <- fs::path(path_GBIF, "n_species_per_publisher")
   fs::dir_create(c(path_sp_data, path_publishers))
 
-  # Grid_10_Land_Crop_sf
-  grid_sf <- fs::path(path_grid, "Grid_10_Land_Crop_sf.RData")
+  # grid_10_land_crop_sf
+  grid_sf <- fs::path(path_grid, "grid_10_land_crop_sf.RData")
   if (!file.exists(grid_sf)) {
     ecokit::stop_ctx(
       "Reference grid (sf) file not found", grid_sf = grid_sf,
@@ -182,8 +181,8 @@ GBIF_process <- function(
   }
   grid_sf <- ecokit::load_as(grid_sf)
 
-  # Grid_10_Land_Crop
-  grid_r <- fs::path(path_grid, "Grid_10_Land_Crop.RData")
+  # grid_10_land_crop
+  grid_r <- fs::path(path_grid, "grid_10_land_crop.RData")
   if (!file.exists(grid_r)) {
     ecokit::stop_ctx(
       "Reference grid file not found", grid_r = grid_r,
@@ -244,7 +243,7 @@ GBIF_process <- function(
       # merge with taxa standardization results
       dplyr::left_join(taxa_list, by = "speciesKey") %>%
       # arrange by species name
-      dplyr::arrange(Species_name)
+      dplyr::arrange(species_name)
   } else {
     Msg <- ChunkList[which(!file.exists(ChunkListRData))] %>%
       paste0(" >> ", ., collapse = "\n") %>%
@@ -320,8 +319,8 @@ GBIF_process <- function(
   GBIF_grid <- sf::st_drop_geometry(GBIF_data) %>%
     # only unique combinations between species and grid ID
     dplyr::distinct(
-      IAS_ID, taxon_name, Species_name, Species_name2,
-      Species_File, CellCode, publisher_type) %>%
+      ias_id, taxon_name, species_name, species_name2,
+      species_file, CellCode, publisher_type) %>%
     # add polygons for grids
     dplyr::left_join(grid_sf, by = "CellCode") %>%
     # ensure that the data is sf object
@@ -339,21 +338,21 @@ GBIF_process <- function(
 
   ecokit::cat_time("# observations per species", level = 1L)
   species_n_obs <- sf::st_drop_geometry(GBIF_data) %>%
-    dplyr::count(IAS_ID, taxon_name, Species_name) %>%
+    dplyr::count(ias_id, taxon_name, species_name) %>%
     dplyr::rename(GBIF_n_obs = n)
 
   ecokit::cat_time("# grids per species", level = 1L)
   species_n_grids <- dplyr::select(GBIF_grid, -publisher_type) %>%
     sf::st_drop_geometry() %>%
-    dplyr::distinct(IAS_ID, taxon_name, Species_name, CellCode) %>%
-    dplyr::count(IAS_ID, taxon_name, Species_name) %>%
+    dplyr::distinct(ias_id, taxon_name, species_name, CellCode) %>%
+    dplyr::count(ias_id, taxon_name, species_name) %>%
     dplyr::rename(GBIF_n_grids = n)
 
   ecokit::cat_time(
     "Merge number of observations and grids per species", level = 1L)
   GBIF_n_obs_n_grid <- dplyr::full_join(
     species_n_obs, species_n_grids,
-    by = c("IAS_ID", "taxon_name", "Species_name"))
+    by = c("ias_id", "taxon_name", "species_name"))
 
   ecokit::cat_time("Save as RData", level = 1L)
   save(GBIF_n_obs_n_grid, file = fs::path(path_GBIF, "GBIF_n_obs_n_grid.RData"))
@@ -581,8 +580,8 @@ GBIF_process <- function(
   ecokit::cat_time("Species-specific data")
 
   species_list <- sf::st_drop_geometry(GBIF_data) %>%
-    dplyr::distinct(Species_name) %>%
-    dplyr::pull(Species_name) %>%
+    dplyr::distinct(species_name) %>%
+    dplyr::pull(species_name) %>%
     sort()
 
   # Species data --- sf ----
@@ -598,7 +597,7 @@ GBIF_process <- function(
     .x = species_list,
     .f = ~ {
       # Filter data on this species
-      sp_data <- dplyr::filter(GBIF_data, Species_name == .x)
+      sp_data <- dplyr::filter(GBIF_data, species_name == .x)
 
       # Save if there is data
       if (nrow(sp_data) > 0) {
@@ -619,7 +618,7 @@ GBIF_process <- function(
 
   n_species_publisher <- sf::st_drop_geometry(GBIF_data) %>%
     dplyr::distinct(
-      IAS_ID, publisher, CellCode, Longitude_3035, Latitude_3035) %>%
+      ias_id, publisher, CellCode, Longitude_3035, Latitude_3035) %>%
     tidyr::nest(sp_data = -publisher) %>%
     dplyr::mutate(n_obs = purrr::map_int(sp_data, nrow)) %>%
     dplyr::arrange(dplyr::desc(n_obs)) %>%
@@ -629,7 +628,7 @@ GBIF_process <- function(
         .x = sp_data,
         .f = ~{
           dplyr::summarise(
-            .x, n_species = length(unique(IAS_ID)),
+            .x, n_species = length(unique(ias_id)),
             .by = c(CellCode, Longitude_3035, Latitude_3035)) %>%
             sf::st_as_sf(
               coords = c("Longitude_3035", "Latitude_3035"), crs = 3035) %>%

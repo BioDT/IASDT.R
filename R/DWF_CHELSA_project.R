@@ -50,7 +50,7 @@ CHELSA_project <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_Grid <- NULL
+  path_grid <- NULL
 
   # # ..................................................................... ###
 
@@ -74,25 +74,25 @@ CHELSA_project <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE)
+    "path_grid", "DP_R_grid_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
   # # ..................................................................... ###
 
   # Loading reference grid -----
 
-  GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
-  if (!file.exists(GridR)) {
+  grid_r <- fs::path(path_grid, "grid_10_land_crop.RData")
+  if (!file.exists(grid_r)) {
     ecokit::stop_ctx(
-      "Path for the Europe boundaries does not exist", GridR = GridR,
+      "Path for the Europe boundaries does not exist", grid_r = grid_r,
       include_backtrace = TRUE)
   }
-  GridR <- ecokit::load_as(GridR, unwrap_r = TRUE)
+  grid_r <- ecokit::load_as(grid_r, unwrap_r = TRUE)
 
   # # ..................................................................... ###
 
@@ -108,12 +108,12 @@ CHELSA_project <- function(
 
   # Extent to crop the maps prior to processing. This ensures that the object
   # reads from the memory. See below
-  CropExtent <- terra::ext(-26, 37.5, 34, 72)
+  crop_extent <- terra::ext(-26, 37.5, 34, 72)
 
-  LandMaskL <- system.file(
+  land_mask_l <- system.file(
     "extdata", "LandMask.nc", package = "IASDT.R", mustWork = TRUE) %>%
     terra::rast() %>%
-    terra::crop(CropExtent) %>%
+    terra::crop(crop_extent) %>%
     suppressWarnings() %>% # suppress warning on LUMI while cropping
     terra::classify(cbind(0, NA))
 
@@ -126,7 +126,7 @@ CHELSA_project <- function(
   # later consider the scale and offset information manually. This is more safe
   # as I found that some of the future projections do not include such
   # information in the tiff files.
-  Rstr <- terra::rast(metadata$Path_Down, raw = TRUE) %>%
+  r_map <- terra::rast(metadata$Path_Down, raw = TRUE) %>%
     stats::setNames(basename(metadata$Path_Down)) %>%
     # crop to European boundaries although it is not necessary to crop the input
     # maps into the European boundaries, we will crop the data prior to
@@ -134,14 +134,14 @@ CHELSA_project <- function(
     # not from the file. This is a workaround to avoid wrong extreme values in
     # the output file because of a bug in terra package (see this issue:
     # https://github.com/rspatial/terra/issues/1356) [18.02.2023]
-    terra::crop(CropExtent) %>%
+    terra::crop(crop_extent) %>%
     # mask by land mask
-    terra::mask(LandMaskL) %>%
+    terra::mask(land_mask_l) %>%
     # `gsp` maps contains extremely high values instead of NA; the following
     # replace extreme values with NA
     terra::classify(cbind(420000000, Inf, NA))
 
-  rm(LandMaskL, CropExtent, envir = environment())
+  rm(land_mask_l, crop_extent, envir = environment())
 
   # # ..................................................................... ###
 
@@ -150,21 +150,21 @@ CHELSA_project <- function(
   # For `npp` layers, all tiff maps except for current climate does have a
   # scaling factor all scale and offset information were set manually
   if (metadata$scale != 1) {
-    Rstr <- Rstr * metadata$scale
+    r_map <- r_map * metadata$scale
   }
   if (metadata$offset != 0) {
-    Rstr <- Rstr + metadata$offset
+    r_map <- r_map + metadata$offset
   }
 
   # # ..................................................................... ###
 
   # Projecting to reference grid EPSG 3035 ------
 
-  Rstr <- Rstr %>%
+  r_map <- r_map %>%
     # project to reference grid
-    terra::project(GridR, method = "average", threads = TRUE) %>%
+    terra::project(grid_r, method = "average", threads = TRUE) %>%
     # mask to the reference grid
-    terra::mask(GridR) %>%
+    terra::mask(grid_r) %>%
     # Ensure that values are read from memory
     terra::toMemory() %>%
     ecokit::set_raster_crs(crs = "epsg:3035")
@@ -174,7 +174,7 @@ CHELSA_project <- function(
   # Write file to disk --- tiff -----
 
   terra::writeRaster(
-    x = Rstr, filename = metadata$Path_Out_tif, overwrite = TRUE,
+    x = r_map, filename = metadata$Path_Out_tif, overwrite = TRUE,
     gdal = c("COMPRESS=DEFLATE", "TILED=YES"))
 
   # # ..................................................................... ###
@@ -182,14 +182,14 @@ CHELSA_project <- function(
   # Write file to disk --- nc -----
 
   # Variable name of the output *.nc file
-  VarName4NC <- c(
+  var_name_for_nc <- c(
     metadata$TimePeriod, metadata$ClimateModel, metadata$ClimateScenario) %>%
     unique() %>%
     paste(collapse = "__") %>%
     paste0(metadata$Variable, "__", .)
 
   # global attributes to be added to the *.nc file
-  Attrs <- c(
+  attributes <- c(
     paste0("URL=", metadata$URL),
     paste0("OriginalFile=", metadata$Path_Down),
     paste0("Variable=", metadata$Variable),
@@ -202,10 +202,10 @@ CHELSA_project <- function(
 
   # save as *.nc file
   terra::writeCDF(
-    Rstr,
-    filename = metadata$Path_Out_NC, varname = VarName4NC,
+    r_map,
+    filename = metadata$Path_Out_NC, varname = var_name_for_nc,
     unit = metadata$unit, zname = metadata$TimePeriod,
-    atts = Attrs, overwrite = TRUE, compression = compression_level)
+    atts = attributes, overwrite = TRUE, compression = compression_level)
 
   # # ..................................................................... ###
 

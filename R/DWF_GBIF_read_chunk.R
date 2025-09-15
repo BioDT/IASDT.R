@@ -36,12 +36,12 @@ GBIF_read_chunk <- function(
 
   # # ..................................................................... ###
 
-  ChunkOutPath <- stringr::str_replace(chunk_file, ".txt$", ".RData")
+  chunk_out_path <- stringr::str_replace(chunk_file, ".txt$", ".RData")
 
   if (isFALSE(overwrite) &&
-      ecokit::check_data(ChunkOutPath, warning = FALSE)) {
+      ecokit::check_data(chunk_out_path, warning = FALSE)) {
     if (return_data) {
-      return(ecokit::load_as(ChunkOutPath))
+      return(ecokit::load_as(chunk_out_path))
     } else {
       return(invisible(NULL))
     }
@@ -51,12 +51,12 @@ GBIF_read_chunk <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  CLC_Tif <- SynHab_desc <- CLC_CW <- Longitude <- Latitude <- UncertainKm <-
-    CountryCodes <- countryName <- hasCoordinate <- hasGeospatialIssues <-
-    phylum <- phylumKey <- Path_Grid <- occurrenceStatus <- Value <-
-    Path_GBIF <- selected_columns <- Int_cols <- lgl_cols <- Dbl_cols <-
-    Int64_cols <- coordinatePrecision <- NDecLong <- NDecLat <- year <-
-    taxonRank <- SortCols <- CellCode <- NULL
+  clc_tif <- SynHab_desc <- clc_crosswalk <- Longitude <- Latitude <-
+    uncertain_km <- country_codes <- countryName <- hasCoordinate <-
+    hasGeospatialIssues <- phylum <- phylumKey <- path_grid <-
+    occurrenceStatus <- Value <- path_gbif <- selected_columns <- Int_cols <-
+    lgl_cols <- dbl_cols <- int64_cols <- coordinatePrecision <- n_dec_long <-
+    n_dec_lat <- year <- taxonRank <- sort_columns <- CellCode <- NULL
 
   # # ..................................................................... ###
 
@@ -67,46 +67,47 @@ GBIF_read_chunk <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "CLC_Tif", "DP_R_CLC_tif", FALSE, TRUE,
-    "CLC_CW", "DP_R_CLC_crosswalk", FALSE, TRUE,
-    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
-    "Path_GBIF", "DP_R_GBIF_processed", FALSE, FALSE,
-    "Path_GBIF_Interim", "DP_R_GBIF_interim", FALSE, FALSE)
+    "clc_tif", "DP_R_clc_tif", FALSE, TRUE,
+    "clc_crosswalk", "DP_R_clc_crosswalk", FALSE, TRUE,
+    "path_grid", "DP_R_grid_processed", TRUE, FALSE,
+    "path_gbif", "DP_R_gbif_processed", FALSE, FALSE,
+    "path_gbif_Interim", "DP_R_gbif_interim", FALSE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
-  load(fs::path(Path_GBIF, "selected_columns.RData"))
+  load(fs::path(path_gbif, "selected_columns.RData"))
 
   # # ..................................................................... ###
 
-  # Grid_10_Land_Crop
-  GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
-  if (!file.exists(GridR)) {
+  # grid_10_land_crop
+  grid_r <- fs::path(path_grid, "grid_10_land_crop.RData")
+  if (!file.exists(grid_r)) {
     ecokit::stop_ctx(
-      "Reference grid file not found", GridR = GridR, include_backtrace = TRUE)
-  }
-  GridR <- ecokit::load_as(GridR, unwrap_r = TRUE)
-
-  # # Grid_10_Land_Crop_sf
-  GridSf <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
-  if (!file.exists(GridSf)) {
-    ecokit::stop_ctx(
-      "Reference grid file (sf) not found", GridSf = GridSf,
+      "Reference grid file not found", grid_r = grid_r,
       include_backtrace = TRUE)
   }
-  GridSf <- ecokit::load_as(GridSf)
+  grid_r <- ecokit::load_as(grid_r, unwrap_r = TRUE)
+
+  # # grid_10_land_crop_sf
+  grid_sf <- fs::path(path_grid, "grid_10_land_crop_sf.RData")
+  if (!file.exists(grid_sf)) {
+    ecokit::stop_ctx(
+      "Reference grid file (sf) not found", grid_sf = grid_sf,
+      include_backtrace = TRUE)
+  }
+  grid_sf <- ecokit::load_as(grid_sf)
 
   # CLC - tif
-  Corine <- terra::rast(CLC_Tif)
-  terra::activeCat(Corine) <- 0
+  corine_r <- terra::rast(clc_tif)
+  terra::activeCat(corine_r) <- 0
 
   # CLC cross-walk to match observations
-  CLC_Levels <- readr::read_delim(
-    file = CLC_CW, show_col_types = FALSE, progress = FALSE) %>%
+  clc_levels <- readr::read_delim(
+    file = clc_crosswalk, show_col_types = FALSE, progress = FALSE) %>%
     dplyr::select(-SynHab_desc)
 
   # publishers for citizen science data
@@ -114,7 +115,7 @@ GBIF_read_chunk <- function(
     "Pl@ntNet", "iNaturalist.org", "Observation.org", "naturgucker.de",
     "iSpot", "BioDiversity4All", "Questagame")
 
-  ChunkData <- readr::read_lines(chunk_file, progress = FALSE) %>%
+  chunk_data <- readr::read_lines(chunk_file, progress = FALSE) %>%
     # read the data by lines and convert to tibble
     dplyr::tibble(Data = .) %>%
     # split into columns and assign column names
@@ -125,15 +126,15 @@ GBIF_read_chunk <- function(
       # convert empty strings to NA
       dplyr::across(tidyselect::everything(), ~ dplyr::na_if(., "")),
       # number of decimal places for longitude / latitude
-      NDecLong = purrr::map_int(Longitude, ecokit::n_decimals),
-      NDecLat = purrr::map_int(Latitude, ecokit::n_decimals),
+      n_dec_long = purrr::map_int(Longitude, ecokit::n_decimals),
+      n_dec_lat = purrr::map_int(Latitude, ecokit::n_decimals),
       # change column classes
       dplyr::across(tidyselect::all_of(Int_cols), as.integer),
       dplyr::across(tidyselect::all_of(lgl_cols), as.logical),
-      dplyr::across(tidyselect::all_of(Dbl_cols), as.double),
-      dplyr::across(tidyselect::all_of(Int64_cols), bit64::as.integer64),
+      dplyr::across(tidyselect::all_of(dbl_cols), as.double),
+      dplyr::across(tidyselect::all_of(int64_cols), bit64::as.integer64),
       # convert uncertainty to kilometre
-      UncertainKm = UncertainKm / 1000,
+      uncertain_km = uncertain_km / 1000,
       # publisher type: citizen science vs others
       publisher_type = dplyr::case_when(
         publisher %in% cz_publishers ~ "citizen_science",
@@ -145,12 +146,12 @@ GBIF_read_chunk <- function(
       # only occurrences with coordinates and without spatial issues
       hasCoordinate, !hasGeospatialIssues,
       # exclude high spatial uncertainty (keep empty uncertainty values)
-      UncertainKm <= max_uncertainty | is.na(UncertainKm),
+      uncertain_km <= max_uncertainty | is.na(uncertain_km),
       # exclude occurrences with less precision (keep empty precision values)
       coordinatePrecision <= 0.05 | is.na(coordinatePrecision),
       # exclude occurrences if either latitude/longitude has no decimals
       # (integer)
-      (NDecLong > 0 & NDecLat > 0),
+      (n_dec_long > 0 & n_dec_lat > 0),
       # keep only occurrences recorder after specific year
       year >= start_year,
       # only "PRESENT" data (i.e. exclude ABSENT)
@@ -161,7 +162,8 @@ GBIF_read_chunk <- function(
       # only accepted taxonomy ranks (species level and below)
       taxonRank %in% c("FORM", "SPECIES", "SUBSPECIES", "VARIETY")) %>%
     # re-order columns
-    dplyr::select(tidyselect::all_of(SortCols), tidyselect::everything()) %>%
+    dplyr::select(
+      tidyselect::all_of(sort_columns), tidyselect::everything()) %>%
     # convert to sf object (keep original coordinate columns)
     sf::st_as_sf(
       coords = c("Longitude", "Latitude"), crs = 4326, remove = FALSE) %>%
@@ -170,10 +172,10 @@ GBIF_read_chunk <- function(
     # Extract coordinates in the new projection
     ecokit::sf_add_coords("Longitude_3035", "Latitude_3035") %>%
     # add country name (match original data iso name for countries)
-    dplyr::left_join(y = CountryCodes, by = "countryCode") %>%
+    dplyr::left_join(y = country_codes, by = "countryCode") %>%
     dplyr::relocate(countryName, .after = "countryCode") %>%
     # add CellCode
-    sf::st_join(GridSf) %>%
+    sf::st_join(grid_sf) %>%
     # remove points not overlapping with land grid cells
     dplyr::filter(!is.na(CellCode)) %>%
     dplyr::select(
@@ -182,12 +184,12 @@ GBIF_read_chunk <- function(
 
   rm(cz_publishers, envir = environment())
 
-  if (nrow(ChunkData) > 0) {
+  if (nrow(chunk_data) > 0) {
     # Extract CLC data for occurrences (original data at resolution of 100 m)
     # extract coordinates
-    ChunkData <- sf::st_coordinates(ChunkData) %>%
+    chunk_data <- sf::st_coordinates(chunk_data) %>%
       # extract matching CLC class
-      terra::extract(x = Corine, y = .) %>%
+      terra::extract(x = corine_r, y = .) %>%
       dplyr::pull(Value) %>%
       # convert to tibble (integer)
       dplyr::tibble(Value = .) %>%
@@ -196,19 +198,20 @@ GBIF_read_chunk <- function(
         Value = dplyr::if_else(
           as.integer(Value) == 999, NA_integer_, as.integer(Value))) %>%
       # add information on CLC (L1//L2/L3) classes
-      dplyr::left_join(CLC_Levels, by = "Value") %>%
+      dplyr::left_join(clc_levels, by = "Value") %>%
       dplyr::select(-Value) %>%
       # merge with cleaned dataset
-      dplyr::bind_cols(ChunkData, .)
+      dplyr::bind_cols(chunk_data, .)
 
     if (save_RData) {
       ChunkOutName <- stringr::str_remove_all(basename(chunk_file), ".txt$")
       ecokit::save_as(
-        object = ChunkData, object_name = ChunkOutName, out_path = ChunkOutPath)
+        object = chunk_data, object_name = ChunkOutName,
+        out_path = chunk_out_path)
     }
 
     if (return_data) {
-      return(ChunkData)
+      return(chunk_data)
     } else {
       return(invisible(NULL))
     }
@@ -221,7 +224,7 @@ GBIF_read_chunk <- function(
       ChunkOutName <- stringr::str_remove_all(basename(chunk_file), ".txt$")
       ecokit::save_as(
         object = tibble::tibble(),
-        object_name = ChunkOutName, out_path = ChunkOutPath)
+        object_name = ChunkOutName, out_path = chunk_out_path)
     }
 
     return(invisible(NULL))

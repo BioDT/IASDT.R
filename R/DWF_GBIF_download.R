@@ -10,8 +10,8 @@
 
 GBIF_download <- function(
     env_file = ".env", r_environ = ".Renviron", request = TRUE, download = TRUE,
-    split_chunks = TRUE, chunk_size = 50000L, boundaries = c(-30, 50, 25, 75),
-    start_year = 1981L) {
+    split_chunks = TRUE, chunk_size = 50000L,
+    boundaries = c(-30L, 50L, 25L, 75L), start_year = 1981L) {
 
   # # ..................................................................... ###
 
@@ -33,7 +33,7 @@ GBIF_download <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   SortID <- ID <- Col <- Path_GBIF_Interim <- Path_GBIF_Raw <- Path_GBIF <-
-    CountryCodes <- TaxaInfo <- NULL
+    country_codes <- TaxaInfo <- NULL
 
   # # ..................................................................... ###
 
@@ -63,17 +63,17 @@ GBIF_download <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "Path_GBIF", "DP_R_GBIF_processed", FALSE, FALSE,
-    "Path_GBIF_Raw", "DP_R_GBIF_raw", FALSE, FALSE,
-    "Path_GBIF_Interim", "DP_R_GBIF_interim", FALSE, FALSE,
-    "CountryCodes", "DP_R_Countrycodes", FALSE, TRUE,
-    "TaxaInfo", "DP_R_Taxa_info_rdata", FALSE, TRUE)
+    "Path_GBIF", "DP_R_gbif_processed", FALSE, FALSE,
+    "Path_GBIF_Raw", "DP_R_gbif_raw", FALSE, FALSE,
+    "Path_GBIF_Interim", "DP_R_gbif_interim", FALSE, FALSE,
+    "country_codes", "DP_R_country_codes", FALSE, TRUE,
+    "TaxaInfo", "DP_R_taxa_info_rdata", FALSE, TRUE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
   # # ..................................................................... ###
 
@@ -86,13 +86,13 @@ GBIF_download <- function(
 
   ## Country codes -----
   ecokit::cat_time("Country codes", level = 1L)
-  CountryCodes <- readr::read_csv(
-    file = CountryCodes, col_types = list(readr::col_character()),
+  country_codes <- readr::read_csv(
+    file = country_codes, col_types = list(readr::col_character()),
     progress = FALSE, col_select = c("countryName", "countryCode"))
 
   ## Species list -----
   ecokit::cat_time("Species list", level = 1L)
-  TaxaList <- ecokit::load_as(TaxaInfo)
+  taxa_list <- ecokit::load_as(TaxaInfo)
 
   # # ..................................................................... ###
 
@@ -111,7 +111,7 @@ GBIF_download <- function(
 
     GBIF_request <- rgbif::occ_download(
       # list of species keys
-      rgbif::pred_in("taxonKey", TaxaList$speciesKey),
+      rgbif::pred_in("taxonKey", taxa_list$speciesKey),
       # Only with coordinates & no spatial issues
       rgbif::pred("hasCoordinate", TRUE),
       rgbif::pred("hasGeospatialIssue", FALSE),
@@ -227,10 +227,10 @@ GBIF_download <- function(
 
   ecokit::cat_time("Prepare selected columns and data types")
 
-  # Class types of some selected columns
+  # class types of some selected columns
   # integer columns
   Int_cols <- c(
-    "LineNum", "day", "month", "year", "speciesKey", "acceptedNameUsageID",
+    "line_number", "day", "month", "year", "speciesKey", "acceptedNameUsageID",
     "taxonKey", "acceptedTaxonKey", "phylumKey", "classKey", "orderKey",
     "familyKey", "genusKey")
 
@@ -238,7 +238,7 @@ GBIF_download <- function(
   Int64_cols <- c("gbifID", "catalogNumber")
 
   # double columns
-  Dbl_cols <- c("UncertainKm", "Longitude", "Latitude", "coordinatePrecision")
+  Dbl_cols <- c("uncertain_km", "Longitude", "Latitude", "coordinatePrecision")
 
   # logical columns
   lgl_cols <- c("hasCoordinate", "hasGeospatialIssues")
@@ -295,7 +295,7 @@ GBIF_download <- function(
     dplyr::right_join(selected_columns, by = "Col") %>%
     dplyr::mutate(
       # add information on column classes
-      Class = dplyr::case_when(
+      class = dplyr::case_when(
         Col %in% Int_cols ~ "integer",
         Col %in% Int64_cols ~ "integer64",
         Col %in% Dbl_cols ~ "double",
@@ -305,7 +305,7 @@ GBIF_download <- function(
       Col = dplyr::case_when(
         Col == "decimalLongitude" ~ "Longitude",
         Col == "decimalLatitude" ~ "Latitude",
-        Col == "coordinateUncertaintyInMeters" ~ "UncertainKm",
+        Col == "coordinateUncertaintyInMeters" ~ "uncertain_km",
         .default = Col)
     ) %>%
     # arrange by column number in the original data
@@ -314,14 +314,14 @@ GBIF_download <- function(
     dplyr::mutate(ID = as.integer(ID + 1), SortID = as.integer(SortID + 1)) %>%
     dplyr::bind_rows(
       tibble::tibble(
-        Col = "LineNum", ID = 1L, SortID = 1L, Class = "integer"),
+        Col = "line_number", ID = 1L, SortID = 1L, class = "integer"),
       .)
 
   SortCols <- dplyr::pull(dplyr::arrange(selected_columns, SortID), Col)
 
   save(
     selected_columns, Int_cols, Int64_cols, Dbl_cols, lgl_cols,
-    SortCols, CountryCodes,
+    SortCols, country_codes,
     file = fs::path(Path_GBIF, "selected_columns.RData"))
 
   # # ..................................................................... ###

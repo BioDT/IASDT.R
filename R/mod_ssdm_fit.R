@@ -256,13 +256,13 @@ fit_sdm_models <- function(
 
   env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "path_grid", "DP_R_Grid_processed", TRUE, FALSE)
+    "path_grid", "DP_R_grid_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = env_vars_to_read)
   rm(env_vars_to_read, envir = environment())
 
-  path_grid_r <- fs::path(path_grid, "Grid_10_Land_Crop.RData")
+  path_grid_r <- fs::path(path_grid, "grid_10_land_crop.RData")
 
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

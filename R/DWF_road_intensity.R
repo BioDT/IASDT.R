@@ -17,7 +17,7 @@
 #' @note
 #' - The function downloads the most recent version of Global Roads Inventory
 #'   Project (`GRIP`) data from the URL specified in the environment variable
-#'   `DP_R_Roads_url`. Original data format is a zipped file containing global
+#'   `DP_R_road_url`. Original data format is a zipped file containing global
 #'   road data in the form of `fgdb` (`EPSG:3246`).
 #' - On LUMI HPC, loading the `libarchive` module is necessary to use the
 #'   `archive` R package: `module load libarchive/3.6.2-cpeGNU-23.09`
@@ -39,8 +39,8 @@ road_intensity <- function(env_file = ".env") {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_Roads <- Path_Roads_Raw <- Path_Roads_Interim <- RoadType <-
-    EU_Bound <- VarName <- Road_URL <- Path_Grid <- NULL
+  path_road <- path_road_raw <- path_road_interim <- road_type <-
+    EU_boundaries <- VarName <- road_URL <- path_grid <- NULL
 
   # # ..................................................................... ###
 
@@ -52,25 +52,25 @@ road_intensity <- function(env_file = ".env") {
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "Path_Roads", "DP_R_Roads_processed", FALSE, FALSE,
-    "Path_Roads_Raw", "DP_R_Roads_raw", FALSE, FALSE,
-    "Path_Roads_Interim", "DP_R_Roads_interim", FALSE, FALSE,
-    "Road_URL", "DP_R_Roads_url", FALSE, FALSE,
-    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
-    "EU_Bound", "DP_R_EUBound", FALSE, TRUE)
+    "path_road", "DP_R_road_processed", FALSE, FALSE,
+    "path_road_raw", "DP_R_road_raw", FALSE, FALSE,
+    "path_road_interim", "DP_R_road_interim", FALSE, FALSE,
+    "road_URL", "DP_R_road_url", FALSE, FALSE,
+    "path_grid", "DP_R_grid_processed", TRUE, FALSE,
+    "EU_boundaries", "DP_R_country_boundaries", FALSE, TRUE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
-  fs::dir_create(c(Path_Roads, Path_Roads_Raw, Path_Roads_Interim))
+  fs::dir_create(c(path_road, path_road_raw, path_road_interim))
 
-  RefGrid <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
-  if (!file.exists(RefGrid)) {
+  grid_ref <- fs::path(path_grid, "grid_10_land_crop.RData")
+  if (!file.exists(grid_ref)) {
     ecokit::stop_ctx(
-      "The reference grid file does not exist", RefGrid = RefGrid,
+      "The reference grid file does not exist", grid_ref = grid_ref,
       include_backtrace = TRUE)
   }
 
@@ -80,56 +80,56 @@ road_intensity <- function(env_file = ".env") {
   ecokit::cat_time("Download road data")
 
   withr::local_options(timeout = 1200)
-  Path_DownFile <- fs::path(Path_Roads_Raw, basename(Road_URL))
+  path_download_file <- fs::path(path_road_raw, basename(road_URL))
 
   # Check if zip file is a valid file
-  if (file.exists(Path_DownFile)) {
-    Success <- ecokit::check_zip(Path_DownFile)
-    if (isFALSE(Success)) {
-      fs::file_delete(Path_DownFile)
+  if (file.exists(path_download_file)) {
+    success <- ecokit::check_zip(path_download_file)
+    if (isFALSE(success)) {
+      fs::file_delete(path_download_file)
     }
   } else {
-    Success <- FALSE
+    success <- FALSE
   }
 
   # Try downloading data for a max of 5 attempts
-  Attempt <- 1
-  Attempts <- 5
+  attempt <- 1
+  attempts <- 5
 
-  while (isFALSE(Success) && Attempt <= Attempts) {
-    Down <- try(
+  while (isFALSE(success) && attempt <= attempts) {
+    download <- try(
       expr = {
         utils::download.file(
-          url = Road_URL, destfile = Path_DownFile,
+          url = road_URL, destfile = path_download_file,
           mode = "wb", quiet = TRUE) %>%
           suppressWarnings()
 
-        Success <- ecokit::check_zip(Path_DownFile)
-        Success
+        success <- ecokit::check_zip(path_download_file)
+        success
       }, silent = TRUE)
 
-    if (inherits(Down, "try-error")) {
-      Success <- FALSE
+    if (inherits(download, "try-error")) {
+      success <- FALSE
     }
 
-    Attempt <- Attempt + 1
+    attempt <- attempt + 1
   }
 
-  if (isFALSE(Success)) {
+  if (isFALSE(success)) {
     ecokit::stop_ctx(
-      paste0("Failed to download road data after ", Attempts, " attempts"),
-      Road_URL = Road_URL, include_backtrace = TRUE)
+      paste0("Failed to download road data after ", attempts, " attempts"),
+      road_URL = road_URL, include_backtrace = TRUE)
   }
 
-  rm(Down, envir = environment())
+  rm(download, envir = environment())
 
   # # .................................... ###
 
   ecokit::cat_time("Extracting files")
   archive::archive_extract(
-    archive = Path_DownFile, dir = Path_Roads_Interim) %>%
+    archive = path_download_file, dir = path_road_interim) %>%
     suppressMessages()
-  rm(Path_DownFile, envir = environment())
+  rm(path_download_file, envir = environment())
 
   # # ..................................................................... ###
 
@@ -139,17 +139,17 @@ road_intensity <- function(env_file = ".env") {
   ## Load, crop, and project GRIP data -----
   ecokit::cat_time("Load, crop, and project GRIP data", level = 1L)
 
-  Road_GDB_Files <- list.files(
-    path = Path_Roads_Interim, pattern = ".gdb$", full.names = TRUE)
+  road_gdb_files <- list.files(
+    path = path_road_interim, pattern = ".gdb$", full.names = TRUE)
 
-  if (length(Road_GDB_Files) == 0) {
+  if (length(road_gdb_files) == 0) {
     ecokit::stop_ctx(
       "No `.gdb` files found in the directory after extraction: ",
-      Path_Roads_Interim = Path_Roads_Interim, Road_GDB_Files = Road_GDB_Files,
+      path_road_interim = path_road_interim, road_gdb_files = road_gdb_files,
       include_backtrace = TRUE)
   }
 
-  Road_sf <- Road_GDB_Files[1] %>%
+  road_sf <- road_gdb_files[1] %>%
     # convert to `SpatVector`, returning `SpatVectorProxy`
     terra::vect(proxy = TRUE) %>%
     # Query the data only in Europe
@@ -165,7 +165,7 @@ road_intensity <- function(env_file = ".env") {
 
   ## Save - RData ----
   ecokit::cat_time("Save projected data - RData", level = 1L)
-  save(Road_sf, file = fs::path(Path_Roads, "Road_sf.RData"))
+  save(road_sf, file = fs::path(path_road, "road_sf.RData"))
 
   # # ..................................... ###
 
@@ -173,7 +173,7 @@ road_intensity <- function(env_file = ".env") {
   ecokit::cat_time("Save RData file per road type", level = 1L)
 
   tibble::tribble(
-    ~RoadType, ~VarName,
+    ~road_type, ~VarName,
     1, "Highways",
     2, "Primary",
     3, "Secondary",
@@ -181,25 +181,24 @@ road_intensity <- function(env_file = ".env") {
     5, "Local") %>%
     dplyr::mutate(
       A = purrr::walk2(
-        .x = RoadType, .y = VarName,
+        .x = road_type, .y = VarName,
         .f = ~ {
           ecokit::cat_time(paste0(.x, " - ", .y), level = 2L)
-          dplyr::filter(Road_sf, GP_RTP %in% .x) %>%
+          dplyr::filter(road_sf, GP_RTP %in% .x) %>%
             dplyr::select(-GP_RTP) %>%
             terra::vect() %>%
             terra::wrap() %>%
             ecokit::save_as(
-              object_name = paste0("Road_sf_", .x, "_", .y),
+              object_name = paste0("road_sf_", .x, "_", .y),
               out_path = fs::path(
-                Path_Roads, paste0("Road_sf_", .x, "_", .y, ".RData")))
+                path_road, paste0("road_sf_", .x, "_", .y, ".RData")))
           invisible(gc())
           return(invisible(NULL))
-        }
-      )
+        })
     ) %>%
     invisible()
 
-  rm(Road_sf, envir = environment())
+  rm(road_sf, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -207,55 +206,54 @@ road_intensity <- function(env_file = ".env") {
   # Road length ------
   ecokit::cat_time("Road length")
 
-
   ecokit::cat_time("Calculate Road length per road type", level = 1L)
 
-  RefGrid <- ecokit::load_as(RefGrid, unwrap_r = TRUE)
+  grid_ref <- ecokit::load_as(grid_ref, unwrap_r = TRUE)
 
-  ExtractRoadSummary <- function(RoadType, VarName, Function = "length") {
-    SummMap <- list.files(
-      path = Path_Roads, full.names = TRUE,
-      pattern = paste0("^Road_sf_", RoadType, "_.+RData")) %>%
+  extract_road_summary <- function(road_type, VarName, Function = "length") {
+    summary_map <- list.files(
+      path = path_road, full.names = TRUE,
+      pattern = paste0("^road_sf_", road_type, "_.+RData")) %>%
       ecokit::load_as(unwrap_r = TRUE) %>%
-      terra::rasterizeGeom(y = RefGrid, fun = Function, unit = "km") %>%
-      terra::mask(mask = RefGrid) %>%
-      stats::setNames(paste0(RoadType, "_", VarName))
-    return(SummMap)
+      terra::rasterizeGeom(y = grid_ref, fun = Function, unit = "km") %>%
+      terra::mask(mask = grid_ref) %>%
+      stats::setNames(paste0(road_type, "_", VarName))
+    return(summary_map)
   }
 
   ecokit::cat_time("1 - Highways", level = 2L)
-  GRIP_1 <- ExtractRoadSummary(RoadType = 1, VarName = "Highways")
+  grip_1 <- extract_road_summary(road_type = 1, VarName = "Highways")
 
   ecokit::cat_time("2 - Primary", level = 2L)
-  GRIP_2 <- ExtractRoadSummary(RoadType = 2, VarName = "Primary")
+  grip_2 <- extract_road_summary(road_type = 2, VarName = "Primary")
 
   ecokit::cat_time("3 - Secondary", level = 2L)
-  GRIP_3 <- ExtractRoadSummary(RoadType = 3, VarName = "Secondary")
+  grip_3 <- extract_road_summary(road_type = 3, VarName = "Secondary")
 
   ecokit::cat_time("4 - Tertiary", level = 2L)
-  GRIP_4 <- ExtractRoadSummary(RoadType = 4, VarName = "Tertiary")
+  grip_4 <- extract_road_summary(road_type = 4, VarName = "Tertiary")
 
   ecokit::cat_time("5 - Local", level = 2L)
-  GRIP_5 <- ExtractRoadSummary(RoadType = 5, VarName = "Local")
+  grip_5 <- extract_road_summary(road_type = 5, VarName = "Local")
 
   ecokit::cat_time("All roads", level = 2L)
-  Road_Length <- (GRIP_1 + GRIP_2 + GRIP_3 + GRIP_4 + GRIP_5) %>%
+  road_length <- (grip_1 + grip_2 + grip_3 + grip_4 + grip_5) %>%
     stats::setNames("All") %>%
-    c(GRIP_1, GRIP_2, GRIP_3, GRIP_4, GRIP_5, .) %>%
+    c(grip_1, grip_2, grip_3, grip_4, grip_5, .) %>%
     # Ensure that values are read from memory
     terra::toMemory()
 
   ecokit::cat_time("Save road length - tif", level = 1L)
   terra::writeRaster(
-    x = Road_Length, overwrite = TRUE,
+    x = road_length, overwrite = TRUE,
     filename = fs::path(
-      Path_Roads, paste0("Road_Length_", names(Road_Length), ".tif")))
+      path_road, paste0("road_length_", names(road_length), ".tif")))
 
   ecokit::cat_time("Save road length - RData", level = 1L)
   ecokit::save_as(
-    object = terra::wrap(Road_Length),
-    object_name = "Road_Length",
-    out_path = fs::path(Path_Roads, "Road_Length.RData"))
+    object = terra::wrap(road_length),
+    object_name = "road_length",
+    out_path = fs::path(path_road, "road_length.RData"))
 
   # # ..................................................................... ###
 
@@ -271,41 +269,40 @@ road_intensity <- function(env_file = ".env") {
   # suppress progress bar
   terra::terraOptions(progress = 0)
 
-  Road_Distance <- purrr::map(
-    .x = as.list(Road_Length),
+  road_distance <- purrr::map(
+    .x = as.list(road_length),
     .f = ~ {
       ecokit::cat_time(names(.x), level = 2L)
       Road_Points <- terra::as.points(terra::classify(.x, cbind(0, NA)))
       terra::distance(x = .x, y = Road_Points, unit = "km") %>%
-        terra::mask(RefGrid) %>%
-        stats::setNames(paste0("Road_Distance_", names(.x))) %>%
+        terra::mask(grid_ref) %>%
+        stats::setNames(paste0("road_distance_", names(.x))) %>%
         # Ensure that values are read from memory
         terra::toMemory()
-    }
-  ) %>%
+    }) %>%
     terra::rast()
 
   ecokit::cat_time("Save distance to road - tif", level = 1L)
   terra::writeRaster(
-    x = Road_Distance, overwrite = TRUE,
-    filename = fs::path(Path_Roads, paste0(names(Road_Distance), ".tif")))
+    x = road_distance, overwrite = TRUE,
+    filename = fs::path(path_road, paste0(names(road_distance), ".tif")))
 
   ecokit::cat_time("Save distance to road - RData", level = 1L)
   ecokit::save_as(
-    object = terra::wrap(Road_Distance), object_name = "Road_Distance",
-    out_path = fs::path(Path_Roads, "Road_Distance.RData"))
+    object = terra::wrap(road_distance), object_name = "road_distance",
+    out_path = fs::path(path_road, "road_distance.RData"))
 
   # # ..................................................................... ###
 
   # Plotting ------
   ecokit::cat_time("Plotting")
 
-  EU_Bound <- ecokit::load_as(EU_Bound) %>%
+  EU_boundaries <- ecokit::load_as(EU_boundaries) %>%
     magrittr::extract2("Bound_sf_Eur_s") %>%
     magrittr::extract2("L_03")
 
   # nolint start
-  PlottingTheme <- ggplot2::theme_bw() +
+  plot_theme <- ggplot2::theme_bw() +
     ggplot2::theme(
       plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
       plot.title = ggplot2::element_text(
@@ -338,23 +335,23 @@ road_intensity <- function(env_file = ".env") {
   ## Road length -----
   ecokit::cat_time("Road length", level = 1L)
 
-  Plots_Length <- purrr::map(
-    .x = terra::as.list(Road_Length),
+  plots_length <- purrr::map(
+    .x = terra::as.list(road_length),
     .f = ~ {
       Road <- log10(terra::classify(.x, cbind(0, NA)))
       Title <- names(.x) %>%
-        stringr::str_remove("Road_Distance_") %>%
+        stringr::str_remove("road_distance_") %>%
         stringr::str_replace("_", " - ") %>%
         paste(" roads")
 
       ggplot2::ggplot() +
         ggplot2::geom_sf(
-          EU_Bound,
+          EU_boundaries,
           mapping = ggplot2::aes(), color = "grey75",
           linewidth = 0.075, fill = "grey98") +
         tidyterra::geom_spatraster(data = Road, maxcell = Inf) +
         ggplot2::geom_sf(
-          EU_Bound,
+          EU_boundaries,
           mapping = ggplot2::aes(), color = "grey30",
           linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
         paletteer::scale_fill_paletteer_c(
@@ -366,11 +363,11 @@ road_intensity <- function(env_file = ".env") {
           expand = ggplot2::expansion(mult = c(0, 0)),
           limits = c(1450000, 5420000)) +
         ggplot2::labs(title = Title, fill = "log10") +
-        PlottingTheme
+        plot_theme
     }
   )
 
-  Plots_Length <- patchwork::wrap_plots(Plots_Length, ncol = 3, nrow = 2) +
+  plots_length <- patchwork::wrap_plots(plots_length, ncol = 3, nrow = 2) +
     patchwork::plot_annotation(
       title = "Road length per grid cell",
       theme = ggplot2::theme(
@@ -380,28 +377,28 @@ road_intensity <- function(env_file = ".env") {
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   ragg::agg_jpeg(
-    filename = fs::path(Path_Roads, "Road_Length.jpeg"),
+    filename = fs::path(path_road, "road_length.jpeg"),
     width = 30, height = 21, res = 600, quality = 100, units = "cm")
-  print(Plots_Length)
+  print(plots_length)
   grDevices::dev.off()
 
-  rm(Plots_Length, envir = environment())
+  rm(plots_length, envir = environment())
 
   # # ..................................... ###
 
-  ## Distance to roads ------
-  ecokit::cat_time("Distance to roads", level = 1L)
-  Plots_Distance <- purrr::map(
-    .x = terra::as.list(Road_Distance),
+  ## Distance to road ------
+  ecokit::cat_time("Distance to road", level = 1L)
+  plots_distance <- purrr::map(
+    .x = terra::as.list(road_distance),
     .f = ~ {
       ggplot2::ggplot() +
         ggplot2::geom_sf(
-          EU_Bound,
+          EU_boundaries,
           mapping = ggplot2::aes(), color = "grey75",
           linewidth = 0.075, fill = "grey98") +
         tidyterra::geom_spatraster(data = .x, maxcell = Inf) +
         ggplot2::geom_sf(
-          EU_Bound,
+          EU_boundaries,
           mapping = ggplot2::aes(), color = "grey30",
           linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
         paletteer::scale_fill_paletteer_c(
@@ -413,11 +410,11 @@ road_intensity <- function(env_file = ".env") {
           expand = ggplot2::expansion(mult = c(0, 0)),
           limits = c(1450000, 5420000)) +
         ggplot2::labs(title = paste0(names(.x), " roads"), fill = "km") +
-        PlottingTheme
+        plot_theme
     }
   )
 
-  Plots_Distance <- patchwork::wrap_plots(Plots_Distance, ncol = 3, nrow = 2) +
+  plots_distance <- patchwork::wrap_plots(plots_distance, ncol = 3, nrow = 2) +
     patchwork::plot_annotation(
       title = "Distance to nearest road",
       theme = ggplot2::theme(
@@ -427,12 +424,12 @@ road_intensity <- function(env_file = ".env") {
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   ragg::agg_jpeg(
-    filename = fs::path(Path_Roads, "Road_Distance.jpeg"),
+    filename = fs::path(path_road, "road_distance.jpeg"),
     width = 30, height = 21, res = 600, quality = 100, units = "cm")
-  print(Plots_Distance)
+  print(plots_distance)
   grDevices::dev.off()
 
-  rm(Plots_Distance, envir = environment())
+  rm(plots_distance, envir = environment())
 
   # ..................................................................... ###
 
@@ -440,10 +437,10 @@ road_intensity <- function(env_file = ".env") {
   ecokit::cat_time("Cleanup")
 
   # Delete extracted GRIP files
-  list.files(Path_Roads_Interim, full.names = TRUE, pattern = "^GRIP") %>%
+  list.files(path_road_interim, full.names = TRUE, pattern = "^GRIP") %>%
     fs::file_delete()
 
-  fs::dir_delete(c(Path_Roads_Interim, Path_Roads_Raw))
+  fs::dir_delete(c(path_road_interim, path_road_raw))
 
   # ..................................................................... ###
 

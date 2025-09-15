@@ -60,7 +60,7 @@ The workflow employs the European Environment Agency (EEA) <a href="https://www.
 
 ## Corine land cover and habitat data
 
-The `CLC_process()` function manages the processing of Corine Land Cover (<a href="https://land.copernicus.eu/en/products/corine-land-cover/clc2018" target="_blank" class="ll">CLC</a>) data within the `IASDT` workflow. It computes the percentage coverage and predominant classes per grid cell across all three CLC levels, alongside `EUNIS` and `SynHab` habitat classifications. A custom crosswalk was used to transform the CLC Level 3 data into ecologically meaningful `EUNIS` and `SynHab` habitat classes. The resulting data serve the following purposes:
+The `clc_process()` function manages the processing of Corine Land Cover (<a href="https://land.copernicus.eu/en/products/corine-land-cover/clc2018" target="_blank" class="ll">CLC</a>) data within the `IASDT` workflow. It computes the percentage coverage and predominant classes per grid cell across all three CLC levels, alongside `EUNIS` and `SynHab` habitat classifications. A custom crosswalk was used to transform the CLC Level 3 data into ecologically meaningful `EUNIS` and `SynHab` habitat classes. The resulting data serve the following purposes:
 
 - **model grid selection**: Grid cells with at least 15% land cover (default threshold) are retained for modelling.
 - **habitat-specific modelling**: The percentage coverage of `SynHab` habitat types informs model fitting by:

@@ -27,7 +27,7 @@ EASIN_taxonomy(
   env_file = ".env",
   kingdom = "Plantae",
   phylum = "Tracheophyta",
-  n_search = 100
+  n_search = 100L
 )
 
 EASIN_download(
@@ -71,7 +71,7 @@ request. Default: 1000, which is the current maximum allowed by the API.}
 data sources. Defaults to \code{.env}.}
 
 \item{delete_chunks}{Logical. Whether to delete temporary files for data
-chunks from the \code{FileParts} subdirectory. Defaults to \code{TRUE}.}
+chunks from the \code{file_parts} subdirectory. Defaults to \code{TRUE}.}
 
 \item{start_year}{Integer. Earliest year for occurrence data (excludes
 earlier records). Default: \code{1981} (aligned with CHELSA climate data).}

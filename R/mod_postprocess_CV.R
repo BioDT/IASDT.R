@@ -71,14 +71,14 @@ mod_postprocess_CV_1_CPU <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "ProjectID", "DP_R_LUMI_gpu", FALSE, FALSE)
+    "ProjectID", "DP_R_lumi_gpu", FALSE, FALSE)
 
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
   # ****************************************************************
 
@@ -375,7 +375,7 @@ mod_postprocess_CV_2_CPU <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  CV <- CV_name <- n_grids <- Sp <- IAS_ID <- pred_mean <- pred <- pred_sd <-
+  CV <- CV_name <- n_grids <- Sp <- ias_id <- pred_mean <- pred <- pred_sd <-
     mean_minus <- mean_plus <- summary_vals <- ias_id <- n_grids_pres_mean <-
     data <- hab_abb <- hab_name <- NULL
 
@@ -396,7 +396,7 @@ mod_postprocess_CV_2_CPU <- function(
 
   Eval_explain <- ecokit::load_as(Eval_explain) %>%
     dplyr::select(-Sp) %>%
-    dplyr::rename(ias_id = IAS_ID) %>%
+    dplyr::rename(ias_id = ias_id) %>%
     dplyr::filter(ias_id != "SR") %>%
     dplyr::rename_with(.cols = -ias_id, .fn = ~ paste0(.x, "_exp"))
 

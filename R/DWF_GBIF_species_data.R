@@ -26,7 +26,7 @@ GBIF_species_data <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  path_GBIF <- CellCode <- path_grid <- EU_Bound <- publisher_type <-
+  path_GBIF <- CellCode <- path_grid <- EU_boundaries <- publisher_type <-
     x <- y <- NULL
 
   # # ..................................................................... ###
@@ -41,15 +41,15 @@ GBIF_species_data <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "path_grid", "DP_R_Grid_processed", TRUE, FALSE,
-    "path_GBIF", "DP_R_GBIF_processed", FALSE, FALSE,
-    "EU_Bound", "DP_R_EUBound", FALSE, TRUE)
+    "path_grid", "DP_R_grid_processed", TRUE, FALSE,
+    "path_GBIF", "DP_R_gbif_processed", FALSE, FALSE,
+    "EU_boundaries", "DP_R_country_boundaries", FALSE, TRUE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
   # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use
   # official parameters (overriding the ones from GeoTIFF keys)
@@ -58,8 +58,8 @@ GBIF_species_data <- function(
 
   # # ..................................................................... ###
 
-  # # Grid_10_Land_Crop_sf
-  grid_sf <- fs::path(path_grid, "Grid_10_Land_Crop_sf.RData")
+  # # grid_10_land_crop_sf
+  grid_sf <- fs::path(path_grid, "grid_10_land_crop_sf.RData")
   if (!file.exists(grid_sf)) {
     ecokit::stop_ctx(
       "Reference grid file (sf) not found", grid_sf = grid_sf,
@@ -67,8 +67,8 @@ GBIF_species_data <- function(
   }
   grid_sf <- ecokit::load_as(grid_sf)
 
-  # Grid_10_Land_Crop
-  grid_r <- fs::path(path_grid, "Grid_10_Land_Crop.RData")
+  # grid_10_land_crop
+  grid_r <- fs::path(path_grid, "grid_10_land_crop.RData")
   if (!file.exists(grid_r)) {
     ecokit::stop_ctx(
       "Reference grid file not found", grid_r = grid_r,
@@ -76,14 +76,14 @@ GBIF_species_data <- function(
   }
   grid_r <- ecokit::load_as(grid_r, unwrap_r = TRUE)
 
-  EU_borders <- ecokit::load_as(EU_Bound) %>%
+  EU_borders <- ecokit::load_as(EU_boundaries) %>%
     magrittr::extract2("Bound_sf_Eur_s") %>%
     magrittr::extract2("L_03")
 
   # # ..................................................................... ###
 
   path_species_data <- fs::path(path_GBIF, "species_data")
-  path_JPEG <- fs::path(path_GBIF, "species_JPEG_maps")
+  path_JPEG <- fs::path(path_GBIF, "species_jpeg_maps")
   path_grids <- fs::path(path_GBIF, "species_grids")
   path_raster <- fs::path(path_GBIF, "species_raster")
   fs::dir_create(c(path_species_data, path_JPEG, path_grids, path_raster))
@@ -108,9 +108,9 @@ GBIF_species_data <- function(
 
     sp_grid <- sf::st_drop_geometry(sp_data) %>%
       # showing the number of observations per grid cell
-      dplyr::count(CellCode, publisher_type, name = "Count", sort = TRUE) %>%
+      dplyr::count(CellCode, publisher_type, name = "count", sort = TRUE) %>%
       # add species name as column
-      dplyr::mutate(Species_name = species) %>%
+      dplyr::mutate(species_name = species) %>%
       # add grid polygon to the data
       dplyr::left_join(grid_sf, by = "CellCode") %>%
       # convert to sf object
@@ -126,14 +126,14 @@ GBIF_species_data <- function(
     # ****************************************************
 
     sp_r_all <- terra::rasterize(
-      x = sp_grid, y = grid_r, field = "Count", fun = "sum", na.rm = TRUE) %>%
+      x = sp_grid, y = grid_r, field = "count", fun = "sum", na.rm = TRUE) %>%
       terra::mask(grid_r) %>%
       stats::setNames(sp_name) %>%
       ecokit::set_raster_crs(crs = "epsg:3035")
     sp_r_cz <- dplyr::filter(sp_grid, publisher_type == "citizen_science")
     if (nrow(sp_r_cz) > 0) {
       sp_r_cz <- sp_r_cz %>%
-        terra::rasterize(y = grid_r, field = "Count", fun = "sum") %>%
+        terra::rasterize(y = grid_r, field = "count", fun = "sum") %>%
         terra::mask(grid_r) %>%
         stats::setNames(paste0(sp_name, "_cz")) %>%
         ecokit::set_raster_crs(crs = "epsg:3035")
@@ -145,7 +145,7 @@ GBIF_species_data <- function(
     sp_r_others <- dplyr::filter(sp_grid, publisher_type == "others")
     if (nrow(sp_r_others) > 0) {
       sp_r_others <- sp_r_others %>%
-        terra::rasterize(y = grid_r, field = "Count", fun = "sum") %>%
+        terra::rasterize(y = grid_r, field = "count", fun = "sum") %>%
         terra::mask(grid_r) %>%
         stats::setNames(paste0(sp_name, "_others")) %>%
         ecokit::set_raster_crs(crs = "epsg:3035")

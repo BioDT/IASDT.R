@@ -89,16 +89,16 @@ mod_CV_prepare <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
-    "EU_Bound", "DP_R_EUBound", FALSE, TRUE)
+    "Path_Grid", "DP_R_grid_processed", TRUE, FALSE,
+    "EU_Bound", "DP_R_country_boundaries", FALSE, TRUE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
-  Path_Grid <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
+  Path_Grid <- fs::path(Path_Grid, "grid_10_land_crop.RData")
   if (!file.exists(Path_Grid)) {
     ecokit::stop_ctx(
       "Path for reference grid does not exist", Path_Grid = Path_Grid,

@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# CLC_plot ------
+# clc_plot ------
 ## |------------------------------------------------------------------------| #
 
 #' Plot Corine Land Cover Maps
@@ -7,18 +7,18 @@
 #' This function plots Corine Land Cover maps with percentage coverage and saves
 #' the plots as JPEG files.
 #'
-#' @param CLC_name Character. Name of the Corine Land Cover map to plot. This
-#'   has to be one of `PercCov_SynHab`, `PercCov_CLC_L1`, `PercCov_CLC_L2`,
-#'   `PercCov_CLC_L3` or `PercCov_EUNIS_2019`.
-#' @param CLC_map A tibble created within the [IASDT.R::CLC_process] containing
+#' @param clc_name Character. Name of the Corine Land Cover map to plot. This
+#'   has to be one of `perc_cover_synhab`, `perc_cover_clc_l1`,
+#'   `perc_cover_clc_l2`, `perc_cover_clc_l3` or `perc_cover_eunis2019`.
+#' @param clc_map A tibble created within the [IASDT.R::clc_process] containing
 #'   CLC summary maps.
 #' @param EU_map `sf` object. Map of EU boundaries to overlay.
 #' @param crosswalk Data frame. Contains the crosswalk between CLC codes and
 #'   their labels.
-#' @param path_JPEG Character. Directory path where JPEG files will be saved.
-#' @param path_JPEG_free Character. Directory path where additional JPEG files
+#' @param path_jpeg Character. Directory path where JPEG files will be saved.
+#' @param path_jpeg_free Character. Directory path where additional JPEG files
 #'   with free legend will be saved (not bounded between 0 and 1).
-#' @name CLC_plot
+#' @name clc_plot
 #' @noRd
 #' @author Ahmed El-Gabbas
 #' @keywords internal
@@ -26,54 +26,54 @@
 #' @note This function is marked as internal and not intended for direct use by
 #'   end users.
 
-CLC_plot <- function(
-    CLC_name, CLC_map, EU_map, crosswalk, path_JPEG, path_JPEG_free) {
+clc_plot <- function(
+    clc_name, clc_map, EU_map, crosswalk, path_jpeg, path_jpeg_free) {
   # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Level <- Map_Crop <- ID <- Label <- Name <- NULL
+  level <- map_crop <- ID <- label <- Name <- NULL
 
   # # ..................................................................... ###
 
-  if (is.null(CLC_name) || is.null(EU_map) || is.null(crosswalk) ||
-      is.null(path_JPEG) || is.null(path_JPEG_free)) {
+  if (is.null(clc_name) || is.null(EU_map) || is.null(crosswalk) ||
+      is.null(path_jpeg) || is.null(path_jpeg_free)) {
     ecokit::stop_ctx(
       paste0(
-        "`CLC_name`, `EU_map`, `crosswalk`, `path_JPEG`, and ",
-        "`path_JPEG_free` can not be empty"),
-      CLC_name = CLC_name, EU_map = EU_map, crosswalk = crosswalk,
-      path_JPEG = path_JPEG, path_JPEG_free = path_JPEG_free,
+        "`clc_name`, `EU_map`, `crosswalk`, `path_jpeg`, and ",
+        "`path_jpeg_free` can not be empty"),
+      clc_name = clc_name, EU_map = EU_map, crosswalk = crosswalk,
+      path_jpeg = path_jpeg, path_jpeg_free = path_jpeg_free,
       include_backtrace = TRUE)
   }
 
-  CLC_MapR <- dplyr::filter(CLC_map, Name == CLC_name) %>%
-    dplyr::pull(Map_Crop) %>%
+  clc_map_r <- dplyr::filter(clc_map, Name == clc_name) %>%
+    dplyr::pull(map_crop) %>%
     magrittr::extract2(1) %>%
     terra::unwrap()
 
-  Labels <- stringr::str_remove_all(CLC_name, "PercCov_|_Crop")
-  ClassOrder <- stringr::str_remove_all(names(CLC_MapR), paste0(Labels, "_"))
-  Labels <- crosswalk %>%
+  labels <- stringr::str_remove_all(clc_name, "perc_cover_|_crop")
+  class_order <- stringr::str_remove_all(names(clc_map_r), paste0(labels, "_"))
+  labels <- crosswalk %>%
     dplyr::select(
       tidyselect::matches(
-        match = paste0("^", Labels, "$|^", Labels, "_Label"))) %>%
+        match = paste0("^", labels, "$|^", labels, "_Label"))) %>%
     dplyr::distinct() %>%
-    stats::setNames(c("Level", "Label")) %>%
-    dplyr::arrange(factor(Level, levels = ClassOrder)) %>%
+    stats::setNames(c("level", "label")) %>%
+    dplyr::arrange(factor(level, levels = class_order)) %>%
     dplyr::mutate(ID = seq_len(dplyr::n())) %>%
-    dplyr::select(ID, Level, Label)
+    dplyr::select(ID, level, label)
 
-  Prefix <- stringr::str_remove_all(CLC_name, "PercCov_|_Crop") %>%
-    stringr::str_replace_all("CLC_", "CLC  ")
+  prefix <- stringr::str_remove_all(clc_name, "perc_cover_|_crop") %>%
+    stringr::str_replace_all("clc_", "CLC  ")
 
-  FilePrefix <- stringr::str_remove_all(CLC_name, "PercCov_|_Crop") %>%
-    stringr::str_replace_all("CLC_L", "CLC")
+  file_prefix <- stringr::str_remove_all(clc_name, "perc_cover_|_crop") %>%
+    stringr::str_replace_all("clc_L", "CLC")
 
-  ecokit::cat_time(Prefix, level = 1L)
+  ecokit::cat_time(prefix, level = 1L)
 
   # determine which layers will be plotted in each figure (4 columns * 2 rows)
-  split_vector <- seq_len(terra::nlyr(CLC_MapR)) %>%
+  split_vector <- seq_len(terra::nlyr(clc_map_r)) %>%
     split(., ceiling(seq_along(.) / 8))
 
   # nolint start
@@ -86,29 +86,29 @@ CLC_plot <- function(
   LastUpdate <- paste0("Last update: ", format(Sys.Date(), "%d %B %Y"))
 
   out_path <- paste0(
-    "Summary_PercCover_", FilePrefix, "_",
+    "summary_perc_cover_", file_prefix, "_",
     seq_len(length(split_vector)), ".jpeg") %>%
-    fs::path(path_JPEG, .)
+    fs::path(path_jpeg, .)
 
-  MAPS <- purrr::map_dfr(
+  maps <- purrr::map_dfr(
     .x = seq_len(length(split_vector)),
     .f = ~ {
 
-      Plots <- purrr::map_dfr(
+      plots <- purrr::map_dfr(
         .x = split_vector[[.x]],
         .f = function(YY) {
 
-          CurrMap <- CLC_MapR[[YY]]
-          CurrMap_no_zero <- terra::classify(CurrMap, cbind(0, NA))
+          curr_map <- clc_map_r[[YY]]
+          curr_map_no_zero <- terra::classify(curr_map, cbind(0, NA))
 
-          ecokit::cat_time(paste0(Labels$Label[[YY]]), level = 2L)
-          MapTitle <- Labels$Label[[YY]] %>%
+          ecokit::cat_time(paste0(labels$label[[YY]]), level = 2L)
+          map_title <- labels$label[[YY]] %>%
             # split long title text into multiple lines when necessary
             stringi::stri_wrap(55) %>%
             stringr::str_c(collapse = "\n")
 
-          if (stringr::str_detect(MapTitle, "\n", negate = TRUE)) {
-            MapTitle <- paste0(MapTitle, "\n")
+          if (stringr::str_detect(map_title, "\n", negate = TRUE)) {
+            map_title <- paste0(map_title, "\n")
           }
 
           plot_theme <-  ggplot2::theme_bw() +
@@ -131,8 +131,8 @@ CLC_plot <- function(
               legend.position = "none")
 
           # create ggplot object for each layer
-          CurrMapPlot <- ggplot2::ggplot() +
-            tidyterra::geom_spatraster(data = CurrMap) +
+          curr_map_plot <- ggplot2::ggplot() +
+            tidyterra::geom_spatraster(data = curr_map) +
             paletteer::scale_fill_paletteer_c(
               na.value = "transparent", palette = "viridis::plasma",
               limits = c(0, 100)) +
@@ -144,11 +144,11 @@ CLC_plot <- function(
               expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim) +
             ggplot2::scale_y_continuous(
               expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
-            ggplot2::labs(title = MapTitle, fill = NULL) +
+            ggplot2::labs(title = map_title, fill = NULL) +
             plot_theme
 
-          CurrMapPlot_no_zero <- ggplot2::ggplot() +
-            tidyterra::geom_spatraster(data = CurrMap_no_zero) +
+          curr_plot_no_zero <- ggplot2::ggplot() +
+            tidyterra::geom_spatraster(data = curr_map_no_zero) +
             paletteer::scale_fill_paletteer_c(
               na.value = "transparent", palette = "viridis::plasma",
               limits = c(0, 100)) +
@@ -160,24 +160,23 @@ CLC_plot <- function(
               expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim) +
             ggplot2::scale_y_continuous(
               expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
-            ggplot2::labs(title = MapTitle, fill = NULL) +
+            ggplot2::labs(title = map_title, fill = NULL) +
             plot_theme
 
-
-          LevelTxt <- stringr::str_replace_all(
-            string = Labels$Level[YY], pattern = "\\.", replacement = "_") %>%
+          level_text <- stringr::str_replace_all(
+            string = labels$level[YY], pattern = "\\.", replacement = "_") %>%
             stringr::str_remove("_$")
 
-          TilePath <- paste0(
-            "PercCover_", FilePrefix, "_", LevelTxt, "_",
-            Labels$Label[YY], ".jpeg") %>%
+          tile_path <- paste0(
+            "perc_cover_", file_prefix, "_", level_text, "_",
+            labels$label[YY], ".jpeg") %>%
             stringr::str_replace_all("/", "_") %>%
-            fs::path(path_JPEG, .)
+            fs::path(path_jpeg, .)
 
-          TilePath_no_zero <- stringr::str_replace(
-            TilePath, ".jpeg", "_no_zero.jpeg")
+          tile_path_no_zero <- stringr::str_replace(
+            tile_path, ".jpeg", "_no_zero.jpeg")
 
-          Theme2 <- ggplot2::theme_minimal() +
+          theme_2 <- ggplot2::theme_minimal() +
             ggplot2::theme(
               plot.margin = ggplot2::margin(0.25, 0, 0, 0.05, "cm"),
               plot.title = ggplot2::element_text(
@@ -201,25 +200,25 @@ CLC_plot <- function(
               plot.tag = ggplot2::element_text(
                 colour = "grey", size = 7, hjust = 1))
 
-          TitleLab <- paste0(
-            FilePrefix, " \u2014 ", Labels$Level[YY],
-            ".", Labels$Label[[YY]]) %>%
-            stringr::str_replace("CLC", "CLC \u2014 Level ") %>%
+          title_lab <- paste0(
+            file_prefix, " \u2014 ", labels$level[YY],
+            ".", labels$label[[YY]]) %>%
+            stringr::str_replace("CLC", "CLC \u2014 level ") %>%
             stringr::str_replace(" - ", " \u2014 ") %>%
             stringr::str_replace("\\.\\.", ".") %>%
             stringi::stri_wrap(75) %>%
             stringr::str_c(collapse = "\n")
 
-          if (stringr::str_detect(TitleLab, "\n", negate = TRUE)) {
-            TitleLab <- paste0(TitleLab, "\n")
+          if (stringr::str_detect(title_lab, "\n", negate = TRUE)) {
+            title_lab <- paste0(title_lab, "\n")
           }
 
-          Plot <- ggplot2::ggplot() +
+          plot <- ggplot2::ggplot() +
             ggplot2::geom_sf(
               EU_map, mapping = ggplot2::aes(),
               color = "grey60", linewidth = 0.25, inherit.aes = TRUE,
               fill = scales::alpha("grey80", 0.4)) +
-            tidyterra::geom_spatraster(data = CurrMap) +
+            tidyterra::geom_spatraster(data = curr_map) +
             ggplot2::geom_sf(
               EU_map, fill = "transparent", mapping = ggplot2::aes(),
               color = "grey75", linewidth = 0.25, inherit.aes = TRUE) +
@@ -230,21 +229,21 @@ CLC_plot <- function(
             ggplot2::scale_y_continuous(
               expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
             ggplot2::labs(
-              title = TitleLab, fill = "%", tag = LastUpdate,
+              title = title_lab, fill = "%", tag = LastUpdate,
               x = NULL, y = NULL) +
-            Theme2
+            theme_2
           ragg::agg_jpeg(
-            filename = TilePath, width = 25, height = 23, res = 600,
+            filename = tile_path, width = 25, height = 23, res = 600,
             quality = 100, units = "cm")
-          print(Plot)
+          print(plot)
           grDevices::dev.off()
 
-          Plot_no_zero <- ggplot2::ggplot() +
+          plot_no_zero <- ggplot2::ggplot() +
             ggplot2::geom_sf(
               EU_map, mapping = ggplot2::aes(),
               color = "grey60", linewidth = 0.25, inherit.aes = TRUE,
               fill = scales::alpha("grey80", 0.4)) +
-            tidyterra::geom_spatraster(data = CurrMap_no_zero) +
+            tidyterra::geom_spatraster(data = curr_map_no_zero) +
             ggplot2::geom_sf(
               EU_map, fill = "transparent", mapping = ggplot2::aes(),
               color = "grey75", linewidth = 0.25, inherit.aes = TRUE) +
@@ -263,30 +262,30 @@ CLC_plot <- function(
             ggplot2::scale_y_continuous(
               expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
             ggplot2::labs(
-              title = TitleLab, fill = "%", tag = LastUpdate,
+              title = title_lab, fill = "%", tag = LastUpdate,
               x = NULL, y = NULL) +
-            Theme2
+            theme_2
           ragg::agg_jpeg(
-            filename = TilePath_no_zero, width = 25, height = 23, res = 600,
+            filename = tile_path_no_zero, width = 25, height = 23, res = 600,
             quality = 100, units = "cm")
-          print(Plot_no_zero)
+          print(plot_no_zero)
           grDevices::dev.off()
 
           # |||||||||||||||||||||||||||||||||||||||||||||||
 
-          TilePathFree <- paste0(
-            "PercCover_", FilePrefix, "_", Labels$Label[YY], ".jpeg") %>%
+          tile_path_free <- paste0(
+            "perc_cover_", file_prefix, "_", labels$label[YY], ".jpeg") %>%
             stringr::str_replace_all("/", "_") %>%
-            fs::path(path_JPEG_free, .)
-          TilePathFree_no_zero <- stringr::str_replace(
-            TilePathFree, ".jpeg", "_no_zero.jpeg")
+            fs::path(path_jpeg_free, .)
+          tile_path_free_no_zero <- stringr::str_replace(
+            tile_path_free, ".jpeg", "_no_zero.jpeg")
 
-          Plot <- ggplot2::ggplot() +
+          plot <- ggplot2::ggplot() +
             ggplot2::geom_sf(
               EU_map, mapping = ggplot2::aes(), color = "grey60",
               linewidth = 0.25, inherit.aes = TRUE,
               fill = scales::alpha("grey80", 0.4)) +
-            tidyterra::geom_spatraster(data = CurrMap) +
+            tidyterra::geom_spatraster(data = curr_map) +
             ggplot2::geom_sf(
               EU_map, fill = "transparent", mapping = ggplot2::aes(),
               color = "grey75", linewidth = 0.25, inherit.aes = TRUE) +
@@ -297,21 +296,21 @@ CLC_plot <- function(
             ggplot2::scale_y_continuous(
               expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
             ggplot2::labs(
-              title = TitleLab, fill = "%", tag = LastUpdate,
+              title = title_lab, fill = "%", tag = LastUpdate,
               x = NULL, y = NULL) +
-            Theme2
+            theme_2
           ragg::agg_jpeg(
-            filename = TilePathFree, width = 25, height = 23, res = 600,
+            filename = tile_path_free, width = 25, height = 23, res = 600,
             quality = 100, units = "cm")
-          print(Plot)
+          print(plot)
           grDevices::dev.off()
 
-          Plot_no_zero <- ggplot2::ggplot() +
+          plot_no_zero <- ggplot2::ggplot() +
             ggplot2::geom_sf(
               EU_map, mapping = ggplot2::aes(), color = "grey60",
               linewidth = 0.25, inherit.aes = TRUE,
               fill = scales::alpha("grey80", 0.4)) +
-            tidyterra::geom_spatraster(data = CurrMap) +
+            tidyterra::geom_spatraster(data = curr_map) +
             ggplot2::geom_sf(
               EU_map, fill = "transparent", mapping = ggplot2::aes(),
               color = "grey75", linewidth = 0.25, inherit.aes = TRUE) +
@@ -330,31 +329,32 @@ CLC_plot <- function(
             ggplot2::scale_y_continuous(
               expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
             ggplot2::labs(
-              title = TitleLab, fill = "%", tag = LastUpdate,
+              title = title_lab, fill = "%", tag = LastUpdate,
               x = NULL, y = NULL) +
-            Theme2
+            theme_2
           ragg::agg_jpeg(
-            filename = TilePathFree_no_zero, width = 25, height = 23, res = 600,
-            quality = 100, units = "cm")
-          print(Plot_no_zero)
+            filename = tile_path_free_no_zero, width = 25, height = 23,
+            res = 600, quality = 100, units = "cm")
+          print(plot_no_zero)
           grDevices::dev.off()
 
           tibble::tibble(
             page = .x, plot_ID = YY,
-            Plot = list(CurrMapPlot), Plot_no_zero = list(CurrMapPlot_no_zero))
+            plot = list(curr_map_plot), plot_no_zero = list(curr_plot_no_zero))
         }) %>%
         dplyr::bind_rows()
 
-      return(Plots)
+      return(plots)
 
     })
 
-  ecokit::cat_time(paste0(Prefix, " - Multiple panels per file "), level = 1L)
+  ecokit::cat_time(paste0(prefix, " - Multiple panels per file "), level = 1L)
 
-  CommonLegend <- cowplot::get_legend(
+  common_legend <- cowplot::get_legend(
     (ggplot2::ggplot() +
        tidyterra::geom_spatraster(
-         data = terra::rast(CLC_MapR[[1]]), maxcell = terra::ncell(CLC_MapR)) +
+         data = terra::rast(clc_map_r[[1]]),
+         maxcell = terra::ncell(clc_map_r)) +
        paletteer::scale_fill_paletteer_c(
          na.value = "transparent", palette = "viridis::plasma",
          limits = c(0, 100)) +
@@ -375,39 +375,39 @@ CLC_plot <- function(
     .f = ~ {
 
       # main title of the figure - {("\u00D7")} prints the multiplication symbol
-      MainTitle <- stringr::str_glue(
-        "Percent coverage of {Prefix} per 10\u00D710 km grid cell") %>%
+      main_title <- stringr::str_glue(
+        "Percent coverage of {prefix} per 10\u00D710 km grid cell") %>%
         as.character()
-      MainTitle <- cowplot::ggdraw() +
-        cowplot::draw_label(MainTitle, fontface = "bold", hjust = 0.5) +
+      main_title <- cowplot::ggdraw() +
+        cowplot::draw_label(main_title, fontface = "bold", hjust = 0.5) +
         cowplot::draw_label(
           LastUpdate, fontface = "italic", color = "grey",
           x = 0.935, size = 3) +
         ggplot2::theme(plot.margin = ggplot2::margin(0, 0, 0, 0))
 
-      Plot <- dplyr::filter(MAPS, page == .x) %>%
-        dplyr::pull(Plot)
-      Plot <- cowplot::plot_grid(plotlist = Plot, ncol = 4, nrow = 2) %>%
-        cowplot::plot_grid(CommonLegend, rel_widths = c(4, 0.2)) %>%
-        cowplot::plot_grid(MainTitle, ., ncol = 1, rel_heights = c(0.05, 1))
+      plot <- dplyr::filter(maps, page == .x) %>%
+        dplyr::pull(plot)
+      plot <- cowplot::plot_grid(plotlist = plot, ncol = 4, nrow = 2) %>%
+        cowplot::plot_grid(common_legend, rel_widths = c(4, 0.2)) %>%
+        cowplot::plot_grid(main_title, ., ncol = 1, rel_heights = c(0.05, 1))
       path_jpeg <- out_path[.x]
       ragg::agg_jpeg(
         filename = path_jpeg, width = 28, height = 15, res = 600,
         quality = 100, units = "cm")
-      print(Plot)
+      print(plot)
       grDevices::dev.off()
 
-      Plot_no_zero <- dplyr::filter(MAPS, page == .x) %>%
-        dplyr::pull(Plot_no_zero)
-      Plot_no_zero <- cowplot::plot_grid(
-        plotlist = Plot_no_zero, ncol = 4, nrow = 2) %>%
-        cowplot::plot_grid(CommonLegend, rel_widths = c(4, 0.2)) %>%
-        cowplot::plot_grid(MainTitle, ., ncol = 1, rel_heights = c(0.05, 1))
+      plot_no_zero <- dplyr::filter(maps, page == .x) %>%
+        dplyr::pull(plot_no_zero)
+      plot_no_zero <- cowplot::plot_grid(
+        plotlist = plot_no_zero, ncol = 4, nrow = 2) %>%
+        cowplot::plot_grid(common_legend, rel_widths = c(4, 0.2)) %>%
+        cowplot::plot_grid(main_title, ., ncol = 1, rel_heights = c(0.05, 1))
       path_jpeg <- stringr::str_replace(out_path[.x], ".jpeg", "_no_zero.jpeg")
       ragg::agg_jpeg(
         filename = path_jpeg, width = 28, height = 15, res = 600,
         quality = 100, units = "cm")
-      print(Plot_no_zero)
+      print(plot_no_zero)
       grDevices::dev.off()
     })
 

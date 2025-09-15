@@ -34,7 +34,7 @@ eLTER_process <- function(env_file = ".env", start_year = 1981) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  TaxaList <- eLTER_DT <- Path_PA <- taxon_name <- speciesKey <- Year <- NULL
+  taxa_list <- eLTER_DT <- Path_PA <- taxon_name <- speciesKey <- Year <- NULL
 
   # # ..................................................................... ###
 
@@ -45,20 +45,20 @@ eLTER_process <- function(env_file = ".env", start_year = 1981) {
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "TaxaList", "DP_R_Taxa_info_rdata", FALSE, TRUE,
+    "taxa_list", "DP_R_taxa_info_rdata", FALSE, TRUE,
     "Path_PA", "DP_R_PA", FALSE, FALSE,
-    "eLTER_DT", "DP_R_eLTER_raw", FALSE, TRUE)
+    "eLTER_DT", "DP_R_elter_raw", FALSE, TRUE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
   # # ..................................................................... ###
 
   fs::dir_create(Path_PA)
-  TaxaList <- ecokit::load_as(TaxaList)
+  taxa_list <- ecokit::load_as(taxa_list)
 
   eLTER_IAS <- readRDS(eLTER_DT) %>%
     dplyr::select(
@@ -66,7 +66,7 @@ eLTER_process <- function(env_file = ".env", start_year = 1981) {
         "SITE_CODE", "Lon", "Lat", "TaxaName", "Day", "Month", "Year",
         "Source", "ID", "name_to_match", "speciesKey"))) %>%
     dplyr::filter(!is.na(speciesKey)) %>%
-    dplyr::left_join(TaxaList, by = "speciesKey") %>%
+    dplyr::left_join(taxa_list, by = "speciesKey") %>%
     dplyr::filter(!is.na(taxon_name), Year >= start_year) %>%
     sf::st_as_sf(
       coords = c("Lon", "Lat"), crs = sf::st_crs(4326), remove = FALSE) %>%

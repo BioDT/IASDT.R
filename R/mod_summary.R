@@ -46,9 +46,9 @@ mod_summary <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  VarSp <- Sp1_abb <- Sp2_abb <- IAS_ID <- Val <- taxon_name <- Species_name <-
+  VarSp <- Sp1_abb <- Sp2_abb <- ias_id <- Val <- taxon_name <- species_name <-
     Sp1_Species_name <- Sp2_Species_name <- Q2_5 <- Q97_5 <- Sp1_Sp_abb <-
-    Sp2_Sp_abb <- TaxaInfoFile <- NULL
+    Sp2_Sp_abb <- taxa_info_file <- NULL
 
   # # ..................................................................... ###
 
@@ -60,13 +60,13 @@ mod_summary <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "TaxaInfoFile", "DP_R_Taxa_info", FALSE, TRUE)
+    "taxa_info_file", "DP_R_taxa_info", FALSE, TRUE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
   # # ..................................................................... ###
 
@@ -134,7 +134,7 @@ mod_summary <- function(
             stringr::str_split(",", simplify = TRUE) %>%
             as.data.frame() %>%
             tibble::as_tibble() %>%
-            stats::setNames(c("Variable", "IAS_ID")) %>%
+            stats::setNames(c("Variable", "ias_id")) %>%
             dplyr::mutate_all(stringr::str_trim) %>%
             dplyr::mutate(
               Variable = purrr::map_chr(
@@ -202,13 +202,13 @@ mod_summary <- function(
   if ("Omega" %in% coda_names) {
     ecokit::cat_time("Omega", level = 1L)
 
-    ListSp <- utils::read.delim(TaxaInfoFile, sep = "\t") %>%
+    ListSp <- utils::read.delim(taxa_info_file, sep = "\t") %>%
       tibble::tibble() %>%
       dplyr::mutate(
-        IAS_ID = stringr::str_pad(IAS_ID, pad = "0", width = 4),
-        IAS_ID = paste0("Sp_", IAS_ID)) %>%
+        ias_id = stringr::str_pad(ias_id, pad = "0", width = 4),
+        ias_id = paste0("Sp_", ias_id)) %>%
       dplyr::select(
-        Sp_abb = IAS_ID, taxon_name, Species_name, tidyselect::everything())
+        Sp_abb = ias_id, taxon_name, species_name, tidyselect::everything())
 
     # Prepare summary for the omega parameter
     Omega_Summary <- DataPrep(Omega_Summary$statistics) %>%

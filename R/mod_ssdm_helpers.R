@@ -470,10 +470,11 @@ prepare_input_data <- function(
   # # ..................................................................... ###
 
   Name <- TimePeriod <- ClimateScenario <- ClimateModel <- pred_df <- cv <-
-    CellCode <- FilePath <- path_rail <- path_roads <- path_clc <- path_bias <-
-    path_rivers <- path_chelsa <- pred_data <- quadratic <- CellNum <-
-    variable <- climate_name <- species_name <- valid_species <- data_path <-
-    path_wetness <- path_soil <- method_type <- NULL
+    CellCode <- FilePath <- path_rail <- path_road <- path_clc <- 
+    path_efforts <- path_rivers <- path_chelsa <- pred_data <- 
+    quadratic <- CellNum <- variable <- climate_name <- species_name <- 
+    valid_species <- data_path <- path_wetness <- path_soil <- 
+    method_type <- NULL
 
   # |||||||||||||||||||||||||||||||||||||||||||
 
@@ -565,14 +566,14 @@ prepare_input_data <- function(
 
   env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "path_rail", "DP_R_Railways_processed", TRUE, FALSE,
-    "path_roads", "DP_R_Roads_processed", TRUE, FALSE,
-    "path_clc", "DP_R_CLC_processed", TRUE, FALSE,
-    "path_bias", "DP_R_Efforts_processed", TRUE, FALSE,
-    "path_rivers", "DP_R_Rivers_processed", TRUE, FALSE,
+    "path_rail", "DP_R_railway_processed", TRUE, FALSE,
+    "path_road", "DP_R_road_processed", TRUE, FALSE,
+    "path_clc", "DP_R_clc_processed", TRUE, FALSE,
+    "path_efforts", "DP_R_efforts_processed", TRUE, FALSE,
+    "path_rivers", "DP_R_rivers_processed", TRUE, FALSE,
     "path_soil", "DP_R_soil_density", TRUE, FALSE,
     "path_wetness", "DP_R_wetness_processed", TRUE, FALSE,
-    "path_chelsa", "DP_R_CHELSA_processed", TRUE, FALSE)
+    "path_chelsa", "DP_R_chelsa_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = env_vars_to_read)
@@ -991,16 +992,16 @@ prepare_input_data <- function(
 
   if ("RoadRailLog" %in% other_variables) {
 
-    r_railways <- fs::path(path_rail, "Railways_Length.RData")
-    if (!fs::file_exists(r_railways)) {
+    r_railway <- fs::path(path_rail, "railway_length.RData")
+    if (!fs::file_exists(r_railway)) {
       ecokit::stop_ctx(
-        "Railways data does not exist", r_railways = r_railways,
+        "Railways data does not exist", r_railway = r_railway,
         include_backtrace = TRUE)
     }
-    r_railways <- ecokit::load_as(r_railways, unwrap_r = TRUE) %>%
+    r_railway <- ecokit::load_as(r_railway, unwrap_r = TRUE) %>%
       magrittr::extract2("rail")
 
-    r_roads <- fs::path(path_roads, "Road_Length.RData")
+    r_roads <- fs::path(path_road, "road_length.RData")
     if (!fs::file_exists(r_roads)) {
       ecokit::stop_ctx(
         "Roads data does not exist", r_roads = r_roads,
@@ -1012,13 +1013,13 @@ prepare_input_data <- function(
     # Calculating the sum of road and railway intensity
     # add 1 (older versions 0.1) to get log for 0 values
     # [only for # rivers/roads/efforts, not hab/rivers]
-    r_road_rail <- (r_roads + r_railways) %>%
+    r_road_rail <- (r_roads + r_railway) %>%
       magrittr::add(1) %>%
       log10() %>%
       stats::setNames("RoadRailLog")
 
     static_predictors <- c(static_predictors, r_road_rail)
-    rm(r_road_rail, r_roads, r_railways, envir = environment())
+    rm(r_road_rail, r_roads, r_railway, envir = environment())
   }
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
@@ -1031,7 +1032,7 @@ prepare_input_data <- function(
   if (hab_predictor) {
 
     r_hab <- fs::path(
-      path_clc, "Summary_RData", "PercCov_SynHab_Crop.RData")
+      path_clc, "summary_rdata", "perc_cover_synhab_crop.RData")
     if (!fs::file_exists(r_hab)) {
       ecokit::stop_ctx(
         "Habitat data does not exist", r_hab = r_hab, include_backtrace = TRUE)
@@ -1058,7 +1059,7 @@ prepare_input_data <- function(
 
   if ("EffortsLog" %in% other_variables) {
 
-    r_efforts <- fs::path(path_bias, "Efforts_SummaryR.RData")
+    r_efforts <- fs::path(path_efforts, "efforts_summary_r.RData")
     if (!fs::file_exists(r_efforts)) {
       ecokit::stop_ctx(
         "Sampling efforts data does not exist", r_efforts = r_efforts,
@@ -1179,7 +1180,7 @@ prepare_input_data <- function(
 
   if ("RiversLog" %in% other_variables) {
 
-    r_rivers <- fs::path(path_rivers, "River_Lengths.RData")
+    r_rivers <- fs::path(path_rivers, "river_lengths.RData")
     if (!fs::file_exists(r_rivers)) {
       ecokit::stop_ctx(
         "River length data does not exist", r_rivers = r_rivers,

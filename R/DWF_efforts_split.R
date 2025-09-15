@@ -15,7 +15,7 @@ efforts_split <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  ID <- Col <- Path_Interim <- NULL
+  column_id <- column <- path_interim <- NULL
 
   # # ..................................................................... ###
 
@@ -43,10 +43,10 @@ efforts_split <- function(
   }
 
   # Checking required bash tools
-  Commands <- c("unzip", "cut", "sed", "split")
-  CommandsAvail <- purrr::map_lgl(Commands, ecokit::check_system_command)
-  if (!all(CommandsAvail)) {
-    Missing <- paste(Commands[!CommandsAvail], collapse = " + ")
+  commands <- c("unzip", "cut", "sed", "split")
+  available_commands <- purrr::map_lgl(commands, ecokit::check_system_command)
+  if (!all(available_commands)) {
+    Missing <- paste(commands[!available_commands], collapse = " + ")
     ecokit::stop_ctx(
       "Missing commands", missing_commands = Missing, include_backtrace = TRUE)
   }
@@ -63,61 +63,61 @@ efforts_split <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "Path_Interim", "DP_R_Efforts_interim", FALSE, FALSE)
+    "path_interim", "DP_R_efforts_interim", FALSE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
   # # ..................................................................... ###
 
-  OutPrefix <- stringr::str_replace(basename(path_zip), ".zip$", "_") %>%
-    fs::path(Path_Interim, .)
+  out_prefix <- stringr::str_replace(basename(path_zip), ".zip$", "_") %>%
+    fs::path(path_interim, .)
 
   # nolint start
-  CSV_File <- stringr::str_replace(basename(path_zip), ".zip$", ".csv")
+  csv_file <- stringr::str_replace(basename(path_zip), ".zip$", ".csv")
 
   # extract column names and their numbers from the zipped file without
   # extraction read first line
-  SelectedColNames <- c(
+  selected_col_names <- c(
     "taxonRank", "decimalLatitude", "decimalLongitude",
     "coordinateUncertaintyInMeters", "speciesKey")
 
-  selected_columns <- "unzip -p {path_zip} {CSV_File} | head -n 1" %>%
+  selected_columns <- "unzip -p {path_zip} {csv_file} | head -n 1" %>%
     stringr::str_glue() %>%
     ecokit::system_command() %>%
     # Split the first row into column names. Data is tab-separated
     stringr::str_split("\t") %>%
     magrittr::extract2(1) %>%
-    dplyr::tibble(Col = .) %>%
+    dplyr::tibble(column = .) %>%
     # column number in the original data
-    dplyr::mutate(ID = seq_len(dplyr::n())) %>%
+    dplyr::mutate(column_id = seq_len(dplyr::n())) %>%
     # Only keep selected columns
-    dplyr::filter(Col %in% SelectedColNames) %>%
-    dplyr::pull(ID) %>%
+    dplyr::filter(column %in% selected_col_names) %>%
+    dplyr::pull(column_id) %>%
     paste0(collapse = ",")
   # nolint end
 
-  Command <- stringr::str_glue(
-    'unzip -p {path_zip} {CSV_File} | cut -f{selected_columns} -d "\t" | \\
-    sed -n "1!p" | split -l {chunk_size} -a 4 -d - {OutPrefix} \\
+  extract_command <- stringr::str_glue(
+    'unzip -p {path_zip} {csv_file} | cut -f{selected_columns} -d "\t" | \\
+    sed -n "1!p" | split -l {chunk_size} -a 4 -d - {out_prefix} \\
     --additional-suffix=.txt')
 
-  Path_Chunks <- tryCatch(
-    ecokit::system_command(Command, r_object = TRUE),
+  path_chunks <- tryCatch(
+    ecokit::system_command(extract_command, r_object = TRUE),
     error = function(e) {
       ecokit::stop_ctx(
         paste0("Failed to execute system command: ", e$message),
         include_backtrace = TRUE)
     }
   )
-  rm(Path_Chunks, envir = environment())
+  rm(path_chunks, envir = environment())
 
   return(
     list.files(
-      Path_Interim, full.names = TRUE,
-      pattern = paste0(basename(OutPrefix), ".+txt"))
+      path_interim, full.names = TRUE,
+      pattern = paste0(basename(out_prefix), ".+txt"))
   )
 }

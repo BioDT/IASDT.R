@@ -140,14 +140,14 @@ predict_maps <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_Grid <- Path_Roads <- Path_Rail <- Path_Bias <- tif_path <-
-    time_period <- climate_scenario <- Path_CHELSA <- row_id <-
+  path_grid <- path_roads <- path_railway <- path_efforts <- tif_path <-
+    time_period <- climate_scenario <- path_chelsa <- row_id <-
     Path_CLC <- ias_id <- taxon_name <- ClimateModel <- ClimateScenario <-
     Name <- File_Pred_sf <- class <- order <- family <- species_name <-
-    tif_path_mean <- tif_path_cov <- tif_path_sd <- Clamp <- Path_Wetness <-
+    tif_path_mean <- tif_path_cov <- tif_path_sd <- Clamp <- path_wetness <-
     Train <- Ensemble_File <- Ensemble_Maps <- tifs <- layer_name <-
     TimePeriod <- File_Pred_summary <- Ensemble_DT <- Dir_Ensemble <-
-    File_Pred_R <- tif_path_anomaly <- Path_Rivers <- Path_Soil <- NULL
+    File_Pred_R <- tif_path_anomaly <- path_river <- Path_soil <- NULL
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -161,31 +161,31 @@ predict_maps <- function(
   fs::dir_create(c(Path_Eval, Path_Prediction_NoClamp))
 
   # Path for overall summary - paths for summaries of identical scenarios
-  Path_Summary_RData <- fs::path(
+  path_summary_rdata <- fs::path(
     dplyr::if_else(
       clamp_pred, Path_Prediction_Clamp, Path_Prediction_NoClamp),
     "Prediction_Summary.RData")
-  Path_Summary_txt <- fs::path(
+  path_summary_text <- fs::path(
     dplyr::if_else(
       clamp_pred, Path_Prediction_Clamp, Path_Prediction_NoClamp),
     "Prediction_Summary.txt")
 
   # Path for overall summary - for ShinyApp
-  Path_Summary_RData_Shiny <- fs::path(
+  path_summary_rdata_Shiny <- fs::path(
     dplyr::if_else(
       clamp_pred, Path_Prediction_Clamp, Path_Prediction_NoClamp),
-    "Prediction_Summary_Shiny.RData")
-  Path_Summary_txt_Shiny <- fs::path(
+    "prediction_summary_shiny.RData")
+  path_summary_txt_shiny <- fs::path(
     dplyr::if_else(
       clamp_pred, Path_Prediction_Clamp, Path_Prediction_NoClamp),
-    "Prediction_Summary_Shiny.txt")
+    "prediction_summary_shiny.txt")
 
   # Check if the prediction summary is already available on disk
   if (all(
     fs::file_exists(
       c(
-        Path_Summary_RData, Path_Summary_txt,
-        Path_Summary_RData_Shiny, Path_Summary_txt_Shiny)))) {
+        path_summary_rdata, path_summary_text,
+        path_summary_rdata_Shiny, path_summary_txt_shiny)))) {
     ecokit::cat_time(
       paste0(
         "All model predictions and prediction summary are already available ",
@@ -232,21 +232,21 @@ predict_maps <- function(
 
   ecokit::cat_time("Environment variables")
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "Path_Rail", "DP_R_Railways_processed", TRUE, FALSE,
-    "Path_Roads", "DP_R_Roads_processed", TRUE, FALSE,
-    "Path_CLC", "DP_R_CLC_processed", TRUE, FALSE,
-    "Path_Bias", "DP_R_Efforts_processed", TRUE, FALSE,
-    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
-    "Path_Rivers", "DP_R_Rivers_processed", TRUE, FALSE,
-    "Path_Wetness", "DP_R_wetness_processed", FALSE, TRUE,
-    "Path_Soil", "DP_R_soil_density", FALSE, TRUE,
-    "Path_CHELSA", "DP_R_CHELSA_processed", TRUE, FALSE)
+    "path_railway", "DP_R_railway_processed", TRUE, FALSE,
+    "path_roads", "DP_R_road_processed", TRUE, FALSE,
+    "Path_CLC", "DP_R_clc_processed", TRUE, FALSE,
+    "path_efforts", "DP_R_efforts_processed", TRUE, FALSE,
+    "path_grid", "DP_R_grid_processed", TRUE, FALSE,
+    "path_river", "DP_R_rivers_processed", TRUE, FALSE,
+    "path_wetness", "DP_R_wetness_processed", FALSE, TRUE,
+    "Path_soil", "DP_R_soil_density", FALSE, TRUE,
+    "path_chelsa", "DP_R_chelsa_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -267,10 +267,10 @@ predict_maps <- function(
   ## Reference grid -----
 
   ecokit::cat_time("Reference grid", level = 1L)
-  Path_GridR <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
-  if (!fs::file_exists(Path_GridR)) {
+  path_gridR <- fs::path(path_grid, "grid_10_land_crop.RData")
+  if (!fs::file_exists(path_gridR)) {
     ecokit::stop_ctx(
-      "Path for the Europe boundaries does not exist", Path_GridR = Path_GridR,
+      "Path for the Europe boundaries does not exist", path_gridR = path_gridR,
       include_backtrace = TRUE)
   }
 
@@ -323,14 +323,14 @@ predict_maps <- function(
 
   ecokit::cat_time("CHELSA data", level = 1L)
 
-  Path_CHELSA <- fs::path(Path_CHELSA, "CHELSA_Processed_DT.RData")
-  if (!fs::file_exists(Path_CHELSA)) {
+  path_chelsa <- fs::path(path_chelsa, "CHELSA_Processed_DT.RData")
+  if (!fs::file_exists(path_chelsa)) {
     ecokit::stop_ctx(
-      "Processed CHELSA data can not be found", Path_CHELSA = Path_CHELSA,
+      "Processed CHELSA data can not be found", path_chelsa = path_chelsa,
       include_backtrace = TRUE)
   }
 
-  Prediction_Options <- ecokit::load_as(Path_CHELSA) %>%
+  Prediction_Options <- ecokit::load_as(path_chelsa) %>%
     dplyr::select(-"File_List") %>%
     dplyr::filter(
       # Filter only selected future climate models
@@ -363,34 +363,34 @@ predict_maps <- function(
 
     ecokit::cat_time("Road and railway intensity", level = 1L)
 
-    R_Railways <- fs::path(Path_Rail, "Railways_Length.RData")
-    if (!fs::file_exists(R_Railways)) {
+    r_railway <- fs::path(path_railway, "railway_length.RData")
+    if (!fs::file_exists(r_railway)) {
       ecokit::stop_ctx(
-        "Railways data does not exist", R_Railways = R_Railways,
+        "Railways data does not exist", r_railway = r_railway,
         include_backtrace = TRUE)
     }
-    R_Railways <- ecokit::load_as(R_Railways, unwrap_r = TRUE) %>%
+    r_railway <- ecokit::load_as(r_railway, unwrap_r = TRUE) %>%
       magrittr::extract2("rail")
 
-    R_Roads <- fs::path(Path_Roads, "Road_Length.RData")
-    if (!fs::file_exists(R_Roads)) {
+    r_roads <- fs::path(path_roads, "road_length.RData")
+    if (!fs::file_exists(r_roads)) {
       ecokit::stop_ctx(
-        "Roads data does not exist", R_Roads = R_Roads,
+        "Roads data does not exist", r_roads = r_roads,
         include_backtrace = TRUE)
     }
-    R_Roads <- ecokit::load_as(R_Roads, unwrap_r = TRUE) %>%
+    r_roads <- ecokit::load_as(r_roads, unwrap_r = TRUE) %>%
       magrittr::extract2("All")
 
     # Calculating the sum of road and railway intensity
     # add 1 (older versions 0.1) to get log for 0 values [only for
     # rivers/roads/efforts, not hab/rivers]
-    R_RoadRail <- (R_Roads + R_Railways) %>%
+    r_road_railway <- (r_roads + r_railway) %>%
       magrittr::add(1) %>%
       log10() %>%
       stats::setNames("RoadRailLog")
 
-    StaticPredictors <- c(StaticPredictors, R_RoadRail)
-    rm(R_RoadRail, R_Roads, R_Railways, envir = environment())
+    StaticPredictors <- c(StaticPredictors, r_road_railway)
+    rm(r_road_railway, r_roads, r_railway, envir = environment())
   }
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
@@ -404,7 +404,7 @@ predict_maps <- function(
 
     ecokit::cat_time("Habitat information", level = 1L)
     R_Hab <- fs::path(
-      Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
+      Path_CLC, "summary_rdata", "perc_cover_synhab_crop.RData")
     if (!fs::file_exists(R_Hab)) {
       ecokit::stop_ctx(
         "Habitat data does not exist", R_Hab = R_Hab, include_backtrace = TRUE)
@@ -432,7 +432,7 @@ predict_maps <- function(
 
     ecokit::cat_time("Sampling efforts", level = 1L)
 
-    R_Efforts <- fs::path(Path_Bias, "Efforts_SummaryR.RData")
+    R_Efforts <- fs::path(path_efforts, "efforts_summary_r.RData")
     if (!fs::file_exists(R_Efforts)) {
       ecokit::stop_ctx(
         "Sampling efforts data does not exist", R_Efforts = R_Efforts,
@@ -573,7 +573,7 @@ predict_maps <- function(
 
     ecokit::cat_time("River length", level = 1L)
 
-    R_Rivers <- fs::path(Path_Rivers, "River_Lengths.RData")
+    R_Rivers <- fs::path(path_river, "river_lengths.RData")
     if (!fs::file_exists(R_Rivers)) {
       ecokit::stop_ctx(
         "River length data does not exist", R_Rivers = R_Rivers,
@@ -715,7 +715,7 @@ predict_maps <- function(
 
     ecokit::cat_time("Soil bulk density", level = 1L)
 
-    R_Soil <- fs::path(Path_Soil, "soil_density.RData")
+    R_Soil <- fs::path(Path_soil, "soil_density.RData")
     if (!fs::file_exists(R_Soil)) {
       ecokit::stop_ctx(
         "Soil bulk density data does not exist", R_Soil = R_Soil,
@@ -738,7 +738,7 @@ predict_maps <- function(
 
     ecokit::cat_time("Topographic wetness index", level = 1L)
 
-    R_wetness <- fs::path(Path_Wetness, "wetness_index.RData")
+    R_wetness <- fs::path(path_wetness, "wetness_index.RData")
     if (!fs::file_exists(R_wetness)) {
       ecokit::stop_ctx(
         "Wetness data does not exist", R_wetness = R_wetness,
@@ -1121,7 +1121,7 @@ predict_maps <- function(
         stringr::str_subset("^Sp_|^SR_") %>%
         gtools::mixedsort()
 
-      Grid10 <- ecokit::load_as(Path_GridR, unwrap_r = TRUE)
+      Grid10 <- ecokit::load_as(path_gridR, unwrap_r = TRUE)
       Prediction_R <- terra::rasterize(
         Prediction_sf, Grid10, field = Fields2Raster)
 
@@ -1248,7 +1248,7 @@ predict_maps <- function(
     line_char = "*", line_char_rep = 70L, cat_red = TRUE,
     cat_bold = TRUE, cat_timestamp = FALSE)
 
-  Grid10 <- ecokit::load_as(Path_GridR, unwrap_r = TRUE)
+  Grid10 <- ecokit::load_as(path_gridR, unwrap_r = TRUE)
 
   Prediction_Summary <- purrr::map_dfr(
     .x = seq_len(nrow(Prediction_Options)), .f = Predict_Internal) %>%
@@ -1548,7 +1548,7 @@ predict_maps <- function(
     Prediction_Summary, hab_abb = hab_abb, hab_name = hab_name, .before = 1)
 
   readr::write_delim(
-    x = Prediction_Summary, file = Path_Summary_txt, delim = "\t",
+    x = Prediction_Summary, file = path_summary_text, delim = "\t",
     col_names = TRUE, append = FALSE, progress = FALSE)
 
   # # ..................................................................... ###
@@ -1557,12 +1557,12 @@ predict_maps <- function(
   # Overall summary - to be uploaded to the data server; for the Shiny App -----
 
   if (clamp_pred) {
-    Prediction_Summary_Shiny <- dplyr::filter(Prediction_Summary, Clamp)
+    prediction_summary_shiny <- dplyr::filter(Prediction_Summary, Clamp)
   } else {
-    Prediction_Summary_Shiny <- dplyr::filter(Prediction_Summary, !Clamp)
+    prediction_summary_shiny <- dplyr::filter(Prediction_Summary, !Clamp)
   }
 
-  Prediction_Summary_Shiny <- Prediction_Summary_Shiny$File_Pred_summary %>%
+  prediction_summary_shiny <- prediction_summary_shiny$File_Pred_summary %>%
     purrr::map(ecokit::load_as) %>%
     dplyr::bind_rows() %>%
     dplyr::distinct() %>%
@@ -1574,13 +1574,13 @@ predict_maps <- function(
         .fns = ~ {
           stringr::str_remove(
             string = .x,
-            pattern = paste0(dirname(Path_Summary_RData_Shiny), "/"))
+            pattern = paste0(dirname(path_summary_rdata_Shiny), "/"))
         }))
 
-  save(Prediction_Summary_Shiny, file = Path_Summary_RData_Shiny)
+  save(prediction_summary_shiny, file = path_summary_rdata_Shiny)
   utils::write.table(
-    x = Prediction_Summary_Shiny, sep = "\t", row.names = FALSE,
-    col.names = TRUE, file = Path_Summary_txt_Shiny, quote = FALSE,
+    x = prediction_summary_shiny, sep = "\t", row.names = FALSE,
+    col.names = TRUE, file = path_summary_txt_shiny, quote = FALSE,
     fileEncoding = "UTF-8")
 
   # Create tar file for prediction files
@@ -1589,7 +1589,7 @@ predict_maps <- function(
     ecokit::cat_time("Create tar file for prediction files", level = 1L)
 
     # Directory to save the tar file
-    TarDir <- dirname(Path_Summary_RData_Shiny)
+    TarDir <- dirname(path_summary_rdata_Shiny)
     # Path to the tar file
     TarFile <- fs::path(TarDir, "Predictions.tar")
     # List of directories in the prediction folder. All directories will be
@@ -1599,7 +1599,7 @@ predict_maps <- function(
       paste(collapse = " ") %>%
       # Add the summary files to the list
       paste(
-        "Prediction_Summary_Shiny.RData", "Prediction_Summary_Shiny.txt",
+        "prediction_summary_shiny.RData", "prediction_summary_shiny.txt",
         collapse = " ")
 
     # Command to create the tar file

@@ -47,14 +47,14 @@ EASIN_download <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "EASIN_URL", "DP_R_EASIN_data_url", FALSE, FALSE,
-    "path_EASIN", "DP_R_EASIN_interim", FALSE, FALSE)
+    "EASIN_URL", "DP_R_easin_data_url", FALSE, FALSE,
+    "path_EASIN", "DP_R_easin_interim", FALSE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
   # # ..................................................................... ###
 

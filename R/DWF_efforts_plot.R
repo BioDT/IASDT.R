@@ -14,7 +14,7 @@ efforts_plot <- function(env_file = ".env") {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_Efforts <- EU_Bound <- NULL
+  path_efforts <- EU_boundaries <- NULL
 
   # # ..................................................................... ###
 
@@ -23,29 +23,29 @@ efforts_plot <- function(env_file = ".env") {
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "Path_Efforts", "DP_R_Efforts_processed", FALSE, FALSE,
-    "EU_Bound", "DP_R_EUBound", FALSE, TRUE)
+    "path_efforts", "DP_R_efforts_processed", FALSE, FALSE,
+    "EU_boundaries", "DP_R_country_boundaries", FALSE, TRUE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
   # # ..................................................................... ###
 
-  File_SummaryR <- fs::path(Path_Efforts, "Efforts_SummaryR.RData")
-  if (!file.exists(File_SummaryR)) {
+  file_summary_r <- fs::path(path_efforts, "efforts_summary_r.RData")
+  if (!file.exists(file_summary_r)) {
     ecokit::stop_ctx(
-      "Summary maps cannot be loaded: ", File_SummaryR = File_SummaryR,
+      "Summary maps cannot be loaded: ", file_summary_r = file_summary_r,
       include_backtrace = TRUE)
   }
-  Efforts_SummaryR <- ecokit::load_as(File_SummaryR, unwrap_r = TRUE)
+  efforts_summary <- ecokit::load_as(file_summary_r, unwrap_r = TRUE)
 
   # # ..................................................................... ###
 
   # nolint start
-  PlottingTheme <- ggplot2::theme_bw() +
+  plot_theme <- ggplot2::theme_bw() +
     ggplot2::theme(
       plot.margin = ggplot2::margin(0.02, 0, 0.02, 0, "cm"),
       plot.title = ggplot2::element_blank(),
@@ -56,117 +56,98 @@ efforts_plot <- function(env_file = ".env") {
       legend.position = "inside",
       legend.position.inside = c(0.925, 0.85),
       legend.title = ggplot2::element_text(
-        color = "black", size = 8, face = "bold"
-      ),
+        color = "black", size = 8, face = "bold"),
       axis.text.x = ggplot2::element_blank(),
       axis.text.y = ggplot2::element_blank(),
       axis.ticks = ggplot2::element_blank(),
       panel.border = ggplot2::element_blank(),
       panel.background = ggplot2::element_rect(fill = NA))
 
-  EurBound <- ecokit::load_as(EU_Bound) %>%
+  EU_boundaries <- ecokit::load_as(EU_boundaries) %>%
     magrittr::extract2("Bound_sf_Eur_s") %>%
     magrittr::extract2("L_03")
   # nolint end
 
   # # ..................................................................... ###
 
-  Efforts_Plots <- purrr::map(
-    .x = seq_len(terra::nlyr(Efforts_SummaryR)),
+  efforts_plots <- purrr::map(
+    .x = seq_len(terra::nlyr(efforts_summary)),
     .f = ~ {
       ggplot2::ggplot() +
         ggplot2::geom_sf(
-          data = EurBound, mapping = ggplot2::aes(), color = "grey75",
-          linewidth = 0.075, fill = "grey98"
-        ) +
+          data = EU_boundaries, mapping = ggplot2::aes(), color = "grey75",
+          linewidth = 0.075, fill = "grey98") +
         tidyterra::geom_spatraster(
-          data = Efforts_SummaryR[[.x]], maxcell = Inf
-        ) +
+          data = efforts_summary[[.x]], maxcell = Inf) +
         ggplot2::geom_sf(
-          data = EurBound, mapping = ggplot2::aes(), color = "grey30",
-          linewidth = 0.075, fill = "transparent", inherit.aes = TRUE
-        ) +
+          data = EU_boundaries, mapping = ggplot2::aes(), color = "grey30",
+          linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
         paletteer::scale_fill_paletteer_c(
-          na.value = "transparent", "viridis::plasma"
-        ) +
+          na.value = "transparent", "viridis::plasma") +
         ggplot2::scale_x_continuous(
           expand = ggplot2::expansion(mult = c(0, 0)),
-          limits = c(2600000, 6550000)
-        ) +
+          limits = c(2600000, 6550000)) +
         ggplot2::scale_y_continuous(
           expand = ggplot2::expansion(mult = c(0, 0)),
-          limits = c(1450000, 5420000)
-        ) +
+          limits = c(1450000, 5420000)) +
         ggplot2::labs(fill = NULL) +
-        PlottingTheme
-    }
-  ) %>%
-    stats::setNames(names(Efforts_SummaryR))
+        plot_theme
+    }) %>%
+    stats::setNames(names(efforts_summary))
 
   # # ..................................................................... ###
 
-  Efforts_Plots_Log <- purrr::map(
-    .x = seq_len(terra::nlyr(Efforts_SummaryR)),
+  efforts_plots_Log <- purrr::map(
+    .x = seq_len(terra::nlyr(efforts_summary)),
     .f = ~ {
       ggplot2::ggplot() +
         ggplot2::geom_sf(
-          data = EurBound, mapping = ggplot2::aes(), color = "grey75",
-          linewidth = 0.075, fill = "grey98"
-        ) +
+          data = EU_boundaries, mapping = ggplot2::aes(), color = "grey75",
+          linewidth = 0.075, fill = "grey98") +
         tidyterra::geom_spatraster(
-          data = log10(Efforts_SummaryR[[.x]]), maxcell = Inf
-        ) +
+          data = log10(efforts_summary[[.x]]), maxcell = Inf) +
         ggplot2::geom_sf(
-          data = EurBound, mapping = ggplot2::aes(), color = "grey30",
-          linewidth = 0.075, fill = "transparent", inherit.aes = TRUE
-        ) +
+          data = EU_boundaries, mapping = ggplot2::aes(), color = "grey30",
+          linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
         paletteer::scale_fill_paletteer_c(
-          na.value = "transparent", "viridis::plasma"
-        ) +
+          na.value = "transparent", "viridis::plasma") +
         ggplot2::scale_x_continuous(
           expand = ggplot2::expansion(mult = c(0, 0)),
-          limits = c(2600000, 6550000)
-        ) +
+          limits = c(2600000, 6550000)) +
         ggplot2::scale_y_continuous(
           expand = ggplot2::expansion(mult = c(0, 0)),
-          limits = c(1450000, 5420000)
-        ) +
+          limits = c(1450000, 5420000)) +
         ggplot2::labs(fill = "log10") +
-        PlottingTheme
-    }
-  ) %>%
-    stats::setNames(names(Efforts_SummaryR))
+        plot_theme
+    }) %>%
+    stats::setNames(names(efforts_summary))
 
   # # ..................................................................... ###
 
-  PlotDF <- tibble::tibble(
-    Plots = list(
-      list(Efforts_Plots$NObs, Efforts_Plots_Log$NObs),
-      list(Efforts_Plots$NObs_Native, Efforts_Plots_Log$NObs_Native),
-      list(Efforts_Plots$NSp, Efforts_Plots_Log$NSp),
-      list(Efforts_Plots$NSp_Native, Efforts_Plots_Log$NSp_Native)
-    )
-  ) %>%
+  plot_data <- tibble::tibble(
+    plots = list(
+      list(efforts_plots$n_obs, efforts_plots_Log$n_obs),
+      list(efforts_plots$n_obs_native, efforts_plots_Log$n_obs_native),
+      list(efforts_plots$n_sp, efforts_plots_Log$n_sp),
+      list(efforts_plots$n_sp_native, efforts_plots_Log$n_sp_native))) %>%
     dplyr::mutate(
-      FileName = c(
-        "Efforts_GBIF_NObs.jpeg", "Efforts_GBIF_NObs_Native.jpeg",
-        "Efforts_GBIF_NSp.jpeg", "Efforts_GBIF_NSp_Native.jpeg"
+      file_name = c(
+        "Efforts_GBIF_n_obs.jpeg", "Efforts_GBIF_n_obs_native.jpeg",
+        "Efforts_GBIF_n_sp.jpeg", "Efforts_GBIF_n_sp_native.jpeg"
       ),
       Title = c(
         "Number of plant observations",
         "Number of plant observations (native species)",
         "Number of plant species",
-        "Number of native species"
-      )
-    )
+        "Number of native species"))
 
   purrr::walk(
-    .x = seq_len(nrow(PlotDF)),
+    .x = seq_len(nrow(plot_data)),
     .f = ~ {
       CurrPlot <- patchwork::wrap_plots(
-        PlotDF$Plots[[.x]], ncol = 2, nrow = 1) +
+        plot_data$plots[[.x]], ncol = 2, nrow = 1) +
         patchwork::plot_annotation(
-          title = PlotDF$Title[[.x]],
+          title = plot_data$Title[[.x]],
           theme = ggplot2::theme(
             plot.title = ggplot2::element_text(
               size = 14, face = "bold", hjust = 0.5, colour = "blue",
@@ -175,7 +156,7 @@ efforts_plot <- function(env_file = ".env") {
       # Using ggplot2::ggsave directly does not show non-ascii characters
       # correctly
       ragg::agg_jpeg(
-        filename = fs::path(Path_Efforts, PlotDF$FileName[[.x]]),
+        filename = fs::path(path_efforts, plot_data$file_name[[.x]]),
         width = 31, height = 16.25, res = 600, quality = 100, units = "cm")
       print(CurrPlot)
       grDevices::dev.off()

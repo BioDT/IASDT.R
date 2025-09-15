@@ -101,14 +101,14 @@ CHELSA_process <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "Path_CHELSA_In", "DP_R_CHELSA_raw", FALSE, FALSE,
-    "Path_CHELSA_Out", "DP_R_CHELSA_processed", FALSE, FALSE)
+    "Path_CHELSA_In", "DP_R_chelsa_raw", FALSE, FALSE,
+    "Path_CHELSA_Out", "DP_R_chelsa_processed", FALSE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
   # Ensure that the output path exists
   fs::dir_create(

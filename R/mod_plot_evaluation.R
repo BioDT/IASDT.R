@@ -16,7 +16,7 @@
 
 plot_evaluation <- function(model_dir) {
 
-  IAS_ID <- AUC <- RMSE <- Boyce <- TjurR2 <- n_cells <- NULL
+  ias_id <- AUC <- RMSE <- Boyce <- TjurR2 <- n_cells <- NULL
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -44,18 +44,18 @@ plot_evaluation <- function(model_dir) {
   } else {
     model_data <- ecokit::load_as(file_model_data)
   }
-  # Summarize the number of cells for each IAS_ID
+  # Summarize the number of cells for each ias_id
   model_n_cells <- tibble::tibble(model_data$DT_y) %>%
     dplyr::summarise_all(.funs = sum) %>%
     tidyr::pivot_longer(
       cols = tidyselect::everything(),
-      names_to = "IAS_ID", values_to = "n_cells")
+      names_to = "ias_id", values_to = "n_cells")
   rm(model_data, file_model_data, file_model_data_subset)
 
   Mod_Eval <- ecokit::load_as(Mod_Eval) %>%
-    dplyr::filter(IAS_ID != "SR") %>%
+    dplyr::filter(ias_id != "SR") %>%
     # add n_cells
-    dplyr::left_join(model_n_cells, by = "IAS_ID")
+    dplyr::left_join(model_n_cells, by = "ias_id")
 
   # # ..................................................................... ###
   # # ..................................................................... ###

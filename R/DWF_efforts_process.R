@@ -48,7 +48,7 @@
 #' - **`efforts_request()`**: Requests GBIF data by order in parallel. Stores
 #'   results to disk.
 #' - **`efforts_download()`**: Downloads GBIF data, validates files, and loads
-#'   existing data if available. Returns a dataframe (`Efforts_AllRequests`)
+#'   existing data if available. Returns a dataframe (`efforts_all_requests`)
 #'   with paths.
 #' - **`efforts_split()`**: Splits zipped CSV data by order into chunks, saving
 #'   each separately.
@@ -110,7 +110,7 @@ efforts_process <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_Efforts <- Path_Raw <- Path_Interim <- Path_Grid <- NULL
+  path_efforts <- path_raw <- path_interim <- path_grid <- NULL
 
   # # ..................................................................... ###
 
@@ -126,19 +126,18 @@ efforts_process <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "Path_Efforts", "DP_R_Efforts_processed", FALSE, FALSE,
-    "Path_Raw", "DP_R_Efforts_raw", FALSE, FALSE,
-    "Path_Interim", "DP_R_Efforts_interim", FALSE, FALSE,
-    "Taxa_Stand", "DP_R_Taxa_stand", FALSE, TRUE,
-    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE)
+    "path_efforts", "DP_R_efforts_processed", FALSE, FALSE,
+    "path_raw", "DP_R_efforts_raw", FALSE, FALSE,
+    "path_interim", "DP_R_efforts_interim", FALSE, FALSE,
+    "path_grid", "DP_R_grid_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
-  AllRequests <- fs::path(Path_Efforts, "Efforts_AllRequests.RData")
+  all_requests <- fs::path(path_efforts, "efforts_all_requests.RData")
 
   # # ..................................................................... ###
 
@@ -146,19 +145,19 @@ efforts_process <- function(
   ecokit::cat_time("Loading input data")
 
   ## Create paths -----
-  Path_Efforts_Requests <- fs::path(Path_Efforts, "Requests")
-  Path_Efforts_Cleaned <- fs::path(Path_Interim, "CleanedData")
+  path_efforts_requests <- fs::path(path_efforts, "requests")
+  path_efforts_cleaned <- fs::path(path_interim, "cleaned_data")
   # Create required directories
   fs::dir_create(
     c(
-      Path_Efforts, Path_Raw, Path_Interim, Path_Efforts_Cleaned,
-      Path_Efforts_Requests))
+      path_efforts, path_raw, path_interim, path_efforts_cleaned,
+      path_efforts_requests))
 
   ## Reference grid ----
-  Grids <- Path_Grid %>%
-    fs::path(c("Grid_10_Land_Crop_sf.RData", "Grid_10_Land_Crop.RData"))
+  grids <- path_grid %>%
+    fs::path(c("grid_10_land_crop_sf.RData", "grid_10_land_crop.RData"))
 
-  missing_grids <- Grids[!file.exists(Grids)]
+  missing_grids <- grids[!file.exists(grids)]
   if (length(missing_grids) > 0) {
     ecokit::stop_ctx(
       paste0(
@@ -182,10 +181,10 @@ efforts_process <- function(
 
   } else {
 
-    if (!file.exists(AllRequests)) {
+    if (!file.exists(all_requests)) {
       ecokit::stop_ctx(
         "Efforts data was not requested and the file does not exist.",
-        AllRequests = AllRequests, include_backtrace = TRUE)
+        all_requests = all_requests, include_backtrace = TRUE)
     }
 
     ecokit::cat_time(
@@ -206,23 +205,25 @@ efforts_process <- function(
 
   } else {
 
-    if (!file.exists(AllRequests)) {
+    if (!file.exists(all_requests)) {
       ecokit::stop_ctx(
         "Efforts data was not downloaded and the file does not exist.",
-        AllRequests = AllRequests, include_backtrace = TRUE)
+        all_requests = all_requests, include_backtrace = TRUE)
     }
 
-    Efforts_AllRequests <- ecokit::load_as(AllRequests)
+    efforts_all_requests <- ecokit::load_as(all_requests)
 
-    if (!("DownPath" %in% names(Efforts_AllRequests))) {
+    if (!("download_path" %in% names(efforts_all_requests))) {
       ecokit::stop_ctx(
-        "Efforts data was not downloaded and the 'DownPath' column is missing.",
-        Efforts_AllRequests = Efforts_AllRequests,
-        names_Efforts_AllRequests = names(Efforts_AllRequests),
+        paste0(
+          "Efforts data was not downloaded and the 'download_path' ",
+          "column is missing."),
+        efforts_all_requests = efforts_all_requests,
+        names_efforts_all_requests = names(efforts_all_requests),
         include_backtrace = TRUE)
     }
 
-    rm(Efforts_AllRequests, envir = environment())
+    rm(efforts_all_requests, envir = environment())
     invisible(gc())
 
     ecokit::cat_time("Efforts data was not downloaded")
@@ -251,8 +252,8 @@ efforts_process <- function(
 
   if (delete_processed) {
     ecokit::cat_time("Cleaning up - delete downloaded GBIF data")
-    fs::file_delete(list.files(Path_Raw, full.names = TRUE))
-    fs::dir_delete(Path_Raw)
+    fs::file_delete(list.files(path_raw, full.names = TRUE))
+    fs::dir_delete(path_raw)
   }
 
   # # ..................................................................... ###

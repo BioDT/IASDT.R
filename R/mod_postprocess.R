@@ -751,14 +751,14 @@ mod_prepare_TF <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "ProjectID", "DP_R_LUMI_gpu", FALSE, FALSE,
-    "path_model", "DP_R_Model_path", TRUE, FALSE)
+    "ProjectID", "DP_R_lumi_gpu", FALSE, FALSE,
+    "path_model", "DP_R_model_root_path", TRUE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
   # ****************************************************************
 

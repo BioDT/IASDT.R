@@ -54,10 +54,11 @@ IAS_process <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_PA <- Path_TaxaInfo_RData <- taxon_name <- Path_TaxaStand <- img_valid <-
-    Path_HabAff <- Species <- PA_Map <- Species_name <- NCells_All <-
-    synhab_name <- IAS_ID <- Count <- Hab <- EU_Bound <- Threshold <- NSp <-
-    taxon_name <- PA_Masked_Map <- NCells_Naturalized <- Species_File <- NULL
+  Path_PA <- path_taxa_info_r <- taxon_name <- path_taxa_stand <- img_valid <-
+    path_hab_affinity <- species <- PA_map <- species_name <- n_cells_all <-
+    synhab_name <- ias_id <- Count <- Hab <- EU_boundaries <- threshold <-
+    n_sp <- taxon_name <- PA_masked_map <- n_cells_naturalized <-
+    species_file <- NULL
 
   # # ..................................................................... ###
 
@@ -69,21 +70,20 @@ IAS_process <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "Path_GBIF", "DP_R_GBIF_processed", TRUE, FALSE,
-    "Path_EASIN", "DP_R_EASIN_processed", TRUE, FALSE,
-    "Path_eLTER", "DP_R_eLTER_processed", FALSE, TRUE,
-    "EU_Bound", "DP_R_EUBound", FALSE, TRUE,
+    "Path_GBIF", "DP_R_gbif_processed", TRUE, FALSE,
+    "path_EASIN", "DP_R_easin_processed", TRUE, FALSE,
+    "EU_boundaries", "DP_R_country_boundaries", FALSE, TRUE,
     "Path_PA", "DP_R_PA", FALSE, FALSE,
-    "Path_HabAff", "DP_R_HabAff", FALSE, TRUE,
-    "Path_TaxaStand", "DP_R_Taxa_stand", FALSE, TRUE,
-    "Path_TaxaInfo_RData", "DP_R_Taxa_info_rdata", FALSE, TRUE)
+    "path_hab_affinity", "DP_R_hab_affinity", FALSE, TRUE,
+    "path_taxa_stand", "DP_R_taxa_stand", FALSE, TRUE,
+    "path_taxa_info_r", "DP_R_taxa_info_rdata", FALSE, TRUE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
+    env_file = env_file, env_variables_data = env_vars_to_read)
 
-  rm(EnvVars2Read, envir = environment())
+  rm(env_vars_to_read, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -103,39 +103,39 @@ IAS_process <- function(
 
   ecokit::cat_time("Reading input data and create directories")
 
-  Path_PA_Summary <- fs::path(Path_PA, "PA_summary")
+  Path_PA_summary <- fs::path(Path_PA, "PA_summary")
   Path_PA_tif <- fs::path(Path_PA, "PA_tif")
-  Path_PA_RData <- fs::path(Path_PA, "PA_RData")
-  Path_PA_JPEG <- fs::path(Path_PA, "Distribution_JPEG")
+  Path_PA_r <- fs::path(Path_PA, "PA_rdata")
+  Path_PA_JPEG <- fs::path(Path_PA, "distribution_jpeg")
 
   # list of paths; create if not exist
-  Paths_All <- list(
-    summary = Path_PA_Summary, PA_tif = Path_PA_tif,
-    PA_RData = Path_PA_RData, jpeg = Path_PA_JPEG)
-  purrr::walk(Paths_All, fs::dir_create)
+  paths_all <- list(
+    summary = Path_PA_summary, PA_tif = Path_PA_tif,
+    PA_rdata = Path_PA_r, jpeg = Path_PA_JPEG)
+  purrr::walk(paths_all, fs::dir_create)
 
   # last update info
-  LastUpdate <- stringr::str_glue(
+  last_update <- stringr::str_glue(
     'Last update: {format(Sys.Date(), "%d %B %Y")}')
 
   ## Standardized taxonomy -----
   ecokit::cat_time("Standardized taxonomy", level = 1L)
   # list of original taxonomy (including dummy ID column `taxon_id_`)
-  TaxaList_Original <- readRDS(Path_TaxaStand) %>%
+  taxa_list_original <- readRDS(path_taxa_stand) %>%
     dplyr::select(tidyselect::all_of(c("taxon_id_", "taxon_name")))
 
   # # .................................... ###
 
   ## TaxaInfo ----
   ecokit::cat_time("TaxaInfo", level = 1L)
-  TaxaList <- ecokit::load_as(Path_TaxaInfo_RData)
-  TaxaList_Distinct <- dplyr::distinct(TaxaList, taxon_name, IAS_ID)
+  taxa_list <- ecokit::load_as(path_taxa_info_r)
+  taxa_list_distinct <- dplyr::distinct(taxa_list, taxon_name, ias_id)
 
   # # .................................... ###
 
   ## Species habitat affinity -----
   ecokit::cat_time("Species habitat affinity", level = 1L)
-  SynHab_List <- tibble::tribble(
+  synhab_list <- tibble::tribble(
     ~SynHab_code, ~SynHab_name,
     "1", "Forests",
     "2", "Open_forests",
@@ -154,35 +154,35 @@ IAS_process <- function(
     "12a", "Ruderal_habitats",
     "12b", "Agricultural_habitats")
 
-  Sp_SynHab <- readRDS(Path_HabAff) %>%
+  species_synhab <- readRDS(path_hab_affinity) %>%
     dplyr::rename(SynHab_name = synhab_name) %>%
-    dplyr::left_join(SynHab_List, by = "SynHab_name") %>%
+    dplyr::left_join(synhab_list, by = "SynHab_name") %>%
     dplyr::mutate(Count = TRUE) %>%
     tidyr::pivot_wider(
       names_from = c("SynHab_code", "SynHab_name"),
       names_prefix = "Hab_", values_from = Count) %>%
     # add taxon_name column
-    dplyr::left_join(TaxaList_Original, by = "taxon_id_") %>%
-    # add IAS_ID column
-    dplyr::left_join(TaxaList_Distinct, by = "taxon_name") %>%
+    dplyr::left_join(taxa_list_original, by = "taxon_id_") %>%
+    # add ias_id column
+    dplyr::left_join(taxa_list_distinct, by = "taxon_name") %>%
     dplyr::select(-tidyselect::all_of(c("taxon_id_", "taxon_name"))) %>%
-    dplyr::select(IAS_ID, gtools::mixedsort(tidyselect::peek_vars())) %>%
+    dplyr::select(ias_id, gtools::mixedsort(tidyselect::peek_vars())) %>%
     dplyr::distinct() %>%
-    dplyr::arrange(IAS_ID)
+    dplyr::arrange(ias_id)
 
-  rm(TaxaList_Original, TaxaList_Distinct, envir = environment())
+  rm(taxa_list_original, taxa_list_distinct, envir = environment())
   invisible(gc())
 
-  Sp_taxa <- TaxaList %>%
-    dplyr::arrange(IAS_ID) %>%
-    dplyr::distinct(Species_name, Species_File)
+  species_taxa <- taxa_list %>%
+    dplyr::arrange(ias_id) %>%
+    dplyr::distinct(species_name, species_file)
 
   # # ..................................................................... ###
 
   # Species-specific data ------
 
   ecokit::cat_time("Species-specific data")
-  .StartTimeDist <- lubridate::now(tzone = "CET")
+  .start_time_distribution <- lubridate::now(tzone = "CET")
 
   # # .................................... ###
 
@@ -202,15 +202,15 @@ IAS_process <- function(
   ecokit::cat_time("Species-specific data in parallel", level = 1L)
 
   ecokit::cat_time(
-    paste0("There are ", nrow(Sp_taxa), " species to process"), level = 2L)
+    paste0("There are ", nrow(species_taxa), " species to process"), level = 2L)
 
-  Sp_PA_Data <- future.apply::future_lapply(
-    X = seq_len(nrow(Sp_taxa)),
+  species_PA_data <- future.apply::future_lapply(
+    X = seq_len(nrow(species_taxa)),
     FUN = function(x) {
 
       # species file name
-      sp_file <- Sp_taxa$Species_File[x]
-      sp_Name <- Sp_taxa$Species_name[x]
+      sp_file <- species_taxa$species_file[x]
+      sp_Name <- species_taxa$species_name[x]
 
       if (length(sp_file) != 1 || is.na(sp_file) || !nzchar(sp_file) ||
           length(sp_Name) != 1 || is.na(sp_Name) || !nzchar(sp_Name)) {
@@ -220,17 +220,17 @@ IAS_process <- function(
       }
 
       # output paths
-      file_summary <- fs::path(Paths_All$summary, paste0(sp_file, ".qs2"))
-      file_PA <- fs::path(Paths_All$PA_RData, paste0(sp_file, "_PA.RData"))
-      file_tif_All <- fs::path(Paths_All$PA_tif, paste0(sp_file, "_All.tif"))
-      file_tif_Masked <- fs::path(
-        Paths_All$PA_tif, paste0(sp_file, "_Masked.tif"))
+      file_summary <- fs::path(paths_all$summary, paste0(sp_file, ".qs2"))
+      file_PA <- fs::path(paths_all$PA_rdata, paste0(sp_file, "_PA.RData"))
+      file_tif_All <- fs::path(paths_all$PA_tif, paste0(sp_file, "_all.tif"))
+      file_tif_masked <- fs::path(
+        paths_all$PA_tif, paste0(sp_file, "_masked.tif"))
 
       all_okay <- all(
         ecokit::check_data(file_summary, warning = FALSE),
         ecokit::check_data(file_PA, warning = FALSE),
         ecokit::check_tiff(file_tif_All, warning = FALSE),
-        ecokit::check_tiff(file_tif_Masked, warning = FALSE))
+        ecokit::check_tiff(file_tif_masked, warning = FALSE))
 
       if (all_okay) {
         return(file_summary)
@@ -283,7 +283,7 @@ IAS_process <- function(
           ecokit::check_data(file_summary, warning = FALSE),
           ecokit::check_data(file_PA, warning = FALSE),
           ecokit::check_tiff(file_tif_All, warning = FALSE),
-          ecokit::check_tiff(file_tif_Masked, warning = FALSE))
+          ecokit::check_tiff(file_tif_masked, warning = FALSE))
 
         if (all_okay) {
           break
@@ -301,7 +301,7 @@ IAS_process <- function(
     },
     future.scheduling = Inf, future.seed = TRUE,
     future.packages = pkg_to_export,
-    future.globals = c("env_file", "Paths_All", "Sp_taxa"))
+    future.globals = c("env_file", "paths_all", "species_taxa"))
 
   invisible(gc())
 
@@ -310,7 +310,7 @@ IAS_process <- function(
   ## Read processed species-specific data -----
   ecokit::cat_time("Read processed species-specific data", level = 1L)
 
-  Sp_PA_Data <- unlist(Sp_PA_Data) %>%
+  species_PA_data <- unlist(species_PA_data) %>%
     # remove NA object from a list; for species with no observations
     purrr::discard(is.na) %>%
     future.apply::future_lapply(
@@ -332,8 +332,9 @@ IAS_process <- function(
   ecokit::cat_time("Identify species with no data", level = 1L)
 
   # Species with no data
-  sp_no_data <- setdiff(TaxaList$IAS_ID, as.integer(Sp_PA_Data$species_ID))
-  sp_no_data <- dplyr::filter(TaxaList, IAS_ID %in% sp_no_data)
+  sp_no_data <- setdiff(
+    taxa_list$ias_id, as.integer(species_PA_data$species_id))
+  sp_no_data <- dplyr::filter(taxa_list, ias_id %in% sp_no_data)
 
   if (nrow(sp_no_data) > 0) {
     readr::write_tsv(
@@ -341,21 +342,22 @@ IAS_process <- function(
       col_names = TRUE)
     ecokit::cat_time(
       paste0(
-        length(unique(Sp_PA_Data$species_ID)),  " species were processed; ",
+        length(
+          unique(species_PA_data$species_id)),  " species were processed; ",
         nrow(sp_no_data), " species have no data. ",
         "See `species_no_data.csv` for details"),
       level = 2L)
   } else {
     ecokit::cat_time(
-      paste0("All ", length(TaxaList$Species_name), " species were processed"),
+      paste0("All ", length(taxa_list$species_name), " species were processed"),
       level = 2L)
   }
 
   # # .................................... ###
 
   ecokit::cat_diff(
-    init_time = .StartTimeDist,
-    prefix = "Processing Species-specific data took ",
+    init_time = .start_time_distribution,
+    prefix = "Processing species-specific data took ",
     msg_n_lines = 1, level = 2L)
 
   rm(sp_no_data, envir = environment())
@@ -366,68 +368,69 @@ IAS_process <- function(
   # Merge species summary info -----
   ecokit::cat_time("Merge species summary info")
 
-  Sp_PA_Data <- Sp_PA_Data %>%
+  species_PA_data <- species_PA_data %>%
     # Split number of grid cell per country / biogeographical region as separate
     # column
-    tidyr::unnest_wider(c("BioRegs_DT", "BioRegsMask_DT", "SpCountry")) %>%
+    tidyr::unnest_wider(
+      c("bioreg_data", "bioreg_mask_summ_data", "species_country")) %>%
     dplyr::mutate(
       # replace NA for biogeographical regions and country analysis with 0
       dplyr::across(
-        tidyselect::matches("^CNT_|^BioReg_"),
+        tidyselect::matches("^CNT_|^bioreg_"),
         ~ dplyr::if_else(is.na(.x), 0L, .x))) %>%
     # change column order
     dplyr::select(
-      Species:NCells_Naturalized, PA_Map, PA_Masked_Map,
+      species:n_cells_naturalized, PA_map, PA_masked_map,
       tidyselect::matches("^GBIF"),
       tidyselect::matches("^EASIN"),
       tidyselect::matches("^eLTER"),
       tidyselect::matches("^iNat"),
-      tidyselect::matches("^BioReg_"),
-      tidyselect::matches("^BioRegSumm_"),
-      tidyselect::matches("^BioReg_Masked_"),
-      tidyselect::matches("^BioRegMaskSumm_"),
+      tidyselect::matches("^bioreg_"),
+      tidyselect::matches("^bioreg_summ_"),
+      tidyselect::matches("^bioreg_mask_"),
+      tidyselect::matches("^bioreg_mask_summ"),
       tidyselect::matches("^CNT_"),
       tidyselect::everything()) %>%
-    dplyr::rename(Species_name = Species) %>%
+    dplyr::rename(species_name = species) %>%
     dplyr::full_join(
       y = dplyr::distinct(
-        dplyr::select(TaxaList, -tidyselect::all_of("speciesKey"))),
-      by = "Species_name") %>%
+        dplyr::select(taxa_list, -tidyselect::all_of("speciesKey"))),
+      by = "species_name") %>%
     dplyr::select(
       tidyselect::all_of(
         c(
-          "IAS_ID", "taxon_name", "Species_name",
-          "Species_name2", "Species_File")),
+          "ias_id", "taxon_name", "species_name",
+          "species_name2", "species_file")),
       tidyselect::everything()) %>%
-    dplyr::left_join(Sp_SynHab, by = "IAS_ID")
+    dplyr::left_join(species_synhab, by = "ias_id")
 
-  rm(TaxaList, envir = environment())
+  rm(taxa_list, envir = environment())
 
   ## Save summary results -----
   ecokit::cat_time("Save summary results", level = 1L)
 
   ecokit::cat_time("`qs2`", level = 2L)
-  save(Sp_PA_Data, file = fs::path(Path_PA, "Sp_PA_Data.qs2"))
+  save(species_PA_data, file = fs::path(Path_PA, "species_PA_data.qs2"))
 
   ecokit::cat_time("Summary data without maps", level = 1L)
   ecokit::cat_time("csv format", level = 2L)
-  Sp_PA_Summary_DF <- Sp_PA_Data %>%
+  sp_pa_summary_df <- species_PA_data %>%
     dplyr::select(tidyselect::where(~ !is.list(.x)))
 
   readr::write_excel_csv(
-    x = Sp_PA_Summary_DF, file = fs::path(Path_PA, "Sp_PA_Summary_DF.csv"),
+    x = sp_pa_summary_df, file = fs::path(Path_PA, "sp_pa_summary_df.csv"),
     progress = FALSE)
 
   ecokit::cat_time("RData format", level = 2L)
-  save(Sp_PA_Summary_DF, file = fs::path(Path_PA, "Sp_PA_Summary_DF.RData"))
+  save(sp_pa_summary_df, file = fs::path(Path_PA, "sp_pa_summary_df.RData"))
 
   # only keep selected columns for summary plots
-  Sp_PA_Data <- Sp_PA_Data %>%
+  species_PA_data <- species_PA_data %>%
     dplyr::select(
-      Species_name, NCells_All, NCells_Naturalized,
-      PA_Map, PA_Masked_Map, tidyselect::starts_with("Hab_"))
+      species_name, n_cells_all, n_cells_naturalized,
+      PA_map, PA_masked_map, tidyselect::starts_with("Hab_"))
 
-  rm(Sp_PA_Summary_DF, envir = environment())
+  rm(sp_pa_summary_df, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -438,68 +441,69 @@ IAS_process <- function(
   ## Number of IAS per grid cell -----
   ecokit::cat_time("# IAS per grid cell", level = 1L)
 
-  IAS_NumSp <- dplyr::filter(Sp_PA_Data, NCells_All > 0) %>%
-    dplyr::pull(PA_Map) %>%
+  IAS_n_sp <- dplyr::filter(species_PA_data, n_cells_all > 0) %>%
+    dplyr::pull(PA_map) %>%
     purrr::map(terra::unwrap) %>%
     terra::rast() %>%
     sum(na.rm = TRUE) %>%
-    stats::setNames("IAS_NumSp") %>%
+    stats::setNames("IAS_n_sp") %>%
     # Ensure that values are read from memory
     terra::toMemory()
 
-  Sp_PA_Data <- dplyr::select(Sp_PA_Data, -PA_Map)
+  species_PA_data <- dplyr::select(species_PA_data, -PA_map)
   invisible(gc())
 
   # save as RData
   ecokit::save_as(
-    object = terra::wrap(IAS_NumSp), object_name = "IAS_NumSp",
-    out_path = fs::path(Path_PA, "IAS_NumSp.RData"))
+    object = terra::wrap(IAS_n_sp), object_name = "IAS_n_sp",
+    out_path = fs::path(Path_PA, "IAS_n_sp.RData"))
 
   # save as tif
   raster::writeRaster(
-    x = IAS_NumSp, overwrite = TRUE,
-    filename = fs::path(Path_PA, "IAS_NumSp.tif"))
+    x = IAS_n_sp, overwrite = TRUE,
+    filename = fs::path(Path_PA, "IAS_n_sp.tif"))
 
   # # .................................... ###
 
   ## Number of IAS per grid cell - masked data -----
 
-  IAS_NumSp_Masked <- dplyr::filter(Sp_PA_Data, NCells_Naturalized > 0) %>%
-    dplyr::pull(PA_Masked_Map) %>%
+  IAS_n_sp_masked <- species_PA_data %>%
+    dplyr::filter(n_cells_naturalized > 0) %>%
+    dplyr::pull(PA_masked_map) %>%
     purrr::map(terra::unwrap) %>%
     terra::rast() %>%
     sum(na.rm = TRUE) %>%
-    stats::setNames("IAS_NumSp_Masked") %>%
+    stats::setNames("IAS_n_sp_masked") %>%
     # Ensure that values are read from memory
     terra::toMemory()
 
-  Sp_PA_Data <- dplyr::select(Sp_PA_Data, -PA_Masked_Map)
+  species_PA_data <- dplyr::select(species_PA_data, -PA_masked_map)
   invisible(gc())
 
   # save as RData
   ecokit::save_as(
-    object = terra::wrap(IAS_NumSp_Masked), object_name = "IAS_NumSp_Masked",
-    out_path = fs::path(Path_PA, "IAS_NumSp_Masked.RData"))
+    object = terra::wrap(IAS_n_sp_masked), object_name = "IAS_n_sp_masked",
+    out_path = fs::path(Path_PA, "IAS_n_sp_masked.RData"))
 
   # save as tif
   raster::writeRaster(
-    x = IAS_NumSp_Masked, overwrite = TRUE,
-    filename = fs::path(Path_PA, "IAS_NumSp_Masked.tif"))
+    x = IAS_n_sp_masked, overwrite = TRUE,
+    filename = fs::path(Path_PA, "IAS_n_sp_masked.tif"))
 
   # # .................................... ###
 
   ## Plotting summary of IAS data -----
   ecokit::cat_time("Plotting summary of IAS data", level = 1L)
 
-  EUBound <- ecokit::load_as(EU_Bound) %>%
+  EUBound <- ecokit::load_as(EU_boundaries) %>%
     magrittr::extract2("Bound_sf_Eur_s") %>%
     magrittr::extract2("L_03")
-  MapLimX <- c(2600000, 6550000)
-  MapLimY <- c(1450000, 5410000)
+  limit_x <- c(2600000, 6550000)
+  limit_y <- c(1450000, 5410000)
 
   # # +++++++++++++++++++++++++++++++++ ###
 
-  PlottingTheme <- ggplot2::theme_bw() +
+  plot_theme <- ggplot2::theme_bw() +
     ggplot2::theme(
       plot.margin = ggplot2::margin(0, 0, 0, 0.1, "cm"),
       plot.title = ggplot2::element_text(
@@ -533,12 +537,12 @@ IAS_process <- function(
 
   # # +++++++++++++++++++++++++++++++++ ###
 
-  Plot_Nsp <- ggplot2::ggplot() +
+  plot_n_sp <- ggplot2::ggplot() +
     ggplot2::geom_sf(
       EUBound, mapping = ggplot2::aes(), color = "grey30",
       linewidth = 0.1, fill = "grey95", inherit.aes = TRUE) +
     tidyterra::geom_spatraster(
-      data = terra::classify(IAS_NumSp, cbind(0, NA)), maxcell = Inf) +
+      data = terra::classify(IAS_n_sp, cbind(0, NA)), maxcell = Inf) +
     paletteer::scale_fill_paletteer_c(
       na.value = "transparent", "viridis::plasma",
       breaks = ecokit::integer_breaks()) +
@@ -546,21 +550,21 @@ IAS_process <- function(
       EUBound, mapping = ggplot2::aes(), color = "grey40",
       linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
     ggplot2::scale_x_continuous(
-      expand = ggplot2::expansion(mult = c(0, 0)), limits = MapLimX) +
+      expand = ggplot2::expansion(mult = c(0, 0)), limits = limit_x) +
     ggplot2::scale_y_continuous(
-      expand = ggplot2::expansion(mult = c(0, 0)), limits = MapLimY) +
+      expand = ggplot2::expansion(mult = c(0, 0)), limits = limit_y) +
     ggplot2::labs(
       title = "Number of IAS per 10\u00D710 km grid",
       subtitle = "All data (including cultivated or casual observations)",
       fill = "# IAS") +
-    PlottingTheme
+    plot_theme
 
-  Plot_Nsp_log <- ggplot2::ggplot() +
+  plot_n_sp_log <- ggplot2::ggplot() +
     ggplot2::geom_sf(
       EUBound, mapping = ggplot2::aes(), color = "grey30",
       linewidth = 0.1, fill = "grey95", inherit.aes = TRUE) +
     tidyterra::geom_spatraster(
-      data = log10(terra::classify(IAS_NumSp, cbind(0, NA))), maxcell = Inf) +
+      data = log10(terra::classify(IAS_n_sp, cbind(0, NA))), maxcell = Inf) +
     paletteer::scale_fill_paletteer_c(
       na.value = "transparent", "viridis::plasma",
       breaks = ecokit::integer_breaks()) +
@@ -568,39 +572,39 @@ IAS_process <- function(
       EUBound, mapping = ggplot2::aes(), color = "grey40",
       linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
     ggplot2::scale_x_continuous(
-      expand = ggplot2::expansion(mult = c(0, 0)), limits = MapLimX) +
+      expand = ggplot2::expansion(mult = c(0, 0)), limits = limit_x) +
     ggplot2::scale_y_continuous(
-      expand = ggplot2::expansion(mult = c(0, 0)), limits = MapLimY) +
+      expand = ggplot2::expansion(mult = c(0, 0)), limits = limit_y) +
     ggplot2::labs(
       title = "Number of IAS per 10\u00D710 km grid (log10 scale)",
       subtitle = "All data (including cultivated or casual observations)",
       fill = "# IAS\n(log10)") +
-    PlottingTheme
+    plot_theme
 
-  Plot <- cowplot::plot_grid(Plot_Nsp, Plot_Nsp_log, ncol = 2, nrow = 1) +
+  Plot <- cowplot::plot_grid(plot_n_sp, plot_n_sp_log, ncol = 2, nrow = 1) +
     cowplot::draw_label(
-      label = LastUpdate, color = "grey", x = 0.99, y = 0.98,
+      label = last_update, color = "grey", x = 0.99, y = 0.98,
       size = 7, hjust = 1)
 
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
   ragg::agg_jpeg(
-    filename = fs::path(Path_PA, "IAS_NumSpecies.jpeg"),
+    filename = fs::path(Path_PA, "IAS_n_sp.jpeg"),
     width = 30, height = 15.5, res = 600, quality = 100, units = "cm")
   print(Plot)
   grDevices::dev.off()
 
-  rm(IAS_NumSp, Plot, envir = environment())
+  rm(IAS_n_sp, Plot, envir = environment())
   invisible(gc())
 
   # # +++++++++++++++++++++++++++++++++ ###
 
-  Plot_Nsp_Masked <- ggplot2::ggplot() +
+  plot_n_sp_masked <- ggplot2::ggplot() +
     ggplot2::geom_sf(
       EUBound, mapping = ggplot2::aes(), color = "grey30",
       linewidth = 0.1, fill = "grey95", inherit.aes = TRUE) +
     tidyterra::geom_spatraster(
-      data = terra::classify(IAS_NumSp_Masked, cbind(0, NA)), maxcell = Inf) +
+      data = terra::classify(IAS_n_sp_masked, cbind(0, NA)), maxcell = Inf) +
     paletteer::scale_fill_paletteer_c(
       na.value = "transparent", "viridis::plasma",
       breaks = ecokit::integer_breaks()) +
@@ -608,21 +612,21 @@ IAS_process <- function(
       EUBound, mapping = ggplot2::aes(), color = "grey40",
       linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
     ggplot2::scale_x_continuous(
-      expand = ggplot2::expansion(mult = c(0, 0)), limits = MapLimX) +
+      expand = ggplot2::expansion(mult = c(0, 0)), limits = limit_x) +
     ggplot2::scale_y_continuous(
-      expand = ggplot2::expansion(mult = c(0, 0)), limits = MapLimY) +
+      expand = ggplot2::expansion(mult = c(0, 0)), limits = limit_y) +
     ggplot2::labs(
       title = "Number of IAS per 10\u00D710 km grid",
       subtitle = "Excluding cultivated or casual observations",
       fill = "# IAS") +
-    PlottingTheme
+    plot_theme
 
-  Plot_Nsp_Masked_log <- ggplot2::ggplot() +
+  plot_n_sp_masked_log <- ggplot2::ggplot() +
     ggplot2::geom_sf(
       EUBound, mapping = ggplot2::aes(), color = "grey30",
       linewidth = 0.1, fill = "grey95", inherit.aes = TRUE) +
     tidyterra::geom_spatraster(
-      data = log10(terra::classify(IAS_NumSp_Masked, cbind(0, NA))),
+      data = log10(terra::classify(IAS_n_sp_masked, cbind(0, NA))),
       maxcell = Inf) +
     paletteer::scale_fill_paletteer_c(
       na.value = "transparent", "viridis::plasma",
@@ -631,24 +635,24 @@ IAS_process <- function(
       EUBound, mapping = ggplot2::aes(), color = "grey40",
       linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
     ggplot2::scale_x_continuous(
-      expand = ggplot2::expansion(mult = c(0, 0)), limits = MapLimX) +
+      expand = ggplot2::expansion(mult = c(0, 0)), limits = limit_x) +
     ggplot2::scale_y_continuous(
-      expand = ggplot2::expansion(mult = c(0, 0)), limits = MapLimY) +
+      expand = ggplot2::expansion(mult = c(0, 0)), limits = limit_y) +
     ggplot2::labs(
       title = "Number of IAS per 10\u00D710 km grid (log10 scale)",
       subtitle = "Excluding cultivated or casual observations",
       fill = "# IAS\n(log10)") +
-    PlottingTheme
+    plot_theme
 
   Plot <- cowplot::plot_grid(
-    Plot_Nsp_Masked, Plot_Nsp_Masked_log, ncol = 2, nrow = 1) +
+    plot_n_sp_masked, plot_n_sp_masked_log, ncol = 2, nrow = 1) +
     cowplot::draw_label(
-      label = LastUpdate, color = "grey", x = 0.99, y = 0.98,
+      label = last_update, color = "grey", x = 0.99, y = 0.98,
       size = 7, hjust = 1)
 
   # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   ragg::agg_jpeg(
-    filename = fs::path(Path_PA, "IAS_NumSpecies_Masked.jpeg"),
+    filename = fs::path(Path_PA, "IAS_n_sp_masked.jpeg"),
     width = 30, height = 15.5, res = 600, quality = 100, units = "cm")
   print(Plot)
   grDevices::dev.off()
@@ -656,8 +660,8 @@ IAS_process <- function(
   # # +++++++++++++++++++++++++++++++++ ###
 
   rm(
-    Plot_Nsp, Plot_Nsp_log, PlottingTheme, EUBound, MapLimX,
-    MapLimY, Plot_Nsp_Masked_log, Plot_Nsp_Masked, IAS_NumSp_Masked, Plot,
+    plot_n_sp, plot_n_sp_log, plot_theme, EUBound, limit_x,
+    limit_y, plot_n_sp_masked_log, plot_n_sp_masked, IAS_n_sp_masked, Plot,
     envir = environment())
   invisible(gc())
 
@@ -665,7 +669,7 @@ IAS_process <- function(
 
   ## # Number of IAS to be used in the model - per habitat type ------
 
-  Threshold_Theme <- ggplot2::theme(
+  threshold_theme <- ggplot2::theme(
     plot.margin = ggplot2::margin(0.05, 0.15, 0.05, 0, "cm"),
     plot.title = ggplot2::element_text(
       size = 11, color = "black", hjust = 0.05, face = "italic",
@@ -692,24 +696,26 @@ IAS_process <- function(
 
   # # +++++++++++++++++++++++++++++++++ ###
 
-  NSp_DT <- dplyr::select(Sp_PA_Data, Species_name, NCells_All)
-  NSp_DT <- purrr::map_dfr(
-    .x = sort(unique(NSp_DT$NCells_All)),
+  n_sp_data <- dplyr::select(species_PA_data, species_name, n_cells_all)
+  n_sp_data <- purrr::map_dfr(
+    .x = sort(unique(n_sp_data$n_cells_all)),
     .f = ~ tibble::tibble(
-      Threshold = .x, NSp = sum(NSp_DT$NCells_All >= .x, na.rm = TRUE))) %>%
-    dplyr::filter(Threshold < 450)
+      threshold = .x,
+      n_sp = sum(n_sp_data$n_cells_all >= .x, na.rm = TRUE))) %>%
+    dplyr::filter(threshold < 450)
 
-  NSp_DT_Masked <- dplyr::select(Sp_PA_Data, Species_name, NCells_Naturalized)
-  NSp_DT_Masked <- purrr::map_dfr(
-    .x = sort(unique(NSp_DT_Masked$NCells_Naturalized)),
+  n_sp_data_masked <- dplyr::select(
+    species_PA_data, species_name, n_cells_naturalized)
+  n_sp_data_masked <- purrr::map_dfr(
+    .x = sort(unique(n_sp_data_masked$n_cells_naturalized)),
     .f = ~ tibble::tibble(
-      Threshold = .x,
-      NSp = sum(NSp_DT_Masked$NCells_Naturalized >= .x, na.rm = TRUE))) %>%
-    dplyr::filter(Threshold < 450)
+      threshold = .x,
+      n_sp = sum(n_sp_data_masked$n_cells_naturalized >= .x, na.rm = TRUE))) %>%
+    dplyr::filter(threshold < 450)
 
   # # +++++++++++++++++++++++++++++++++ ###
 
-  NSp_Hab_DT <- purrr::map_dfr(
+  n_sp_hab_data <- purrr::map_dfr(
     .x = c(
       "Hab_1_Forests", "Hab_2_Open_forests", "Hab_3_Scrub",
       "Hab_4a_Natural_grasslands", "Hab_4b_Human_maintained_grasslands",
@@ -718,14 +724,14 @@ IAS_process <- function(
     .f = function(Hab) {
 
       # nolint start
-      CurrDT <- dplyr::filter(Sp_PA_Data, !!as.symbol(Hab))
+      CurrDT <- dplyr::filter(species_PA_data, !!as.symbol(Hab))
       # nolint end
 
       purrr::map_dfr(
-        sort(unique(Sp_PA_Data$NCells_All)),
+        sort(unique(species_PA_data$n_cells_all)),
         ~ tibble::tibble(
-          Hab = Hab, Threshold = .x,
-          NSp = sum(CurrDT$NCells_All >= .x, na.rm = TRUE)))
+          Hab = Hab, threshold = .x,
+          n_sp = sum(CurrDT$n_cells_all >= .x, na.rm = TRUE)))
     }) %>%
     dplyr::mutate(
       Hab = stringr::str_remove(Hab, "^Hab_"),
@@ -733,31 +739,31 @@ IAS_process <- function(
       Hab = stringr::str_replace_all(Hab, "_", " "),
       Hab = forcats::fct_inorder(Hab)) %>%
     dplyr::slice(gtools::mixedorder(Hab)) %>%
-    dplyr::filter(Threshold < 450) %>%
+    dplyr::filter(threshold < 450) %>%
     ggplot2::ggplot() +
     ggplot2::geom_line(
-      ggplot2::aes(x = Threshold, y = NSp, group = Hab, colour = Hab),
+      ggplot2::aes(x = threshold, y = n_sp, group = Hab, colour = Hab),
       linewidth = 0.75) +
     ggplot2::geom_line(
-      data = NSp_DT, inherit.aes = FALSE, colour = "black",
-      ggplot2::aes(x = Threshold, y = NSp), linewidth = 0.75) +
+      data = n_sp_data, inherit.aes = FALSE, colour = "black",
+      ggplot2::aes(x = threshold, y = n_sp), linewidth = 0.75) +
     ggplot2::scale_y_continuous(
       expand = c(0, 0, 0, 0), limits = c(0, NA), oob = scales::oob_keep) +
     ggplot2::scale_x_continuous(
       expand = c(0, 0, 0, 0), limits = c(-5, NA), oob = scales::oob_keep) +
     ggplot2::xlab(
-      "Threshold (# of 10\u00D710 km presence grid cells per species)") +
+      "threshold (# of 10\u00D710 km presence grid cells per species)") +
     ggplot2::ylab("Number of species") +
     ggplot2::scale_color_discrete(name = NULL) +
     ggplot2::labs(
       title = "All data (including cultivated or casual observations)") +
-    Threshold_Theme +
+    threshold_theme +
     ggplot2::guides(
       colour = ggplot2::guide_legend(
         nrow = 1, label.position = "bottom",
         override.aes = list(linewidth = 1.5)))
 
-  NSp_Hab_Masked_DT <- purrr::map_dfr(
+  n_sp_hab_masked_data <- purrr::map_dfr(
     .x = c(
       "Hab_1_Forests", "Hab_2_Open_forests", "Hab_3_Scrub",
       "Hab_4a_Natural_grasslands", "Hab_4b_Human_maintained_grasslands",
@@ -766,14 +772,14 @@ IAS_process <- function(
     .f = function(Hab) {
 
       # nolint start
-      CurrDT <- dplyr::filter(Sp_PA_Data, !!as.symbol(Hab))
+      CurrDT <- dplyr::filter(species_PA_data, !!as.symbol(Hab))
       # nolint end
 
       purrr::map_dfr(
-        sort(unique(Sp_PA_Data$NCells_Naturalized)),
+        sort(unique(species_PA_data$n_cells_naturalized)),
         ~ tibble::tibble(
-          Hab = Hab, Threshold = .x,
-          NSp = sum(CurrDT$NCells_Naturalized >= .x, na.rm = TRUE)))
+          Hab = Hab, threshold = .x,
+          n_sp = sum(CurrDT$n_cells_naturalized >= .x, na.rm = TRUE)))
     }) %>%
     dplyr::mutate(
       Hab = stringr::str_remove(Hab, "^Hab_"),
@@ -781,28 +787,28 @@ IAS_process <- function(
       Hab = stringr::str_replace_all(Hab, "_", " "),
       Hab = forcats::fct_inorder(Hab)) %>%
     dplyr::slice(gtools::mixedorder(Hab)) %>%
-    dplyr::filter(Threshold < 450) %>%
+    dplyr::filter(threshold < 450) %>%
     ggplot2::ggplot() +
     ggplot2::geom_line(
-      ggplot2::aes(x = Threshold, y = NSp, group = Hab, colour = Hab),
+      ggplot2::aes(x = threshold, y = n_sp, group = Hab, colour = Hab),
       linewidth = 0.75) +
     ggplot2::geom_line(
-      data = NSp_DT_Masked, inherit.aes = FALSE, colour = "black",
-      ggplot2::aes(x = Threshold, y = NSp), linewidth = 0.75) +
+      data = n_sp_data_masked, inherit.aes = FALSE, colour = "black",
+      ggplot2::aes(x = threshold, y = n_sp), linewidth = 0.75) +
     ggplot2::scale_y_continuous(
       expand = c(0, 0, 0, 0), limits = c(0, NA), oob = scales::oob_keep) +
     ggplot2::scale_x_continuous(
       expand = c(0, 0, 0, 0), limits = c(-5, NA), oob = scales::oob_keep) +
     ggplot2::xlab(
-      "Threshold (# of 10\u00D710 km presence grid cells per species)") +
+      "threshold (# of 10\u00D710 km presence grid cells per species)") +
     ggplot2::ylab("Number of species") +
     ggplot2::scale_color_discrete(name = NULL) +
     ggplot2::labs(title = "Excluding cultivated or casual observations") +
-    Threshold_Theme +
+    threshold_theme +
     ggplot2::theme(legend.position = "none")
 
-  Legend <- ggpubr::as_ggplot(ggpubr::get_legend(NSp_Hab_DT))
-  title <- cowplot::ggdraw() +
+  Legend <- ggpubr::as_ggplot(ggpubr::get_legend(n_sp_hab_data))
+  plot_title <- cowplot::ggdraw() +
     cowplot::draw_label(
       paste0(
         "Number of IAS to be used in the models based on the arbitrary ",
@@ -810,10 +816,10 @@ IAS_process <- function(
       fontface = "bold", colour = "blue")
 
   Plot <- cowplot::plot_grid(
-    title,
+    plot_title,
     cowplot::plot_grid(
-      (NSp_Hab_DT + ggplot2::theme(legend.position = "none")),
-      NSp_Hab_Masked_DT,
+      (n_sp_hab_data + ggplot2::theme(legend.position = "none")),
+      n_sp_hab_masked_data,
       ncol = 2, nrow = 1),
     Legend,
     ncol = 1, rel_heights = c(0.05, 1, 0.05))
@@ -826,8 +832,8 @@ IAS_process <- function(
   grDevices::dev.off()
 
   rm(
-    Sp_PA_Data, NSp_Hab_DT, NSp_Hab_Masked_DT, Legend, title, Plot,
-    envir = environment())
+    species_PA_data, n_sp_hab_data, n_sp_hab_masked_data,
+    Legend, plot_title, Plot, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -835,7 +841,7 @@ IAS_process <- function(
 
   # Plotting species distribution -----
   ecokit::cat_time("Plotting species distribution")
-  .StartTimePlot <- lubridate::now(tzone = "CET")
+  .start_time_plot <- lubridate::now(tzone = "CET")
 
   ## Prepare working in parallel -----
   if (n_cores == 1) {
@@ -852,8 +858,8 @@ IAS_process <- function(
   ## Plotting species distribution in parallel ----
   ecokit::cat_time("Plotting species distribution in parallel", level = 1L)
 
-  Sp_plots <- future.apply::future_lapply(
-    X = seq_len(nrow(Sp_taxa)),
+  species_plots <- future.apply::future_lapply(
+    X = seq_len(nrow(species_taxa)),
     FUN = function(x) {
 
       # Maximum attempts
@@ -863,7 +869,7 @@ IAS_process <- function(
       repeat {
         sp_plot <- tryCatch(
           IASDT.R::IAS_plot(
-            species = Sp_taxa$Species_name[x], env_file = env_file))
+            species = species_taxa$species_name[x], env_file = env_file))
 
         if (inherits(sp_plot, "try-error") || !is.character(sp_plot) ||
             !fs::file_exists(sp_plot)) {
@@ -887,19 +893,19 @@ IAS_process <- function(
       }
 
       tibble::tibble(
-        species = Sp_taxa$Species_name[x],
+        species = species_taxa$species_name[x],
         img_file = sp_plot, img_valid = img_valid)
 
     },
     future.scheduling = Inf, future.seed = TRUE,
     future.packages = pkg_to_export,
-    future.globals = c("env_file", "Paths_All", "Sp_taxa"))
+    future.globals = c("env_file", "paths_all", "species_taxa"))
 
 
   # validate that all plots were created
-  Sp_plots <- dplyr::bind_rows(Sp_plots)
-  invalid_plots <- dplyr::filter(Sp_plots, !img_valid)
-  valid_plots <- dplyr::filter(Sp_plots, img_valid)
+  species_plots <- dplyr::bind_rows(species_plots)
+  invalid_plots <- dplyr::filter(species_plots, !img_valid)
+  valid_plots <- dplyr::filter(species_plots, img_valid)
 
   if (nrow(invalid_plots) > 0) {
     readr::write_tsv(
@@ -921,7 +927,7 @@ IAS_process <- function(
       level = 2L)
   }
 
-  rm(Sp_plots, valid_plots, invalid_plots, envir = environment())
+  rm(species_plots, valid_plots, invalid_plots, envir = environment())
 
   # # .................................... ###
 
@@ -934,8 +940,8 @@ IAS_process <- function(
   # # .................................... ###
 
   ecokit::cat_diff(
-    init_time = .StartTimePlot,
-    prefix = "Plotting Species distribution took ",
+    init_time = .start_time_plot,
+    prefix = "Plotting species distribution took ",
     msg_n_lines = 1, level = 2L)
 
   # # ..................................................................... ###

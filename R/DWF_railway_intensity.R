@@ -55,9 +55,9 @@ railway_intensity <- function(
   # Avoid "no visible binding for global variable" message
 
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_Railways <- Path_Railways_Raw <- Path_Railways_Interim <- RefGrid <-
-    Country <- URL <- URL2 <- Path <- EU_Bound <- fclass <- Path_Grid <-
-    CellCode <- Name <- OldName <- NewName <- DT <- Railways_URL <- NULL
+  path_railway <- path_railway_raw <- path_railway_interim <- RefGrid <-
+    country <- URL <- URL2 <- path <- EU_boundaries <- fclass <- path_grid <-
+    CellCode <- Name <- old_name <- new_name <- DT <- railway_URL <- NULL
 
   # # ..................................................................... ###
 
@@ -69,24 +69,24 @@ railway_intensity <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "Path_Railways", "DP_R_Railways_processed", FALSE, FALSE,
-    "Path_Railways_Raw", "DP_R_Railways_raw", FALSE, FALSE,
-    "Path_Railways_Interim", "DP_R_Railways_interim", FALSE, FALSE,
-    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
-    "EU_Bound", "DP_R_EUBound", FALSE, TRUE,
-    "Railways_URL", "DP_R_Railways_url", FALSE, FALSE)
+    "path_railway", "DP_R_railway_processed", FALSE, FALSE,
+    "path_railway_raw", "DP_R_railway_raw", FALSE, FALSE,
+    "path_railway_interim", "DP_R_railway_interim", FALSE, FALSE,
+    "path_grid", "DP_R_grid_processed", TRUE, FALSE,
+    "EU_boundaries", "DP_R_country_boundaries", FALSE, TRUE,
+    "railway_URL", "DP_R_railway_url", FALSE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
   fs::dir_create(
-    c(Path_Railways, Path_Railways_Raw, Path_Railways_Interim)
+    c(path_railway, path_railway_raw, path_railway_interim)
   )
 
-  RefGrid <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
+  RefGrid <- fs::path(path_grid, "grid_10_land_crop.RData")
   if (!file.exists(RefGrid)) {
     ecokit::stop_ctx(
       "The reference grid file does not exist", RefGrid = RefGrid,
@@ -94,13 +94,13 @@ railway_intensity <- function(
   }
   RefGrid <- ecokit::load_as(RefGrid, unwrap_r = TRUE)
 
-  RefGridSF <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf.RData")
-  if (!file.exists(RefGridSF)) {
+  grid_sf <- fs::path(path_grid, "grid_10_land_crop_sf.RData")
+  if (!file.exists(grid_sf)) {
     ecokit::stop_ctx(
-      "The reference grid file does not exist", RefGridSF = RefGridSF,
+      "The reference grid file does not exist", grid_sf = grid_sf,
       include_backtrace = TRUE)
   }
-  RefGridSF <- ecokit::load_as(RefGridSF)
+  grid_sf <- ecokit::load_as(grid_sf)
 
   # # ..................................................................... ###
 
@@ -116,34 +116,34 @@ railway_intensity <- function(
   ecokit::cat_time("Scrap download links")
   .StartTimeDown <- lubridate::now(tzone = "CET")
 
-  if (!ecokit::check_url(Railways_URL)) {
+  if (!ecokit::check_url(railway_URL)) {
     ecokit::stop_ctx(
       "The base URL for railways data is not valid",
-      Railways_URL = Railways_URL, include_backtrace = TRUE)
+      railway_URL = railway_URL, include_backtrace = TRUE)
   }
 
-  ecokit::cat_time(paste0("Base URL is: ", Railways_URL), level = 1L)
+  ecokit::cat_time(paste0("Base URL is: ", railway_URL), level = 1L)
 
   # We download European data at country level. For most countries, the data are
   # available in single file, while for others the data are divided into
   # sub-regions. Data on 3 federal states in Germany are not available in single
   # link but at one level below state
 
-  German_L3 <- dplyr::tribble(
-    ~URL, ~Country,
+  german_l3 <- dplyr::tribble(
+    ~URL, ~country,
     "europe/germany/baden-wuerttemberg.html", "Germany",
     "europe/germany/bayern.html", "Germany",
     "europe/germany/nordrhein-westfalen.html", "Germany") %>%
-    dplyr::mutate(URL = paste0(Railways_URL, URL))
+    dplyr::mutate(URL = paste0(railway_URL, URL))
 
   # scrap initial railways links
-  Attempt <- 1
-  Attempts <- 5
-  Success <- FALSE
-  while (isFALSE(Success) && Attempt <= Attempts) {
-    Railways_Links <- try(
+  attempt <- 1
+  attempts <- 5
+  success <- FALSE
+  while (isFALSE(success) && attempt <= attempts) {
+    railway_links <- try(
       expr = {
-        paste0(Railways_URL, "europe.html") %>%
+        paste0(railway_URL, "europe.html") %>%
           rvest::session() %>%
           rvest::html_elements(css = "table") %>%
           magrittr::extract(2) %>%
@@ -152,44 +152,44 @@ railway_intensity <- function(
           stringr::str_subset(".html$") %>%
           dplyr::tibble(URL = .) %>%
           dplyr::mutate(
-            Country = purrr::map_chr(
+            country = purrr::map_chr(
               .x = URL,
               .f = ~ {
                 stringr::str_remove_all(.x, "europe/|.html") %>%
                   stringr::str_to_title()
               }
             ),
-            URL = paste0(Railways_URL, URL)
+            URL = paste0(railway_URL, URL)
           ) %>%
-          dplyr::filter(!(Country %in% c("Russia", "Turkey", "Ukraine"))) %>%
-          dplyr::bind_rows(German_L3) %>%
-          dplyr::arrange(Country, URL)
+          dplyr::filter(!(country %in% c("Russia", "Turkey", "Ukraine"))) %>%
+          dplyr::bind_rows(german_l3) %>%
+          dplyr::arrange(country, URL)
       }, silent = TRUE)
 
-    if (inherits(Railways_Links, "tibble")) {
-      Success <- TRUE
-    } else if (inherits(Railways_Links, "try-error")) {
-      Success <- FALSE
-      if (Attempt == Attempts) {
+    if (inherits(railway_links, "tibble")) {
+      success <- TRUE
+    } else if (inherits(railway_links, "try-error")) {
+      success <- FALSE
+      if (attempt == attempts) {
         ecokit::stop_ctx(
-          paste0("Initial scraping of railways links failed after ", Attempts),
+          paste0("Initial scraping of railways links failed after ", attempts),
           include_backtrace = TRUE)
       }
     }
 
-    Attempt <- Attempt + 1
+    attempt <- attempt + 1
   }
 
   # Scraping final railways links
-  Railways_Links <- Railways_Links %>%
+  railway_links <- railway_links %>%
     dplyr::mutate(
       URL2 = purrr::map(
         .x = URL,
         .f = ~ {
-          Success <- FALSE
-          Attempt <- 1
-          while (isFALSE(Success) && Attempt <= Attempts) {
-            ScrapedLinks <- try(
+          success <- FALSE
+          attempt <- 1
+          while (isFALSE(success) && attempt <= attempts) {
+            scraped_links <- try(
               expr = {
                 BaseURL2 <- stringr::str_extract(.x, "^.+/")
                 rvest::session(.x) %>%
@@ -200,34 +200,34 @@ railway_intensity <- function(
                   unique()
               }, silent = TRUE)
 
-            if (inherits(ScrapedLinks, "character")) {
-              Success <- TRUE
-            } else if (inherits(ScrapedLinks, "try-error")) {
-              Success <- FALSE
-              if (Attempt == Attempts) {
+            if (inherits(scraped_links, "character")) {
+              success <- TRUE
+            } else if (inherits(scraped_links, "try-error")) {
+              success <- FALSE
+              if (attempt == attempts) {
                 ecokit::stop_ctx(
                   paste0(
-                    "Scraping railways links failed for: ", ScrapedLinks,
-                    "after ", Attempts),
+                    "Scraping railways links failed for: ", scraped_links,
+                    "after ", attempts),
                   include_backtrace = TRUE)
               }
             }
-            Attempt <- Attempt + 1
+            attempt <- attempt + 1
           }
 
-          return(ScrapedLinks)
+          return(scraped_links)
         }
       )
     ) %>%
     tidyr::unnest(cols = "URL2") %>%
     dplyr::mutate(
       # download path
-      Path = purrr::map2(
-        .x = URL2, .y = Country,
+      path = purrr::map2(
+        .x = URL2, .y = country,
         .f = ~ {
           stringr::str_remove_all(.x, "^.+/|-latest-free.shp") %>%
             paste0(.y, "_", .) %>%
-            fs::path(Path_Railways_Raw, .)
+            fs::path(path_railway_raw, .)
         }
       ),
       ModDate = purrr::map(
@@ -246,10 +246,10 @@ railway_intensity <- function(
     tidyr::unnest(c = "ModDate")
 
   ecokit::cat_time(
-    paste0("There are ", nrow(Railways_Links), " files to be downloaded"),
+    paste0("There are ", nrow(railway_links), " files to be downloaded"),
     level = 1L)
 
-  save(Railways_Links, file = fs::path(Path_Railways, "Railways_Links.RData"))
+  save(railway_links, file = fs::path(path_railway, "railway_links.RData"))
 
   ecokit::cat_diff(
     init_time = .StartTimeDown, msg_n_lines = 1, level = 1L,
@@ -274,75 +274,75 @@ railway_intensity <- function(
   ## Processing railway data ----
   ecokit::cat_time("Processing railway data", level = 1L)
 
-  Railways_3035 <- future.apply::future_lapply(
-    X = seq_len(nrow(Railways_Links)),
+  railway_3035 <- future.apply::future_lapply(
+    X = seq_len(nrow(railway_links)),
     FUN = function(ID) {
-      URL <- Railways_Links$URL2[[ID]]
-      Path <- Railways_Links$Path[[ID]]
-      Country <- Railways_Links$Country[[ID]]
-      Prefix <- stringr::str_remove_all(basename(Path), ".zip$")
-      Path_Temp <- fs::path(Path_Railways_Interim, paste0(Prefix, ".RData"))
+      URL <- railway_links$URL2[[ID]]
+      path <- railway_links$path[[ID]]
+      country <- railway_links$country[[ID]]
+      Prefix <- stringr::str_remove_all(basename(path), ".zip$")
+      path_Temp <- fs::path(path_railway_interim, paste0(Prefix, ".RData"))
 
       withr::local_options(
         future.globals.maxSize = 8000 * 1024^2, future.gc = TRUE,
         future.seed = TRUE, timeout = 1800)
 
       # Check if zip file is a valid file
-      if (file.exists(Path)) {
-        Success <- ecokit::check_zip(Path)
-        if (isFALSE(Success)) {
-          fs::file_delete(Path)
+      if (file.exists(path)) {
+        success <- ecokit::check_zip(path)
+        if (isFALSE(success)) {
+          fs::file_delete(path)
         }
       } else {
-        Success <- FALSE
+        success <- FALSE
       }
 
       # Try downloading data for a max of 5 attempts
-      Attempt <- 1
-      Attempts <- 5
+      attempt <- 1
+      attempts <- 5
 
-      while (isFALSE(Success) && Attempt <= Attempts) {
+      while (isFALSE(success) && attempt <= attempts) {
         Down <- try(
           expr = {
 
             stringr::str_glue(
               'curl -k -L --connect-timeout 180 --max-time 3600 --retry 5 \\
-            "{URL}" -o "{Path}" --silent') %>%
+            "{URL}" -o "{path}" --silent') %>%
               system()
 
-            Success <- ecokit::check_zip(Path)
+            success <- ecokit::check_zip(path)
 
-            if (isFALSE(Success)) {
-              fs::file_delete(Path)
+            if (isFALSE(success)) {
+              fs::file_delete(path)
             }
 
-            Success
+            success
           }, silent = TRUE)
 
         if (inherits(Down, "try-error")) {
-          Success <- FALSE
+          success <- FALSE
         }
-        Attempt <- Attempt + 1
+        attempt <- attempt + 1
       }
 
       # Filter only railways files
-      InFileN <- dplyr::tibble(utils::unzip(Path, list = TRUE)) %>%
+      in_file_n <- dplyr::tibble(utils::unzip(path, list = TRUE)) %>%
         dplyr::filter(stringr::str_detect(Name, "railways")) %>%
         dplyr::pull(Name) %>%
         unique()
 
       utils::unzip(
-        zipfile = Path, files = InFileN,
-        exdir = fs::path(Path_Railways_Interim, Prefix))
+        zipfile = path, files = in_file_n,
+        exdir = fs::path(path_railway_interim, Prefix))
 
-      Path_Extract <- dplyr::tibble(
-        OldName = fs::path(Path_Railways_Interim, Prefix, InFileN),
-        NewName = fs::path(
-          Path_Railways_Interim,
-          paste0(Prefix, ".", tools::file_ext(InFileN)))) %>%
-        dplyr::mutate(Ren = purrr::map2(OldName, NewName, file.rename))
+      path_extract <- dplyr::tibble(
+        old_name = fs::path(path_railway_interim, Prefix, in_file_n),
+        new_name = fs::path(
+          path_railway_interim,
+          paste0(Prefix, ".", tools::file_ext(in_file_n)))) %>%
+        dplyr::mutate(Ren = purrr::map2(old_name, new_name, file.rename))
 
-      Railway <- dplyr::pull(Path_Extract, NewName) %>%
+      Railway <- dplyr::pull(path_extract, new_name) %>%
         stringr::str_subset(".shp$") %>%
         sf::st_read(quiet = TRUE) %>%
         tibble::tibble() %>%
@@ -350,26 +350,26 @@ railway_intensity <- function(
         sf::st_transform(crs = 3035) %>%
         dplyr::select(
           -tidyselect::all_of(c("bridge", "tunnel", "layer", "name"))) %>%
-        sf::st_filter(y = RefGridSF, .predicate = sf::st_intersects)
+        sf::st_filter(y = grid_sf, .predicate = sf::st_intersects)
 
-      save(Railway, file = Path_Temp)
+      save(Railway, file = path_Temp)
 
       # Clean up
-      fs::dir_delete(fs::path(Path_Railways_Interim, Prefix))
-      fs::file_delete(Path_Extract$NewName)
+      fs::dir_delete(fs::path(path_railway_interim, Prefix))
+      fs::file_delete(path_extract$new_name)
       if (delete_processed) {
-        fs::file_delete(Path)
+        fs::file_delete(path)
       }
 
       return(
         tibble::tibble(
-          URL = URL, Country = Country, Area = Prefix, Path = Path_Temp))
+          URL = URL, country = country, Area = Prefix, path = path_Temp))
     },
     future.scheduling = Inf, future.seed = TRUE,
     future.packages = pkg_to_export,
-    future.globals = c("Railways_Links", "RefGridSF")) %>%
+    future.globals = c("railway_links", "grid_sf")) %>%
     dplyr::bind_rows() %>%
-    dplyr::mutate(DT = purrr::map(Path, ecokit::load_as)) %>%
+    dplyr::mutate(DT = purrr::map(path, ecokit::load_as)) %>%
     tidyr::unnest(DT) %>%
     sf::st_as_sf()
 
@@ -380,49 +380,49 @@ railway_intensity <- function(
   }
 
   # Delete raw directory if empty
-  RawFileList <- list.files(Path_Railways_Raw, full.names = TRUE)
-  if (length(RawFileList) == 0) {
-    fs::dir_delete(Path_Railways_Raw)
+  raw_file_list <- list.files(path_railway_raw, full.names = TRUE)
+  if (length(raw_file_list) == 0) {
+    fs::dir_delete(path_railway_raw)
   }
 
   # # .................................... ###
 
   ## Saving - RData -----
   ecokit::cat_time("Saving - RData", level = 1L)
-  save(Railways_3035, file = fs::path(Path_Railways, "Railways_3035.RData"))
+  save(railway_3035, file = fs::path(path_railway, "railway_3035.RData"))
 
   # # .................................... ###
 
-  ## Railways_3035_2plot ----
-  Railways_3035_2plot <- dplyr::filter(Railways_3035, fclass == "rail") %>%
-    sf::st_join(RefGridSF) %>%
+  ## railway_3035_to_plot ----
+  railway_3035_to_plot <- dplyr::filter(railway_3035, fclass == "rail") %>%
+    sf::st_join(grid_sf) %>%
     dplyr::filter(!is.na(CellCode)) %>%
     dplyr::select("geometry")
 
   save(
-    Railways_3035_2plot,
-    file = fs::path(Path_Railways, "Railways_3035_2plot.RData"))
+    railway_3035_to_plot,
+    file = fs::path(path_railway, "railway_3035_to_plot.RData"))
 
   # # .................................... ###
 
   ## Saving each railway class to separate file ----
   ecokit::cat_time("Saving each railway class to separate file", level = 1L)
 
-  sf::st_drop_geometry(Railways_3035) %>%
+  sf::st_drop_geometry(railway_3035) %>%
     dplyr::distinct(fclass) %>%
     dplyr::pull(fclass) %>%
     purrr::walk(
       .f = ~ {
         ecokit::cat_time(.x, level = 2L)
-        dplyr::filter(Railways_3035, fclass == .x) %>%
+        dplyr::filter(railway_3035, fclass == .x) %>%
           ecokit::save_as(
-            object_name = paste0("Railways_sf_", .x),
+            object_name = paste0("railway_sf_", .x),
             out_path = fs::path(
-              Path_Railways, paste0("Railways_sf_", .x, ".RData")))
+              path_railway, paste0("railway_sf_", .x, ".RData")))
       }
     )
 
-  rm(Railways_3035, RefGridSF, envir = environment())
+  rm(railway_3035, grid_sf, envir = environment())
   invisible(gc())
 
   ecokit::cat_diff(
@@ -435,11 +435,11 @@ railway_intensity <- function(
   ecokit::cat_time(
     "Calculate length of railways for each railway class per grid cell")
 
-  Railways_Length <- Path_Railways %>%
-    list.files(pattern = "^Railways_sf_", full.names = TRUE) %>%
+  railway_length <- path_railway %>%
+    list.files(pattern = "^railway_sf_", full.names = TRUE) %>%
     purrr::map(
       .f = ~ {
-        Name <- stringr::str_remove_all(basename(.x), "Railways_sf_|.RData")
+        Name <- stringr::str_remove_all(basename(.x), "railway_sf_|.RData")
 
         ecokit::cat_time(Name, level = 2L)
 
@@ -454,21 +454,21 @@ railway_intensity <- function(
     terra::rast()
 
   # Sum of railways length of any type
-  Railways_Length$Sum <- sum(Railways_Length)
+  railway_length$Sum <- sum(railway_length)
 
   ## Saving - RData -----
   ecokit::cat_time("Saving - RData", level = 1L)
   ecokit::save_as(
-    object = terra::wrap(Railways_Length), object_name = "Railways_Length",
-    out_path = fs::path(Path_Railways, "Railways_Length.RData"))
+    object = terra::wrap(railway_length), object_name = "railway_length",
+    out_path = fs::path(path_railway, "railway_length.RData"))
 
   ## Saving - tif ------
   ecokit::cat_time("Saving - tif", level = 1L)
   terra::writeRaster(
-    x = Railways_Length, overwrite = TRUE,
+    x = railway_length, overwrite = TRUE,
     filename = fs::path(
-      Path_Railways,
-      paste0("Railways_Length_", names(Railways_Length), ".tif")))
+      path_railway,
+      paste0("railway_length_", names(railway_length), ".tif")))
 
   # # ..................................................................... ###
 
@@ -480,19 +480,19 @@ railway_intensity <- function(
   # actual distance to nearest railway line; which is expected to take too much
   # time to calculate
 
-  Railways_Distance <- purrr::map(
-    .x = as.list(Railways_Length),
+  railway_distance <- purrr::map(
+    .x = as.list(railway_length),
     .f = ~ {
       ecokit::cat_time(names(.x), level = 2L)
 
       # suppress progress bar
       terra::terraOptions(progress = 0)
 
-      Railways_Points <- terra::as.points(terra::classify(.x, cbind(0, NA)))
+      railway_Points <- terra::as.points(terra::classify(.x, cbind(0, NA)))
 
-      terra::distance(x = .x, y = Railways_Points, unit = "km") %>%
+      terra::distance(x = .x, y = railway_Points, unit = "km") %>%
         terra::mask(RefGrid) %>%
-        stats::setNames(paste0("Railways_Distance_", names(.x))) %>%
+        stats::setNames(paste0("railway_distance_", names(.x))) %>%
         # Ensure that values are read from memory
         terra::toMemory()
     }
@@ -501,14 +501,14 @@ railway_intensity <- function(
 
   ecokit::cat_time("Save distance to railways - tif", level = 1L)
   terra::writeRaster(
-    x = Railways_Distance, overwrite = TRUE,
+    x = railway_distance, overwrite = TRUE,
     filename = fs::path(
-      Path_Railways, paste0(names(Railways_Distance), ".tif")))
+      path_railway, paste0(names(railway_distance), ".tif")))
 
   ecokit::cat_time("Save distance to railways - RData", level = 1L)
   ecokit::save_as(
-    object = terra::wrap(Railways_Distance), object_name = "Railways_Distance",
-    out_path = fs::path(Path_Railways, "Railways_Distance.RData"))
+    object = terra::wrap(railway_distance), object_name = "railway_distance",
+    out_path = fs::path(path_railway, "railway_distance.RData"))
 
   rm(RefGrid, envir = environment())
 
@@ -517,11 +517,11 @@ railway_intensity <- function(
   # Plotting ------
   ecokit::cat_time("Plotting")
 
-  EU_Bound <- ecokit::load_as(EU_Bound) %>%
+  EU_boundaries <- ecokit::load_as(EU_boundaries) %>%
     magrittr::extract2("Bound_sf_Eur_s") %>%
     magrittr::extract2("L_03")
 
-  PlottingTheme <- ggplot2::theme_bw() +
+  plot_theme <- ggplot2::theme_bw() +
     ggplot2::theme(
       plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
       plot.title = ggplot2::element_text(
@@ -555,16 +555,16 @@ railway_intensity <- function(
   ## Plotting length of railways -----
   ecokit::cat_time("Plotting length of railways", level = 1L)
 
-  Rail2Plot <- terra::subset(Railways_Length, "rail") %>%
+  rail_to_plot <- terra::subset(railway_length, "rail") %>%
     terra::classify(cbind(0, NA))
 
-  RailPlot <- ggplot2::ggplot() +
+  rail_plot <- ggplot2::ggplot() +
     ggplot2::geom_sf(
-      EU_Bound, mapping = ggplot2::aes(), color = "grey75",
+      EU_boundaries, mapping = ggplot2::aes(), color = "grey75",
       linewidth = 0.075, fill = "grey98") +
-    tidyterra::geom_spatraster(data = log10(Rail2Plot + 1), maxcell = Inf) +
+    tidyterra::geom_spatraster(data = log10(rail_to_plot + 1), maxcell = Inf) +
     ggplot2::geom_sf(
-      EU_Bound, mapping = ggplot2::aes(), color = "grey30",
+      EU_boundaries, mapping = ggplot2::aes(), color = "grey30",
       linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
     paletteer::scale_fill_paletteer_c(
       na.value = "transparent", "viridis::plasma") +
@@ -574,30 +574,30 @@ railway_intensity <- function(
     ggplot2::scale_y_continuous(
       expand = ggplot2::expansion(mult = c(0, 0)),
       limits = c(1450000, 5420000)) +
-    ggplot2::labs(title = "Railways length", fill = "log10") +
-    PlottingTheme
+    ggplot2::labs(title = "Railway length", fill = "log10") +
+    plot_theme
 
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
   ragg::agg_jpeg(
-    filename = fs::path(Path_Railways, "Railways_Length.jpeg"),
+    filename = fs::path(path_railway, "railway_length.jpeg"),
     width = 31, height = 30, res = 600, quality = 100, units = "cm")
-  print(RailPlot)
+  print(rail_plot)
   grDevices::dev.off()
 
-  rm(RailPlot, envir = environment())
+  rm(rail_plot, envir = environment())
 
   # # .................................. ###
 
   ## Plotting railways -----
   ecokit::cat_time("Plotting European railways", level = 1L)
 
-  RailPlotShp <- ggplot2::ggplot() +
+  rail_plot_shp <- ggplot2::ggplot() +
     ggplot2::geom_sf(
-      EU_Bound, mapping = ggplot2::aes(), color = "grey75",
+      EU_boundaries, mapping = ggplot2::aes(), color = "grey75",
       linewidth = 0.075, fill = "grey98") +
     ggplot2::geom_sf(
-      Railways_3035_2plot,
+      railway_3035_to_plot,
       mapping = ggplot2::aes(), color = "blue", linewidth = 0.05) +
     ggplot2::scale_x_continuous(
       expand = ggplot2::expansion(mult = c(0, 0)),
@@ -606,17 +606,17 @@ railway_intensity <- function(
       expand = ggplot2::expansion(mult = c(0, 0)),
       limits = c(1450000, 5420000)) +
     ggplot2::labs(title = "Railways in Europe", fill = NA) +
-    PlottingTheme
+    plot_theme
 
   # Using ggplot2::ggsave directly does not show non-ascii characters
   # correctly
   ragg::agg_jpeg(
-    filename = fs::path(Path_Railways, "Railways_Lines.jpeg"),
+    filename = fs::path(path_railway, "railway_lines.jpeg"),
     width = 31, height = 30, res = 600, quality = 100, units = "cm")
-  print(RailPlotShp)
+  print(rail_plot_shp)
   grDevices::dev.off()
 
-  rm(RailPlotShp, envir = environment())
+  rm(rail_plot_shp, envir = environment())
 
   # # ..................................................................... ###
 

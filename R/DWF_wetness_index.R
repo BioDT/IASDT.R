@@ -37,20 +37,20 @@ wetness_index_process <- function(env_file = ".env") {
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "dir_grid", "DP_R_Grid_processed", TRUE, FALSE,
+    "dir_grid", "DP_R_grid_processed", TRUE, FALSE,
     "dir_wetness_raw", "DP_R_wetness_raw", FALSE, FALSE,
     "dir_wetness", "DP_R_wetness_processed", FALSE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
   # # ..................................................................... ###
 
   # Load the reference grid
-  reference_grid <- fs::path(dir_grid, "Grid_10_Land_Crop.RData")
+  reference_grid <- fs::path(dir_grid, "grid_10_land_crop.RData")
   if (!file.exists(reference_grid)) {
     ecokit::stop_ctx(
       "Reference grid file does not exist", reference_grid = reference_grid)

@@ -28,8 +28,8 @@ resp_curv_plot_species <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_PA <- NCells_Naturalized <- NFV <- Coords <- Species <- Prefix <-
-    Data <- RC_Path_Prob <- Variable <- IAS_ID <- VarDesc <- VarDesc2 <-
+  Path_PA <- n_cells_naturalized <- NFV <- Coords <- Species <- Prefix <-
+    Data <- RC_Path_Prob <- Variable <- ias_id <- VarDesc <- VarDesc2 <-
     RC_File <- NULL
 
   # # ..................................................................... ###
@@ -56,25 +56,25 @@ resp_curv_plot_species <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
     "Path_PA", "DP_R_PA", TRUE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
-  SpSummary <- fs::path(Path_PA, "Sp_PA_Summary_DF.csv")
-  if (!file.exists(SpSummary)) {
+  sp_summary <- fs::path(Path_PA, "sp_pa_summary_df.RData")
+  if (!file.exists(sp_summary)) {
     ecokit::stop_ctx(
-      "SpSummary file does not exist", SpSummary = SpSummary,
+      "sp_summary file does not exist", sp_summary = sp_summary,
       include_backtrace = TRUE)
   }
 
-  SpSummary <- readr::read_csv(
-    file = SpSummary, show_col_types = FALSE, progress = FALSE) %>%
-    dplyr::select(tidyselect::all_of(c("IAS_ID", "NCells_Naturalized"))) %>%
-    dplyr::rename(NCells = NCells_Naturalized)
+  sp_summary <- readr::read_csv(
+    file = sp_summary, show_col_types = FALSE, progress = FALSE) %>%
+    dplyr::select(tidyselect::all_of(c("ias_id", "n_cells_naturalized"))) %>%
+    dplyr::rename(NCells = n_cells_naturalized)
 
   # # ..................................................................... ###
 
@@ -97,8 +97,8 @@ resp_curv_plot_species <- function(
     dplyr::select(-RC_Path_Prob) %>%
     tidyr::nest(
       DT = tidyselect::everything(), .by = c(NFV, Coords, Species)) %>%
-    dplyr::mutate(IAS_ID = as.numeric(stringr::str_remove(Species, "^Sp_"))) %>%
-    dplyr::left_join(SpSummary, by = "IAS_ID") %>%
+    dplyr::mutate(ias_id = as.numeric(stringr::str_remove(Species, "^Sp_"))) %>%
+    dplyr::left_join(sp_summary, by = "ias_id") %>%
     dplyr::mutate(
       Prefix = paste0(Species, "_NFV_", NFV, "_Coords_", Coords),
       path_JPEG_fixed = fs::path(Path_RC_Sp, paste0(Prefix, "_Fixed.jpeg")),
@@ -194,19 +194,19 @@ resp_curv_plot_species <- function(
             "<span style='font-size: 8pt;'>", VarDesc2, "</span>"))
 
       # nolint start
-      Species2 <- dplyr::filter(SpeciesNames, IAS_ID == !!Species)
-      Species_name <- Species2$Species_name
+      Species2 <- dplyr::filter(SpeciesNames, ias_id == !!Species)
+      species_name <- Species2$species_name
       Species_ID <- stringr::str_remove(Species, "^Sp_")
-      Class <- Species2$Class
-      Order <- Species2$Order
-      Family <- Species2$Family
+      class <- Species2$class
+      order <- Species2$order
+      family <- Species2$family
       TitleTxt <- stringr::str_glue(
         '<span style="font-size:13pt;"><b> Response curves of </b></span>\\
         <span style="color:blue; font-size:13pt;">\\
-        <b><i>{Species_name}</i></b></span>\\
+        <b><i>{species_name}</i></b></span>\\
         <span style="font-size:8pt;"> (\\
-        <b>Class:</b> {Class} &#8212; <b>Order:</b> {Order} &#8212; \\
-        <b>Family:</b> {Family} &#8212; <b>ID:</b> {Species_ID} \\
+        <b>Class:</b> {class} &#8212; <b>Order:</b> {order} &#8212; \\
+        <b>Family:</b> {family} &#8212; <b>ID:</b> {Species_ID} \\
         &#8212; <b># presence grids:</b> {NCells})</span>')
       # nolint end
 

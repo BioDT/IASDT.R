@@ -11,13 +11,13 @@
 efforts_download <- function(
     n_cores = 6L, strategy = "multisession", env_file = ".env") {
 
-  .StartTimeDown <- lubridate::now(tzone = "CET")
+  .start_time_down <- lubridate::now(tzone = "CET")
 
   # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Request <- Path_Efforts <- NULL
+  Request <- path_efforts <- NULL
 
   # # ..................................................................... ###
 
@@ -40,14 +40,14 @@ efforts_download <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "Path_Efforts", "DP_R_Efforts_processed", FALSE, FALSE,
-    "Path_Raw", "DP_R_Efforts_raw", FALSE, FALSE)
+    "path_efforts", "DP_R_efforts_processed", FALSE, FALSE,
+    "path_raw", "DP_R_efforts_raw", FALSE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
   # # ..................................................................... ###
 
@@ -58,15 +58,15 @@ efforts_download <- function(
 
   # # ..................................................................... ###
 
-  Path_Efforts_Request <- fs::path(Path_Efforts, "Efforts_AllRequests.RData")
+  path_efforts_request <- fs::path(path_efforts, "efforts_all_requests.RData")
 
-  if (!file.exists(Path_Efforts_Request)) {
+  if (!file.exists(path_efforts_request)) {
     ecokit::stop_ctx(
-      "The path for the `Efforts_AllRequests` data does not exist",
-      Path_Efforts_Request = Path_Efforts_Request, include_backtrace = TRUE)
+      "The path for the `efforts_all_requests` data does not exist",
+      path_efforts_request = path_efforts_request, include_backtrace = TRUE)
   }
 
-  Efforts_AllRequests <- ecokit::load_as(Path_Efforts_Request)
+  efforts_all_requests <- ecokit::load_as(path_efforts_request)
 
   # # ..................................................................... ###
 
@@ -85,63 +85,63 @@ efforts_download <- function(
   # Downloading/checking efforts data ------
   ecokit::cat_time("Downloading & checking efforts data", level = 1L)
 
-  Efforts_AllRequests <- Efforts_AllRequests %>%
+  efforts_all_requests <- efforts_all_requests %>%
     dplyr::mutate(
       # Download datasets in parallel
-      DownPath = furrr::future_map_chr(
+      download_path = furrr::future_map_chr(
         .x = Request,
         .f = ~{
 
-          DownFile <- fs::path(Path_Raw, paste0(as.character(.x), ".zip"))
+          down_file <- fs::path(path_raw, paste0(as.character(.x), ".zip"))
 
           # Check zip file if exist, if not download it
-          if (file.exists(DownFile)) {
-            Success <- ecokit::check_zip(DownFile)
-            if (isFALSE(Success)) {
-              fs::file_delete(DownFile)
+          if (file.exists(down_file)) {
+            success <- ecokit::check_zip(down_file)
+            if (isFALSE(success)) {
+              fs::file_delete(down_file)
             }
           } else {
-            Success <- FALSE
+            success <- FALSE
           }
 
           # Try downloading data for a max of 3 attempts, each with 20 mins
           # time out
           withr::local_options(list(timeout = 1200))
 
-          Attempt <- 1
-          Attempts <- 3
+          attempt <- 1
+          attempts <- 3
 
-          while (isFALSE(Success) && (Attempt <= Attempts)) {
+          while (isFALSE(success) && (attempt <= attempts)) {
             tryCatch({
               suppressMessages(
                 rgbif::occ_download_get(
-                  key = .x, path = Path_Raw, overwrite = TRUE))
+                  key = .x, path = path_raw, overwrite = TRUE))
 
-              # Ensure Success is only TRUE if both the zip file exists and
+              # Ensure success is only TRUE if both the zip file exists and
               # passes integrity check
-              Success <- file.exists(DownFile) && ecokit::check_zip(DownFile)
+              success <- file.exists(down_file) && ecokit::check_zip(down_file)
 
             },
             error = function(e) {
-              if (Attempt >= Attempts) {
+              if (attempt >= attempts) {
                 ecokit::stop_ctx(
                   paste0(
-                    "Failed to download data after ", Attempts, " attempts: ",
+                    "Failed to download data after ", attempts, " attempts: ",
                     conditionMessage(e)),
                   include_backtrace = TRUE)
               }
-              Attempt <- Attempt + 1
+              attempt <- attempt + 1
             })
           }
 
-          return(DownFile)
+          return(down_file)
 
         },
         .options = furrr::furrr_options(
           seed = TRUE, scheduling = Inf,
-          globals = "Path_Raw", packages = pkg_to_export)))
+          globals = "path_raw", packages = pkg_to_export)))
 
-  save(Efforts_AllRequests, file = Path_Efforts_Request)
+  save(efforts_all_requests, file = path_efforts_request)
 
   # # ..................................................................... ###
 
@@ -154,7 +154,7 @@ efforts_download <- function(
   # # ..................................................................... ###
 
   ecokit::cat_diff(
-    init_time = .StartTimeDown,
+    init_time = .start_time_down,
     prefix = "Downloading efforts data took ", level = 1L)
 
   # # ..................................................................... ###

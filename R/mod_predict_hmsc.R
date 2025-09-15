@@ -110,7 +110,7 @@ predict_hmsc <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Chunk <- Sp <- IAS_ID <- Path_pred <- Sp_data <- data <- geometry <- x <-
+  Chunk <- Sp <- ias_id <- Path_pred <- Sp_data <- data <- geometry <- x <-
     y <- SR_mean <- SR_sd <- SR_cov <- NULL
 
   # # ..................................................................... ###
@@ -601,12 +601,12 @@ predict_hmsc <- function(
 
           return(
             cbind.data.frame(
-              Chunk = Chunk, Sp = Sp, IAS_ID = Model$spNames[Sp],
+              Chunk = Chunk, Sp = Sp, ias_id = Model$spNames[Sp],
               ChunkSp_File = ChunkSp_File))
         }) %>%
         dplyr::bind_rows(
           tibble::tibble(
-            Chunk = Chunk, Sp = 0, IAS_ID = "SR", ChunkSp_File = ChunkSR_File),
+            Chunk = Chunk, Sp = 0, ias_id = "SR", ChunkSp_File = ChunkSR_File),
           .)
 
       rm(PredChunk, envir = environment())
@@ -629,60 +629,61 @@ predict_hmsc <- function(
     "Summarizing prediction outputs / Evaluation",
     level = 1L, verbose = verbose)
 
-  Eval_DT <- dplyr::select(pred, -Chunk) %>%
-    dplyr::group_nest(Sp, IAS_ID) %>%
+  evaluation_data <- dplyr::select(pred, -Chunk) %>%
+    dplyr::group_nest(Sp, ias_id) %>%
     dplyr::mutate(data = purrr::map(data, unlist))
 
-  Eval_DT <- future.apply::future_lapply(
-    X = seq_len(nrow(Eval_DT)),
+  evaluation_data <- future.apply::future_lapply(
+    X = seq_len(nrow(evaluation_data)),
     FUN = function(ID) {
 
-      Sp <- Eval_DT$Sp[[ID]]
+      Sp <- evaluation_data$Sp[[ID]]
       if (Sp == 0) {
         Sp2 <- "SR"
       } else {
         Sp2 <- paste0("taxon", Sp)
       }
-      IAS_ID <- Eval_DT$IAS_ID[[ID]]
-      data <- as.vector(Eval_DT$data[[ID]])
+      ias_id <- evaluation_data$ias_id[[ID]]
+      data <- as.vector(evaluation_data$data[[ID]])
 
-      SpDT <- purrr::map(data, ecokit::load_as) %>%
+      species_data <- purrr::map(data, ecokit::load_as) %>%
         do.call(cbind, .) %>%
         as.double()
 
       # Mean prediction
-      SpDT_Mean <- Rfast::rowmeans(SpDT)
+      species_data_mean <- Rfast::rowmeans(species_data)
 
       # standard deviation of prediction
-      SpDT_SD <- Rfast::rowVars(SpDT, std = TRUE)
+      species_data_sd <- Rfast::rowVars(species_data, std = TRUE)
 
       # Coefficient of variation
-      SpDT_Mean0 <- SpDT_Mean
+      species_data_mean0 <- species_data_mean
       # Replace very small mean values with reasonably small number to avoid
       # overflow warning
-      SpDT_Mean0[SpDT_Mean0 < 1e-8] <- 1e-8
-      SpDT_Cov <- SpDT_SD / SpDT_Mean0
+      species_data_mean0[species_data_mean0 < 1e-8] <- 1e-8
+      species_data_cov <- species_data_sd / species_data_mean0
 
-      rm(SpDT, envir = environment())
+      rm(species_data, envir = environment())
       invisible(gc())
 
       if (is.null(pred_XY)) {
         pred_XY <- Model$rL$sample$s
       }
 
-      PredSummary <- tibble::tibble(
+      pred_summary <- tibble::tibble(
         as.data.frame(pred_XY),
-        Mean = SpDT_Mean, SD = SpDT_SD, Cov = SpDT_Cov) %>%
+        Mean = species_data_mean, SD = species_data_sd,
+        Cov = species_data_cov) %>%
         stats::setNames(
           c(
-            "x", "y", paste0(IAS_ID, "_mean"),
-            paste0(IAS_ID, "_sd"), paste0(IAS_ID, "_cov"))) %>%
+            "x", "y", paste0(ias_id, "_mean"),
+            paste0(ias_id, "_sd"), paste0(ias_id, "_cov"))) %>%
         sf::st_as_sf(coords = c("x", "y"), crs = 3035, remove = FALSE)
 
-      PredSummaryFile <- fs::path(
+      pred_summary_file <- fs::path(
         pred_directory, paste0("Pred_", model_name, "_", Sp2, ".qs2"))
 
-      ecokit::save_as(object = PredSummary, out_path = PredSummaryFile)
+      ecokit::save_as(object = pred_summary, out_path = pred_summary_file)
 
       if (evaluate && Sp2 != "SR") {
         if (is.null(pred_PA)) {
@@ -694,16 +695,16 @@ predict_hmsc <- function(
         if (length(unique(PresAbs)) == 2) {
           # Calculate evaluation metrics if there are two both presence and
           # absence info in (testing) data
-          RMSE <- caret::RMSE(PresAbs, SpDT_Mean)
-          MeanPres <- mean(SpDT_Mean[which(PresAbs == 1)])
-          MeanAbs <- mean(SpDT_Mean[which(PresAbs == 0)])
-          TjurR2 <- MeanPres - MeanAbs
+          RMSE <- caret::RMSE(PresAbs, species_data_mean)
+          mean_at_pres <- mean(species_data_mean[which(PresAbs == 1)])
+          mean_at_abs <- mean(species_data_mean[which(PresAbs == 0)])
+          TjurR2 <- mean_at_pres - mean_at_abs
           AUC <- pROC::auc(
-            response = PresAbs, predictor = SpDT_Mean,
+            response = PresAbs, predictor = species_data_mean,
             levels = c(0, 1), direction = "<") %>%
             as.numeric()
           Boyce <- ecospat::ecospat.boyce(
-            fit = SpDT_Mean, obs = SpDT_Mean[PresAbs == 1],
+            fit = species_data_mean, obs = species_data_mean[PresAbs == 1],
             PEplot = FALSE)$cor
         } else {
           RMSE <- TjurR2 <- AUC <- Boyce <- NA_real_
@@ -714,13 +715,13 @@ predict_hmsc <- function(
 
       return(
         tibble::tibble(
-          Sp = Sp, IAS_ID = IAS_ID, Path_pred = PredSummaryFile,
+          Sp = Sp, ias_id = ias_id, Path_pred = pred_summary_file,
           RMSE = RMSE, AUC = AUC, Boyce = Boyce, TjurR2 = TjurR2))
 
     },
     future.seed = TRUE, future.packages = pkg_to_export,
     future.globals = c(
-      "Eval_DT", "evaluate", "pred_directory", "model_name",
+      "evaluation_data", "evaluate", "pred_directory", "model_name",
       "pred_PA", "pred_XY"))
 
   if (n_cores > 1) {
@@ -736,9 +737,9 @@ predict_hmsc <- function(
   ecokit::cat_time(
     "Save predictions for all species in a single file", verbose = verbose)
 
-  Eval_DT <- dplyr::bind_rows(Eval_DT)
+  evaluation_data <- dplyr::bind_rows(evaluation_data)
 
-  Predictions <- dplyr::select(Eval_DT, Path_pred, Sp, IAS_ID) %>%
+  Predictions <- dplyr::select(evaluation_data, Path_pred, Sp, ias_id) %>%
     dplyr::mutate(
       Sp_data = purrr::map(
         .x = Path_pred,
@@ -765,7 +766,7 @@ predict_hmsc <- function(
   ecokit::save_as(object = Predictions, out_path = Pred_File)
 
   if (temp_cleanup) {
-    try(fs::file_delete(Eval_DT$Path_pred), silent = TRUE)
+    try(fs::file_delete(evaluation_data$Path_pred), silent = TRUE)
   }
 
   ecokit::cat_time("Predictions were saved", level = 1L, verbose = verbose)
@@ -786,8 +787,8 @@ predict_hmsc <- function(
           "_", evaluation_name, ".qs2"))
     }
 
-    Eval_DT <- dplyr::select(Eval_DT, -Path_pred)
-    ecokit::save_as(object = Eval_DT, out_path = Eval_Path)
+    evaluation_data <- dplyr::select(evaluation_data, -Path_pred)
+    ecokit::save_as(object = evaluation_data, out_path = Eval_Path)
 
     ecokit::cat_time(
       "Evaluation results were saved", level = 1L, verbose = verbose)

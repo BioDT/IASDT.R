@@ -16,7 +16,7 @@ EASIN_plot <- function(env_file = ".env") {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  path_EASIN_summary <- EU_Bound <- NULL
+  path_EASIN_summary <- EU_boundaries <- NULL
 
   # # |||||||||||||||||||||||||||||||||||
   # # Environment variables ----
@@ -29,16 +29,16 @@ EASIN_plot <- function(env_file = ".env") {
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "EU_Bound", "DP_R_EUBound", FALSE, TRUE,
-    "path_EASIN", "DP_R_EASIN_processed", TRUE, FALSE,
-    "path_EASIN_Interim", "DP_R_EASIN_interim", TRUE, FALSE,
-    "path_EASIN_summary", "DP_R_EASIN_summary", TRUE, FALSE)
+    "EU_boundaries", "DP_R_country_boundaries", FALSE, TRUE,
+    "path_EASIN", "DP_R_easin_processed", TRUE, FALSE,
+    "path_EASIN_Interim", "DP_R_easin_interim", TRUE, FALSE,
+    "path_EASIN_summary", "DP_R_easin_summary", TRUE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
   # # |||||||||||||||||||||||||||||||||||
   # # Input maps ----
@@ -48,7 +48,7 @@ EASIN_plot <- function(env_file = ".env") {
 
   ## Country boundaries ----
   ecokit::cat_time("Country boundaries", level = 2L)
-  EU_borders <- ecokit::load_as(EU_Bound) %>%
+  EU_borders <- ecokit::load_as(EU_boundaries) %>%
     magrittr::extract2("Bound_sf_Eur_s") %>%
     magrittr::extract2("L_03")
 
@@ -113,8 +113,7 @@ EASIN_plot <- function(env_file = ".env") {
         panel.grid.major = ggplot2::element_line(linewidth = 0.25),
         panel.border = ggplot2::element_blank(),
         plot.tag.position = c(0.88, 0.999),
-        plot.tag = ggtext::element_markdown(colour = "grey", size = 5)
-      )
+        plot.tag = ggtext::element_markdown(colour = "grey", size = 5))
 
     plot_obj <- ggplot2::ggplot() +
       tidyterra::geom_spatraster(data = plot_map, maxcell = n_cells) +
@@ -266,7 +265,6 @@ EASIN_plot <- function(env_file = ".env") {
 
     return(invisible(NULL))
   }
-
 
   ### Number of observations per partner ----
   ecokit::cat_time("Number of observations per partner", level = 2L)

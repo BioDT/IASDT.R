@@ -30,11 +30,11 @@ IAS_distribution <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_Grid <- Path_TaxaInfo <- Path_GBIF <- Path_eLTER <- Path_EASIN <-
-    Path_BioReg <- Path_Grid_Ref <- Path_PA <- Path_TaxaInfo_RData <- BiogReg <-
-    Country <- Species_name2 <- Species_name <- n <- GBIF <- EASIN <- eLTER <-
-    PA <- `status-decision` <- Path_TaxaCNT <- country <-
-    gbif_key <- status_decision <- NULL
+  path_grid <- path_taxa_info <- path_GBIF <- path_eLTER <- path_EASIN <-
+    path_bioreg <- path_grid_ref <- path_PA <- biogreg <-
+    country <- species_name2 <- species_name <- n <- GBIF <- EASIN <- eLTER <-
+    PA <- `status-decision` <- path_taxa_country <- country <-
+    gbif_key <- status_decision <- path_taxa_info_rdata <- NULL
 
   # # ..................................................................... ###
 
@@ -46,23 +46,22 @@ IAS_distribution <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
-    "Path_Grid_Ref", "DP_R_Grid_raw", TRUE, FALSE,
-    "Path_GBIF", "DP_R_GBIF_processed", TRUE, FALSE,
-    "Path_EASIN", "DP_R_EASIN_processed", TRUE, FALSE,
-    "Path_eLTER", "DP_R_eLTER_processed", FALSE, TRUE,
-    "Path_PA", "DP_R_PA", FALSE, FALSE,
-    "Path_TaxaCNT", "DP_R_Taxa_country", FALSE, TRUE,
-    "Path_TaxaInfo_RData", "DP_R_Taxa_info_rdata", FALSE, TRUE,
-    "Path_TaxaInfo", "DP_R_Taxa_info", FALSE, TRUE,
-    "Path_BioReg", "DP_R_BioReg_processed", TRUE, FALSE,
-    "EU_Bound", "DP_R_EUBound", FALSE, TRUE)
+    "path_grid", "DP_R_grid_processed", TRUE, FALSE,
+    "path_grid_ref", "DP_R_grid_raw", TRUE, FALSE,
+    "path_GBIF", "DP_R_gbif_processed", TRUE, FALSE,
+    "path_EASIN", "DP_R_easin_processed", TRUE, FALSE,
+    "path_eLTER", "DP_R_elter_processed", FALSE, TRUE,
+    "path_PA", "DP_R_PA", FALSE, FALSE,
+    "path_taxa_country", "DP_R_taxa_country", FALSE, TRUE,
+    "path_taxa_info_rdata", "DP_R_taxa_info_rdata", FALSE, TRUE,
+    "path_taxa_info", "DP_R_taxa_info", FALSE, TRUE,
+    "path_bioreg", "DP_R_bioreg_processed", TRUE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -76,15 +75,15 @@ IAS_distribution <- function(
   ecokit::cat_time("Current species info", level = 1L, verbose = verbose)
 
   Species2 <- ecokit::replace_space(species)
-  IAS_ID <- readr::read_tsv(
-    file = Path_TaxaInfo, show_col_types = FALSE, progress = FALSE) %>%
-    dplyr::filter(Species_name2 == Species2)
-  Sp_File <- unique(IAS_ID$Species_File)
-  IAS_ID <- dplyr::pull(IAS_ID, "IAS_ID") %>%
+  ias_id <- readr::read_tsv(
+    file = path_taxa_info, show_col_types = FALSE, progress = FALSE) %>%
+    dplyr::filter(species_name2 == Species2)
+  species_file <- unique(ias_id$species_file)
+  ias_id <- dplyr::pull(ias_id, "ias_id") %>%
     unique() %>%
     stringr::str_pad(width = 4, pad = "0")
-  GBIF_Keys <- ecokit::load_as(Path_TaxaInfo_RData) %>%
-    dplyr::filter(Species_name == species) %>%
+  GBIF_keys <- ecokit::load_as(path_taxa_info_rdata) %>%
+    dplyr::filter(species_name == species) %>%
     dplyr::pull("speciesKey")
 
   # # ................................ ###
@@ -94,96 +93,96 @@ IAS_distribution <- function(
 
   ecokit::cat_time(
     "Check and create directories", level = 2L, verbose = verbose)
-  Path_PA_Summary <- fs::path(Path_PA, "PA_summary")
-  Path_PA_tif <- fs::path(Path_PA, "PA_tif")
-  Path_PA_RData <- fs::path(Path_PA, "PA_RData")
-  Path_PA_JPEG <- fs::path(Path_PA, "Distribution_JPEG")
+  path_PA_summary <- fs::path(path_PA, "PA_summary")
+  path_PA_tif <- fs::path(path_PA, "PA_tif")
+  path_PA_r <- fs::path(path_PA, "PA_r")
+  path_PA_JPEG <- fs::path(path_PA, "distribution_jpeg")
 
-  c(Path_PA_Summary, Path_PA_tif, Path_PA_RData, Path_PA_JPEG) %>%
+  c(path_PA_summary, path_PA_tif, path_PA_r, path_PA_JPEG) %>%
     purrr::walk(fs::dir_create)
 
-  Out_JPEG <- fs::path(Path_PA_JPEG, paste0(Sp_File, ".jpeg"))
-  out_qs2 <- fs::path(Path_PA_Summary, paste0(Sp_File, ".qs2"))
+  out_JPEG <- fs::path(path_PA_JPEG, paste0(species_file, ".jpeg"))
+  out_qs2 <- fs::path(path_PA_summary, paste0(species_file, ".qs2"))
 
   # # ................................ ###
 
   ecokit::cat_time(
     "Check path for EASIN and GBIF data", level = 2L, verbose = verbose)
-  Path_GBIF_DT <- fs::path(Path_GBIF, "species_data")
-  Path_EASIN <- fs::path(Path_EASIN, "Sp_DT")
+  path_GBIF_data <- fs::path(path_GBIF, "species_data")
+  path_EASIN <- fs::path(path_EASIN, "species_data")
 
-  if (!dir.exists(Path_GBIF_DT)) {
+  if (!dir.exists(path_GBIF_data)) {
     ecokit::stop_ctx(
-      "Required path for GBIF data do not exist", Path_GBIF_DT = Path_GBIF_DT,
-      include_backtrace = TRUE)
+      "Required path for GBIF data do not exist",
+      path_GBIF_data = path_GBIF_data, include_backtrace = TRUE)
   }
 
-  if (!dir.exists(Path_EASIN)) {
+  if (!dir.exists(path_EASIN)) {
     ecokit::stop_ctx(
-      "Required path for EASIN data do not exist", Path_EASIN = Path_EASIN,
+      "Required path for EASIN data do not exist", path_EASIN = path_EASIN,
       include_backtrace = TRUE)
   }
 
   # # ................................ ###
 
   ecokit::cat_time("eLTER data", level = 1L, verbose = verbose)
-  eLTER_DT <- ecokit::load_as(Path_eLTER) %>%
-    dplyr::filter(Species_name == species)
+  eLTER_data <- ecokit::load_as(path_eLTER) %>%
+    dplyr::filter(species_name == species)
 
   # # ................................ ###
 
   # Loading reference grids ----
   ecokit::cat_time("Loading reference grids", level = 1L, verbose = verbose)
-  grid_100_file <- fs::path(Path_Grid_Ref, "Grid_100_sf.RData")
+  grid_100_file <- fs::path(path_grid_ref, "Grid_100_sf.RData")
   if (!file.exists(grid_100_file)) {
     ecokit::stop_ctx(
       "grid file does not exist: Grid_100_sf.RData",
       grid_100_file = grid_100_file, include_backtrace = TRUE)
   }
 
-  GridsPath <- fs::path(
-    Path_Grid,
+  grid_paths <- fs::path(
+    path_grid,
     c(
-      "Grid_10_Land_Crop_sf_Country.RData", "Grid_10_Land_Crop.RData",
-      "Grid_10_Land_sf.RData"))
+      "grid_10_land_crop_sf_country.RData", "grid_10_land_crop.RData",
+      "grid_10_land_sf.RData"))
 
-  if (!all(file.exists(GridsPath))) {
+  if (!all(file.exists(grid_paths))) {
     ecokit::stop_ctx(
       paste0(
         "grid files do not exist: \n  >>> ",
-        paste(GridsPath[!file.exists(GridsPath)], collapse = "\n  >>> ")),
-      GridsPath = GridsPath,
-      missing_GridsPath = GridsPath[!file.exists(GridsPath)],
+        paste(grid_paths[!file.exists(grid_paths)], collapse = "\n  >>> ")),
+      grid_paths = grid_paths,
+      missing_grid_paths = grid_paths[!file.exists(grid_paths)],
       include_backtrace = TRUE)
   }
 
   ### sf - 100 km ----
   ecokit::cat_time("sf - 100 km", level = 2L, verbose = verbose)
-  Grid_100_sf <- ecokit::load_as(grid_100_file) %>%
+  grid_100_sf <- ecokit::load_as(grid_100_file) %>%
     magrittr::extract2("Grid_100_sf_s")
 
   ### sf - 10 km ----
   ecokit::cat_time("sf - 10 km - CNT", level = 2L, verbose = verbose)
-  Grid_10_CNT <- fs::path(
-    Path_Grid, "Grid_10_Land_Crop_sf_Country.RData") %>%
+  grid_10_country <- fs::path(
+    path_grid, "grid_10_land_crop_sf_country.RData") %>%
     ecokit::load_as()
 
   ### raster - 10 km ----
   ecokit::cat_time("raster - 10 km", level = 2L, verbose = verbose)
-  RefGrid <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData") %>%
+  reference_grid <- fs::path(path_grid, "grid_10_land_crop.RData") %>%
     ecokit::load_as(unwrap_r = TRUE)
 
   ### raster - 100 km ----
   ecokit::cat_time("raster - 100 km", level = 2L, verbose = verbose)
-  Grid_100_Land <- fs::path(Path_Grid, "Grid_10_Land_sf.RData") %>%
+  grid_100_land <- fs::path(path_grid, "grid_10_land_sf.RData") %>%
     ecokit::load_as() %>%
     sf::st_geometry() %>%
     sf::st_centroid() %>%
-    sf::st_filter(x = Grid_100_sf, join = sf::st_within)
+    sf::st_filter(x = grid_100_sf, join = sf::st_within)
 
-  Grid100Empty <- dplyr::slice(Grid_100_sf, 0)
+  grid_100_empty <- dplyr::slice(grid_100_sf, 0)
 
-  rm(Grid_100_sf, envir = environment())
+  rm(grid_100_sf, envir = environment())
   invisible(gc())
 
   # # ................................ ###
@@ -192,8 +191,9 @@ IAS_distribution <- function(
   ecokit::cat_time(
     "`PA_100km` function - species distribution at 100 km", level = 1L,
     verbose = verbose)
-  PA_100km <- function(Sp_Sf, Grid100 = Grid_100_Land) {
-    sf::st_filter(x = Grid100, y = Sp_Sf, join = sf::st_within) %>%
+
+  PA_100km <- function(species_sf, grid100 = grid_100_land) {
+    sf::st_filter(x = grid100, y = species_sf, join = sf::st_within) %>%
       dplyr::select("geometry") %>%
       tibble::tibble() %>%
       dplyr::distinct() %>%
@@ -208,13 +208,14 @@ IAS_distribution <- function(
     level = 1L, verbose = verbose)
 
   # List of countries to be excluded for the current species
-  Countries2Exclude <- readxl::read_xlsx(path = Path_TaxaCNT, sheet = 1) %>%
+  countries_to_exclude <- readxl::read_xlsx(
+    path = path_taxa_country, sheet = 1) %>%
     dplyr::rename(status_decision = `status-decision`) %>%
     # filter data on the current species and only keep countries with `cult+cas`
     # or `delete` status
     dplyr::filter(
-      gbif_key %in% GBIF_Keys, status_decision %in% c("cult+cas", "delete")
-    ) %>%
+      gbif_key %in% GBIF_keys,
+      status_decision %in% c("cult+cas", "delete")) %>%
     # rename countries to match country names of the countries boundaries
     dplyr::mutate(
       country = dplyr::case_when(
@@ -222,39 +223,39 @@ IAS_distribution <- function(
         country == "North_Macedonia" ~ "North Macedonia",
         country == "Isle_of_Man" ~ "Isle of Man",
         country == "Bosnia_and_Herzegovina" ~ "Bosnia and Herzegovina",
-        .default = country)
-    ) %>%
+        .default = country)) %>%
     # Exclude Turkey, as it is currently not in the current study area
     dplyr::filter(country != "Turkey") %>%
     dplyr::pull("country")
 
   ecokit::cat_time(
-    paste0("There are ", length(Countries2Exclude), " countries to exclude:"),
+    paste0(
+      "There are ", length(countries_to_exclude), " countries to exclude:"),
     level = 2L, cat_timestamp = FALSE, verbose = verbose)
 
   # Mask grid to exclude countries - `TRUE` for grid cells to be considered as
   # presence if present in any of the data source; `FALSE` for grid cells need
   # to be masked as 0 in species distribution maps (1 becomes 0)
-  if (length(Countries2Exclude) > 0) {
+  if (length(countries_to_exclude) > 0) {
 
     ecokit::cat_time(
-      paste(sort(Countries2Exclude), collapse = " + "),
+      paste(sort(countries_to_exclude), collapse = " + "),
       level = 3L, cat_timestamp = FALSE, verbose = verbose)
 
-    Mask_Keep <- Grid_10_CNT %>%
-      dplyr::mutate(Keep = !(Country %in% Countries2Exclude)) %>%
+    mask_keep <- grid_10_country %>%
+      dplyr::mutate(Keep = !(country %in% countries_to_exclude)) %>%
       dplyr::select("Keep") %>%
-      terra::rasterize(y = RefGrid, field = "Keep") %>%
+      terra::rasterize(y = reference_grid, field = "Keep") %>%
       terra::as.bool() %>%
       terra::toMemory() %>%
-      stats::setNames("Mask_Keep")
+      stats::setNames("mask_keep")
   } else {
-    Mask_Keep <- terra::as.bool(RefGrid) %>%
+    mask_keep <- terra::as.bool(reference_grid) %>%
       terra::toMemory() %>%
-      stats::setNames("Mask_Keep")
+      stats::setNames("mask_keep")
   }
 
-  rm(Grid_10_CNT, envir = environment())
+  rm(grid_10_country, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -266,47 +267,47 @@ IAS_distribution <- function(
   ## 1. GBIF -----
   ecokit::cat_time("1. GBIF", level = 1L, verbose = verbose)
 
-  GBIF_Keys <- paste(GBIF_Keys, collapse = "_")
+  GBIF_keys <- paste(GBIF_keys, collapse = "_")
 
   # Path for the current species GBIF data
-  Path_GBIF_D <- fs::path(Path_GBIF_DT, paste0(Sp_File, ".RData"))
-  Path_GBIF_R <- fs::path(
-    Path_GBIF, "species_raster", paste0(Sp_File, "_raster.RData"))
+  path_GBIF_data <- fs::path(path_GBIF_data, paste0(species_file, ".RData"))
+  path_GBIF_r <- fs::path(
+    path_GBIF, "species_raster", paste0(species_file, "_raster.RData"))
 
-  if (all(file.exists(Path_GBIF_D, Path_GBIF_R))) {
+  if (all(file.exists(path_GBIF_data, path_GBIF_r))) {
     # GBIF data as sf object
-    GBIF_DT <- ecokit::load_as(Path_GBIF_D)
+    GBIF_data <- ecokit::load_as(path_GBIF_data)
 
     # GBIF data as raster map
-    GBIF_R <- ecokit::load_as(Path_GBIF_R) %>%
+    GBIF_r <- ecokit::load_as(path_GBIF_r) %>%
       terra::unwrap() %>%
       # convert raster map into binary (1/0)
       ecokit::raster_to_pres_abs() %>%
-      terra::mask(RefGrid) %>%
+      terra::mask(reference_grid) %>%
       stats::setNames("GBIF")
 
     # presence 100 km grid
-    GBIF_Gr100 <- PA_100km(GBIF_DT)
+    GBIF_grid100 <- PA_100km(GBIF_data)
 
-    rm(GBIF_DT, envir = environment())
+    rm(GBIF_data, envir = environment())
     invisible(gc())
 
     # Map to export out of this function
-    GBIF_R_Out <- stats::setNames(GBIF_R, Sp_File) %>%
+    GBIF_r_out <- stats::setNames(GBIF_r, species_file) %>%
       terra::wrap() %>%
       list()
 
-    GBIF_Path <- Path_GBIF_D
+    GBIF_path <- path_GBIF_data
   } else {
-    GBIF_R <- terra::classify(RefGrid, cbind(1, 0)) %>%
+    GBIF_r <- terra::classify(reference_grid, cbind(1, 0)) %>%
       stats::setNames("GBIF")
 
-    GBIF_R_Out <- stats::setNames(GBIF_R, Sp_File) %>%
+    GBIF_r_out <- stats::setNames(GBIF_r, species_file) %>%
       terra::wrap() %>%
       list()
 
-    GBIF_Gr100 <- Grid100Empty
-    GBIF_Path <- NA_character_
+    GBIF_grid100 <- grid_100_empty
+    GBIF_path <- NA_character_
   }
 
   # # .................................... ###
@@ -314,38 +315,38 @@ IAS_distribution <- function(
   ## 2. EASIN -----
   ecokit::cat_time("2. EASIN", level = 1L, verbose = verbose)
 
-  Path_EASIN_D <- fs::path(Path_EASIN, paste0(Sp_File, "_DT.RData"))
+  path_EASIN_data <- fs::path(path_EASIN, paste0(species_file, "_data.RData"))
 
-  if (file.exists(Path_EASIN_D)) {
-    EASIN_DT <- ecokit::load_as(Path_EASIN_D)
+  if (file.exists(path_EASIN_data)) {
+    EASIN_data <- ecokit::load_as(path_EASIN_data)
 
     # raster map
-    EASIN_R <- dplyr::select(EASIN_DT, "Species_name") %>%
-      terra::rasterize(RefGrid) %>%
+    EASIN_r <- dplyr::select(EASIN_data, "species_name") %>%
+      terra::rasterize(reference_grid) %>%
       ecokit::raster_to_pres_abs() %>%
-      terra::mask(RefGrid) %>%
+      terra::mask(reference_grid) %>%
       stats::setNames("EASIN")
 
-    EASIN_Gr100 <- PA_100km(EASIN_DT)
+    EASIN_grid100 <- PA_100km(EASIN_data)
 
-    rm(EASIN_DT, envir = environment())
+    rm(EASIN_data, envir = environment())
     invisible(gc())
 
-    EASIN_R_Out <- stats::setNames(EASIN_R, Sp_File) %>%
+    EASIN_r_out <- stats::setNames(EASIN_r, species_file) %>%
       terra::wrap() %>%
       list()
 
-    EASIN_Path <- Path_EASIN_D
+    EASIN_path <- path_EASIN_data
   } else {
-    EASIN_R <- terra::classify(RefGrid, cbind(1, 0)) %>%
+    EASIN_r <- terra::classify(reference_grid, cbind(1, 0)) %>%
       stats::setNames("EASIN")
 
-    EASIN_R_Out <- stats::setNames(EASIN_R, Sp_File) %>%
+    EASIN_r_out <- stats::setNames(EASIN_r, species_file) %>%
       terra::wrap() %>%
       list()
 
-    EASIN_Gr100 <- Grid100Empty
-    EASIN_Path <- NA_character_
+    EASIN_grid100 <- grid_100_empty
+    EASIN_path <- NA_character_
   }
 
   # # .................................... ###
@@ -353,30 +354,30 @@ IAS_distribution <- function(
   ## 3. eLTER -----
   ecokit::cat_time("3. eLTER", level = 1L, verbose = verbose)
 
-  if (nrow(eLTER_DT) > 0) {
-    eLTER_R <- dplyr::select(eLTER_DT, "Species_name") %>%
-      terra::rasterize(RefGrid) %>%
+  if (nrow(eLTER_data) > 0) {
+    eLTER_r <- dplyr::select(eLTER_data, "species_name") %>%
+      terra::rasterize(reference_grid) %>%
       ecokit::raster_to_pres_abs() %>%
-      terra::mask(RefGrid) %>%
+      terra::mask(reference_grid) %>%
       stats::setNames("eLTER")
 
-    eLTER_Gr100 <- PA_100km(eLTER_DT)
+    eLTER_grid100 <- PA_100km(eLTER_data)
 
-    eLTER_R_Out <- stats::setNames(eLTER_R, Sp_File) %>%
+    eLTER_r_out <- stats::setNames(eLTER_r, species_file) %>%
       terra::wrap() %>%
       list()
   } else {
-    eLTER_R <- terra::classify(RefGrid, cbind(1, 0)) %>%
+    eLTER_r <- terra::classify(reference_grid, cbind(1, 0)) %>%
       stats::setNames("eLTER")
 
-    eLTER_R_Out <- stats::setNames(eLTER_R, Sp_File) %>%
+    eLTER_r_out <- stats::setNames(eLTER_r, species_file) %>%
       terra::wrap() %>%
       list()
 
-    eLTER_Gr100 <- Grid100Empty
+    eLTER_grid100 <- grid_100_empty
   }
 
-  rm(eLTER_DT, Grid_100_Land, Grid100Empty, envir = environment())
+  rm(eLTER_data, grid_100_land, grid_100_empty, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -385,23 +386,23 @@ IAS_distribution <- function(
   ecokit::cat_time(
     "Merging data from the 3 data sources", level = 1L, verbose = verbose)
 
-  Sp_PA <- sum(GBIF_R, EASIN_R, eLTER_R) %>%
+  species_PA <- sum(GBIF_r, EASIN_r, eLTER_r) %>%
     ecokit::raster_to_pres_abs() %>%
     stats::setNames("PA") %>%
-    terra::mask(RefGrid)
-  Sp_PA$PA_Masked <- (Sp_PA$PA * Mask_Keep)
-  Sp_PA <- c(GBIF_R, EASIN_R, eLTER_R, Sp_PA, Mask_Keep) %>%
+    terra::mask(reference_grid)
+  species_PA$PA_masked <- (species_PA$PA * mask_keep)
+  species_PA <- c(GBIF_r, EASIN_r, eLTER_r, species_PA, mask_keep) %>%
     # Ensure that values are read from memory
     terra::toMemory()
 
-  rm(RefGrid, Mask_Keep, envir = environment())
+  rm(reference_grid, mask_keep, envir = environment())
   invisible(gc())
 
   # number of cells with values
-  PA_NCells_All <- terra::global(Sp_PA$PA == 1, sum, na.rm = TRUE) %>%
+  PA_n_cells_all <- terra::global(species_PA$PA == 1, sum, na.rm = TRUE) %>%
     as.integer()
-  PA_NCells_Naturalized <- terra::global(
-    x = Sp_PA$PA_Masked == 1, sum, na.rm = TRUE) %>%
+  PA_n_cells_naturalized <- terra::global(
+    x = species_PA$PA_masked == 1, sum, na.rm = TRUE) %>%
     as.integer()
 
   # # ..................................................................... ###
@@ -410,7 +411,7 @@ IAS_distribution <- function(
   ecokit::cat_time("Processing species data", verbose = verbose)
 
   # If there is no presence grid cell for the current species, return NA early
-  if (PA_NCells_All == 0) {
+  if (PA_n_cells_all == 0) {
     return(tibble::tibble(species = species, PA_summary = NA_character_))
   }
 
@@ -422,25 +423,25 @@ IAS_distribution <- function(
 
   ### RData -----
   ecokit::cat_time("`.RData`", level = 2L, verbose = verbose)
-  path_RData <- fs::path(Path_PA_RData, paste0(Sp_File, "_PA.RData"))
+  path_rData <- fs::path(path_PA_r, paste0(species_file, "_PA.RData"))
   ecokit::save_as(
-    object = terra::wrap(Sp_PA), object_name = paste0(Sp_File, "_PA"),
-    out_path = path_RData)
+    object = terra::wrap(species_PA), object_name = paste0(species_file, "_PA"),
+    out_path = path_rData)
 
   ### tif - all presence grid cells -----
   ecokit::cat_time(
     "`.tif` - all presence grid cells", level = 2L, verbose = verbose)
   terra::writeRaster(
-    x = Sp_PA$PA, overwrite = TRUE,
-    filename = fs::path(Path_PA_tif, paste0(Sp_File, "_All.tif")))
+    x = species_PA$PA, overwrite = TRUE,
+    filename = fs::path(path_PA_tif, paste0(species_file, "_all.tif")))
 
   ### tif - Excluding cultivated or casual observations -----
   ecokit::cat_time(
     "`.tif` - Excluding cultivated or casual observations",
     level = 2L, verbose = verbose)
   terra::writeRaster(
-    x = Sp_PA$PA_Masked, overwrite = TRUE,
-    filename = fs::path(Path_PA_tif, paste0(Sp_File, "_Masked.tif")))
+    x = species_PA$PA_masked, overwrite = TRUE,
+    filename = fs::path(path_PA_tif, paste0(species_file, "_masked.tif")))
 
   ### NetCDF -----
   # NOT IMPLEMENTED YET
@@ -459,74 +460,73 @@ IAS_distribution <- function(
   # number of biogeographical regions per species and minimum / maximum / mean
   # number of grid cells per biogeographical regions
 
-  BioReg_R <- fs::path(Path_BioReg, "BioReg_R.RData")
-  if (isFALSE(ecokit::check_data(BioReg_R, warning = FALSE))) {
+  bioreg_r <- fs::path(path_bioreg, "bioreg_r.RData")
+  if (isFALSE(ecokit::check_data(bioreg_r, warning = FALSE))) {
     ecokit::stop_ctx(
       "Required file for biogeographical regions does not exist",
-      BioReg_R = BioReg_R, include_backtrace = TRUE)
+      bioreg_r = bioreg_r, include_backtrace = TRUE)
   }
-  BioReg_R <- ecokit::load_as(BioReg_R, unwrap_r = TRUE)
+  bioreg_r <- ecokit::load_as(bioreg_r, unwrap_r = TRUE)
 
   # name of Biogeographical regions
-  BioReg_Names <- c(
+  bioreg_names <- c(
     "alpine", "arctic", "atlantic", "blackSea", "boreal",
     "continental", "mediterranean", "pannonian", "steppic") %>%
-    paste0("BioReg_", .)
+    paste0("bioreg_", .)
 
-  Sp_BiogeoRegions <- terra::classify(Sp_PA$PA, cbind(0, NA)) %>%
-    terra::mask(mask = ., x = BioReg_R) %>%
+  species_bioregs <- terra::classify(species_PA$PA, cbind(0, NA)) %>%
+    terra::mask(mask = ., x = bioreg_r) %>%
     as.data.frame() %>%
     tibble::tibble() %>%
-    dplyr::rename(BiogReg = "short_name") %>%
-    dplyr::count(BiogReg) %>%
-    tidyr::pivot_wider(names_from = BiogReg, values_from = n) %>%
-    dplyr::rename_all(~ stringr::str_c("BioReg_", .x)) %>%
-    ecokit::add_missing_columns(0L, BioReg_Names) %>%
+    dplyr::rename(biogreg = "short_name") %>%
+    dplyr::count(biogreg) %>%
+    tidyr::pivot_wider(names_from = biogreg, values_from = n) %>%
+    dplyr::rename_all(~ stringr::str_c("bioreg_", .x)) %>%
+    ecokit::add_missing_columns(0L, bioreg_names) %>%
     # Sort columns
-    dplyr::select(tidyselect::all_of(BioReg_Names))
+    dplyr::select(tidyselect::all_of(bioreg_names))
 
-  BioRegsSumm_Min <- min(Sp_BiogeoRegions, na.rm = TRUE)
-  BioRegsSumm_Max <- max(Sp_BiogeoRegions, na.rm = TRUE)
-  BioRegsSumm_Mean <- unlist(Sp_BiogeoRegions) %>%
+  bioreg_summ_min <- min(species_bioregs, na.rm = TRUE)
+  bioreg_summ_max <- max(species_bioregs, na.rm = TRUE)
+  bioreg_summ_mean <- unlist(species_bioregs) %>%
     mean(na.rm = TRUE) %>%
     round(1)
-  BioRegsSumm_N <- sum(Sp_BiogeoRegions > 0)
+  bioreg_summ_n <- sum(species_bioregs > 0)
 
   ### Masked -----
   ecokit::cat_time(
     "Excluding cultivated or casual observations",
     level = 2L, verbose = verbose)
 
-  BioReg_Names2 <- stringr::str_replace(
-    string = BioReg_Names, pattern = "BioReg_", replacement = "BioReg_Masked_")
+  bioreg_names2 <- stringr::str_replace(
+    string = bioreg_names, pattern = "bioreg_", replacement = "bioreg_masked_")
 
-  Sp_BiogeoRegions_Masked <- terra::classify(Sp_PA$PA_Masked, cbind(0, NA)) %>%
-    terra::mask(mask = ., x = BioReg_R) %>%
+  sp_bioreg_masked <- terra::classify(species_PA$PA_masked, cbind(0, NA)) %>%
+    terra::mask(mask = ., x = bioreg_r) %>%
     as.data.frame() %>%
     tibble::tibble() %>%
-    dplyr::rename(BiogReg = "short_name") %>%
-    dplyr::count(BiogReg) %>%
-    tidyr::pivot_wider(names_from = BiogReg, values_from = n) %>%
-    dplyr::rename_all(~ stringr::str_c("BioReg_Masked_", .x)) %>%
-    ecokit::add_missing_columns(0L, BioReg_Names2) %>%
-    dplyr::select(tidyselect::all_of(BioReg_Names2))
+    dplyr::rename(biogreg = "short_name") %>%
+    dplyr::count(biogreg) %>%
+    tidyr::pivot_wider(names_from = biogreg, values_from = n) %>%
+    dplyr::rename_all(~ stringr::str_c("bioreg_masked_", .x)) %>%
+    ecokit::add_missing_columns(0L, bioreg_names2) %>%
+    dplyr::select(tidyselect::all_of(bioreg_names2))
 
-
-  rm(BioReg_R, envir = environment())
+  rm(bioreg_r, envir = environment())
   invisible(gc())
 
-  if (nrow(Sp_BiogeoRegions_Masked) > 0) {
-    BioRegsMaskSumm_Min <- min(Sp_BiogeoRegions_Masked, na.rm = TRUE)
-    BioRegsMaskSumm_Max <- max(Sp_BiogeoRegions_Masked, na.rm = TRUE)
-    BioRegsMaskSumm_Mean <- unlist(Sp_BiogeoRegions_Masked) %>%
+  if (nrow(sp_bioreg_masked) > 0) {
+    bioreg_mask_summ_min <- min(sp_bioreg_masked, na.rm = TRUE)
+    bioreg_mask_summ_max <- max(sp_bioreg_masked, na.rm = TRUE)
+    bioreg_mask_summ_mean <- unlist(sp_bioreg_masked) %>%
       mean(na.rm = TRUE) %>%
       round(1)
-    BioRegsMaskSumm_N <- sum(Sp_BiogeoRegions_Masked > 0)
+    bioreg_mask_summ_n <- sum(sp_bioreg_masked > 0)
   } else {
-    BioRegsMaskSumm_Min <- 0
-    BioRegsMaskSumm_Max <- 0
-    BioRegsMaskSumm_Mean <- 0
-    BioRegsMaskSumm_N <- 0
+    bioreg_mask_summ_min <- 0
+    bioreg_mask_summ_max <- 0
+    bioreg_mask_summ_mean <- 0
+    bioreg_mask_summ_n <- 0
   }
 
   # # .................................... ###
@@ -536,58 +536,61 @@ IAS_distribution <- function(
     "# presence grid cells per data provider", level = 1L, verbose = verbose)
 
   # presence grid cells per data type
-  RVals <- c(GBIF_R, EASIN_R, eLTER_R) %>%
+  r_values <- c(GBIF_r, EASIN_r, eLTER_r) %>%
     as.data.frame(na.rm = TRUE) %>%
     tibble::tibble() %>%
     # Keep only grid cells present for any data provider
     dplyr::filter_all(dplyr::any_vars(. > 0))
 
-  RVals_Masked <- c(GBIF_R, EASIN_R, eLTER_R) %>%
-    magrittr::multiply_by(Sp_PA$PA_Masked) %>%
+  r_values_masked <- c(GBIF_r, EASIN_r, eLTER_r) %>%
+    magrittr::multiply_by(species_PA$PA_masked) %>%
     as.data.frame(na.rm = TRUE) %>%
     tibble::tibble() %>%
     dplyr::filter_all(dplyr::any_vars(. > 0))
 
-  N_GBIF <- as.integer(terra::global(GBIF_R, sum, na.rm = TRUE))
-  N_GBIF_Unique <- dplyr::filter(RVals, GBIF == 1, EASIN == 0, eLTER == 0) %>%
+  n_GBIF <- as.integer(terra::global(GBIF_r, sum, na.rm = TRUE))
+  n_GBIF_unique <- dplyr::filter(
+    r_values, GBIF == 1, EASIN == 0, eLTER == 0) %>%
     dplyr::pull("GBIF") %>%
     sum()
 
-  N_GBIF_Masked <- terra::global(
-    (Sp_PA$GBIF * Sp_PA$Mask_Keep), sum, na.rm = TRUE) %>%
+  n_GBIF_masked <- terra::global(
+    (species_PA$GBIF * species_PA$mask_keep), sum, na.rm = TRUE) %>%
     as.integer()
-  N_GBIF_Unique_Masked <- dplyr::filter(
-    RVals_Masked, GBIF == 1, EASIN == 0, eLTER == 0) %>%
+  n_GBIF_unique_masked <- dplyr::filter(
+    r_values_masked, GBIF == 1, EASIN == 0, eLTER == 0) %>%
     dplyr::pull("GBIF") %>%
     sum()
 
-  N_EASIN <- as.integer(terra::global(EASIN_R, sum, na.rm = TRUE))
-  N_EASIN_Unique <- dplyr::filter(RVals, GBIF == 0, EASIN == 1, eLTER == 0) %>%
+  n_EASIN <- as.integer(terra::global(EASIN_r, sum, na.rm = TRUE))
+  n_EASIN_unique <- dplyr::filter(
+    r_values, GBIF == 0, EASIN == 1, eLTER == 0) %>%
     dplyr::pull("EASIN") %>%
     sum()
 
-  N_EASIN_Masked <- terra::global(
-    (Sp_PA$EASIN * Sp_PA$Mask_Keep), sum, na.rm = TRUE) %>%
+  n_EASIN_masked <- terra::global(
+    (species_PA$EASIN * species_PA$mask_keep), sum, na.rm = TRUE) %>%
     as.integer()
-  N_EASIN_Unique_Masked <- dplyr::filter(
-    RVals_Masked, GBIF == 0, EASIN == 1, eLTER == 0) %>%
+  n_EASIN_unique_masked <- dplyr::filter(
+    r_values_masked, GBIF == 0, EASIN == 1, eLTER == 0) %>%
     dplyr::pull("EASIN") %>%
     sum()
 
-  N_eLTER <- as.integer(terra::global(eLTER_R, sum, na.rm = TRUE))
-  N_eLTER_Unique <- dplyr::filter(RVals, GBIF == 0, EASIN == 0, eLTER == 1) %>%
+  n_eLTER <- as.integer(terra::global(eLTER_r, sum, na.rm = TRUE))
+  n_eLTER_unique <- dplyr::filter(
+    r_values, GBIF == 0, EASIN == 0, eLTER == 1) %>%
     dplyr::pull("eLTER") %>%
     sum()
 
-  N_eLTER_Masked <- terra::global(
-    (Sp_PA$eLTER * Sp_PA$Mask_Keep), sum, na.rm = TRUE) %>%
+  n_eLTER_masked <- terra::global(
+    (species_PA$eLTER * species_PA$mask_keep), sum, na.rm = TRUE) %>%
     as.integer()
-  N_eLTER_Unique_Masked <- dplyr::filter(
-    RVals_Masked, GBIF == 0, EASIN == 0, eLTER == 1) %>%
+  n_eLTER_unique_masked <- dplyr::filter(
+    r_values_masked, GBIF == 0, EASIN == 0, eLTER == 1) %>%
     dplyr::pull("eLTER") %>%
     sum()
 
-  rm(RVals, RVals_Masked, GBIF_R, EASIN_R, eLTER_R, envir = environment())
+  rm(r_values, r_values_masked, GBIF_r, EASIN_r, eLTER_r, envir = environment())
   invisible(gc())
 
   # # .................................... ###
@@ -596,7 +599,7 @@ IAS_distribution <- function(
   ecokit::cat_time(
     "# presence grid cells per country", level = 1L, verbose = verbose)
 
-  CountryList <- c(
+  country_list <- c(
     "Albania", "Austria", "Belgium", "Bosnia and Herzegovina",
     "Bulgaria", "Croatia", "Cyprus", "Czechia", "Denmark", "Estonia",
     "Finland", "France", "Germany", "Greece", "Hungary", "Iceland",
@@ -610,25 +613,25 @@ IAS_distribution <- function(
     ecokit::replace_space() %>%
     paste0("CNT_", .)
 
-  Grid_CNT <- fs::path(Path_Grid, "Grid_10_Land_Crop_sf_Country.RData") %>%
+  grid_country <- fs::path(path_grid, "grid_10_land_crop_sf_country.RData") %>%
     ecokit::load_as() %>%
-    dplyr::select("Country")
+    dplyr::select("country")
 
-  SpCountry <- terra::as.points(Sp_PA$PA) %>%
+  species_country <- terra::as.points(species_PA$PA) %>%
     sf::st_as_sf() %>%
     dplyr::filter(PA == 1) %>%
     dplyr::select(-"PA") %>%
-    sf::st_join(Grid_CNT) %>%
+    sf::st_join(grid_country) %>%
     sf::st_drop_geometry() %>%
     tibble::tibble() %>%
-    dplyr::mutate(Country = ecokit::replace_space(Country)) %>%
-    dplyr::count(Country) %>%
-    tidyr::pivot_wider(names_from = Country, values_from = n) %>%
+    dplyr::mutate(country = ecokit::replace_space(country)) %>%
+    dplyr::count(country) %>%
+    tidyr::pivot_wider(names_from = country, values_from = n) %>%
     dplyr::rename_all(~ stringr::str_c("CNT_", .x)) %>%
-    ecokit::add_missing_columns(0L, CountryList) %>%
-    dplyr::select(tidyselect::all_of(CountryList))
+    ecokit::add_missing_columns(0L, country_list) %>%
+    dplyr::select(tidyselect::all_of(country_list))
 
-  rm(Grid_CNT, envir = environment())
+  rm(grid_country, envir = environment())
   invisible(gc())
 
   # # .................................... ###
@@ -637,18 +640,18 @@ IAS_distribution <- function(
   ecokit::cat_time(
     "# unique iNaturalist grid cells", level = 1L, verbose = verbose)
 
-  iNatur_DT <- fs::path(Path_GBIF, "iNaturalist_count.RData") %>%
+  iNatur_data <- fs::path(path_GBIF, "iNaturalist_count.RData") %>%
     ecokit::load_as() %>%
     dplyr::filter(species == !!species)
 
-  if (nrow(iNatur_DT) > 0) {
-    iNatur_Unique <- iNatur_DT$iNaturalist_Unique
-    iNatur_Perc <- round(100 * (iNatur_DT$iNaturalist_Unique / N_GBIF), 1)
+  if (nrow(iNatur_data) > 0) {
+    iNatur_unique <- iNatur_data$iNaturalist_unique
+    iNatur_percent <- round(100 * (iNatur_data$iNaturalist_unique / n_GBIF), 1)
   } else {
-    iNatur_Unique <- iNatur_Perc <- 0
+    iNatur_unique <- iNatur_percent <- 0
   }
 
-  rm(iNatur_DT, envir = environment())
+  rm(iNatur_data, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -656,80 +659,80 @@ IAS_distribution <- function(
   # Prepare and export species summary info -------
   ecokit::cat_time("Prepare and export species summary info", verbose = verbose)
 
-  Binary_R_Out <- stats::setNames(Sp_PA$PA, Sp_File) %>%
+  binary_r_out <- stats::setNames(species_PA$PA, species_file) %>%
     terra::wrap() %>%
     list()
 
-  Binary_R_Masked_Out <- stats::setNames(Sp_PA$PA_Masked, Sp_File) %>%
+  binary_r_masked_out <- stats::setNames(species_PA$PA_masked, species_file) %>%
     terra::wrap() %>%
     list()
 
-  Binary_R_Mask_Keep <- stats::setNames(Sp_PA$Mask_Keep, Sp_File) %>%
+  binary_r_mask_keep <- stats::setNames(species_PA$mask_keep, species_file) %>%
     terra::wrap() %>%
     list()
 
-  rm(Sp_PA, envir = environment())
+  rm(species_PA, envir = environment())
   invisible(gc())
 
-  IntegerCols <- c(
-    "NCells_All", "NCells_Naturalized",
-    "GBIF", "GBIF_Unique", "GBIF_Masked", "GBIF_Masked_Unique",
-    "EASIN", "EASIN_Unique", "EASIN_Masked", "EASIN_Masked_Unique",
-    "eLTER", "eLTER_Unique", "eLTER_Masked", "eLTER_Masked_Unique",
-    "BioRegsSumm_Min", "BioRegsSumm_Max", "BioRegsSumm_N",
-    "BioRegsMaskSumm_Min", "BioRegsMaskSumm_Max", "BioRegsMaskSumm_N",
-    "iNaturalist_Unique")
+  integer_columns <- c(
+    "n_cells_all", "n_cells_naturalized",
+    "GBIF", "GBIF_unique", "GBIF_masked", "GBIF_masked_unique",
+    "EASIN", "EASIN_unique", "EASIN_masked", "EASIN_masked_unique",
+    "eLTER", "eLTER_unique", "eLTER_masked", "eLTER_masked_unique",
+    "bioreg_summ_min", "bioreg_summ_max", "bioreg_summ_n",
+    "bioreg_mask_summ_min", "bioreg_mask_summ_max",
+    "bioreg_mask_summ_n", "iNaturalist_unique")
 
   Results <- tibble::tibble(
-    Species = species,
-    GBIF_Keys = GBIF_Keys,
-    species_ID = IAS_ID,
-    NCells_All = PA_NCells_All,
-    NCells_Naturalized = PA_NCells_Naturalized,
+    species = species,
+    GBIF_keys = GBIF_keys,
+    species_id = ias_id,
+    n_cells_all = PA_n_cells_all,
+    n_cells_naturalized = PA_n_cells_naturalized,
 
-    GBIF = N_GBIF,
-    GBIF_Unique = N_GBIF_Unique,
-    GBIF_Masked = N_GBIF_Masked,
-    GBIF_Masked_Unique = N_GBIF_Unique_Masked,
-    GBIF_Path = GBIF_Path,
-    GBIF_Gr100 = list(GBIF_Gr100),
-    GBIF_R = GBIF_R_Out,
+    GBIF = n_GBIF,
+    GBIF_unique = n_GBIF_unique,
+    GBIF_masked = n_GBIF_masked,
+    GBIF_masked_unique = n_GBIF_unique_masked,
+    GBIF_path = GBIF_path,
+    GBIF_grid100 = list(GBIF_grid100),
+    GBIF_r = GBIF_r_out,
 
-    EASIN = N_EASIN,
-    EASIN_Unique = N_EASIN_Unique,
-    EASIN_Masked = N_EASIN_Masked,
-    EASIN_Masked_Unique = N_EASIN_Unique_Masked,
-    EASIN_Path = EASIN_Path,
-    EASIN_Gr100 = list(EASIN_Gr100),
-    EASIN_R = EASIN_R_Out,
+    EASIN = n_EASIN,
+    EASIN_unique = n_EASIN_unique,
+    EASIN_masked = n_EASIN_masked,
+    EASIN_masked_unique = n_EASIN_unique_masked,
+    EASIN_path = EASIN_path,
+    EASIN_grid100 = list(EASIN_grid100),
+    EASIN_r = EASIN_r_out,
 
-    eLTER = N_eLTER,
-    eLTER_Unique = N_eLTER_Unique,
-    eLTER_Masked = N_eLTER_Masked,
-    eLTER_Masked_Unique = N_eLTER_Unique_Masked,
-    eLTER_Gr100 = list(eLTER_Gr100),
-    eLTER_R = eLTER_R_Out,
+    eLTER = n_eLTER,
+    eLTER_unique = n_eLTER_unique,
+    eLTER_masked = n_eLTER_masked,
+    eLTER_masked_unique = n_eLTER_unique_masked,
+    eLTER_grid100 = list(eLTER_grid100),
+    eLTER_r = eLTER_r_out,
 
-    PA_Map = Binary_R_Out,
-    PA_Masked_Map = Binary_R_Masked_Out,
-    Mask_Keep = Binary_R_Mask_Keep,
+    PA_map = binary_r_out,
+    PA_masked_map = binary_r_masked_out,
+    mask_keep = binary_r_mask_keep,
 
-    SpCountry = list(SpCountry),
-    BioRegs_DT = list(Sp_BiogeoRegions),
-    BioRegsSumm_Min = BioRegsSumm_Min,
-    BioRegsSumm_Max = BioRegsSumm_Max,
-    BioRegsSumm_Mean = BioRegsSumm_Mean,
-    BioRegsSumm_N = BioRegsSumm_N,
-    BioRegsMask_DT = list(Sp_BiogeoRegions_Masked),
-    BioRegsMaskSumm_Min = BioRegsMaskSumm_Min,
-    BioRegsMaskSumm_Max = BioRegsMaskSumm_Max,
-    BioRegsMaskSumm_Mean = BioRegsMaskSumm_Mean,
-    BioRegsMaskSumm_N = BioRegsMaskSumm_N,
-    iNaturalist_Unique = iNatur_Unique,
-    iNatur_Perc = iNatur_Perc,
-    Countries2Exclude = list(Countries2Exclude),
-    path_JPEG = Out_JPEG) %>%
-    dplyr::mutate_at(IntegerCols, ~ as.integer(.))
+    species_country = list(species_country),
+    bioreg_data = list(species_bioregs),
+    bioreg_summ_min = bioreg_summ_min,
+    bioreg_summ_max = bioreg_summ_max,
+    bioreg_summ_mean = bioreg_summ_mean,
+    bioreg_summ_n = bioreg_summ_n,
+    bioreg_mask_summ_data = list(species_bioregs_masked),
+    bioreg_mask_summ_min = bioreg_mask_summ_min,
+    bioreg_mask_summ_max = bioreg_mask_summ_max,
+    bioreg_mask_summ_mean = bioreg_mask_summ_mean,
+    bioreg_mask_summ_n = bioreg_mask_summ_n,
+    iNaturalist_unique = iNatur_unique,
+    iNatur_percent = iNatur_percent,
+    countries_to_exclude = list(countries_to_exclude),
+    path_JPEG = out_JPEG) %>%
+    dplyr::mutate_at(integer_columns, ~ as.integer(.))
 
   # # ..................................................................... ###
 

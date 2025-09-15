@@ -27,7 +27,7 @@ plot_prediction <- function(
   .start_time <- lubridate::now(tzone = "CET")
 
   tif_path_mean <- tif_path_sd <- tif_path_cov <- Path_CLC <- Path_Grid <- x <-
-    IAS_ID <- Species_File <- Observed <- Clamp <- NoClamp <- Path_PA <- NULL
+    ias_id <- species_file <- Observed <- Clamp <- NoClamp <- Path_PA <- NULL
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -55,19 +55,19 @@ plot_prediction <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "Path_CLC", "DP_R_CLC_processed", TRUE, FALSE,
-    "Path_Grid", "DP_R_Grid_processed", TRUE, FALSE,
+    "Path_CLC", "DP_R_clc_processed", TRUE, FALSE,
+    "Path_Grid", "DP_R_grid_processed", TRUE, FALSE,
     "Path_PA", "DP_R_PA", TRUE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
   invisible(gc())
 
   # Reference grid
-  Gird10 <- fs::path(Path_Grid, "Grid_10_Land_Crop.RData")
+  Gird10 <- fs::path(Path_Grid, "grid_10_land_crop.RData")
   if (!file.exists(Gird10)) {
     ecokit::stop_ctx(
       "Path for the Europe boundaries does not exist", Gird10 = Gird10,
@@ -177,7 +177,8 @@ plot_prediction <- function(
 
   ecokit::cat_time("Load habitat map")
 
-  Path_Hab <- fs::path(Path_CLC, "Summary_RData", "PercCov_SynHab_Crop.RData")
+  Path_Hab <- fs::path(
+    Path_CLC, "summary_rdata", "perc_cover_synhab_crop.RData")
   if (!file.exists(Path_Hab)) {
     ecokit::stop_ctx(
       "Path_Hab file does not exist", Path_Hab = Path_Hab,
@@ -407,16 +408,16 @@ plot_prediction <- function(
       # Observed species presence
 
       # Files containing observed data maps
-      Path_observed <- fs::path(Path_PA, "Sp_PA_Summary_DF.RData")
+      Path_observed <- fs::path(Path_PA, "sp_pa_summary_df.RData")
       if (!file.exists(Path_observed)) {
         ecokit::stop_ctx(
           "Path_observed file does not exist", Path_observed = Path_observed,
           include_backtrace = TRUE)
       }
       Path_observed <- ecokit::load_as(Path_observed) %>%
-        dplyr::filter(IAS_ID == SpID2) %>%
-        dplyr::pull(Species_File) %>%
-        paste0(c("_Masked.tif", "_All.tif")) %>%
+        dplyr::filter(ias_id == SpID2) %>%
+        dplyr::pull(species_file) %>%
+        paste0(c("_masked.tif", "_all.tif")) %>%
         fs::path(Path_PA, "PA_tif", .)
 
       # Check if observed data files exist
@@ -572,9 +573,9 @@ plot_prediction <- function(
         '<SPAN STYLE="font-size:16pt">Predicted habitat suitability of \\
           <b><i>{SpName}</i></b></SPAN>')
       PlotTitle2 <- stringr::str_glue(
-        '<SPAN STYLE="font-size:8pt; color: darkgrey"><b>Class:</b> \\
+        '<SPAN STYLE="font-size:8pt; color: darkgrey"><b>class:</b> \\
           {ClassName}; <b>Order:</b> {OrderName}; <b>Family:</b> \\
-          {FamilyName}; <b>IAS_ID:</b> {SpID2}</SPAN>')
+          {FamilyName}; <b>ias_id:</b> {SpID2}</SPAN>')
     } else {
       PlotTitle1 <- "Predicted level of invasion (mean species richness)"
       PlotTitle2 <- ""

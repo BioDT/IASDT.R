@@ -24,7 +24,7 @@ efforts_request <- function(
 
   # # ..................................................................... ###
 
-  .StartTimeRequest <- lubridate::now(tzone = "CET")
+  .start_time_request <- lubridate::now(tzone = "CET")
 
   strategy <- .validate_strategy(strategy)
   if (strategy == "sequential") n_cores <- 1L
@@ -46,8 +46,8 @@ efforts_request <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Request <- DownDetails <- orderKey <- Size <- NumberDatasets <-
-    TotalRecords <- Path_Efforts <- NULL
+  request <- download_details <- orderKey <- size <- n_datasets <-
+    total_records <- path_efforts <- NULL
   # # ..................................................................... ###
 
   # Ensure that GBIF access information is available
@@ -62,13 +62,13 @@ efforts_request <- function(
       "Environment file is not found or invalid.", env_file = env_file)
   }
 
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "Path_Efforts", "DP_R_Efforts_processed", FALSE, FALSE)
+    "path_efforts", "DP_R_efforts_processed", FALSE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
   # # ..................................................................... ###
 
@@ -104,29 +104,29 @@ efforts_request <- function(
   selected_columns <- c(
     "class", "classKey", "order", "orderKey", "numDescendants")
 
-  Efforts_AllRequests <- rgbif::name_backbone("Tracheophyta") %>%
+  efforts_all_requests <- rgbif::name_backbone("Tracheophyta") %>%
     dplyr::pull("phylumKey") %>%
     rgbif::name_lookup(rank = "ORDER", higherTaxonKey = .) %>%
     # Get info on order names
     magrittr::extract2("data") %>%
     dplyr::select(tidyselect::all_of(selected_columns)) %>%
     dplyr::mutate(
-      Request = furrr::future_map(
+      request = furrr::future_map(
         .x = orderKey,
         .f = ~ {
-          Request_ID <- paste0("Request_", .x)
-          Request_Path <- fs::path(
-            Path_Efforts, "Requests", paste0(Request_ID, ".RData"))
+          request_id <- paste0("request_", .x)
+          request_path <- fs::path(
+            path_efforts, "requests", paste0(request_id, ".RData"))
 
-          if (file.exists(Request_Path)) {
+          if (file.exists(request_path)) {
             # load previous request
-            Down <- ecokit::load_as(Request_Path)
+            request_down <- ecokit::load_as(request_path)
           } else {
             # Attempt the request with error handling
             tryCatch(
               {
                 # Make data request
-                Down <- rgbif::occ_download(
+                request_down <- rgbif::occ_download(
                   rgbif::pred_in("taxonKey", .x),
                   # Only with coordinates & no spatial issues
                   rgbif::pred("hasCoordinate", TRUE),
@@ -141,8 +141,8 @@ efforts_request <- function(
                   format = "SIMPLE_CSV")
 
                 ecokit::save_as(
-                  object = Down, object_name = Request_ID,
-                  out_path = Request_Path)
+                  object = request_down, object_name = request_id,
+                  out_path = request_path)
               },
               error = function(e) {
                 ecokit::stop_ctx(
@@ -154,42 +154,42 @@ efforts_request <- function(
           }
 
           # Waiting for data to be ready
-          rgbif::occ_download_wait(Down, quiet = TRUE)
+          rgbif::occ_download_wait(request_down, quiet = TRUE)
 
-          return(Down)
+          return(request_down)
         },
         .options = furrr::furrr_options(
           seed = TRUE, scheduling = Inf, packages = pkg_to_export,
-          globals = c("Path_Efforts", "boundaries", "start_year")))
+          globals = c("path_efforts", "boundaries", "start_year")))
     ) %>%
     dplyr::rowwise() %>%
     # Add columns for metadata
     dplyr::mutate(
-      DownDetails = list(rgbif::occ_download_wait(Request, quiet = TRUE)),
+      download_details = list(rgbif::occ_download_wait(request, quiet = TRUE)),
       # Extract some info from metadata
-      DownloadKey = DownDetails$key,
-      DOI = DownDetails$doi,
-      Created = DownDetails$created,
-      Modified = DownDetails$modified,
-      EraseAfter = DownDetails$eraseAfter,
-      DownLink = DownDetails$downloadLink,
-      Size = DownDetails$size,
-      TotalRecords = DownDetails$totalRecords,
-      NumberDatasets = DownDetails$numberDatasets,
-      Status = DownDetails$status,
-      # Size of data in megabytes
-      Size = as.numeric(Size) / (1024 * 1024),
+      download_key = download_details$key,
+      DOI = download_details$doi,
+      created_time = download_details$created,
+      modified_time = download_details$modified,
+      erase_after = download_details$eraseAfter,
+      download_link = download_details$downloadLink,
+      size = download_details$size,
+      total_records = download_details$total_records,
+      n_datasets = download_details$numberDatasets,
+      status = download_details$status,
+      # size of data in megabytes
+      size = as.numeric(size) / (1024 * 1024),
       # Convert some columns to numeric (double)
-      dplyr::across(Size:NumberDatasets, as.numeric),
+      dplyr::across(size:n_datasets, as.numeric),
       # Convert some columns to integer
-      dplyr::across(TotalRecords:NumberDatasets, as.integer),
+      dplyr::across(total_records:n_datasets, as.integer),
       # Convert some columns to date type
       dplyr::across(
-        c("Created", "Modified", "EraseAfter"),
+        c("created_time", "modified_time", "erase_after"),
         lubridate::as_date)) %>%
     dplyr::ungroup() %>%
     # how to cite data
-    dplyr::mutate(citation = purrr::map_chr(Request, attr, "citation"))
+    dplyr::mutate(citation = purrr::map_chr(request, attr, "citation"))
 
   ecokit::cat_time("Requesting efforts data was finished", level = 2L)
 
@@ -199,8 +199,8 @@ efforts_request <- function(
   ecokit::cat_time("Save efforts request data", level = 1L)
 
   save(
-    Efforts_AllRequests,
-    file = fs::path(Path_Efforts, "Efforts_AllRequests.RData"))
+    efforts_all_requests,
+    file = fs::path(path_efforts, "efforts_all_requests.RData"))
 
   # # ..................................................................... ###
 
@@ -213,7 +213,7 @@ efforts_request <- function(
   # # ..................................................................... ###
 
   ecokit::cat_diff(
-    init_time = .StartTimeRequest,
+    init_time = .start_time_request,
     prefix = "Requesting efforts data took ", level = 1L)
 
   # # ..................................................................... ###

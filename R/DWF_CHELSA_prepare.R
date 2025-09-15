@@ -35,22 +35,22 @@ CHELSA_prepare <- function(
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   Variable <- Path_Down <- TimePeriod <- Ext <- ClimateScenario <- Variable <-
     Path_CHELSA_In <- File <- Path_Out_tif <- Path_Out_NC <- Path_CHELSA_Out <-
-    Path_DwnLinks <- URL <- Folder <- URL_File <- ClimateModel <- Exclude <-
-    BaseURL <- NULL
+    Path_dwnload_links <- URL <- Folder <- URL_File <- ClimateModel <-
+    Exclude <- chelsa_base_url <- NULL
 
   # # ..................................................................... ###
 
   # Environment variables -----
-  EnvVars2Read <- tibble::tribble(
+  env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "Path_CHELSA_Out", "DP_R_CHELSA_processed", FALSE, FALSE,
-    "Path_CHELSA_In", "DP_R_CHELSA_raw", FALSE, FALSE,
-    "Path_DwnLinks", "DP_R_CHELSA_links", TRUE, FALSE,
-    "BaseURL", "DP_R_CHELSA_url", FALSE, FALSE)
+    "Path_CHELSA_Out", "DP_R_chelsa_processed", FALSE, FALSE,
+    "Path_CHELSA_In", "DP_R_chelsa_raw", FALSE, FALSE,
+    "Path_dwnload_links", "DP_R_chelsa_links", TRUE, FALSE,
+    "chelsa_base_url", "DP_R_chelsa_url", FALSE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
-    env_file = env_file, env_variables_data = EnvVars2Read)
-  rm(EnvVars2Read, envir = environment())
+    env_file = env_file, env_variables_data = env_vars_to_read)
+  rm(env_vars_to_read, envir = environment())
 
   # # ..................................................................... ###
 
@@ -74,13 +74,13 @@ CHELSA_prepare <- function(
 
   ecokit::cat_time("Prepare CHELSA metadata", level = 1L)
 
-  if (!endsWith(BaseURL, "/")) {
-    BaseURL <- paste0(BaseURL, "/")
+  if (!endsWith(chelsa_base_url, "/")) {
+    chelsa_base_url <- paste0(chelsa_base_url, "/")
   }
 
   CHELSA_Metadata <- list.files(
-    path = Path_DwnLinks, recursive = TRUE, full.names = TRUE,
-    pattern = "DwnLinks_Climatologies_.+txt$") %>%
+    path = Path_dwnload_links, recursive = TRUE, full.names = TRUE,
+    pattern = "dwnload_links_Climatologies_.+txt$") %>%
     dplyr::tibble(URL_File = .) %>%
     # Add download links
     dplyr::mutate(
@@ -89,14 +89,15 @@ CHELSA_prepare <- function(
     tidyr::unnest_longer("URL") %>%
     dplyr::mutate(
       URL = purrr::map_chr(URL, stringr::str_trim),
-      Folder = purrr::map_chr(URL, stringr::str_remove_all, pattern = BaseURL),
+      Folder = purrr::map_chr(
+        URL, stringr::str_remove_all, pattern = chelsa_base_url),
       File = purrr::map_chr(Folder, basename),
       Folder = purrr::map_chr(Folder, dirname),
 
       # Extract time period
       TimePeriod = purrr::map_chr(
         URL_File, stringr::str_remove_all,
-        pattern = "DwnLinks_Climatologies_|.txt"),
+        pattern = "dwnload_links_Climatologies_|.txt"),
 
       # File extension
       Ext = purrr::map_chr(URL, tools::file_ext),

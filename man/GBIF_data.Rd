@@ -31,7 +31,7 @@ GBIF_download(
   download = TRUE,
   split_chunks = TRUE,
   chunk_size = 50000L,
-  boundaries = c(-30, 50, 25, 75),
+  boundaries = c(-30L, 50L, 25L, 75L),
   start_year = 1981L
 )
 

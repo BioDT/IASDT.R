@@ -116,7 +116,7 @@ processing, and plotting GBIF vascular plant data.
 \item \strong{\code{efforts_request()}}: Requests GBIF data by order in parallel. Stores
 results to disk.
 \item \strong{\code{efforts_download()}}: Downloads GBIF data, validates files, and loads
-existing data if available. Returns a dataframe (\code{Efforts_AllRequests})
+existing data if available. Returns a dataframe (\code{efforts_all_requests})
 with paths.
 \item \strong{\code{efforts_split()}}: Splits zipped CSV data by order into chunks, saving
 each separately.

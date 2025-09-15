@@ -4,7 +4,7 @@
 \alias{soil_density_process}
 \title{Retrieve and project soil bulk density data}
 \usage{
-soil_density_process(depths = NULL, env_file = ".env", n_cores = 6)
+soil_density_process(depths = NULL, env_file = ".env", n_cores = 6L)
 }
 \arguments{
 \item{depths}{Character vector of depth intervals (e.g. \code{c("0-5","5-15")}).

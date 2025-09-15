@@ -4,7 +4,7 @@
 \alias{clc_process}
 \title{Process Corine Land Cover (CLC) data for the \code{IASDT}}
 \usage{
-clc_process(env_file = ".env", min_land_percent = 15, plot_clc = TRUE)
+clc_process(env_file = ".env", min_land_percent = 15L, plot_clc = TRUE)
 }
 \arguments{
 \item{env_file}{Character. Path to the environment file containing paths to

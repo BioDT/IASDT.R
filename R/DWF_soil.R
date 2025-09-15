@@ -30,7 +30,7 @@
 #' @export
 
 soil_density_process <- function(
-    depths = NULL, env_file = ".env", n_cores = 6) {
+    depths = NULL, env_file = ".env", n_cores = 6L) {
 
   dir_grid <- dir_soil <- NULL
 

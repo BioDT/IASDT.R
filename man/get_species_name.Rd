@@ -4,10 +4,10 @@
 \alias{get_species_name}
 \title{Get species name or information of an \code{IASDT} species ID}
 \usage{
-get_species_name(species_ID = NULL, env_file = ".env")
+get_species_name(species_id = NULL, env_file = ".env")
 }
 \arguments{
-\item{species_ID}{optional IASDT species ID for which detailed information is
+\item{species_id}{optional IASDT species ID for which detailed information is
 required. If not provided, the function returns the entire species list.}
 
 \item{env_file}{Character. Path to the environment file containing paths to
@@ -15,12 +15,12 @@ data sources. Defaults to \code{.env}.}
 }
 \value{
 A data frame containing species information. If a species ID
-\code{species_ID} is provided, it only returns species information for the
+\code{species_id} is provided, it only returns species information for the
 listed species, otherwise return the full list of IAS.
 }
 \description{
 This function retrieves detailed information on \code{IASDT} species list,
-optionally filtered by a specific \code{IASDT} species ID (\code{species_ID}).
+optionally filtered by a specific \code{IASDT} species ID (\code{species_id}).
 }
 \author{
 Ahmed El-Gabbas

@@ -79,11 +79,10 @@ clc_plot <- function(
   # nolint start
 
   # Plotting boundaries
-  Xlim <- c(2600000, 6550000)
-  Ylim <- c(1450000, 5420000)
+  x_lim <- c(2600000, 6550000)
+  y_lim <- c(1450000, 5420000)
 
-
-  LastUpdate <- paste0("Last update: ", format(Sys.Date(), "%d %B %Y"))
+  last_update <- paste0("Last update: ", format(Sys.Date(), "%d %B %Y"))
 
   out_path <- paste0(
     "summary_perc_cover_", file_prefix, "_",
@@ -141,9 +140,9 @@ clc_plot <- function(
               linewidth = 0.25, inherit.aes = TRUE,
               fill = scales::alpha("grey80", 0.2)) +
             ggplot2::scale_x_continuous(
-              expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim) +
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = x_lim) +
             ggplot2::scale_y_continuous(
-              expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = y_lim) +
             ggplot2::labs(title = map_title, fill = NULL) +
             plot_theme
 
@@ -157,9 +156,9 @@ clc_plot <- function(
               linewidth = 0.25, inherit.aes = TRUE,
               fill = scales::alpha("grey80", 0.2)) +
             ggplot2::scale_x_continuous(
-              expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim) +
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = x_lim) +
             ggplot2::scale_y_continuous(
-              expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = y_lim) +
             ggplot2::labs(title = map_title, fill = NULL) +
             plot_theme
 
@@ -225,11 +224,11 @@ clc_plot <- function(
             paletteer::scale_fill_paletteer_c(
               na.value = "transparent", "viridis::plasma", limits = c(0, 100)) +
             ggplot2::scale_x_continuous(
-              expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim) +
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = x_lim) +
             ggplot2::scale_y_continuous(
-              expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = y_lim) +
             ggplot2::labs(
-              title = title_lab, fill = "%", tag = LastUpdate,
+              title = title_lab, fill = "%", tag = last_update,
               x = NULL, y = NULL) +
             theme_2
           ragg::agg_jpeg(
@@ -258,11 +257,11 @@ clc_plot <- function(
             paletteer::scale_fill_paletteer_c(
               na.value = "transparent", "viridis::plasma", limits = c(0, 100)) +
             ggplot2::scale_x_continuous(
-              expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim) +
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = x_lim) +
             ggplot2::scale_y_continuous(
-              expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = y_lim) +
             ggplot2::labs(
-              title = title_lab, fill = "%", tag = LastUpdate,
+              title = title_lab, fill = "%", tag = last_update,
               x = NULL, y = NULL) +
             theme_2
           ragg::agg_jpeg(
@@ -292,11 +291,11 @@ clc_plot <- function(
             paletteer::scale_fill_paletteer_c(
               na.value = "transparent", palette = "viridis::plasma") +
             ggplot2::scale_x_continuous(
-              expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim) +
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = x_lim) +
             ggplot2::scale_y_continuous(
-              expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = y_lim) +
             ggplot2::labs(
-              title = title_lab, fill = "%", tag = LastUpdate,
+              title = title_lab, fill = "%", tag = last_update,
               x = NULL, y = NULL) +
             theme_2
           ragg::agg_jpeg(
@@ -325,11 +324,11 @@ clc_plot <- function(
             paletteer::scale_fill_paletteer_c(
               na.value = "transparent", palette = "viridis::plasma") +
             ggplot2::scale_x_continuous(
-              expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim) +
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = x_lim) +
             ggplot2::scale_y_continuous(
-              expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
+              expand = ggplot2::expansion(mult = c(0, 0)), limits = y_lim) +
             ggplot2::labs(
-              title = title_lab, fill = "%", tag = LastUpdate,
+              title = title_lab, fill = "%", tag = last_update,
               x = NULL, y = NULL) +
             theme_2
           ragg::agg_jpeg(
@@ -381,7 +380,7 @@ clc_plot <- function(
       main_title <- cowplot::ggdraw() +
         cowplot::draw_label(main_title, fontface = "bold", hjust = 0.5) +
         cowplot::draw_label(
-          LastUpdate, fontface = "italic", color = "grey",
+          last_update, fontface = "italic", color = "grey",
           x = 0.935, size = 3) +
         ggplot2::theme(plot.margin = ggplot2::margin(0, 0, 0, 0))
 
@@ -403,7 +402,8 @@ clc_plot <- function(
         plotlist = plot_no_zero, ncol = 4, nrow = 2) %>%
         cowplot::plot_grid(common_legend, rel_widths = c(4, 0.2)) %>%
         cowplot::plot_grid(main_title, ., ncol = 1, rel_heights = c(0.05, 1))
-      path_jpeg <- stringr::str_replace(out_path[.x], ".jpeg", "_no_zero.jpeg")
+      path_jpeg <- stringr::str_replace(
+        out_path[.x], "summary_jpeg", "summary_jpeg_no_zero")
       ragg::agg_jpeg(
         filename = path_jpeg, width = 28, height = 15, res = 600,
         quality = 100, units = "cm")

@@ -40,7 +40,7 @@ road_intensity <- function(env_file = ".env") {
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   path_road <- path_road_raw <- path_road_interim <- road_type <-
-    EU_boundaries <- VarName <- road_URL <- path_grid <- NULL
+    EU_boundaries <- road_name <- road_URL <- path_grid <- NULL
 
   # # ..................................................................... ###
 
@@ -165,7 +165,8 @@ road_intensity <- function(env_file = ".env") {
 
   ## Save - RData ----
   ecokit::cat_time("Save projected data - RData", level = 1L)
-  save(road_sf, file = fs::path(path_road, "road_sf.RData"))
+  ecokit::save_as(
+    object = road_sf, out_path = fs::path(path_road, "road_sf.qs2"))
 
   # # ..................................... ###
 
@@ -173,7 +174,7 @@ road_intensity <- function(env_file = ".env") {
   ecokit::cat_time("Save RData file per road type", level = 1L)
 
   tibble::tribble(
-    ~road_type, ~VarName,
+    ~road_type, ~road_name,
     1, "Highways",
     2, "Primary",
     3, "Secondary",
@@ -181,7 +182,7 @@ road_intensity <- function(env_file = ".env") {
     5, "Local") %>%
     dplyr::mutate(
       A = purrr::walk2(
-        .x = road_type, .y = VarName,
+        .x = road_type, .y = road_name,
         .f = ~ {
           ecokit::cat_time(paste0(.x, " - ", .y), level = 2L)
           dplyr::filter(road_sf, GP_RTP %in% .x) %>%
@@ -191,7 +192,7 @@ road_intensity <- function(env_file = ".env") {
             ecokit::save_as(
               object_name = paste0("road_sf_", .x, "_", .y),
               out_path = fs::path(
-                path_road, paste0("road_sf_", .x, "_", .y, ".RData")))
+                path_road, paste0("road_sf_", .x, "_", .y, ".qs2")))
           invisible(gc())
           return(invisible(NULL))
         })
@@ -210,31 +211,31 @@ road_intensity <- function(env_file = ".env") {
 
   grid_ref <- ecokit::load_as(grid_ref, unwrap_r = TRUE)
 
-  extract_road_summary <- function(road_type, VarName, Function = "length") {
+  extract_road_summary <- function(road_type, road_name, Function = "length") {
     summary_map <- list.files(
       path = path_road, full.names = TRUE,
       pattern = paste0("^road_sf_", road_type, "_.+RData")) %>%
       ecokit::load_as(unwrap_r = TRUE) %>%
       terra::rasterizeGeom(y = grid_ref, fun = Function, unit = "km") %>%
       terra::mask(mask = grid_ref) %>%
-      stats::setNames(paste0(road_type, "_", VarName))
+      stats::setNames(paste0(road_type, "_", road_name))
     return(summary_map)
   }
 
   ecokit::cat_time("1 - Highways", level = 2L)
-  grip_1 <- extract_road_summary(road_type = 1, VarName = "Highways")
+  grip_1 <- extract_road_summary(road_type = 1, road_name = "Highways")
 
   ecokit::cat_time("2 - Primary", level = 2L)
-  grip_2 <- extract_road_summary(road_type = 2, VarName = "Primary")
+  grip_2 <- extract_road_summary(road_type = 2, road_name = "Primary")
 
   ecokit::cat_time("3 - Secondary", level = 2L)
-  grip_3 <- extract_road_summary(road_type = 3, VarName = "Secondary")
+  grip_3 <- extract_road_summary(road_type = 3, road_name = "Secondary")
 
   ecokit::cat_time("4 - Tertiary", level = 2L)
-  grip_4 <- extract_road_summary(road_type = 4, VarName = "Tertiary")
+  grip_4 <- extract_road_summary(road_type = 4, road_name = "Tertiary")
 
   ecokit::cat_time("5 - Local", level = 2L)
-  grip_5 <- extract_road_summary(road_type = 5, VarName = "Local")
+  grip_5 <- extract_road_summary(road_type = 5, road_name = "Local")
 
   ecokit::cat_time("All roads", level = 2L)
   road_length <- (grip_1 + grip_2 + grip_3 + grip_4 + grip_5) %>%

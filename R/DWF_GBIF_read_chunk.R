@@ -54,7 +54,7 @@ GBIF_read_chunk <- function(
   clc_tif <- SynHab_desc <- clc_crosswalk <- Longitude <- Latitude <-
     uncertain_km <- country_codes <- countryName <- hasCoordinate <-
     hasGeospatialIssues <- phylum <- phylumKey <- path_grid <-
-    occurrenceStatus <- Value <- path_gbif <- selected_columns <- Int_cols <-
+    occurrenceStatus <- Value <- path_gbif <- selected_columns <- int_cols <-
     lgl_cols <- dbl_cols <- int64_cols <- coordinatePrecision <- n_dec_long <-
     n_dec_lat <- year <- taxonRank <- sort_columns <- CellCode <- NULL
 
@@ -129,7 +129,7 @@ GBIF_read_chunk <- function(
       n_dec_long = purrr::map_int(Longitude, ecokit::n_decimals),
       n_dec_lat = purrr::map_int(Latitude, ecokit::n_decimals),
       # change column classes
-      dplyr::across(tidyselect::all_of(Int_cols), as.integer),
+      dplyr::across(tidyselect::all_of(int_cols), as.integer),
       dplyr::across(tidyselect::all_of(lgl_cols), as.logical),
       dplyr::across(tidyselect::all_of(dbl_cols), as.double),
       dplyr::across(tidyselect::all_of(int64_cols), bit64::as.integer64),

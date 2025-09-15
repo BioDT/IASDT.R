@@ -229,16 +229,16 @@ GBIF_download <- function(
 
   # class types of some selected columns
   # integer columns
-  Int_cols <- c(
+  int_cols <- c(
     "line_number", "day", "month", "year", "speciesKey", "acceptedNameUsageID",
     "taxonKey", "acceptedTaxonKey", "phylumKey", "classKey", "orderKey",
     "familyKey", "genusKey")
 
   # integer64 columns
-  Int64_cols <- c("gbifID", "catalogNumber")
+  int64_cols <- c("gbifID", "catalogNumber")
 
   # double columns
-  Dbl_cols <- c("uncertain_km", "Longitude", "Latitude", "coordinatePrecision")
+  dbl_cols <- c("uncertain_km", "Longitude", "Latitude", "coordinatePrecision")
 
   # logical columns
   lgl_cols <- c("hasCoordinate", "hasGeospatialIssues")
@@ -296,9 +296,9 @@ GBIF_download <- function(
     dplyr::mutate(
       # add information on column classes
       class = dplyr::case_when(
-        Col %in% Int_cols ~ "integer",
-        Col %in% Int64_cols ~ "integer64",
-        Col %in% Dbl_cols ~ "double",
+        Col %in% int_cols ~ "integer",
+        Col %in% int64_cols ~ "integer64",
+        Col %in% dbl_cols ~ "double",
         Col %in% lgl_cols ~ "logical",
         .default = "character"),
       # shorten some columns
@@ -317,11 +317,11 @@ GBIF_download <- function(
         Col = "line_number", ID = 1L, SortID = 1L, class = "integer"),
       .)
 
-  SortCols <- dplyr::pull(dplyr::arrange(selected_columns, SortID), Col)
+  sort_columns <- dplyr::pull(dplyr::arrange(selected_columns, SortID), Col)
 
   save(
-    selected_columns, Int_cols, Int64_cols, Dbl_cols, lgl_cols,
-    SortCols, country_codes,
+    selected_columns, int_cols, int64_cols, dbl_cols, lgl_cols,
+    sort_columns, country_codes,
     file = fs::path(Path_GBIF, "selected_columns.RData"))
 
   # # ..................................................................... ###

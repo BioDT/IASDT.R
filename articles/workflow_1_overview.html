@@ -394,7 +394,7 @@ Default value
 <tbody>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_BioReg_interim</cc>
+<cc>DP_R_bioreg_interim</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path to biogeographical regions interim data
@@ -405,7 +405,7 @@ Directory path to biogeographical regions interim data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_BioReg_processed</cc>
+<cc>DP_R_bioreg_processed</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path to biogeographical regions processed data
@@ -416,7 +416,7 @@ Directory path to biogeographical regions processed data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_BioReg_raw</cc>
+<cc>DP_R_bioreg_raw</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path to biogeographical regions raw data
@@ -427,7 +427,7 @@ Directory path to biogeographical regions raw data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_BioReg_url</cc>
+<cc>DP_R_bioreg_url</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 URL for downloading biogeographical regions data
@@ -438,18 +438,18 @@ URL for downloading biogeographical regions data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_CHELSA_links</cc>
+<cc>DP_R_chelsa_links</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path containing CHELSA download links
 </td>
 <td style="text-align:left;">
-<i>references/chelsa/DwnLinks</i>
+<i>references/chelsa/dwnload_links</i>
 </td>
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_CHELSA_processed</cc>
+<cc>DP_R_chelsa_processed</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path to processed CHELSA data
@@ -460,7 +460,7 @@ Directory path to processed CHELSA data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_CHELSA_raw</cc>
+<cc>DP_R_chelsa_raw</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path to raw CHELSA data
@@ -471,7 +471,7 @@ Directory path to raw CHELSA data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_CHELSA_url</cc>
+<cc>DP_R_chelsa_url</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Base URL for CHELSA data
@@ -482,7 +482,7 @@ Base URL for CHELSA data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_CLC_crosswalk</cc>
+<cc>DP_R_clc_crosswalk</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Path to a text file containing custom cross-walk between CLC values at
@@ -495,7 +495,7 @@ level 3 and their corresponding values for <em>EUNIS</em> and
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_CLC_processed</cc>
+<cc>DP_R_clc_processed</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path to processed CLC data
@@ -506,7 +506,7 @@ Directory path to processed CLC data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_CLC_tif</cc>
+<cc>DP_R_clc_tif</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Path to the input CLC tif file
@@ -517,7 +517,7 @@ Path to the input CLC tif file
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_LUMI_cpu</cc>
+<cc>DP_R_lumi_cpu</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 LUMI project number for CPU computations
@@ -528,7 +528,7 @@ LUMI project number for CPU computations
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_LUMI_gpu</cc>
+<cc>DP_R_lumi_gpu</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 LUMI project number for GPU computations
@@ -539,7 +539,7 @@ LUMI project number for GPU computations
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_LUMI_gpu_check</cc>
+<cc>DP_R_lumi_gpu_check</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 File path to a python script for reporting if the GPU was used in the
@@ -551,29 +551,29 @@ running SLURM job
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_Countrycodes</cc>
+<cc>DP_R_country_codes</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Path to a file containing countries ISO codes
 </td>
 <td style="text-align:left;">
-<i>references/CountryCodes.csv</i>
+<i>references/country_codes.csv</i>
 </td>
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_EUBound</cc>
+<cc>DP_R_country_boundaries</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Path to <code>RData</code> file containing country boundaries
 </td>
 <td style="text-align:left;">
-<i>references/Bound_sf_Eur.RData</i>
+<i>references/EU_boundaries_sf.RData</i>
 </td>
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_Model_path</cc>
+<cc>DP_R_model_root_path</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path for model fitting
@@ -584,40 +584,40 @@ Directory path for model fitting
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_Railways_interim</cc>
+<cc>DP_R_railway_interim</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path to interim railways data
 </td>
 <td style="text-align:left;">
-<i>datasets/interim/railways</i>
+<i>datasets/interim/railway</i>
 </td>
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_Railways_processed</cc>
+<cc>DP_R_railway_processed</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path to processed railways data
 </td>
 <td style="text-align:left;">
-<i>datasets/processed/railways</i>
+<i>datasets/processed/railway</i>
 </td>
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_Railways_raw</cc>
+<cc>DP_R_railway_raw</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path to raw railways data
 </td>
 <td style="text-align:left;">
-<i>datasets/raw/railways</i>
+<i>datasets/raw/railway</i>
 </td>
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_Railways_url</cc>
+<cc>DP_R_railway_url</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 URL for railways data
@@ -628,7 +628,7 @@ URL for railways data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_Grid_processed</cc>
+<cc>DP_R_grid_processed</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path for reference grid (resulted from processing CLC data)
@@ -639,7 +639,7 @@ Directory path for reference grid (resulted from processing CLC data)
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_Grid_raw</cc>
+<cc>DP_R_grid_raw</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path for reference grid (original)
@@ -650,7 +650,7 @@ Directory path for reference grid (original)
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_Rivers_interim</cc>
+<cc>DP_R_rivers_interim</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path to interim rivers data
@@ -661,7 +661,7 @@ Directory path to interim rivers data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_Rivers_processed</cc>
+<cc>DP_R_rivers_processed</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path to processed rivers data
@@ -672,7 +672,7 @@ Directory path to processed rivers data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_Rivers_raw</cc>
+<cc>DP_R_rivers_raw</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path to raw rivers data
@@ -683,7 +683,7 @@ Directory path to raw rivers data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_Rivers_zip</cc>
+<cc>DP_R_rivers_zip</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Path to zip file containing river data
@@ -694,7 +694,7 @@ Path to zip file containing river data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_Roads_interim</cc>
+<cc>DP_R_road_interim</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path to interim roads data
@@ -705,7 +705,7 @@ Directory path to interim roads data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_Roads_processed</cc>
+<cc>DP_R_road_processed</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path to processed roads data
@@ -716,7 +716,7 @@ Directory path to processed roads data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_Roads_raw</cc>
+<cc>DP_R_road_raw</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path to raw roads data
@@ -727,7 +727,7 @@ Directory path to raw roads data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_Roads_url</cc>
+<cc>DP_R_road_url</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 URL for the Global Roads Inventory Project (GRIP) data
@@ -738,40 +738,40 @@ URL for the Global Roads Inventory Project (GRIP) data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_Efforts_interim</cc>
+<cc>DP_R_efforts_interim</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path to interim sampling efforts data
 </td>
 <td style="text-align:left;">
-<i>datasets/interim/SamplingEfforts</i>
+<i>datasets/interim/sampling_efforts</i>
 </td>
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_Efforts_processed</cc>
+<cc>DP_R_efforts_processed</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path to processed sampling efforts data
 </td>
 <td style="text-align:left;">
-<i>datasets/processed/SamplingEfforts</i>
+<i>datasets/processed/sampling_efforts</i>
 </td>
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_Efforts_raw</cc>
+<cc>DP_R_efforts_raw</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path to raw sampling efforts data
 </td>
 <td style="text-align:left;">
-<i>datasets/raw/SamplingEfforts</i>
+<i>datasets/raw/sampling_efforts</i>
 </td>
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_EASIN_interim</cc>
+<cc>DP_R_easin_interim</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path to EASIN data
@@ -782,7 +782,7 @@ Directory path to EASIN data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_EASIN_processed</cc>
+<cc>DP_R_easin_processed</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path to processed EASIN data
@@ -793,7 +793,7 @@ Directory path to processed EASIN data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_EASIN_summary</cc>
+<cc>DP_R_easin_summary</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path to summary of processed EASIN data
@@ -804,7 +804,7 @@ Directory path to summary of processed EASIN data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_EASIN_taxa_url</cc>
+<cc>DP_R_easin_taxa_url</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 URL for EASIN API for downloading taxa list
@@ -815,7 +815,7 @@ URL for EASIN API for downloading taxa list
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_EASIN_data_url</cc>
+<cc>DP_R_easin_data_url</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 URL for EASIN API for downloading species data
@@ -826,7 +826,7 @@ URL for EASIN API for downloading species data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_eLTER_processed</cc>
+<cc>DP_R_elter_processed</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Path to <code>RData</code> containing processed eLTER presence-absence
@@ -838,7 +838,7 @@ data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_eLTER_raw</cc>
+<cc>DP_R_elter_raw</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Path to <code>rds</code> file containing processed and standardized
@@ -850,7 +850,7 @@ eLTER data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_GBIF_interim</cc>
+<cc>DP_R_gbif_interim</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path to interim GBIF data
@@ -861,7 +861,7 @@ Directory path to interim GBIF data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_GBIF_processed</cc>
+<cc>DP_R_gbif_processed</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path to processed GBIF data
@@ -872,7 +872,7 @@ Directory path to processed GBIF data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_GBIF_raw</cc>
+<cc>DP_R_gbif_raw</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Directory path to raw GBIF data
@@ -894,7 +894,7 @@ Directory path to species-specific presence-absence data
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_HabAff</cc>
+<cc>DP_R_hab_affinity</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Path to <code>rds</code> file containing species affinity to habitat
@@ -906,7 +906,7 @@ types
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_Taxa_country</cc>
+<cc>DP_R_taxa_country</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Path to excel file containing the number of grid cells per species and
@@ -918,7 +918,7 @@ country
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_Taxa_easin</cc>
+<cc>DP_R_taxa_easin</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Path to <code>rds</code> file containing EASIN standardized taxonomy
@@ -929,7 +929,7 @@ Path to <code>rds</code> file containing EASIN standardized taxonomy
 </tr>
 <tr>
 <td style="text-align:left;white-space: nowrap;">
-<cc>DP_R_OPeNDAP_url</cc>
+<cc>DP_R_opendap_url</cc>
 </td>
 <td style="text-align:left;width: 25em; ">
 Path to OpENDAP server for the <code>IASDT</code>

@@ -97,10 +97,10 @@ linters: linters_with_defaults(
 	)
 exclusions: list(
 	"vignettes/",
-	"R/DWF_bioreg.R" = list(line_length_linter = Inf),
-	"R/DWF_river_length.R" = list(line_length_linter = Inf),
+	"R/dwf_bioreg.R" = list(line_length_linter = Inf),
+	"R/dwf_river_length.R" = list(line_length_linter = Inf),
 	"R/mod_prepare_knots.R" = list(unnecessary_nesting_linter = 70:80),
-	"R/mod_prepare_HPC.R" = list(line_length_linter = Inf),
-	"R/DWF_wetness_index.R" = list(line_length_linter = Inf),
-	"R/DWF_soil.R" = list(line_length_linter = Inf)
+	"R/mod_prepare_hpc.R" = list(line_length_linter = Inf),
+	"R/dwf_wetness_index.R" = list(line_length_linter = Inf),
+	"R/dwf_soil.R" = list(line_length_linter = Inf)
 	)

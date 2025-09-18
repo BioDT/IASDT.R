@@ -120,7 +120,7 @@ gbif_read_chunk <- function(
     dplyr::tibble(Data = .) %>%
     # split into columns and assign column names
     tidyr::separate_wider_delim(
-      cols = "Data", delim = "\t", names = selected_columns$Col) %>%
+      cols = "Data", delim = "\t", names = selected_columns$column) %>%
     # Convert classes for some columns
     dplyr::mutate(
       # convert empty strings to NA

@@ -54,7 +54,7 @@ gbif_read_chunk <- function(
   clc_tif <- synhab_desc <- clc_crosswalk <- Longitude <- Latitude <-
     uncertain_km <- country_codes <- countryName <- hasCoordinate <-
     hasGeospatialIssues <- phylum <- phylumKey <- path_grid <-
-    occurrenceStatus <- value <- path_gbif <- selected_columns <- int_cols <-
+    occurrenceStatus <- Value <- path_gbif <- selected_columns <- int_cols <-
     lgl_cols <- dbl_cols <- int64_cols <- coordinatePrecision <- n_dec_long <-
     n_dec_lat <- year <- taxonRank <- sort_columns <- CellCode <- NULL
 
@@ -192,14 +192,14 @@ gbif_read_chunk <- function(
       terra::extract(x = corine_r, y = .) %>%
       dplyr::pull(Value) %>%
       # convert to tibble (integer)
-      dplyr::tibble(value = .) %>%
+      dplyr::tibble(Value = .) %>%
       dplyr::mutate(
         # replace 999 with NA
-        value = dplyr::if_else(
-          as.integer(value) == 999, NA_integer_, as.integer(value))) %>%
+        Value = dplyr::if_else(
+          as.integer(Value) == 999, NA_integer_, as.integer(Value))) %>%
       # add information on CLC (L1//L2/L3) classes
-      dplyr::left_join(clc_levels, by = "value") %>%
-      dplyr::select(-value) %>%
+      dplyr::left_join(clc_levels, by = "Value") %>%
+      dplyr::select(-Value) %>%
       # merge with cleaned dataset
       dplyr::bind_cols(chunk_data, .)
 

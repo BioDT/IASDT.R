@@ -130,8 +130,7 @@ efforts_process <- function(
     ~var_name, ~value, ~check_dir, ~check_file,
     "path_efforts", "DP_R_efforts_processed", FALSE, FALSE,
     "path_raw", "DP_R_efforts_raw", FALSE, FALSE,
-    "path_interim", "DP_R_efforts_interim", FALSE, FALSE,
-    "path_grid", "DP_R_grid_processed", TRUE, FALSE)
+    "path_interim", "DP_R_efforts_interim", FALSE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = env_vars_to_read)
@@ -152,21 +151,7 @@ efforts_process <- function(
     c(
       path_efforts, path_raw, path_interim, path_efforts_cleaned,
       path_efforts_requests))
-
-  ## Reference grid ----
-  grids <- path_grid %>%
-    fs::path(c("grid_10_land_crop_sf.RData", "grid_10_land_crop.RData"))
-
-  missing_grids <- grids[!file.exists(grids)]
-  if (length(missing_grids) > 0) {
-    ecokit::stop_ctx(
-      paste0(
-        "The following grid file(s) do not exist:\n",
-        paste0(" >>> ", missing_grids, collapse = "\n")),
-      missing_grids = missing_grids,
-      length_missing_grids = length(missing_grids), include_backtrace = TRUE)
-  }
-
+  
   # # ..................................................................... ###
 
   # request efforts data ------

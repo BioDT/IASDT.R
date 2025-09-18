@@ -174,7 +174,7 @@ chelsa_prepare <- function(
       down_command = purrr::map2_chr(
         .x = url, .y = path_down,
         .f = ~ stringr::str_glue(
-          'curl -k -L --connect-timeout 120 --max-time 600 --retry 5 \\
+          'curl -k -L --connect-timeout 240 --max-time 1200 --retry 5 \\
           "{.x}" -o "{.y}" --silent')),
 
       # Unique name for variable / time combination

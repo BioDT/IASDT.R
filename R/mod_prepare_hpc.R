@@ -132,7 +132,7 @@
 #' @param check_python Logical. Whether to check if the Python executable
 #'   exists.
 #' @param precision Integer. Must be either 32 or 64 (default). Defines the
-#'  floating-point precision mode for `Hmsc-HPC` sampling (--fp 32 or --fp 64).
+#'   floating-point precision mode for `Hmsc-HPC` sampling (--fp 32 or --fp 64).
 #' @param hab_abb Character. Abbreviation for the habitat type (based on
 #'   [SynHab](https://www.preslia.cz/article/pdf?id=11548)) for which to prepare
 #'   data. Valid values are `0`, `1`, `2`, `3`, `4a`, `4b`, `10`, `12a`, `12b`.

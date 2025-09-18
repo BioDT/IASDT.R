@@ -337,7 +337,7 @@ mod_prepare_data <- function(
   # Reference grid as sf - country names
   ecokit::cat_time(
     "Reference grid - country names", level = 2L, verbose = verbose_progress)
-  grid_country <- fs::path(path_grid, "grid_10_land_crop_sf_country.RData")
+  grid_country <- fs::path(path_grid, "grid_10_land_sf_country.RData")
   if (!fs::file_exists(grid_country)) {
     ecokit::stop_ctx(
       "grid_country file does not exist", grid_country = grid_country,

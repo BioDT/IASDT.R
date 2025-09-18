@@ -119,7 +119,7 @@ naps_plot <- function(species = NULL, env_file = ".env") {
   invisible(gc())
 
   # the study area as simple feature object for plotting
-  grid10_sf <- fs::path(path_grid, "grid_10_land_crop_sf.RData") %>%
+  grid10_sf <- fs::path(path_grid, "grid_10_land_sf.RData") %>%
     ecokit::load_as()
 
   gbif_grid100 <- species_data$gbif_grid100[[1]]

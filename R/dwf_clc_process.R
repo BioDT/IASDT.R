@@ -17,6 +17,11 @@
 #'   the reference grid. Default: `15`.
 #' @param plot_clc Logical. If `TRUE`, plots percentage coverage for CLC levels
 #'   and habitat types. Default: `TRUE`.
+#' @param n_cores_plot Integer. Number of CPU cores to use for parallel
+#'   plotting. Default: 5L.
+#' @param strategy Character. The parallel processing strategy to use. Valid
+#'   options are "sequential", "multisession" (default), "multicore", and
+#'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @return Returns `invisible(NULL)`; saves processed data and optional plots to
 #'   disk.
 #' @name clc_process
@@ -30,7 +35,8 @@
 #' <https://doi.org/10.2909/960998c1-1870-4e82-8051-6485205ebbac>
 
 clc_process <- function(
-    env_file = ".env", min_land_percent = 15L, plot_clc = TRUE) {
+    env_file = ".env", min_land_percent = 15L, plot_clc = TRUE,
+    n_cores_plot = 5L, strategy = "multisession") {
 
   # # ..................................................................... ###
 
@@ -42,9 +48,9 @@ clc_process <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  synhab_desc <- CNTR_ID <- geometry <- name <- path_clc <- path_grid <-
+  CNTR_ID <- geometry <- name <- path_clc <- path_grid <-
     path_grid_ref <- km <- majority <- path_clc_tif <- path_clc_crosswalk <-
-    eu_boundaries <- value <- country <- country_2 <- map <- NULL
+    eu_boundaries <- value <- country <- country_2 <- map <- Value <- NULL
 
   if (!is.numeric(min_land_percent) ||
       !dplyr::between(min_land_percent, 0, 100)) {
@@ -52,6 +58,10 @@ clc_process <- function(
       "`min_land_percent` must be a numeric value between 0 and 100.",
       min_land_percent = min_land_percent, include_backtrace = TRUE)
   }
+
+  strategy <- .validate_strategy(strategy)
+  if (strategy == "sequential") n_cores <- 1L
+  n_cores <- .validate_n_cores(n_cores)
 
   # # ..................................................................... ###
 
@@ -114,12 +124,11 @@ clc_process <- function(
   ecokit::cat_time("Loading crosswalks", level = 1L)
   clc_crosswalk <- readr::read_delim(
     file = path_clc_crosswalk, show_col_types = FALSE, progress = FALSE) %>%
-    dplyr::select(-synhab_desc) %>%
     dplyr::rename_all(~stringr::str_replace(.x, "CLC", "clc")) %>%
     dplyr::rename_all(~stringr::str_replace(.x, "_L", "_l")) %>%
     dplyr::rename_all(~stringr::str_replace(.x, "EUNIS_2019", "eunis2019")) %>%
     dplyr::rename_all(~stringr::str_replace(.x, "SynHab", "synhab")) %>%
-    dplyr::rename_all(~stringr::str_replace(.x, "Value", "value"))
+    dplyr::rename(value = Value)
 
   # # ||||||||||||||||||||||||||||||||||||||||||||
   # reference grid
@@ -164,15 +173,13 @@ clc_process <- function(
   # Create folders when necessary
   c(
     path_clc, path_clc_summary_tif, path_clc_summary_tif_crop,
-    path_clc_summary_rdata) %>%
+    path_clc_summary_rdata, path_grid) %>%
     purrr::walk(fs::dir_create)
 
   if (plot_clc) {
     # sub-folders to store JPEG files
     path_clc_summary_jpeg <- fs::path(path_clc, "summary_jpeg")
-    path_clc_summary_jpeg_free <- fs::path(path_clc_summary_jpeg, "free_legend")
-
-    fs::dir_create(c(path_clc_summary_jpeg, path_clc_summary_jpeg_free))
+    fs::dir_create(path_clc_summary_jpeg)
   }
 
   # # ..................................................................... ###
@@ -209,7 +216,9 @@ clc_process <- function(
       exactextractr::exact_extract(
         x = clc_rast, y = ., fun = "frac",
         force_df = TRUE, default_value = 44, progress = FALSE)) %>%
-    sf::st_transform(crs = 3035)
+    sf::st_transform(crs = 3035) %>%
+    tibble::as_tibble() %>%
+    sf::st_as_sf()
 
   # # ||||||||||||||||||||||||||||||||||||||||||||
   # Save fraction results
@@ -343,6 +352,7 @@ clc_process <- function(
     dplyr::filter(name == "perc_cover_clc_l3") %>%
     dplyr::pull(map) %>%
     magrittr::extract2(1) %>%
+    terra::unwrap() %>%
     magrittr::extract2(
       c(
         "clc_l3_423", "clc_l3_511", "clc_l3_512",
@@ -375,13 +385,6 @@ clc_process <- function(
     dplyr::filter(grid_10_land == 1) %>%
     dplyr::select(-grid_10_land)
 
-  ecokit::cat_time("Reference grid --- sf object - cropped", level = 2L)
-  grid_10_land_crop_sf <- terra::as.points(grid_10_land_crop) %>%
-    sf::st_as_sf() %>%
-    sf::st_join(x = grid_sf, y = .) %>%
-    dplyr::filter(grid_10_land_crop == 1) %>%
-    dplyr::select(-grid_10_land_crop)
-
   ## ||||||||||||||||||||||||||||||||||||||||
   # Save reference grid
   ## ||||||||||||||||||||||||||||||||||||||||
@@ -390,16 +393,12 @@ clc_process <- function(
   grid_10_land <- terra::wrap(grid_10_land)
   grid_10_land_crop <- terra::wrap(grid_10_land_crop)
 
-  fs::dir_create(path_grid)
   save(grid_10_land, file = fs::path(path_grid, "grid_10_land.RData"))
   save(
     grid_10_land_crop,
     file = fs::path(path_grid, "grid_10_land_crop.RData"))
   save(
     grid_10_land_sf, file = fs::path(path_grid, "grid_10_land_sf.RData"))
-  save(
-    grid_10_land_crop_sf,
-    file = fs::path(path_grid, "grid_10_land_crop_sf.RData"))
 
   ## ||||||||||||||||||||||||||||||||||||||||
   # Save calculated % coverage
@@ -458,19 +457,19 @@ clc_process <- function(
   # was retrieved by spatial joining of the grid centroid and country boundaries
   # or estimated as the nearest country
   grid_country <- sf::st_join(x = grid_country, y = grid_country_near) %>%
-    sf::st_join(grid_10_land_crop_sf) %>%
+    sf::st_join(grid_10_land_sf) %>%
     dplyr::mutate(
       Nearest = is.na(country),
       country = dplyr::coalesce(country, country_2)) %>%
     dplyr::select(-"country_2")
 
   ecokit::save_as(
-    object = grid_country, object_name = "grid_10_land_crop_sf_country",
-    out_path = fs::path(path_grid, "grid_10_land_crop_sf_country.RData"))
+    object = grid_country, object_name = "grid_10_land_sf_country",
+    out_path = fs::path(path_grid, "grid_10_land_sf_country.RData"))
 
   rm(
-    grid_10_land_crop_sf, grid_10_land_sf, exclude_area,
-    turkey_boundaries, grid_country, grid_country_near, envir = environment())
+    exclude_area, turkey_boundaries, grid_country, grid_country_near,
+    envir = environment())
 
   invisible(gc())
 
@@ -491,23 +490,24 @@ clc_process <- function(
         clc_type <- stringr::str_remove(.x, "perc_cover_")
         ecokit::cat_time(clc_type, level = 2L)
 
-        map <- terra::crop(.y, terra::unwrap(grid_10_land_crop)) %>%
+        map_cropped <- terra::crop(
+          terra::unwrap(.y), terra::unwrap(grid_10_land_crop)) %>%
           terra::mask(terra::unwrap(grid_10_land_crop)) %>%
           ecokit::set_raster_crs(crs = "epsg:3035")
 
         terra::writeRaster(
-          x = map, overwrite = TRUE,
+          x = map_cropped, overwrite = TRUE,
           filename = fs::path(
-            path_clc_summary_tif_crop, paste0("perc_cover_", names(map),
-            ".tif")))
+            path_clc_summary_tif_crop, paste0("perc_cover_", names(map_cropped),
+                                              ".tif")))
 
         out_obj_name <- paste0("perc_cover_", clc_type, "_crop")
         ecokit::save_as(
-          object = terra::wrap(map), object_name = out_obj_name,
+          object = terra::wrap(map_cropped), object_name = out_obj_name,
           out_path = fs::path(
             path_clc_summary_rdata, paste0(out_obj_name, ".RData")))
 
-        return(map)
+        return(terra::wrap(map_cropped))
       }
     ))
 
@@ -530,22 +530,20 @@ clc_process <- function(
   ecokit::cat_time(
     "Processing using `exactextractr::exact_extract`", level = 1L)
 
-  clc_majority <- grid_sf %>%
-    # Ensure that the projection of x and y parameters of
-    # `exactextractr::exact_extract` suppress warning: Polygons transformed to
-    # raster CRS (EPSG:3035)
-    # https://github.com/isciences/exactextractr/issues/103
-    sf::st_transform(sf::st_crs(clc_rast)) %>%
+  # Ensure that the projection of x and y parameters of
+  # `exactextractr::exact_extract` suppress warning: Polygons transformed to
+  # raster CRS (EPSG:3035) https://github.com/isciences/exactextractr/issues/103
+
+  clc_majority <- sf::st_transform(grid_10_land_sf, sf::st_crs(clc_rast)) %>%
     dplyr::mutate(
       majority = exactextractr::exact_extract(
         x = clc_rast, y = ., fun = "majority",
         default_value = 44, progress = FALSE)) %>%
     dplyr::left_join(clc_crosswalk, by = dplyr::join_by(majority == value)) %>%
+    sf::st_transform(crs = 3035) %>%
+    dplyr::mutate(majority = factor(majority)) %>%
     tibble::tibble() %>%
-    sf::st_as_sf() %>%
-    sf::st_transform(crs = 3035)
-
-  rm(clc_rast, grid_sf, envir = environment())
+    sf::st_as_sf()
 
   ## ||||||||||||||||||||||||||||||||||||||||
   # Save majority results
@@ -556,6 +554,7 @@ clc_process <- function(
     clc_majority,
     file = fs::path(path_clc_summary_rdata, "clc_majority.RData"))
 
+  rm(clc_rast, grid_sf, grid_10_land_sf, envir = environment())
   invisible(gc())
 
   ## ||||||||||||||||||||||||||||||||||||||||
@@ -584,15 +583,43 @@ clc_process <- function(
   # ---------------------------------------------------
 
   if (plot_clc) {
+
     ecokit::cat_time("Plotting")
-    c(
-      "perc_cover_synhab", "perc_cover_clc_l1", "perc_cover_clc_l2",
-      "perc_cover_clc_l3", "perc_cover_eunis2019") %>%
-      purrr::walk(
-        .f = clc_plot,
-        clc_map = perc_cover_maps, eu_map = eu_boundaries_sf$L_03,
-        crosswalk = clc_crosswalk, path_jpeg = path_clc_summary_jpeg,
-        path_jpeg_free = path_clc_summary_jpeg_free)
+
+    if (n_cores_plot == 1) {
+      future::plan("sequential", gc = TRUE)
+    } else {
+      ecokit::set_parallel(
+        n_cores = n_cores_plot, level = 1L, strategy = strategy)
+      withr::defer(future::plan("sequential", gc = TRUE))
+    }
+
+    eu_map <- eu_boundaries_sf$L_03
+
+    # packages to be loaded in parallel
+    pkg_to_export <- ecokit::load_packages_future(
+      packages = c(
+        "cowplot", "dplyr", "ecokit", "fs", "ggplot2", "ggtext", "grid",
+        "magrittr", "paletteer", "purrr", "ragg", "scales", "stringi",
+        "stringr", "terra", "tibble", "tidyselect", "tidyterra", "viridis"),
+      strategy = strategy)
+
+    plot_list <- future.apply::future_lapply(
+      X = c(
+        "perc_cover_synhab", "perc_cover_clc_l1", "perc_cover_clc_l2",
+        "perc_cover_clc_l3", "perc_cover_eunis2019"),
+      FUN = function(x) {
+        clc_plot(
+          clc_name = x, clc_map = perc_cover_maps, eu_map = eu_map,
+          crosswalk = clc_crosswalk, path_jpeg = path_clc_summary_jpeg)
+      },
+      future.scheduling = Inf, future.seed = TRUE,
+      future.packages = pkg_to_export,
+      future.globals = c(
+        "clc_plot", "perc_cover_maps", "eu_map", "clc_crosswalk",
+        "path_clc_summary_jpeg"))
+
+    rm(plot_list, envir = environment())
   }
 
   # # ..................................................................... ###
@@ -652,7 +679,7 @@ clc_get_percentage <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  fracs <- class <- hab_percent <- NULL
+  fracs <- cw_class <- hab_percent <- NULL
 
   # # ..................................................................... ###
 
@@ -661,13 +688,13 @@ clc_get_percentage <- function(
 
   map <- dplyr::select(
     clc_crosswalk, "value", tidyselect::all_of(clc_type)) %>%
-    stats::setNames(c("fracs", "class")) %>%
-    tidyr::nest(fracs = -class) %>%
-    dplyr::slice(gtools::mixedorder(class)) %>%
+    stats::setNames(c("fracs", "cw_class")) %>%
+    tidyr::nest(fracs = -cw_class) %>%
+    dplyr::slice(gtools::mixedorder(cw_class)) %>%
     dplyr::mutate(
       fracs = purrr::map(.x = fracs, .f = ~ as.vector(unlist(.x))),
       hab_percent = purrr::map2(
-        .x = fracs, .y = class,
+        .x = fracs, .y = cw_class,
         .f = ~ {
           r_name <- paste0(clc_type, "_", .y) %>%
             stringr::str_replace_all("\\.", "") %>%
@@ -690,7 +717,7 @@ clc_get_percentage <- function(
     object = terra::wrap(map), object_name = out_obj_name,
     out_path = fs::path(path_rdata, paste0(out_obj_name, ".RData")))
 
-  tibble::tibble(name = out_obj_name, map = list(map))
+  tibble::tibble(name = out_obj_name, map = list(terra::wrap(map)))
 }
 
 # --------------------------------------------------- ####
@@ -727,6 +754,7 @@ clc_get_percentage <- function(
 clc_get_majority <- function(
     clc_type, clc_majority, path_tif, path_tif_crop, path_rdata,
     grid_10_land, grid_10_land_crop) {
+
   # # ..................................................................... ###
 
   if (is.null(clc_type) || is.null(clc_majority) || is.null(path_tif) ||
@@ -753,8 +781,7 @@ clc_get_majority <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-
-  label <- class <- id <- NULL
+  cw_label <- cw_class <- NULL
 
   # # ..................................................................... ###
 
@@ -762,84 +789,69 @@ clc_get_majority <- function(
   out_obj_name <- paste0("majority_", clc_type)
   out_obj_name_crop <- paste0(out_obj_name, "_crop")
 
-  map <- dplyr::filter(clc_majority, !is.na(clc_type)) %>%
+  na_classes <- c(
+    "Marine habitats", "5_Water bodies",
+    "5_2_Marine waters", "5_2_3_Sea and ocean", "A_Marine_Marine habitats")
+
+  map <- clc_majority %>%
     dplyr::select(
       tidyselect::starts_with(clc_type), -tidyselect::ends_with("_desc")) %>%
-    stats::setNames(c("id", "label", "geometry")) %>%
+    stats::setNames(c("cw_class", "cw_label", "geometry")) %>%
     dplyr::mutate(
-      id = paste0(id, "_", label),
-      id = stringr::str_replace_all(id, "\\.|\\._", "_"),
-      id = stringr::str_replace_all(id, "__", "_"),
-      id = stringr::str_replace_all(id, "NA_NA+", NA_character_),
-      label = NULL) %>%
-    # https://stackoverflow.com/questions/43487773/
-    dplyr::rename(!!out_obj_name := id) %>%
-    terra::rasterize(terra::unwrap(grid_10_land), field = out_obj_name)
+      cw_class = paste0(cw_class, "_", cw_label),
+      cw_class = stringr::str_replace_all(cw_class, "\\.|\\._", "_"),
+      cw_class = stringr::str_replace_all(cw_class, "__", "_"),
+      cw_class = stringr::str_replace_all(cw_class, "NA_NA", NA_character_),
+      cw_label = NULL) %>%
+    dplyr::filter(!is.na(cw_class), !cw_class %in% na_classes) %>%
+    terra::rasterize(terra::unwrap(grid_10_land), field = "cw_class") %>%
+    stats::setNames(out_obj_name)
 
-  map_levels <- magrittr::extract2(terra::levels(map), 1)
-  na_flag <- dplyr::pull(dplyr::filter(map_levels, is.na(get(out_obj_name))), 1)
-  terra::NAflag(map) <- (na_flag)
-  map <- terra::droplevels(map)
-
-  map_levels_new <- map_levels %>%
-    dplyr::slice(gtools::mixedorder(.[, 2])) %>%
-    dplyr::mutate(id = seq_len(dplyr::n()))
-
-  map_levels_m <- dplyr::left_join(
-    x = map_levels, y = map_levels_new, by = names(map_levels)[2]) %>%
-    dplyr::select(
-      tidyselect::all_of(out_obj_name), tidyselect::everything())
-
-  map <- terra::classify(map, map_levels_m[, -1])
-  levels(map) <- list(map_levels_new)
-
-  na_classes <- c(
-    "Marine_Marine habitats", "5_Water bodies",
-    "5_2_Marine waters", "5_2_3_Sea and ocean", "A_Marine habitats")
-
-  vv <- stats::setNames(map_levels_new, c("id", "class")) %>%
-    dplyr::filter(class %in% na_classes) %>%
-    dplyr::pull(id)
-
-  map <- terra::classify(map, cbind(NA, vv)) %>%
-    ecokit::set_raster_crs(crs = "epsg:3035")
-  levels(map) <- list(map_levels_new)
+  # Remap raster cell values
+  map_levels <- magrittr::extract2(terra::levels(map), 1) %>%
+    ecokit::arrange_alphanum("cw_class") %>%
+    dplyr::mutate(cw_id = seq_len(dplyr::n()))
+  # Create a named vector to map old IDs to new sequential IDs
+  id_map <- stats::setNames(map_levels$cw_id, map_levels$ID)
+  # Create a lookup for all possible raster values
+  lookup <- rep(NA_integer_, max(map_levels$ID) + 1)
+  lookup[as.integer(names(id_map)) + 1] <- id_map
+  map <- terra::classify(map, rcl = cbind(map_levels$ID, map_levels$cw_id))
+  # Now set levels with sequential IDs and your desired order
+  levels(map)[[1]] <- map_levels[, c("cw_id", "cw_class")]
 
   terra::writeRaster(
     x = map, overwrite = TRUE,
     filename = fs::path(path_tif, paste0(out_obj_name, ".tif")))
-
   terra::levels(map) %>%
     magrittr::extract2(1) %>%
-    dplyr::rename(VALUE = id) %>%
+    dplyr::rename(VALUE = cw_class) %>%
     foreign::write.dbf(
       file = fs::path(path_tif, paste0(out_obj_name, ".tif.vat.dbf")),
       factor2char = TRUE, max_nchar = 254)
-
   ecokit::save_as(
     object = terra::wrap(map), object_name = out_obj_name,
     out_path = fs::path(path_rdata, paste0(out_obj_name, ".RData")))
 
-  # CROPPING
-  map_crop <- terra::crop(x = map, y = terra::unwrap(grid_10_land_crop)) %>%
-    terra::mask(mask = terra::unwrap(grid_10_land_crop)) %>%
-    ecokit::set_raster_crs(crs = "epsg:3035")
+  # cropping
+  map_crop <- terra::crop(x = map, y = terra::unwrap(grid_10_land_crop))
 
   terra::writeRaster(
     x = map_crop, overwrite = TRUE,
     filename = fs::path(path_tif_crop, paste0(out_obj_name_crop, ".tif")))
-
   terra::levels(map_crop) %>%
     magrittr::extract2(1) %>%
-    dplyr::rename(VALUE = id) %>%
+    dplyr::rename(VALUE = cw_class) %>%
     foreign::write.dbf(
       file = fs::path(
         path_tif_crop, paste0(out_obj_name_crop, ".tif.vat.dbf")),
       factor2char = TRUE, max_nchar = 254)
-
   ecokit::save_as(
     object = terra::wrap(map_crop), object_name = out_obj_name_crop,
     out_path = fs::path(path_rdata, paste0(out_obj_name_crop, ".RData")))
 
-  tibble::tibble(Type = clc_type, map = list(map), map_crop = list(map_crop))
+  tibble::tibble(
+    clc_type = clc_type,
+    map = list(terra::wrap(map)),
+    map_crop = list(terra::wrap(map_crop)))
 }

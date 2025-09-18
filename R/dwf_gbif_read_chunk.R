@@ -92,8 +92,8 @@ gbif_read_chunk <- function(
   }
   grid_r <- ecokit::load_as(grid_r, unwrap_r = TRUE)
 
-  # # grid_10_land_crop_sf
-  grid_sf <- fs::path(path_grid, "grid_10_land_crop_sf.RData")
+  # # grid_10_land_sf
+  grid_sf <- fs::path(path_grid, "grid_10_land_sf.RData")
   if (!file.exists(grid_sf)) {
     ecokit::stop_ctx(
       "Reference grid file (sf) not found", grid_sf = grid_sf,

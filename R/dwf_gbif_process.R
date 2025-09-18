@@ -172,8 +172,8 @@ gbif_process <- function(
   path_publishers <- fs::path(path_gbif, "n_species_per_publisher")
   fs::dir_create(c(path_sp_data, path_publishers))
 
-  # grid_10_land_crop_sf
-  grid_sf <- fs::path(path_grid, "grid_10_land_crop_sf.RData")
+  # grid_10_land_sf
+  grid_sf <- fs::path(path_grid, "grid_10_land_sf.RData")
   if (!file.exists(grid_sf)) {
     ecokit::stop_ctx(
       "Reference grid (sf) file not found", grid_sf = grid_sf,
@@ -615,6 +615,7 @@ gbif_process <- function(
   # # ..................................................................... ###
 
   # Number of species per publisher --------
+  ecokit::cat_time("Number of species per publisher")
 
   n_species_publisher <- sf::st_drop_geometry(gbif_data) %>%
     dplyr::distinct(

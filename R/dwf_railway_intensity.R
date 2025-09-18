@@ -92,7 +92,7 @@ railway_intensity <- function(
   }
   grid_ref <- ecokit::load_as(grid_ref, unwrap_r = TRUE)
 
-  grid_sf <- fs::path(path_grid, "grid_10_land_crop_sf.RData")
+  grid_sf <- fs::path(path_grid, "grid_10_land_sf.RData")
   if (!file.exists(grid_sf)) {
     ecokit::stop_ctx(
       "The reference grid file does not exist", grid_sf = grid_sf,

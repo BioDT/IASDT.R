@@ -68,7 +68,7 @@ efforts_summarize <- function(
   # # ..................................................................... ###
 
   path_grid_r <- fs::path(path_grid, "grid_10_land_crop.RData")
-  path_grid_sf <- fs::path(path_grid, "grid_10_land_crop_sf.RData")
+  path_grid_sf <- fs::path(path_grid, "grid_10_land_sf.RData")
 
   if (!file.exists(path_grid_r)) {
     ecokit::stop_ctx(

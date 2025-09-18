@@ -4,7 +4,13 @@
 \alias{clc_process}
 \title{Process Corine Land Cover (CLC) data for the \code{IASDT}}
 \usage{
-clc_process(env_file = ".env", min_land_percent = 15L, plot_clc = TRUE)
+clc_process(
+  env_file = ".env",
+  min_land_percent = 15L,
+  plot_clc = TRUE,
+  n_cores_plot = 5L,
+  strategy = "multisession"
+)
 }
 \arguments{
 \item{env_file}{Character. Path to the environment file containing paths to
@@ -15,6 +21,13 @@ the reference grid. Default: \code{15}.}
 
 \item{plot_clc}{Logical. If \code{TRUE}, plots percentage coverage for CLC levels
 and habitat types. Default: \code{TRUE}.}
+
+\item{n_cores_plot}{Integer. Number of CPU cores to use for parallel
+plotting. Default: 5L.}
+
+\item{strategy}{Character. The parallel processing strategy to use. Valid
+options are "sequential", "multisession" (default), "multicore", and
+"cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 }
 \value{
 Returns \code{invisible(NULL)}; saves processed data and optional plots to

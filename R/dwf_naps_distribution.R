@@ -137,7 +137,7 @@ naps_distribution <- function(
   grid_paths <- fs::path(
     path_grid,
     c(
-      "grid_10_land_crop_sf_country.RData", "grid_10_land_crop.RData",
+      "grid_10_land_sf_country.RData", "grid_10_land_crop.RData",
       "grid_10_land_sf.RData"))
 
   if (!all(file.exists(grid_paths))) {
@@ -164,7 +164,7 @@ naps_distribution <- function(
   ### sf - 10 km ----
   ecokit::cat_time("sf - 10 km - CNT", level = 2L, verbose = verbose)
   grid_10_country <- fs::path(
-    path_grid, "grid_10_land_crop_sf_country.RData") %>%
+    path_grid, "grid_10_land_sf_country.RData") %>%
     ecokit::load_as()
 
   ### raster - 10 km ----
@@ -645,7 +645,7 @@ naps_distribution <- function(
 
   country_list <- paste0("cnt_", ecokit::replace_space(valid_countries))
 
-  grid_country <- fs::path(path_grid, "grid_10_land_crop_sf_country.RData") %>%
+  grid_country <- fs::path(path_grid, "grid_10_land_sf_country.RData") %>%
     ecokit::load_as() %>%
     dplyr::select("country")
 

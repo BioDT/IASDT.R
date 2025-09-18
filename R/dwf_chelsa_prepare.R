@@ -34,7 +34,7 @@ chelsa_prepare <- function(
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   variable <- path_down <- time_period <- extension <- climate_scenario <-
-    path_chelsa_in <- path_file <- path_out_tif <- path_out_nc <-
+    path_chelsa_in <- path_file <- path_out_tif <- path_out_netcdf <-
     path_chelsa_out <- path_dwnload_links <- url <- path_dir <- url_file <-
     climate_model <- exclude <- chelsa_base_url <- NULL
 
@@ -164,12 +164,12 @@ chelsa_prepare <- function(
       path_out_tif = purrr::map_chr(
         .x = path_file, .f = ~ fs::path(path_chelsa_out, "chelsa_tif", .x)),
 
-      path_out_nc = purrr::map_chr(
+      path_out_netcdf = purrr::map_chr(
         .x = path_out_tif, .f = stringr::str_replace_all,
         pattern = "chelsa_tif", replacement = "chelsa_netcdf"),
 
-      path_out_nc = purrr::map_chr(
-        .x = path_out_nc, .f = stringr::str_replace_all,
+      path_out_netcdf = purrr::map_chr(
+        .x = path_out_netcdf, .f = stringr::str_replace_all,
         pattern = ".tif$", replacement = ".nc"),
       down_command = purrr::map2_chr(
         .x = url, .y = path_down,

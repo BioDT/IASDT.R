@@ -23,10 +23,10 @@
 #'   files in the `model_postprocessing/parameters_summary` subdirectory.
 #' @details The functions exports three types of visualisations (see
 #'   [Hmsc::plotBeta]):
-#' - `Mean`: posterior mean estimate,
+#' - `mean`: posterior mean estimate,
 #' - `support`: statistical support level, measured by the posterior
 #'   probability for a positive or negative response,
-#' - `Sign`: indicates whether the response is positive, negative, or neither
+#' - `sign`: indicates whether the response is positive, negative, or neither
 #'   of these based on the chosen `support_level`.
 #'
 #' For the `omega` parameter, the `mod_heatmap_omega()` function generates two

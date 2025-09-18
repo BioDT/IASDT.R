@@ -113,7 +113,7 @@ plot_evaluation <- function(model_dir) {
     patchwork::plot_layout(axes = "collect")
 
   ragg::agg_jpeg(
-    filename = fs::path(model_dir, "model_evaluation", "Eval_explanatory.jpeg"),
+    filename = fs::path(model_dir, "model_evaluation", "eval_explanatory.jpeg"),
     width = 24, height = 20, res = 600,
     quality = 100, units = "cm")
   print(plots)

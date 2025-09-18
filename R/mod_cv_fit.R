@@ -368,7 +368,7 @@ mod_cv_fit <- function(
 
               # Path to save the progress of model fitting
               mod_prog_file <- stringr::str_replace_all(
-                post_file, "post.rds$", "Progress.txt")
+                post_file, "post.rds$", "progress.txt")
 
 
               # Model fitting command

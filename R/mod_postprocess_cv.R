@@ -387,7 +387,7 @@ mod_postprocess_cv_2_cpu <- function(
 
   eval_explain <- list.files(
     path = fs::path(model_dir, "model_evaluation"),
-    pattern = "Eval_.+.qs2", full.names = TRUE)
+    pattern = "eval_.+.qs2", full.names = TRUE)
 
   if (length(eval_explain) != 1L) {
     ecokit::stop_ctx(

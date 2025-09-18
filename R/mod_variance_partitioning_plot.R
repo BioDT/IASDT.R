@@ -75,7 +75,7 @@ variance_partitioning_plot <- function(
   path_root <- ecokit::parent_dir(
     path = path_model, levels = 1L, check_dir = TRUE, warning = FALSE)
   path_varpar <- fs::path(
-    path_root, "model_postprocessing", "Variance_Partitioning")
+    path_root, "model_postprocessing", "variance_partitioning")
 
   # # ..................................................................... ###
   # # ..................................................................... ###

@@ -75,7 +75,7 @@ mod_prepare_data <- function(
   fs::dir_create(path_model)
 
   ecokit::record_arguments(
-    out_path = fs::path(path_model, "Args_prepare_data.RData"))
+    out_path = fs::path(path_model, "args_prepare_data.RData"))
 
   # # ..................................................................... ###
 
@@ -366,7 +366,7 @@ mod_prepare_data <- function(
       include_backtrace = TRUE)
   }
   r_road_int <- ecokit::load_as(r_road_int, unwrap_r = TRUE) %>%
-    magrittr::extract2("All") %>%
+    magrittr::extract2("all") %>%
     stats::setNames("road_int") %>%
     terra::mask(efforts_mask)
 

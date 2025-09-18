@@ -144,7 +144,7 @@ mod_merge_chains <- function(
 
     temp_files_rds <- stringr::str_replace_all(temp_files, ".rds_temp$", ".rds")
     temp_files_progress <- stringr::str_replace_all(
-      temp_files, "_post.rds_temp", "_Progress.txt")
+      temp_files, "_post.rds_temp", "_progress.txt")
 
     purrr::walk(
       .x = c(temp_files_rds, temp_files, temp_files_progress),

@@ -278,7 +278,7 @@ mod_postprocess_1_cpu <- function(
   species_name <- non_focal_variables <- NULL
 
   ecokit::record_arguments(
-    out_path = fs::path(model_dir, "Args_mod_postprocess_1_cpu.RData"))
+    out_path = fs::path(model_dir, "args_mod_postprocess_1_cpu.RData"))
 
   # ****************************************************************
 

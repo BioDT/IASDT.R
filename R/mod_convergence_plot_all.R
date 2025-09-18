@@ -10,7 +10,7 @@
 #' model parameters.
 #'
 #' @param model_dir Character. Path to the root directory of the fitted model.
-#'   The convergence outputs will be saved to the `model_convergence_All`
+#'   The convergence outputs will be saved to the `model_convergence_all`
 #'   subdirectory.
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #' @param strategy Character. The parallel processing strategy to use. Valid
@@ -77,7 +77,7 @@ convergence_plot_all <- function(
 
   ecokit::cat_time("Prepare or load convergence data")
 
-  path_conv_all <- fs::path(model_dir, "model_convergence_All")
+  path_conv_all <- fs::path(model_dir, "model_convergence_all")
   fs::dir_create(path_conv_all)
 
   model_info <- fs::path(model_dir, "model_info.RData")

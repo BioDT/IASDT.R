@@ -106,7 +106,7 @@ predict_maps_cv <- function(
   model_name <- paste0(hab_abb, "_", cv_data$ModName)
 
   # path for model evaluation
-  path_eval <- fs::path(model_dir, "model_fitting_cv", "Evaluation")
+  path_eval <- fs::path(model_dir, "model_fitting_cv", "evaluation")
 
   # path for model predictions
   path_prediction <- fs::path(
@@ -118,14 +118,14 @@ predict_maps_cv <- function(
 
   path_preds_sf <- fs::path(
     path_prediction, paste0("prediction_", model_name, ".qs2"))
-  path_eval_file <- fs::path(path_eval, paste0("Eval_", model_name, ".qs2"))
+  path_eval_file <- fs::path(path_eval, paste0("eval_", model_name, ".qs2"))
   path_preds_r <- fs::path(
     path_prediction, paste0("prediction_", model_name, "_R.qs2"))
   path_preds_summary <- fs::path(
     path_prediction, paste0("prediction_", model_name, "_summary.RData"))
 
   # CV fitted cross-validated model
-  path_model <- cv_data$Path_ModFitted
+  path_model <- cv_data$path_mod_fitted
   if (!file.exists(path_model)) {
     ecokit::stop_ctx(
       "Model data does not exist", path_model = path_model,

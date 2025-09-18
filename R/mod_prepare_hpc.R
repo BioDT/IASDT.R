@@ -457,7 +457,7 @@ mod_prepare_hpc <- function(
     suppressWarnings()
 
   ecokit::record_arguments(
-    out_path = fs::path(path_model, "Args_mod_prepare_hpc.RData"))
+    out_path = fs::path(path_model, "args_mod_prepare_hpc.RData"))
 
   # # ..................................................................... ###
 
@@ -1129,7 +1129,7 @@ mod_prepare_hpc <- function(
       })
 
     grDevices::cairo_pdf(
-      filename = fs::path(path_model, "knot_Locations.pdf"),
+      filename = fs::path(path_model, "knot_locations.pdf"),
       width = 12, height = 13.25, onefile = TRUE)
     invisible(purrr::map(knots_plots, print))
     grDevices::dev.off()

@@ -168,7 +168,7 @@ mod_cv_evaluate <- function(model_dir = NULL, cv_type = "cv_dist") {
     patchwork::plot_layout(heights = c(0.25, 12), widths = c(1, 1))
 
   ragg::agg_jpeg(
-    filename = fs::path(model_dir, "model_evaluation", "Evaluation_plot.jpeg"),
+    filename = fs::path(model_dir, "model_evaluation", "evaluation_plot.jpeg"),
     width = 20, height = 30, res = 600, quality = 100, units = "cm")
   print(final_plot)
   grDevices::dev.off()

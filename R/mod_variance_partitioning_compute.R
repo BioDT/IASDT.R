@@ -79,12 +79,12 @@ variance_partitioning_compute <- function(
   # # .................................................................... ###
 
   # Create folder for variance partitioning results
-  Path_VarPar <- fs::path(
+  path_var_par <- fs::path(
     dirname(dirname(path_model)),
-    "model_postprocessing", "Variance_Partitioning")
-  fs::dir_create(Path_VarPar)
+    "model_postprocessing", "variance_partitioning")
+  fs::dir_create(path_var_par)
 
-  file_var_par <- fs::path(Path_VarPar, paste0(vp_file, ".RData"))
+  file_var_par <- fs::path(path_var_par, paste0(vp_file, ".RData"))
   if (ecokit::check_data(file_var_par)) {
     return(ecokit::load_as(file_var_par))
   }

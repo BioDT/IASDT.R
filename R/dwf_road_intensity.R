@@ -244,7 +244,7 @@ road_intensity <- function(env_file = ".env") {
 
   ecokit::cat_time("All roads", level = 2L)
   road_length <- (grip_1 + grip_2 + grip_3 + grip_4 + grip_5) %>%
-    stats::setNames("All") %>%
+    stats::setNames("all") %>%
     c(grip_1, grip_2, grip_3, grip_4, grip_5, .) %>%
     # Ensure that values are read from memory
     terra::toMemory()

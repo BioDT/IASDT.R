@@ -38,9 +38,9 @@
 #' @param evaluate Logical. Whether to evaluate the model predictions. Defaults
 #'   to `FALSE`.
 #' @param evaluation_name Character. Name of the evaluation results. If `NULL`,
-#'   the default name is used (`Eval_[model_name].qs2`).
+#'   the default name is used (`eval_[model_name].qs2`).
 #' @param evaluation_directory Character. Directory where the evaluation results
-#'   will be saved. Defaults to `Evaluation`.
+#'   will be saved. Defaults to `evaluation`.
 #' @param prediction_type Character. Type of predictions to be made. If `NULL`
 #'   (default), predictions are made for the latent factors. If `c`, predictions
 #'   are made for response curves at mean coordinates. If `i`, predictions are
@@ -77,7 +77,7 @@ predict_hmsc <- function(
     n_cores_lf = n_cores, lf_check = FALSE, lf_temp_cleanup = TRUE,
     lf_commands_only = FALSE, pred_directory = NULL, pred_pa = NULL,
     pred_xy = NULL, evaluate = FALSE, evaluation_name = NULL,
-    evaluation_directory = "Evaluation", verbose = TRUE,
+    evaluation_directory = "evaluation", verbose = TRUE,
     spatial_model = TRUE) {
 
   # # ..................................................................... ###
@@ -112,7 +112,7 @@ predict_hmsc <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  chunk <- sp <- ias_id <- Path_pred <- sp_data <- data <- geometry <- x <-
+  chunk <- sp <- ias_id <- path_pred <- sp_data <- data <- geometry <- x <-
     y <- sr_mean <- sr_sd <- sr_cov <- NULL
 
   # # ..................................................................... ###
@@ -718,7 +718,7 @@ predict_hmsc <- function(
       }
 
       tibble::tibble(
-        sp = sp, ias_id = ias_id, Path_pred = pred_summary_file,
+        sp = sp, ias_id = ias_id, path_pred = pred_summary_file,
         RMSE = RMSE, AUC = AUC, Boyce = Boyce, TjurR2 = TjurR2)
 
     },
@@ -742,10 +742,10 @@ predict_hmsc <- function(
 
   evaluation_data <- dplyr::bind_rows(evaluation_data)
 
-  predictions <- dplyr::select(evaluation_data, Path_pred, sp, ias_id) %>%
+  predictions <- dplyr::select(evaluation_data, path_pred, sp, ias_id) %>%
     dplyr::mutate(
       sp_data = purrr::map(
-        .x = Path_pred,
+        .x = path_pred,
         .f = ~ {
           ecokit::load_as(.x) %>%
             tidyr::pivot_longer(
@@ -769,7 +769,7 @@ predict_hmsc <- function(
   ecokit::save_as(object = predictions, out_path = pred_file)
 
   if (temp_cleanup) {
-    try(fs::file_delete(evaluation_data$Path_pred), silent = TRUE)
+    try(fs::file_delete(evaluation_data$path_pred), silent = TRUE)
   }
 
   ecokit::cat_time("Predictions were saved", level = 1L, verbose = verbose)
@@ -781,22 +781,22 @@ predict_hmsc <- function(
       eval_path <- fs::path(
         evaluation_directory,
         paste0(
-          "Eval_", stringr::str_remove(model_name, "_train|_current"), ".qs2"))
+          "eval_", stringr::str_remove(model_name, "_train|_current"), ".qs2"))
     } else {
       eval_path <- fs::path(
         evaluation_directory,
         paste0(
-          "Eval_", stringr::str_remove(model_name, "_train|_current"),
+          "eval_", stringr::str_remove(model_name, "_train|_current"),
           "_", evaluation_name, ".qs2"))
     }
 
-    evaluation_data <- dplyr::select(evaluation_data, -Path_pred)
+    evaluation_data <- dplyr::select(evaluation_data, -path_pred)
     ecokit::save_as(object = evaluation_data, out_path = eval_path)
 
     ecokit::cat_time(
       "Evaluation results were saved", level = 1L, verbose = verbose)
     ecokit::cat_time(
-      fs::path(evaluation_directory, "Eval_DT.qs2"),
+      fs::path(evaluation_directory, "eval_data.qs2"),
       level = 2L, cat_timestamp = FALSE, verbose = verbose)
 
   } else {

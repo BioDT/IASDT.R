@@ -59,19 +59,19 @@ times if the output file validation fails.</p>
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">run_crossprod_solve</span><span class="op">(</span></span>
-<span>  <span class="va">TF_environ</span>,</span>
+<span>  <span class="va">tf_environ</span>,</span>
 <span>  <span class="va">s1</span>,</span>
 <span>  <span class="va">s2</span>,</span>
-<span>  <span class="va">postEta</span>,</span>
+<span>  <span class="va">post_eta</span>,</span>
 <span>  <span class="va">path_out</span>,</span>
 <span>  <span class="va">denom</span>,</span>
 <span>  chunk_size <span class="op">=</span> <span class="fl">1000L</span>,</span>
 <span>  threshold_mb <span class="op">=</span> <span class="fl">2000L</span>,</span>
-<span>  TF_use_single <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  tf_use_single <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  solve_chunk_size <span class="op">=</span> <span class="fl">50L</span>,</span>
 <span>  solve_max_attempts <span class="op">=</span> <span class="fl">5L</span>,</span>
-<span>  LF_commands_only <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  lf_commands_only <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -79,9 +79,9 @@ times if the output file validation fails.</p>
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-tf-environ">TF_environ<a class="anchor" aria-label="anchor" href="#arg-tf-environ"></a></dt>
+<dl><dt id="arg-tf-environ">tf_environ<a class="anchor" aria-label="anchor" href="#arg-tf-environ"></a></dt>
 <dd><p>Character. Path to the Python environment. This argument is
-required if <code>use_TF</code> is <code>TRUE</code> under Windows. Defaults to <code>NULL</code>.</p></dd>
+required if <code>use_tf</code> is <code>TRUE</code> under Windows. Defaults to <code>NULL</code>.</p></dd>
 
 
 <dt id="arg-s-">s1<a class="anchor" aria-label="anchor" href="#arg-s-"></a></dt>
@@ -92,8 +92,8 @@ required if <code>use_TF</code> is <code>TRUE</code> under Windows. Defaults to 
 <dd><p>Character Path to the input file containing s2 coordinates.</p></dd>
 
 
-<dt id="arg-posteta">postEta<a class="anchor" aria-label="anchor" href="#arg-posteta"></a></dt>
-<dd><p>Character. Path to the file containing the <code>postEta</code> matrix
+<dt id="arg-post-eta">post_eta<a class="anchor" aria-label="anchor" href="#arg-post-eta"></a></dt>
+<dd><p>Character. Path to the file containing the <code>post_eta</code> matrix
 data.</p></dd>
 
 
@@ -116,7 +116,7 @@ Default is 1000.</p></dd>
 processing. Default is 2000.</p></dd>
 
 
-<dt id="arg-tf-use-single">TF_use_single<a class="anchor" aria-label="anchor" href="#arg-tf-use-single"></a></dt>
+<dt id="arg-tf-use-single">tf_use_single<a class="anchor" aria-label="anchor" href="#arg-tf-use-single"></a></dt>
 <dd><p>Logical. Whether to use single precision for the
 <code>TensorFlow</code> calculations. Defaults to <code>FALSE</code>.</p></dd>
 
@@ -136,7 +136,7 @@ function. Default is 50L.</p></dd>
 and crossprod internal function run_crossprod_solve. Default is 5L.</p></dd>
 
 
-<dt id="arg-lf-commands-only">LF_commands_only<a class="anchor" aria-label="anchor" href="#arg-lf-commands-only"></a></dt>
+<dt id="arg-lf-commands-only">lf_commands_only<a class="anchor" aria-label="anchor" href="#arg-lf-commands-only"></a></dt>
 <dd><p>Logical. If <code>TRUE</code>, returns the command to run the
 Python script. Default is <code>FALSE</code>.</p></dd>
 

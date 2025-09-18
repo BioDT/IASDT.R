@@ -214,13 +214,13 @@ optimize performance and manage memory constraints effectively.</p>
 <div class="section level2">
 <h2 id="step-1-cpu">Step 1: CPU<a class="anchor" aria-label="anchor" href="#step-1-cpu"></a>
 </h2>
-<p>The <strong><code><a href="../reference/Mod_postprocessing.html">mod_postprocess_1_CPU()</a></code></strong> function
+<p>The <strong><code><a href="../reference/Mod_postprocessing.html">mod_postprocess_1_cpu()</a></code></strong> function
 begins the post-processing phase for each habitat type by automating the
 following tasks:</p>
 <table class="table table table-condensed table-hover" style="font-size: 16px; margin-left: auto; margin-right: auto;"><tbody>
 <tr>
 <td style="text-align:left;padding-left: 4em;white-space: nowrap;" indentlevel="1">
-<cc><code><a href="../reference/Mod_SLURM.html">mod_SLURM_refit()</a></code></cc><tab0></tab0>
+<cc><code><a href="../reference/Mod_SLURM.html">mod_slurm_refit()</a></code></cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 checks for unsuccessful model fits.
@@ -294,35 +294,35 @@ residual species associations.
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 4em;white-space: nowrap;" indentlevel="1">
-<cc><code><a href="../reference/Mod_CV_Fit.html">mod_CV_fit()</a></code></cc><tab0></tab0>
+<cc><code><a href="../reference/Mod_CV_Fit.html">mod_cv_fit()</a></code></cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 prepares the necessary data for fitting cross-validated models.
 <ul>
 <li>
-output files are saved in the <code>Model_Fitting_CV</code>
+output files are saved in the <code>model_fitting_cv</code>
 subdirectory.
 </li>
 <li>
 the type of cross-validation strategy is controlled by the
-<code>CV_name</code> argument, which defaults to both
-<code>CV_Dist</code> and <code>CV_Large</code>.
+<code>cv_name</code> argument, which defaults to both
+<code>cv_dist</code> and <code>cv_large</code>.
 </li>
 <li>
-unfitted model objects are saved in the <code>Model_Init</code>
+unfitted model objects are saved in the <code>model_init</code>
 subdirectory.
 </li>
 <li>
 commands for model fitting are saved as text files, with a separate file
 for each cross-validation strategy (e.g.,
-<code>Commands2Fit_CV_Dist.txt</code>,
-<code>Commands2Fit_CV_Large.txt</code>).
+<code>commands_to_fit_cv_dist.txt</code>,
+<code>commands_to_fit_cv_large.txt</code>).
 </li>
 <li>
 model fitting commands are submitted as batch jobs using SLURM scripts,
 with a separate script for each strategy (e.g.,
-<code>CV_Bash_Fit_Dist.slurm</code>,
-<code>CV_Bash_Fit_Large.slurm</code>).
+<code>cv_bash_fit_dist.slurm</code>,
+<code>cv_bash_fit_large.slurm</code>).
 </li>
 </ul>
 </td>
@@ -338,12 +338,12 @@ sites, and compute variance partitioning using R on CPUs (such as the
 UFZ Windows server and LUMI HPC) were limited by memory constraints. As
 a result, these tasks are now offloaded to GPU-based computations using
 <code>Python</code> and <code>TensorFlow</code>. The
-<code><a href="../reference/Mod_postprocessing.html">mod_postprocess_1_CPU()</a></code> function calls the following
+<code><a href="../reference/Mod_postprocessing.html">mod_postprocess_1_cpu()</a></code> function calls the following
 sub-functions to generate the necessary commands for GPU execution:</p>
 <table class="table table table-condensed table-hover" style="font-size: 16px; margin-left: auto; margin-right: auto;"><tbody>
 <tr>
 <td style="text-align:left;padding-left: 4em;white-space: nowrap;" indentlevel="1">
-<cc><code><a href="../reference/Response_curves.html">resp_curv_prepare_data()</a></code></cc><tab0></tab0>
+<cc><code><a href="../reference/Response_curves.html">rc_prepare_data()</a></code></cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 prepares data for predicting latent factors for response curves
@@ -381,62 +381,34 @@ units are performed using a <code>TensorFlow</code> script located at
 <a href="https://github.com/BioDT/IASDT.R/blob/main/inst/crossprod_solve.py" target="_blank" class="external-link ll">inst/crossprod_solve.py</a>.</li>
 <li>For these tasks, the corresponding R functions export multiple
 <code>.qs2</code> and <code>.feather</code> data files to the
-<ff>TEMP_Pred</ff> subdirectory, which are essential for GPU
+<ff>temp_pred</ff> subdirectory, which are essential for GPU
 computations. Additionally, they generate execution commands saved as
-<ff>LF_RC_Commands_<em>.txt</em></ff> (for response curves) and
-<ff>LF_NewSites_Commands_.txt</ff> (for new sites).</li>
+<ff>lf_rc_commands_<em>.txt</em></ff> (for response curves) and
+<ff>lf_new_sites_commands_.txt</ff> (for new sites).</li>
 </ul>
 <button onclick="toggleScript('scriptContentNS1')" class="ShortBlockButton">
-»» Example LF_RC_Commands.txt file
+»» Example lf_RC_Commands.txt file
 </button>
 <div id="scriptContentNS1" class="ShortBlock" style="display: none;">
-<pre><code class="bash">python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch001.feather --path_out RC_c_etaPred_ch001.feather --denom 1200000 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch001.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch002.feather --path_out RC_c_etaPred_ch002.feather --denom 1188081 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch002.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch003.feather --path_out RC_c_etaPred_ch003.feather --denom 1176162 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch003.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch004.feather --path_out RC_c_etaPred_ch004.feather --denom 1164242 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch004.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch005.feather --path_out RC_c_etaPred_ch005.feather --denom 1200000 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch005.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch006.feather --path_out RC_c_etaPred_ch006.feather --denom 413333 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch006.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch007.feather --path_out RC_c_etaPred_ch007.feather --denom 1188081 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch007.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch008.feather --path_out RC_c_etaPred_ch008.feather --denom 425253 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch008.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch009.feather --path_out RC_c_etaPred_ch009.feather --denom 1176162 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch009.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch010.feather --path_out RC_c_etaPred_ch010.feather --denom 437172 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch010.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch011.feather --path_out RC_c_etaPred_ch011.feather --denom 1200000 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch011.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch012.feather --path_out RC_c_etaPred_ch012.feather --denom 401414 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch012.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch013.feather --path_out RC_c_etaPred_ch013.feather --denom 1164242 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch013.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch014.feather --path_out RC_c_etaPred_ch014.feather --denom 449091 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch014.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 RC_c_s1.feather --s2 RC_c_s2.feather --post_eta RC_c_postEta_ch015.feather --path_out RC_c_etaPred_ch015.feather --denom 1152323 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; RC_c_etaPred_ch015.log 2&gt;&amp;1</code></pre>
+<pre><code class="bash">Error: File not found.</code></pre>
 </div>
 <p><br></p>
 <button onclick="toggleScript('scriptContentNS2')" class="ShortBlockButton">
-»» Example LF_NewSites_Commands.txt file
+»» Example lf_new_sites_Commands.txt file
 </button>
 <div id="scriptContentNS2" class="ShortBlock" style="display: none;">
-<pre><code class="bash">python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch001.feather --path_out LF_3_Test_etaPred_ch001.feather --denom 225758 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch001.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch002.feather --path_out LF_3_Test_etaPred_ch002.feather --denom 211111 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch002.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch003.feather --path_out LF_3_Test_etaPred_ch003.feather --denom 240404 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch003.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch004.feather --path_out LF_3_Test_etaPred_ch004.feather --denom 196465 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch004.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch005.feather --path_out LF_3_Test_etaPred_ch005.feather --denom 196465 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch005.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch006.feather --path_out LF_3_Test_etaPred_ch006.feather --denom 211111 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch006.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch007.feather --path_out LF_3_Test_etaPred_ch007.feather --denom 225758 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch007.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch008.feather --path_out LF_3_Test_etaPred_ch008.feather --denom 181818 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch008.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch009.feather --path_out LF_3_Test_etaPred_ch009.feather --denom 255051 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch009.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch010.feather --path_out LF_3_Test_etaPred_ch010.feather --denom 240404 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch010.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch011.feather --path_out LF_3_Test_etaPred_ch011.feather --denom 167172 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch011.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch012.feather --path_out LF_3_Test_etaPred_ch012.feather --denom 269697 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch012.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch013.feather --path_out LF_3_Test_etaPred_ch013.feather --denom 255051 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch013.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch014.feather --path_out LF_3_Test_etaPred_ch014.feather --denom 269697 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch014.log 2&gt;&amp;1
-python3 crossprod_solve.py --s1 LF_3_Test_s1.feather --s2 LF_3_Test_s2.feather --post_eta LF_3_Test_postEta_ch015.feather --path_out LF_3_Test_etaPred_ch015.feather --denom 181818 --chunk_size 1000 --threshold_mb 2000 --solve_chunk_size 50 --verbose  &gt;&gt; LF_3_Test_etaPred_ch015.log 2&gt;&amp;1</code></pre>
+<pre><code class="bash">Error: File not found.</code></pre>
 </div>
 <p><br><br></p>
 <ul>
 <li>Response curves
 <ul>
 <li>
-<code><a href="../reference/Response_curves.html">resp_curv_prepare_data()</a></code> extends the functionality of
+<code><a href="../reference/Response_curves.html">rc_prepare_data()</a></code> extends the functionality of
 <code><a href="https://rdrr.io/pkg/Hmsc/man/constructGradient.html" class="external-link">Hmsc::constructGradient()</a></code> and
 <code><a href="https://rdrr.io/pkg/Hmsc/man/plotGradient.html" class="external-link">Hmsc::plotGradient()</a></code> by enabling the preparation of
 response curve data on GPUs when
-<code>LF_commands_only = TRUE</code>.</li>
+<code>lf_commands_only = TRUE</code>.</li>
 <li>For predictions at mean coordinates (as specified by the
 <code>coordinates</code> argument in
 <code><a href="https://rdrr.io/pkg/Hmsc/man/constructGradient.html" class="external-link">Hmsc::constructGradient()</a></code>), latent factor predictions —
@@ -448,8 +420,8 @@ which are typically memory-intensive when using
 <ul>
 <li>
 <code><a href="../reference/Predict_Maps.html">predict_maps()</a></code> sets up GPU computations for predictions
-at new sites when both <code>LF_only = TRUE</code> and
-<code>LF_commands_only = TRUE</code>.</li>
+at new sites when both <code>lf_only = TRUE</code> and
+<code>lf_commands_only = TRUE</code>.</li>
 </ul>
 </li>
 </ul>
@@ -469,7 +441,7 @@ These scripts implement functionality derived from
 internal functions <code>geta</code>, <code>getf</code>, and
 <code>gemu</code>.</li>
 <li>The <code><a href="../reference/Variance_partitioning.html">variance_partitioning_compute()</a></code> function exports
-the necessary files to the <ff>TEMP_VP</ff> subdirectory, including
+the necessary files to the <ff>temp_vp</ff> subdirectory, including
 numerous <code>.qs2</code> and <code>.feather</code> files. It also
 generates execution commands saved as <ff>VP_A_Command.txt</ff>,
 <ff>VP_F_Command.txt</ff>, and <ff>VP_mu_Command.txt</ff>.</li>
@@ -479,19 +451,19 @@ generates execution commands saved as <ff>VP_A_Command.txt</ff>,
 <div class="section level3">
 <h3 id="combining-commands-for-gpu-computations">Combining commands for GPU computations<a class="anchor" aria-label="anchor" href="#combining-commands-for-gpu-computations"></a>
 </h3>
-<p>Once <code><a href="../reference/Mod_postprocessing.html">mod_postprocess_1_CPU()</a></code> has been executed for all
-habitat types, the <strong><code><a href="../reference/Mod_postprocessing.html">mod_prepare_TF()</a></code></strong>
+<p>Once <code><a href="../reference/Mod_postprocessing.html">mod_postprocess_1_cpu()</a></code> has been executed for all
+habitat types, the <strong><code><a href="../reference/Mod_postprocessing.html">mod_prepare_tf()</a></code></strong>
 function consolidates the batch scripts for GPU computations across all
 habitat types:</p>
 <ul>
 <li>It aggregates the script files that contain commands for response
 curves and latent factor predictions, splitting them into multiple
-scripts (<ff>TF_Chunk_*.txt</ff>) for batch processing. Additionally, it
-generates a SLURM script (<ff>LF_SLURM.slurm</ff>) for executing the
+scripts (<ff>tf_chunk_*.txt</ff>) for batch processing. Additionally, it
+generates a SLURM script (<ff>lf_SLURM.slurm</ff>) for executing the
 latent factor predictions.</li>
 </ul>
 <button onclick="toggleScript('scriptContentNS3')" class="ShortBlockButton">
-»» Example TF_Chunk_*.txt file
+»» Example tf_chunk_*.txt file
 </button>
 <div id="scriptContentNS3" class="ShortBlock" style="display: none;">
 <pre><code class="bash">#!/bin/bash
@@ -529,66 +501,10 @@ python3 crossprod_solve.py --s1 'datasets/processed/model_fitting/Mod_Riv_Hab1/T
 </div>
 <p><br></p>
 <button onclick="toggleScript('scriptContentNS4')" class="ShortBlockButton">
-»» Example LF_SLURM.slurm file
+»» Example lf_SLURM.slurm file
 </button>
 <div id="scriptContentNS4" class="ShortBlock" style="display: none;">
-<pre><code class="bash">#!/bin/bash
-#SBATCH --job-name=PP_LF
-#SBATCH --ntasks=1
-#SBATCH --ntasks-per-node=1
-#SBATCH --account=project_465001588
-#SBATCH --cpus-per-task=1
-#SBATCH --gpus-per-node=1
-#SBATCH --time=01:00:00
-#SBATCH --partition=small-g
-#SBATCH --output=datasets/processed/model_fitting/TMP/%x-%A-%a.out
-#SBATCH --error=datasets/processed/model_fitting/TMP/%x-%A-%a.out
-#SBATCH --array=1-186
-
-# Define directories
-OutputDir="datasets/processed/model_fitting/TF_BatchFiles"
-
-# Find all the split files and sort them explicitly
-SplitFiles=($(find "$OutputDir" -type f -name "TF_Chunk_*.txt" | sort -V))
-
-# Check if files were found
-if [ ${#SplitFiles[@]} -eq 0 ]; then
-    echo "Error: No files matching TF_Chunk_*.txt found in $OutputDir"
-    exit 1
-fi
-
-# Ensure no more than `, NumFiles, ` files are processed
-MaxFiles=186
-if [ ${#SplitFiles[@]} -gt $MaxFiles ]; then
-    SplitFiles=("${SplitFiles[@]:0:$MaxFiles}")
-    echo "More than $MaxFiles files found, limiting to the first $MaxFiles files."
-fi
-
-# Get the index of the current task based on SLURM_ARRAY_TASK_ID
-TaskIndex=$((SLURM_ARRAY_TASK_ID - 1))
-
-# Validate TaskIndex
-if [ $TaskIndex -ge ${#SplitFiles[@]} ] || [ $TaskIndex -lt 0 ]; then
-    echo "Error: TaskIndex $TaskIndex is out of range. Valid range: 0 to $((${#SplitFiles[@]} - 1))"
-    exit 1
-fi
-
-# Get the specific split file to process based on the job array task ID
-SplitFile="${SplitFiles[$TaskIndex]}"
-
-# Verify the selected split file
-if [ -z "$SplitFile" ] || [ ! -f "$SplitFile" ]; then
-    echo "Error: File $SplitFile does not exist or is invalid."
-    exit 1
-fi
-
-# Processing file
-echo "Processing file: $SplitFile"
-
-# Run the selected split file
-bash "$SplitFile"
-
-echo End of program at `date`</code></pre>
+<pre><code class="bash">Error: File not found.</code></pre>
 </div>
 <p><br></p>
 <ul>
@@ -672,15 +588,15 @@ computed on GPUs. The batch jobs for these computations can be submitted
 using the <code>sbatch</code> command:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># Submit SLURM jobs for variance partitioning and latent factor predictions</span></span>
 <span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="ex">sbatch</span> datasets/processed/model_fitting/Mod_Q_Hab_TF/VP_SLURM.slurm</span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="ex">sbatch</span> datasets/processed/model_fitting/Mod_Q_Hab_TF/LF_SLURM.slurm</span></code></pre></div>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="ex">sbatch</span> datasets/processed/model_fitting/Mod_Q_Hab_TF/lf_SLURM.slurm</span></code></pre></div>
 <p>Additionally, cross-validated models are fitted by submitting the
 corresponding SLURM scripts for each cross-validation strategy:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="co"># Submit SLURM jobs for cross-validated model fitting</span></span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="co">#</span></span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co"># cross-validation method "CV_Dist"</span></span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="ex">sbatch</span> datasets/processed/model_fitting/HabX/Model_Fitting_CV/CV_Bash_Fit_Dist.slurm</span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co"># cross-validation method "CV_Large"</span></span>
-<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="ex">sbatch</span> datasets/processed/model_fitting/HabX/Model_Fitting_CV/CV_Bash_Fit_Large.slurm</span></code></pre></div>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co"># cross-validation method "cv_dist"</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="ex">sbatch</span> datasets/processed/model_fitting/HabX/model_fitting_cv/cv_bash_fit_dist.slurm</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co"># cross-validation method "cv_large"</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="ex">sbatch</span> datasets/processed/model_fitting/HabX/model_fitting_cv/cv_bash_fit_large.slurm</span></code></pre></div>
 <hr class="hr1">
 </div>
 <div class="section level2">
@@ -689,15 +605,15 @@ corresponding SLURM scripts for each cross-validation strategy:</p>
 <p>To continue the post-processing of the fitted models on CPUs, two
 functions need to be executed:</p>
 <div class="section level3">
-<h3 id="mod_postprocess_2_cpu">1. <strong><code>mod_postprocess_2_CPU()</code></strong><a class="anchor" aria-label="anchor" href="#mod_postprocess_2_cpu"></a>
+<h3 id="mod_postprocess_2_cpu">1. <strong><code>mod_postprocess_2_cpu()</code></strong><a class="anchor" aria-label="anchor" href="#mod_postprocess_2_cpu"></a>
 </h3>
-<p>The <code><a href="../reference/Mod_postprocessing.html">mod_postprocess_2_CPU()</a></code> function progresses the
+<p>The <code><a href="../reference/Mod_postprocessing.html">mod_postprocess_2_cpu()</a></code> function progresses the
 post-processing pipeline for HMSC models on the CPU by automating the
 following tasks:</p>
 <table class="table table table-condensed table-hover" style="font-size: 16px; margin-left: auto; margin-right: auto;"><tbody>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc><code><a href="../reference/Response_curves.html">resp_curv_prepare_data()</a></code>,<br><code><a href="../reference/Response_curves.html">resp_curv_plot_SR()</a></code>,<br><code><a href="../reference/Response_curves.html">resp_curv_plot_species()</a></code>,<br><code><a href="../reference/Response_curves.html">resp_curv_plot_species_all()</a></code></cc><tab0></tab0>
+<cc><code><a href="../reference/Response_curves.html">rc_prepare_data()</a></code>,<br><code><a href="../reference/Response_curves.html">rc_plot_sr()</a></code>,<br><code><a href="../reference/Response_curves.html">rc_plot_species()</a></code>,<br><code><a href="../reference/Response_curves.html">rc_plot_species_all()</a></code></cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 continues the processing and visualisation of response curves.
@@ -765,15 +681,15 @@ visualises the explanatory power of the model (internal evaluation).
 <p><br></p>
 </div>
 <div class="section level3">
-<h3 id="mod_postprocess_cv_1_cpu">2. <strong><code>mod_postprocess_CV_1_CPU()</code></strong><a class="anchor" aria-label="anchor" href="#mod_postprocess_cv_1_cpu"></a>
+<h3 id="mod_postprocess_cv_1_cpu">2. <strong><code>mod_postprocess_cv_1_cpu()</code></strong><a class="anchor" aria-label="anchor" href="#mod_postprocess_cv_1_cpu"></a>
 </h3>
-<p>The <code><a href="../reference/Mod_postprocessing.html">mod_postprocess_CV_1_CPU()</a></code> function begins the
+<p>The <code><a href="../reference/Mod_postprocessing.html">mod_postprocess_cv_1_cpu()</a></code> function begins the
 post-processing of cross-validated models on the CPU by automating the
 following tasks:</p>
 <table class="table table table-condensed table-hover" style="font-size: 16px; margin-left: auto; margin-right: auto;"><tbody>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc><code><a href="../reference/Mod_Merge_Chains.html">mod_merge_chains_CV()</a></code></cc><tab0></tab0>
+<cc><code><a href="../reference/Mod_Merge_Chains.html">mod_merge_chains_cv()</a></code></cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 merges fitted cross-validated model chains into <code>Hmsc</code> model
@@ -782,22 +698,22 @@ objects and saves them to disk.
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc><code><a href="../reference/Predict_Maps.html">predict_maps_CV()</a></code></cc><tab0></tab0>
+<cc><code><a href="../reference/Predict_Maps.html">predict_maps_cv()</a></code></cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 prepares scripts for predicting latent factors for each cross-validation
 strategy at new sampling units (evaluation folds). The arguments
-<code>LF_only</code> and <code>LF_commands_only</code> are set to
+<code>lf_only</code> and <code>lf_commands_only</code> are set to
 <code>TRUE</code> to prepare only the necessary script files.
 </td>
 </tr>
 </tbody></table>
-<p>Once <code><a href="../reference/Predict_Maps.html">predict_maps_CV()</a></code> has been completed, the function
+<p>Once <code><a href="../reference/Predict_Maps.html">predict_maps_cv()</a></code> has been completed, the function
 combines the computation commands into multiple text script files
-(<ff>TF_Chunk_*.txt</ff>) in each model’s
-<ff>Model_Fitting_CV/LF_TF_commands</ff> subdirectory. These scripts
+(<ff>tf_chunk_*.txt</ff>) in each model’s
+<ff>model_fitting_cv/lf_TF_commands</ff> subdirectory. These scripts
 need to be executed on GPUs using a single batch job submitted via a
-SLURM script in the same directory, <ff>LF_SLURM.slurm</ff>.</p>
+SLURM script in the same directory, <ff>lf_SLURM.slurm</ff>.</p>
 <hr class="hr1">
 </div>
 </div>
@@ -806,18 +722,18 @@ SLURM script in the same directory, <ff>LF_SLURM.slurm</ff>.</p>
 </h2>
 <p>In this step, the computation of latent factors for cross-validated
 models is performed on GPUs using SLURM scripts.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="ex">sbatch</span> datasets/processed/model_fitting/HabX/Model_Fitting_CV/LF_TF_commands/LF_SLURM.slurm</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="ex">sbatch</span> datasets/processed/model_fitting/HabX/model_fitting_cv/lf_TF_commands/lf_SLURM.slurm</span></code></pre></div>
 <hr class="hr1">
 </div>
 <div class="section level2">
 <h2 id="step-5-cpu">Step 5: CPU<a class="anchor" aria-label="anchor" href="#step-5-cpu"></a>
 </h2>
 <p>The final step of the post-processing pipeline is carried out on CPUs
-using the <code><a href="../reference/Mod_postprocessing.html">mod_postprocess_CV_2_CPU()</a></code> function. This
+using the <code><a href="../reference/Mod_postprocessing.html">mod_postprocess_cv_2_cpu()</a></code> function. This
 function automates the following tasks:</p>
 <ul>
 <li>Predicting habitat suitability at the testing cross-validation folds
-using the <code><a href="../reference/Predict_Maps.html">predict_maps_CV()</a></code> function.</li>
+using the <code><a href="../reference/Predict_Maps.html">predict_maps_cv()</a></code> function.</li>
 <li>Computing the model’s predictive power (using spatially independent
 testing data) with the same function, based on four metrics: AUC (area
 under the ROC curve); RMSE (root mean square error); continuous Boyce

@@ -58,7 +58,7 @@ from JSON format if specified.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mod_get_posteriors</span><span class="op">(</span>path_posterior <span class="op">=</span> <span class="cn">NULL</span>, from_JSON <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">mod_get_posteriors</span><span class="op">(</span>path_posterior <span class="op">=</span> <span class="cn">NULL</span>, from_json <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -70,7 +70,7 @@ from JSON format if specified.</p>
 exported posterior files. This argument is mandatory and cannot be empty.</p></dd>
 
 
-<dt id="arg-from-json">from_JSON<a class="anchor" aria-label="anchor" href="#arg-from-json"></a></dt>
+<dt id="arg-from-json">from_json<a class="anchor" aria-label="anchor" href="#arg-from-json"></a></dt>
 <dd><p>Logical. Whether the loaded models should be converted from
 <code>JSON</code> format. Defaults to <code>FALSE</code>, meaning the data will be read directly
 from RDS files without conversion.</p></dd>
@@ -78,7 +78,7 @@ from RDS files without conversion.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Depending on the <code>from_JSON</code> parameter, returns an Hmsc object either
+    <p>Depending on the <code>from_json</code> parameter, returns an Hmsc object either
 directly from the RDS files or after converting it from JSON format.</p>
     </div>
     <div class="section level2">

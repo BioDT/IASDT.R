@@ -75,7 +75,7 @@ predictors.</p>
 <span>  model_settings <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  model_dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  hab_abb <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  cv_type <span class="op">=</span> <span class="st">"CV_Dist"</span>,</span>
+<span>  cv_type <span class="op">=</span> <span class="st">"cv_dist"</span>,</span>
 <span>  n_cores <span class="op">=</span> <span class="fl">8L</span>,</span>
 <span>  future_max_size <span class="op">=</span> <span class="fl">2000L</span>,</span>
 <span>  selected_species <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -111,18 +111,18 @@ For details and supported options, see <code><a href="https://rdrr.io/pkg/sdm/ma
 <dt id="arg-model-dir">model_dir<a class="anchor" aria-label="anchor" href="#arg-model-dir"></a></dt>
 <dd><p>Character. Path to the directory containing model data and
 where outputs and results will be saved. Model data are prepared using the
-<code><a href="Mod_inputs.html">mod_prepare_HPC()</a></code> and <code><a href="Mod_inputs.html">mod_prepare_data()</a></code> functions.</p></dd>
+<code><a href="Mod_inputs.html">mod_prepare_hpc()</a></code> and <code><a href="Mod_inputs.html">mod_prepare_data()</a></code> functions.</p></dd>
 
 
 <dt id="arg-hab-abb">hab_abb<a class="anchor" aria-label="anchor" href="#arg-hab-abb"></a></dt>
 <dd><p>Character. Abbreviation for a single SynHab habitat type.
 Valid values: "0", "1", "2", "3", "4a", "4b", "10", "12a", "12b". See
-<code><a href="Mod_inputs.html">mod_prepare_HPC()</a></code> for more details.</p></dd>
+<code><a href="Mod_inputs.html">mod_prepare_hpc()</a></code> for more details.</p></dd>
 
 
 <dt id="arg-cv-type">cv_type<a class="anchor" aria-label="anchor" href="#arg-cv-type"></a></dt>
-<dd><p>Character. Cross-validation type. One of <code>CV_Dist</code> (default)
-or <code>CV_Large</code>. See <code><a href="Mod_CV_Fit.html">mod_CV_fit()</a></code> for more details.</p></dd>
+<dd><p>Character. Cross-validation type. One of <code>cv_dist</code> (default)
+or <code>cv_large</code>. See <code><a href="Mod_CV_Fit.html">mod_cv_fit()</a></code> for more details.</p></dd>
 
 
 <dt id="arg-n-cores">n_cores<a class="anchor" aria-label="anchor" href="#arg-n-cores"></a></dt>

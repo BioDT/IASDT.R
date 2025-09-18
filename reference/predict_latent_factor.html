@@ -64,21 +64,21 @@ when <code>predictMean = TRUE</code>.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">predict_latent_factor</span><span class="op">(</span></span>
 <span>  <span class="va">units_pred</span>,</span>
 <span>  <span class="va">units_model</span>,</span>
-<span>  <span class="va">postEta</span>,</span>
+<span>  <span class="va">post_eta</span>,</span>
 <span>  <span class="va">post_alpha</span>,</span>
-<span>  <span class="va">LF_rL</span>,</span>
-<span>  n_cores_LF <span class="op">=</span> <span class="fl">8L</span>,</span>
+<span>  <span class="va">lf_rl</span>,</span>
+<span>  n_cores_lf <span class="op">=</span> <span class="fl">8L</span>,</span>
 <span>  strategy <span class="op">=</span> <span class="st">"multisession"</span>,</span>
-<span>  temp_dir <span class="op">=</span> <span class="st">"TEMP_Pred"</span>,</span>
-<span>  LF_temp_cleanup <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  temp_dir <span class="op">=</span> <span class="st">"temp_pred"</span>,</span>
+<span>  lf_temp_cleanup <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  model_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  use_TF <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  TF_environ <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  TF_use_single <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  LF_out_file <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  LF_return <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  LF_check <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  LF_commands_only <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  use_tf <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  tf_environ <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  tf_use_single <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  lf_out_file <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  lf_return <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  lf_check <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  lf_commands_only <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  solve_max_attempts <span class="op">=</span> <span class="fl">5L</span>,</span>
 <span>  solve_chunk_size <span class="op">=</span> <span class="fl">50L</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
@@ -99,8 +99,8 @@ predictions are to be made</p></dd>
 conditioned on</p></dd>
 
 
-<dt id="arg-posteta">postEta<a class="anchor" aria-label="anchor" href="#arg-posteta"></a></dt>
-<dd><p>Character. Path of <code>postEta</code>; a list containing samples of
+<dt id="arg-post-eta">post_eta<a class="anchor" aria-label="anchor" href="#arg-post-eta"></a></dt>
+<dd><p>Character. Path of <code>post_eta</code>; a list containing samples of
 random factors at conditioned units</p></dd>
 
 
@@ -109,12 +109,12 @@ random factors at conditioned units</p></dd>
 for latent factors</p></dd>
 
 
-<dt id="arg-lf-rl">LF_rL<a class="anchor" aria-label="anchor" href="#arg-lf-rl"></a></dt>
+<dt id="arg-lf-rl">lf_rl<a class="anchor" aria-label="anchor" href="#arg-lf-rl"></a></dt>
 <dd><p>a HmscRandomLevel-class object that describes the random level
 structure</p></dd>
 
 
-<dt id="arg-n-cores-lf">n_cores_LF<a class="anchor" aria-label="anchor" href="#arg-n-cores-lf"></a></dt>
+<dt id="arg-n-cores-lf">n_cores_lf<a class="anchor" aria-label="anchor" href="#arg-n-cores-lf"></a></dt>
 <dd><p>Integer. Number of cores to use for parallel processing of
 latent factor prediction. Defaults to 8L.</p></dd>
 
@@ -129,7 +129,7 @@ options are "sequential", "multisession" (default), "multicore", and
 <dd><p>Character. Path for temporary storage of intermediate files.</p></dd>
 
 
-<dt id="arg-lf-temp-cleanup">LF_temp_cleanup<a class="anchor" aria-label="anchor" href="#arg-lf-temp-cleanup"></a></dt>
+<dt id="arg-lf-temp-cleanup">lf_temp_cleanup<a class="anchor" aria-label="anchor" href="#arg-lf-temp-cleanup"></a></dt>
 <dd><p>Logical. Whether to delete temporary files in the
 <code>temp_dir</code> directory after finishing the LF predictions.</p></dd>
 
@@ -139,41 +139,41 @@ options are "sequential", "multisession" (default), "multicore", and
 <code>NULL</code>, in which case no prefix is used.</p></dd>
 
 
-<dt id="arg-use-tf">use_TF<a class="anchor" aria-label="anchor" href="#arg-use-tf"></a></dt>
+<dt id="arg-use-tf">use_tf<a class="anchor" aria-label="anchor" href="#arg-use-tf"></a></dt>
 <dd><p>Logical. Whether to use <code>TensorFlow</code> for calculations. Defaults
 to <code>TRUE</code>.</p></dd>
 
 
-<dt id="arg-tf-environ">TF_environ<a class="anchor" aria-label="anchor" href="#arg-tf-environ"></a></dt>
+<dt id="arg-tf-environ">tf_environ<a class="anchor" aria-label="anchor" href="#arg-tf-environ"></a></dt>
 <dd><p>Character. Path to the Python environment. This argument is
-required if <code>use_TF</code> is <code>TRUE</code> under Windows. Defaults to <code>NULL</code>.</p></dd>
+required if <code>use_tf</code> is <code>TRUE</code> under Windows. Defaults to <code>NULL</code>.</p></dd>
 
 
-<dt id="arg-tf-use-single">TF_use_single<a class="anchor" aria-label="anchor" href="#arg-tf-use-single"></a></dt>
+<dt id="arg-tf-use-single">tf_use_single<a class="anchor" aria-label="anchor" href="#arg-tf-use-single"></a></dt>
 <dd><p>Logical. Whether to use single precision for the
 <code>TensorFlow</code> calculations. Defaults to <code>FALSE</code>.</p></dd>
 
 
-<dt id="arg-lf-out-file">LF_out_file<a class="anchor" aria-label="anchor" href="#arg-lf-out-file"></a></dt>
+<dt id="arg-lf-out-file">lf_out_file<a class="anchor" aria-label="anchor" href="#arg-lf-out-file"></a></dt>
 <dd><p>Character. Path to save the outputs. If <code>NULL</code> (default),
 the predicted latent factors are not saved to a file. This should end with
 either <code>*.qs2</code> or <code>*.RData</code>.</p></dd>
 
 
-<dt id="arg-lf-return">LF_return<a class="anchor" aria-label="anchor" href="#arg-lf-return"></a></dt>
+<dt id="arg-lf-return">lf_return<a class="anchor" aria-label="anchor" href="#arg-lf-return"></a></dt>
 <dd><p>Logical. Whether the output should be returned. Defaults to
-<code>FALSE</code>. If <code>LF_out_file</code> is <code>NULL</code>, this parameter cannot be set to
+<code>FALSE</code>. If <code>lf_out_file</code> is <code>NULL</code>, this parameter cannot be set to
 <code>FALSE</code> because the function needs to return the result if it is not saved
 to a file.</p></dd>
 
 
-<dt id="arg-lf-check">LF_check<a class="anchor" aria-label="anchor" href="#arg-lf-check"></a></dt>
+<dt id="arg-lf-check">lf_check<a class="anchor" aria-label="anchor" href="#arg-lf-check"></a></dt>
 <dd><p>Logical. If <code>TRUE</code>, the function checks if the output files
 are already created and valid. If <code>FALSE</code>, the function will only check if
 the files exist without checking their integrity. Default is <code>FALSE</code>.</p></dd>
 
 
-<dt id="arg-lf-commands-only">LF_commands_only<a class="anchor" aria-label="anchor" href="#arg-lf-commands-only"></a></dt>
+<dt id="arg-lf-commands-only">lf_commands_only<a class="anchor" aria-label="anchor" href="#arg-lf-commands-only"></a></dt>
 <dd><p>Logical. If <code>TRUE</code>, returns the command to run the
 Python script. Default is <code>FALSE</code>.</p></dd>
 
@@ -198,16 +198,16 @@ execution. Default is <code>TRUE</code>.</p></dd>
     <p>The function is expected to be faster than the original function in
 the <code>Hmsc</code> package, especially when using <code>TensorFlow</code> for calculations and
 when working in parallel.</p>
-<p>The main difference is that this function:</p><ul><li><p>allow for parallel processing (<code>n_cores_LF</code> argument);</p></li>
-<li><p>when <code>TensorFlow</code> is used (<code>use_TF = TRUE</code>), matrix
+<p>The main difference is that this function:</p><ul><li><p>allow for parallel processing (<code>n_cores_lf</code> argument);</p></li>
+<li><p>when <code>TensorFlow</code> is used (<code>use_tf = TRUE</code>), matrix
 calculations are much faster, particularly when used on GPU. The following
 Python modules are needed: <code>numpy</code>, <code>tensorflow</code>, <code>rdata</code>, <code>xarray</code>, and
-<code>pandas</code>. To use <code>TensorFlow</code> under Windows, the argument <code>TF_environ</code>
+<code>pandas</code>. To use <code>TensorFlow</code> under Windows, the argument <code>tf_environ</code>
 should be set to the path of a Python environment with <code>TensorFlow</code>
 installed;</p></li>
-<li><p>if <code>use_TF</code> is set to <code>FALSE</code>, the function uses <code>R</code> (supported by
+<li><p>if <code>use_tf</code> is set to <code>FALSE</code>, the function uses <code>R</code> (supported by
 relatively faster <code>CPP</code> functions) in the calculations;</p></li>
-<li><p><code>D11</code> and <code>D12</code> matrices are processed only once and saved to disk and
+<li><p><code>d11</code> and <code>d12</code> matrices are processed only once and saved to disk and
 called when needed.</p></li>
 </ul></div>
     <div class="section level2">

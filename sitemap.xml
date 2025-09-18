@@ -21,7 +21,6 @@
 <url><loc>https://biodt.github.io/IASDT.R/reference/Efforts_data.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/GBIF_data.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/IASDT.R-package.html</loc></url>
-<url><loc>https://biodt.github.io/IASDT.R/reference/IAS_data.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/Mod_CV_Fit.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/Mod_Merge_Chains.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/Mod_SLURM.html</loc></url>
@@ -48,6 +47,7 @@
 <url><loc>https://biodt.github.io/IASDT.R/reference/mod_cv_merge_predictions.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/mod_fit_windows.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/mod_get_posteriors.html</loc></url>
+<url><loc>https://biodt.github.io/IASDT.R/reference/naps_data.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/pipe.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/plot_evaluation.html</loc></url>
 <url><loc>https://biodt.github.io/IASDT.R/reference/plot_gelman.html</loc></url>

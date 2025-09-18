@@ -63,9 +63,9 @@ verify the installation of Python, the virtual environment, and the packages.</p
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">install_hmsc_windows</span><span class="op">(</span></span>
 <span>  <span class="va">path_python</span>,</span>
-<span>  <span class="va">path_VE</span>,</span>
-<span>  URL_Hmsc <span class="op">=</span> <span class="st">"https://github.com/trossi/hmsc-hpc.git@simplify-io"</span>,</span>
-<span>  URL_rdata <span class="op">=</span> <span class="st">"https://github.com/trossi/rdata.git@test-for-hmsc-v2"</span>,</span>
+<span>  <span class="va">path_ve</span>,</span>
+<span>  url_hmsc <span class="op">=</span> <span class="st">"https://github.com/trossi/hmsc-hpc.git@simplify-io"</span>,</span>
+<span>  url_rdata <span class="op">=</span> <span class="st">"https://github.com/trossi/rdata.git@test-for-hmsc-v2"</span>,</span>
 <span>  force <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -78,17 +78,17 @@ verify the installation of Python, the virtual environment, and the packages.</p
 <dd><p>Character. Path to the Python executable.</p></dd>
 
 
-<dt id="arg-path-ve">path_VE<a class="anchor" aria-label="anchor" href="#arg-path-ve"></a></dt>
+<dt id="arg-path-ve">path_ve<a class="anchor" aria-label="anchor" href="#arg-path-ve"></a></dt>
 <dd><p>Character. Path where the virtual environment will be created.
 This can not be an existing folder.</p></dd>
 
 
-<dt id="arg-url-hmsc">URL_Hmsc<a class="anchor" aria-label="anchor" href="#arg-url-hmsc"></a></dt>
+<dt id="arg-url-hmsc">url_hmsc<a class="anchor" aria-label="anchor" href="#arg-url-hmsc"></a></dt>
 <dd><p>Character. URL of the Git repository (and branch name) of the
 <code>Hmsc-HPC</code> package.</p></dd>
 
 
-<dt id="arg-url-rdata">URL_rdata<a class="anchor" aria-label="anchor" href="#arg-url-rdata"></a></dt>
+<dt id="arg-url-rdata">url_rdata<a class="anchor" aria-label="anchor" href="#arg-url-rdata"></a></dt>
 <dd><p>Character. URL of the Git repository (and branch name) of
 the <code>rdata</code> package. This is temporary to allow <code>rdata</code> package to write
 rds file. In the near future, this functionality will be pushed to the
@@ -126,7 +126,7 @@ an error if it does</p></li>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
 <span class="r-in"><span><span class="fu">install_hmsc_windows</span><span class="op">(</span></span></span>
 <span class="r-in"><span>   path_python <span class="op">=</span> <span class="st">"C:/Python/Python310/python.exe"</span>,</span></span>
-<span class="r-in"><span>   path_VE <span class="op">=</span> <span class="st">"D:/Hmsc-HPC"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>   path_ve <span class="op">=</span> <span class="st">"D:/Hmsc-HPC"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

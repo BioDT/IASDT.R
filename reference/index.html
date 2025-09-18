@@ -74,28 +74,28 @@
 
       <dl><dt>
 
-          <code><a href="GBIF_data.html">GBIF_process()</a></code> <code><a href="GBIF_data.html">GBIF_download()</a></code> <code><a href="GBIF_data.html">GBIF_read_chunk()</a></code> <code><a href="GBIF_data.html">GBIF_species_data()</a></code>
+          <code><a href="GBIF_data.html">gbif_process()</a></code> <code><a href="GBIF_data.html">gbif_download()</a></code> <code><a href="GBIF_data.html">gbif_read_chunk()</a></code> <code><a href="GBIF_data.html">gbif_species_data()</a></code>
 
         </dt>
         <dd>Process GBIF occurrence data for the <code>IASDT</code></dd>
       </dl><dl><dt>
 
-          <code><a href="EASIN_data.html">EASIN_process()</a></code> <code><a href="EASIN_data.html">EASIN_taxonomy()</a></code> <code><a href="EASIN_data.html">EASIN_download()</a></code> <code><a href="EASIN_data.html">EASIN_plot()</a></code>
+          <code><a href="EASIN_data.html">easin_process()</a></code> <code><a href="EASIN_data.html">easin_taxonomy()</a></code> <code><a href="EASIN_data.html">easin_download()</a></code> <code><a href="EASIN_data.html">easin_plot()</a></code>
 
         </dt>
         <dd>Process EASIN data for the <code>IASDT</code></dd>
       </dl><dl><dt>
 
-          <code><a href="eLTER_Process.html">eLTER_process()</a></code>
+          <code><a href="eLTER_Process.html">elter_process()</a></code>
 
         </dt>
         <dd>Process eLTER data for the <code>IASDT</code></dd>
       </dl><dl><dt>
 
-          <code><a href="IAS_data.html">IAS_process()</a></code> <code><a href="IAS_data.html">IAS_distribution()</a></code> <code><a href="IAS_data.html">IAS_plot()</a></code>
+          <code><a href="naps_data.html">naps_process()</a></code> <code><a href="naps_data.html">naps_distribution()</a></code> <code><a href="naps_data.html">naps_plot()</a></code>
 
         </dt>
-        <dd>Process and map Invasive Alien Species (IAS) data for the <code>IASDT</code></dd>
+        <dd>Process and map Naturalized Alien Plant Species (NAPS) data for the <code>IASDT</code></dd>
       </dl><dl><dt>
 
           <code><a href="get_species_name.html">get_species_name()</a></code>
@@ -121,13 +121,13 @@
         <dd>Process Corine Land Cover (CLC) data for the <code>IASDT</code></dd>
       </dl><dl><dt>
 
-          <code><a href="CHELSA_variables.html">CHELSA_variables</a></code>
+          <code><a href="CHELSA_variables.html">chelsa_variables</a></code>
 
         </dt>
         <dd>Detailed information on CHELSA climate variables</dd>
       </dl><dl><dt>
 
-          <code><a href="CHELSA_data.html">CHELSA_process()</a></code> <code><a href="CHELSA_data.html">CHELSA_prepare()</a></code> <code><a href="CHELSA_data.html">CHELSA_project()</a></code>
+          <code><a href="CHELSA_data.html">chelsa_process()</a></code> <code><a href="CHELSA_data.html">chelsa_prepare()</a></code> <code><a href="CHELSA_data.html">chelsa_project()</a></code>
 
         </dt>
         <dd>Process CHELSA Climate Data for the <code>IASDT</code></dd>
@@ -192,7 +192,7 @@
 
       <dl><dt>
 
-          <code><a href="mod_CV_prepare.html">mod_CV_prepare()</a></code>
+          <code><a href="mod_CV_prepare.html">mod_cv_prepare()</a></code>
 
         </dt>
         <dd>Prepare spatial-block cross-validation folds for spatial analysis</dd>
@@ -204,13 +204,13 @@
         <dd>Prepare knot locations for Hmsc GPP models</dd>
       </dl><dl><dt>
 
-          <code><a href="Mod_inputs.html">mod_prepare_HPC()</a></code> <code><a href="Mod_inputs.html">mod_prepare_data()</a></code>
+          <code><a href="Mod_inputs.html">mod_prepare_data()</a></code> <code><a href="Mod_inputs.html">mod_prepare_hpc()</a></code>
 
         </dt>
         <dd>Prepare initial models for model fitting with Hmsc-HPC</dd>
       </dl><dl><dt>
 
-          <code><a href="Mod_SLURM.html">mod_SLURM()</a></code> <code><a href="Mod_SLURM.html">mod_SLURM_refit()</a></code>
+          <code><a href="Mod_SLURM.html">mod_slurm()</a></code> <code><a href="Mod_SLURM.html">mod_slurm_refit()</a></code>
 
         </dt>
         <dd>Prepare SLURM scripts for Hmsc-HPC model fitting</dd>
@@ -222,7 +222,7 @@
         <dd>Fit Hmsc-HPC models on UFZ Windows Server</dd>
       </dl><dl><dt>
 
-          <code><a href="Mod_CV_Fit.html">mod_CV_fit()</a></code>
+          <code><a href="Mod_CV_Fit.html">mod_cv_fit()</a></code>
 
         </dt>
         <dd>Prepare cross-validated Hmsc models for HPC fitting</dd>
@@ -275,7 +275,7 @@
         <dd>Combines posteriors exported by <code>Hmsc-HPC</code> into an Hmsc object</dd>
       </dl><dl><dt>
 
-          <code><a href="Mod_Merge_Chains.html">mod_merge_chains()</a></code> <code><a href="Mod_Merge_Chains.html">mod_merge_chains_CV()</a></code>
+          <code><a href="Mod_Merge_Chains.html">mod_merge_chains()</a></code> <code><a href="Mod_Merge_Chains.html">mod_merge_chains_cv()</a></code>
 
         </dt>
         <dd>Merge model chains into <code>Hmsc</code> and <code>coda</code> objects</dd>
@@ -287,7 +287,7 @@
         <dd>Summary of Hmsc model parameters</dd>
       </dl><dl><dt>
 
-          <code><a href="Response_curves.html">resp_curv_prepare_data()</a></code> <code><a href="Response_curves.html">resp_curv_plot_species()</a></code> <code><a href="Response_curves.html">resp_curv_plot_species_all()</a></code> <code><a href="Response_curves.html">resp_curv_plot_SR()</a></code>
+          <code><a href="Response_curves.html">rc_prepare_data()</a></code> <code><a href="Response_curves.html">rc_plot_species()</a></code> <code><a href="Response_curves.html">rc_plot_species_all()</a></code> <code><a href="Response_curves.html">rc_plot_sr()</a></code>
 
         </dt>
         <dd>Prepare and plot response curve data for Hmsc models</dd>
@@ -311,7 +311,7 @@
         <dd>Calculates predicted values from a fitted Hmsc model</dd>
       </dl><dl><dt>
 
-          <code><a href="Predict_Maps.html">predict_maps()</a></code> <code><a href="Predict_Maps.html">predict_maps_CV()</a></code>
+          <code><a href="Predict_Maps.html">predict_maps()</a></code> <code><a href="Predict_Maps.html">predict_maps_cv()</a></code>
 
         </dt>
         <dd>Predict habitat suitability of <code>Hmsc</code> models</dd>
@@ -341,7 +341,7 @@
         <dd>Merge Cross-Validation Predictions and Generate Summary Maps</dd>
       </dl><dl><dt>
 
-          <code><a href="Mod_postprocessing.html">mod_postprocess_1_CPU()</a></code> <code><a href="Mod_postprocessing.html">mod_prepare_TF()</a></code> <code><a href="Mod_postprocessing.html">mod_postprocess_2_CPU()</a></code> <code><a href="Mod_postprocessing.html">mod_postprocess_CV_1_CPU()</a></code> <code><a href="Mod_postprocessing.html">mod_postprocess_CV_2_CPU()</a></code>
+          <code><a href="Mod_postprocessing.html">mod_postprocess_1_cpu()</a></code> <code><a href="Mod_postprocessing.html">mod_prepare_tf()</a></code> <code><a href="Mod_postprocessing.html">mod_postprocess_2_cpu()</a></code> <code><a href="Mod_postprocessing.html">mod_postprocess_cv_1_cpu()</a></code> <code><a href="Mod_postprocessing.html">mod_postprocess_cv_2_cpu()</a></code>
 
         </dt>
         <dd>Model pipeline for post-processing fitted Hmsc models</dd>

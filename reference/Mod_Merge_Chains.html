@@ -3,11 +3,11 @@
 into unified Hmsc and coda objects, facilitating further analysis. They
 check for missing or incomplete chains, optionally report these issues, and
 save the processed results to disk. mod_merge_chains handles regular
-models, while mod_merge_chains_CV is designed for cross-validated models."><meta property="og:description" content="These functions merge posterior chains from multiple runs of Hmsc models
+models, while mod_merge_chains_cv is designed for cross-validated models."><meta property="og:description" content="These functions merge posterior chains from multiple runs of Hmsc models
 into unified Hmsc and coda objects, facilitating further analysis. They
 check for missing or incomplete chains, optionally report these issues, and
 save the processed results to disk. mod_merge_chains handles regular
-models, while mod_merge_chains_CV is designed for cross-validated models."></head><body>
+models, while mod_merge_chains_cv is designed for cross-validated models."></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -59,7 +59,7 @@ models, while mod_merge_chains_CV is designed for cross-validated models."></hea
 into unified <code>Hmsc</code> and <code>coda</code> objects, facilitating further analysis. They
 check for missing or incomplete chains, optionally report these issues, and
 save the processed results to disk. <code>mod_merge_chains</code> handles regular
-models, while <code>mod_merge_chains_CV</code> is designed for cross-validated models.</p>
+models, while <code>mod_merge_chains_cv</code> is designed for cross-validated models.</p>
     </div>
 
     <div class="section level2">
@@ -70,16 +70,16 @@ models, while <code>mod_merge_chains_CV</code> is designed for cross-validated m
 <span>  strategy <span class="op">=</span> <span class="st">"multisession"</span>,</span>
 <span>  model_info_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  print_incomplete <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  from_JSON <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  from_json <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  out_extension <span class="op">=</span> <span class="st">"qs2"</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">mod_merge_chains_CV</span><span class="op">(</span></span>
+<span><span class="fu">mod_merge_chains_cv</span><span class="op">(</span></span>
 <span>  model_dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  n_cores <span class="op">=</span> <span class="fl">8L</span>,</span>
 <span>  strategy <span class="op">=</span> <span class="st">"multisession"</span>,</span>
-<span>  CV_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"CV_Dist"</span>, <span class="st">"CV_Large"</span><span class="op">)</span>,</span>
-<span>  from_JSON <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  cv_names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cv_dist"</span>, <span class="st">"cv_large"</span><span class="op">)</span>,</span>
+<span>  from_json <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  out_extension <span class="op">=</span> <span class="st">"qs2"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -90,10 +90,10 @@ models, while <code>mod_merge_chains_CV</code> is designed for cross-validated m
 
 <dl><dt id="arg-model-dir">model_dir<a class="anchor" aria-label="anchor" href="#arg-model-dir"></a></dt>
 <dd><p>Character. Path to the root directory where the model was
-fitted. For <code>mod_merge_chains</code>, subdirectories <code>Model_Fitted</code> and
-<code>Model_Coda</code> are created within this path to store the merged <code>Hmsc</code> and
-<code>coda</code> objects, respectively. For <code>mod_merge_chains_CV</code>, merged objects are
-stored under <code>Model_Fitting_CV/Model_Fitted</code>.</p></dd>
+fitted. For <code>mod_merge_chains</code>, subdirectories <code>model_fitted</code> and
+<code>model_coda</code> are created within this path to store the merged <code>Hmsc</code> and
+<code>coda</code> objects, respectively. For <code>mod_merge_chains_cv</code>, merged objects are
+stored under <code>model_fitting_cv/model_fitted</code>.</p></dd>
 
 
 <dt id="arg-n-cores">n_cores<a class="anchor" aria-label="anchor" href="#arg-n-cores"></a></dt>
@@ -110,7 +110,7 @@ options are "sequential", "multisession" (default), "multicore", and
 <dt id="arg-model-info-name">model_info_name<a class="anchor" aria-label="anchor" href="#arg-model-info-name"></a></dt>
 <dd><p>Character. Name of the file (without extension) where
 updated model information is saved. If <code>NULL</code>, overwrites the existing
-<code>Model_Info.RData</code> file in <code>model_dir</code> directory. If specified, creates a
+<code>model_info.RData</code> file in <code>model_dir</code> directory. If specified, creates a
 new <code>.RData</code> file with this name in <code>model_dir</code> directory. Applies only to
 <code>mod_merge_chains</code>.</p></dd>
 
@@ -121,7 +121,7 @@ variants that failed to merge due to missing or incomplete chains. Defaults
 to <code>TRUE</code>.</p></dd>
 
 
-<dt id="arg-from-json">from_JSON<a class="anchor" aria-label="anchor" href="#arg-from-json"></a></dt>
+<dt id="arg-from-json">from_json<a class="anchor" aria-label="anchor" href="#arg-from-json"></a></dt>
 <dd><p>Logical. Whether to convert loaded models from JSON format
 before reading. Defaults to <code>FALSE</code>.</p></dd>
 
@@ -133,10 +133,10 @@ read/write via the <code>qs2</code> package) or <code>RData</code> (standard R f
 to <code>qs2</code>.</p></dd>
 
 
-<dt id="arg-cv-names">CV_names<a class="anchor" aria-label="anchor" href="#arg-cv-names"></a></dt>
+<dt id="arg-cv-names">cv_names<a class="anchor" aria-label="anchor" href="#arg-cv-names"></a></dt>
 <dd><p>Character vector. Names of cross-validation strategies to
-merge, matching those used during model setup. Defaults to <code>c("CV_Dist", "CV_Large")</code>. The names should be one of <code>CV_Dist</code>, <code>CV_Large</code>, or
-<code>CV_SAC</code>. Applies only to <code>mod_merge_chains_CV</code>.</p></dd>
+merge, matching those used during model setup. Defaults to <code>c("cv_dist", "cv_large")</code>. The names should be one of <code>cv_dist</code>, <code>cv_large</code>, or
+<code>cv_sac</code>. Applies only to <code>mod_merge_chains_cv</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -153,9 +153,9 @@ chains, aligns posteriors (using <code>alignPost = TRUE</code>, falling back to 
 if alignment fails), and saves a merged <code>Hmsc</code> object and a <code>coda</code> object for
 MCMC diagnostics. It also records fitting time and memory usage from progress
 files.</p></li>
-<li><p><code>mod_merge_chains_CV</code> performs a similar merging process for
+<li><p><code>mod_merge_chains_cv</code> performs a similar merging process for
 cross-validated <code>Hmsc</code> models, processing each fold of the specified
-<code>CV_names</code> separately. It saves merged <code>Hmsc</code> objects per fold but does not
+<code>cv_names</code> separately. It saves merged <code>Hmsc</code> objects per fold but does not
 generate <code>coda</code> objects.</p></li>
 </ul></div>
     <div class="section level2">

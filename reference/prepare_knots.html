@@ -65,8 +65,8 @@ avoid overlap.</p>
 <span>  coordinates <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  min_distance <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  jitter_distance <span class="op">=</span> <span class="fl">100</span>,</span>
-<span>  min_LF <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  max_LF <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  min_lf <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  max_lf <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  alphapw <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>Prior <span class="op">=</span> <span class="cn">NULL</span>, Min <span class="op">=</span> <span class="fl">10</span>, Max <span class="op">=</span> <span class="fl">1500</span>, Samples <span class="op">=</span> <span class="fl">101</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -91,7 +91,7 @@ distance is used for both <code>knotDist</code> and <code>minKnotDist</code> par
 coordinates to avoid exact duplicates. Defaults to 100 meters.</p></dd>
 
 
-<dt id="arg-min-lf-max-lf">min_LF, max_LF<a class="anchor" aria-label="anchor" href="#arg-min-lf-max-lf"></a></dt>
+<dt id="arg-min-lf-max-lf">min_lf, max_lf<a class="anchor" aria-label="anchor" href="#arg-min-lf-max-lf"></a></dt>
 <dd><p>Integer. Minimum and maximum number of latent factors to
 be used. Both default to <code>NULL</code> which means that the number of latent
 factors will be estimated from the data. If either is provided, the
@@ -111,7 +111,7 @@ from 10 to 1500 km, with the first value in the second column set to 0.5.</p></d
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An object of class <code>HmscRandomLevel</code>, suitable for specifying the
 random level in HMSC GPP models. This object contains the prepared knot
-locations as a data frame with columns <code>Var1</code> and <code>Var2</code> (numeric
+locations as a data frame with columns <code>var_1</code> and <code>var_2</code> (numeric
 coordinates), after possible jittering and conversion to avoid overlap.</p>
     </div>
     <div class="section level2">

@@ -215,7 +215,7 @@ and the subsequent process of fitting these models on GPUs within the
 <h2 id="model-input-data">Model input data<a class="anchor" aria-label="anchor" href="#model-input-data"></a>
 </h2>
 <p>The primary function for preparing model-fitting data and
-initialising models is <cc><code><a href="../reference/Mod_inputs.html">mod_prepare_HPC()</a></code></cc>. It
+initialising models is <cc><code><a href="../reference/Mod_inputs.html">mod_prepare_hpc()</a></code></cc>. It
 structures data for each habitat-specific model into distinct
 directories (e.g., <ff>datasets/processed/model_fitting/HabX</ff>, where
 <i>X</i> represents a
@@ -294,17 +294,17 @@ observations (<cc>exclude_cultivated</cc>)
 <p><br><br></p>
 <ul>
 <li>
-<code><a href="../reference/mod_CV_prepare.html">mod_CV_prepare()</a></code>: prepare and visualise options for
-spatial-block cross-validation. In the <i>CV_Dist</i> strategy, block
-size is governed by the <em>CV_n_grids</em> argument, whereas in the
-<i>CV_Large</i> strategy, the study area is partitioned into larger
-blocks based on the <em>CV_n_rows</em> and <em>CV_n_columns</em>
+<code><a href="../reference/mod_CV_prepare.html">mod_cv_prepare()</a></code>: prepare and visualise options for
+spatial-block cross-validation. In the <i>cv_dist</i> strategy, block
+size is governed by the <em>cv_n_grids</em> argument, whereas in the
+<i>cv_large</i> strategy, the study area is partitioned into larger
+blocks based on the <em>cv_n_rows</em> and <em>cv_n_columns</em>
 arguments.</li>
 </ul>
 <table class="table table table-condensed table-hover" style="font-size: 16px; margin-left: auto; margin-right: auto;"><tbody>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>CV_n_folds</cc><tab0></tab0>
+<cc>cv_n_folds</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 number of cross-validation folds
@@ -312,22 +312,22 @@ number of cross-validation folds
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>CV_n_grids</cc><tab0></tab0>
+<cc>cv_n_grids</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
-number of grid cells in each directions for the <i>CV_Dist</i>
+number of grid cells in each directions for the <i>cv_dist</i>
 cross-validation strategy (default: 20, yielding 20 × 20 grid cell
 blocks).
 </td>
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>CV_n_rows / CV_n_columns</cc><tab0></tab0>
+<cc>cv_n_rows / cv_n_columns</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
-number of rows and columns defining in the <i>CV_Large</i>
+number of rows and columns defining in the <i>cv_large</i>
 cross-validation strategy, partitioning the study area into large blocks
-(default: <em>CV_n_rows = CV_n_columns = 2</em>, resulting in four
+(default: <em>cv_n_rows = cv_n_columns = 2</em>, resulting in four
 blocks divided at median coordinates).
 </td>
 </tr>
@@ -352,7 +352,7 @@ Predictive Process (GPP)
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>GPP_dists</cc><tab0></tab0>
+<cc>gpp_dists</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 distance (in kilometres; controlled by the <code>min_distance</code>
@@ -371,7 +371,7 @@ whether to plot the coordinates of sampling units and knots
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>min_LF / max_LF</cc><tab0></tab0>
+<cc>min_lf / max_lf</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 minimum and maximum number of latent factors to be include
@@ -389,7 +389,7 @@ prior specification for the alpha parameter
 <p><br><br></p>
 <ul>
 <li>
-<code><a href="../reference/Mod_SLURM.html">mod_SLURM()</a></code>: generate SLURM scripts to facilitate model
+<code><a href="../reference/Mod_SLURM.html">mod_slurm()</a></code>: generate SLURM scripts to facilitate model
 fitting on GPUs using the <code>Hmsc-HPC</code> extension.</li>
 </ul>
 <table class="table table table-condensed table-hover" style="font-size: 16px; margin-left: auto; margin-right: auto;"><tbody>
@@ -435,7 +435,7 @@ maximum duration for job execution
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>HPC_partition</cc><tab0></tab0>
+<cc>hpc_partition</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 name of the HPC partition
@@ -522,7 +522,7 @@ length</a> per grid cell as a predictor
 <table class="table table table-condensed table-hover" style="font-size: 16px; margin-left: auto; margin-right: auto;"><tbody>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>MCMC_n_chains</cc><tab0></tab0>
+<cc>mcmc_n_chains</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 number of MCMC chains
@@ -530,7 +530,7 @@ number of MCMC chains
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>MCMC_thin</cc><tab0></tab0>
+<cc>mcmc_thin</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 thinning value(s) in MCMC sampling
@@ -538,7 +538,7 @@ thinning value(s) in MCMC sampling
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>MCMC_samples</cc><tab0></tab0>
+<cc>mcmc_samples</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 number of MCMC samples per chain
@@ -546,7 +546,7 @@ number of MCMC samples per chain
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>MCMC_transient_factor</cc><tab0></tab0>
+<cc>mcmc_transient_factor</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 transient multiplication factor. The value of transient will equal the
@@ -555,7 +555,7 @@ multiplication of <cc>transientFactor</cc> and <cc>thin</cc>
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>MCMC_verbose</cc><tab0></tab0>
+<cc>mcmc_verbose</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 interval at which MCMC sampling progress is reported
@@ -582,11 +582,11 @@ countries</li>
 and <cc>no_phylo_tree</cc>
 </li>
 <li>
-<cc>path_Hmsc</cc>: directory path to <code>Hmsc-HPC</code>
+<cc>path_hmsc</cc>: directory path to <code>Hmsc-HPC</code>
 extension installation</li>
 <li>
-<cc>SLURM_prepare</cc>: whether to prepare SLURM script for model
-fitting on GPU via <code><a href="../reference/Mod_SLURM.html">mod_SLURM()</a></code>
+<cc>slurm_prepare</cc>: whether to prepare SLURM script for model
+fitting on GPU via <code><a href="../reference/Mod_SLURM.html">mod_slurm()</a></code>
 </li>
 </ul>
 <hr class="hr1">
@@ -596,12 +596,12 @@ fitting on GPU via <code><a href="../reference/Mod_SLURM.html">mod_SLURM()</a></
 </h2>
 <p>Following the preparation of model input data and initialisation of
 models, the subsequent phase involves fitting these models on GPUs. For
-each habitat type, the <code><a href="../reference/Mod_inputs.html">mod_prepare_HPC()</a></code> function
+each habitat type, the <code><a href="../reference/Mod_inputs.html">mod_prepare_hpc()</a></code> function
 produces:</p>
 <ul>
-<li>python commands (<ff>Commands2Fit.txt</ff>) for fitting model chains
-across all model variants on GPUs, with each line corresponding to a
-single chain.</li>
+<li>python commands (<ff>commands_to_fit.txt</ff>) for fitting model
+chains across all model variants on GPUs, with each line corresponding
+to a single chain.</li>
 </ul>
 <button onclick="toggleScript('scriptContentNS1')" class="ShortBlockButton">
 »» Example model fitting commands
@@ -612,9 +612,9 @@ python3 -m hmsc.run_gibbs_sampler --input datasets/processed/model_fitting/Mod_R
 </div>
 <p><br></p>
 <ul>
-<li>one or more SLURM script files (<ff>Bash_Fit.slurm</ff>) designed to
-submit all model-fitting commands (<ff>Commands2Fit.txt</ff>) as batch
-jobs on a high-performance computing (HPC) system.</li>
+<li>one or more SLURM script files (<ff>bash_fit.slurm</ff>) designed to
+submit all model-fitting commands (<ff>commands_to_fit.txt</ff>) as
+batch jobs on a high-performance computing (HPC) system.</li>
 </ul>
 <p><br></p>
 <button onclick="toggleScript('scriptContentNS2')" class="ShortBlockButton">
@@ -697,7 +697,7 @@ echo "End of program at `date`"
 <p><br><br></p>
 <p>Batch jobs for model fitting can be submitted using the
 <code>sbatch</code> command, for example:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="ex">sbatch</span> datasets/processed/model_fitting/Hab1/Bash_Fit.slurm</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="ex">sbatch</span> datasets/processed/model_fitting/Hab1/bash_fit.slurm</span></code></pre></div>
 <hr class="hr1">
 <p><span style="font-size: 1.2em; line-height: 0.8;"> <b>Previous
 articles:</b><br><tab>↠<tab><a href="workflow_1_overview.html" class="ll">1.

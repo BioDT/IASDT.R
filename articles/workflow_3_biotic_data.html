@@ -706,7 +706,7 @@ Schizaeales
 <div class="section level2">
 <h2 id="gbif">GBIF<a class="anchor" aria-label="anchor" href="#gbif"></a>
 </h2>
-<p>The <code><a href="../reference/GBIF_data.html">GBIF_process()</a></code> function manages the retrieval,
+<p>The <code><a href="../reference/GBIF_data.html">gbif_process()</a></code> function manages the retrieval,
 processing, and visualisation of the most current occurrence data for
 invasive alien species (IAS) from the Global Biodiversity Information
 Facility
@@ -725,7 +725,7 @@ delineating presence-only data across the reference grid.</p>
 <p>The European Alien Species Information Network
 (<a href="https://easin.jrc.ec.europa.eu/" target="_blank" class="external-link ll">EASIN</a>)
 serves as a web-based platform providing spatial data on approximately
-14,000 alien species. The <code><a href="../reference/EASIN_data.html">EASIN_process()</a></code> function oversees
+14,000 alien species. The <code><a href="../reference/EASIN_data.html">easin_process()</a></code> function oversees
 the processing and visualisation of the latest IAS occurrence data
 sourced from EASIN. A checklist of vascular plants from EASIN’s database
 was retrieved via its API and standardized against the GBIF taxonomic
@@ -748,7 +748,7 @@ Socio-Ecological Research Infrastructure
 comprises a network of sites dedicated to collecting ecological data for
 long-term research across the European Union. Data from 137 eLTER sites,
 encompassing 5,265 observations for 110 invasive alien species (IAS),
-were processed (<code><a href="../reference/eLTER_Process.html">eLTER_process()</a></code>) and standardized to ensure
+were processed (<code>eLTER_process()</code>) and standardized to ensure
 consistency with other biotic datasets in the <code>IASDT</code>
 workflow.</p>
 <p><br><br></p>
@@ -756,7 +756,7 @@ workflow.</p>
 <div class="section level2">
 <h2 id="species-distribution">Species distribution<a class="anchor" aria-label="anchor" href="#species-distribution"></a>
 </h2>
-<p>The <code><a href="../reference/IAS_data.html">IAS_process()</a></code> function integrates and visualises
+<p>The <code><a href="../reference/naps_data.html">naps_process()</a></code> function integrates and visualises
 species distribution data sourced from <code>GBIF</code>,
 <code>EASIN</code>, and <code>eLTER</code>. It combines pre-processed
 datasets and generates presence-absence rasters for use in the species

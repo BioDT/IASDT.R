@@ -65,24 +65,24 @@
 <span>  expected <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  n_cores <span class="op">=</span> <span class="fl">8L</span>,</span>
 <span>  strategy <span class="op">=</span> <span class="st">"multisession"</span>,</span>
-<span>  model_name <span class="op">=</span> <span class="st">"Train"</span>,</span>
-<span>  temp_dir <span class="op">=</span> <span class="st">"TEMP_Pred"</span>,</span>
+<span>  model_name <span class="op">=</span> <span class="st">"train"</span>,</span>
+<span>  temp_dir <span class="op">=</span> <span class="st">"temp_pred"</span>,</span>
 <span>  temp_cleanup <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  prediction_type <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  use_TF <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  TF_environ <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  TF_use_single <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  LF_out_file <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  LF_return <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  LF_inputFile <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  LF_only <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  n_cores_LF <span class="op">=</span> <span class="va">n_cores</span>,</span>
-<span>  LF_check <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  LF_temp_cleanup <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  LF_commands_only <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  use_tf <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  tf_environ <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  tf_use_single <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  lf_out_file <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  lf_return <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  lf_input_file <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  lf_only <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  n_cores_lf <span class="op">=</span> <span class="va">n_cores</span>,</span>
+<span>  lf_check <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  lf_temp_cleanup <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  lf_commands_only <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  pred_directory <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  pred_PA <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  pred_XY <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  pred_pa <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  pred_xy <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  evaluate <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  evaluation_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  evaluation_directory <span class="op">=</span> <span class="st">"Evaluation"</span>,</span>
@@ -176,65 +176,65 @@ are made for response curves at mean coordinates. If <code>i</code>, predictions
 made for response curves at infinite coordinates.</p></dd>
 
 
-<dt id="arg-use-tf">use_TF<a class="anchor" aria-label="anchor" href="#arg-use-tf"></a></dt>
+<dt id="arg-use-tf">use_tf<a class="anchor" aria-label="anchor" href="#arg-use-tf"></a></dt>
 <dd><p>Logical. Whether to use <code>TensorFlow</code> for calculations. Defaults
 to <code>TRUE</code>.</p></dd>
 
 
-<dt id="arg-tf-environ">TF_environ<a class="anchor" aria-label="anchor" href="#arg-tf-environ"></a></dt>
+<dt id="arg-tf-environ">tf_environ<a class="anchor" aria-label="anchor" href="#arg-tf-environ"></a></dt>
 <dd><p>Character. Path to the Python environment. This argument is
-required if <code>use_TF</code> is <code>TRUE</code> under Windows. Defaults to <code>NULL</code>.</p></dd>
+required if <code>use_tf</code> is <code>TRUE</code> under Windows. Defaults to <code>NULL</code>.</p></dd>
 
 
-<dt id="arg-tf-use-single">TF_use_single<a class="anchor" aria-label="anchor" href="#arg-tf-use-single"></a></dt>
+<dt id="arg-tf-use-single">tf_use_single<a class="anchor" aria-label="anchor" href="#arg-tf-use-single"></a></dt>
 <dd><p>Logical. Whether to use single precision for the
 <code>TensorFlow</code> calculations. Defaults to <code>FALSE</code>.</p></dd>
 
 
-<dt id="arg-lf-out-file">LF_out_file<a class="anchor" aria-label="anchor" href="#arg-lf-out-file"></a></dt>
+<dt id="arg-lf-out-file">lf_out_file<a class="anchor" aria-label="anchor" href="#arg-lf-out-file"></a></dt>
 <dd><p>Character. Path to save the outputs. If <code>NULL</code> (default),
 the predicted latent factors are not saved to a file. This should end with
 either <code>*.qs2</code> or <code>*.RData</code>.</p></dd>
 
 
-<dt id="arg-lf-return">LF_return<a class="anchor" aria-label="anchor" href="#arg-lf-return"></a></dt>
+<dt id="arg-lf-return">lf_return<a class="anchor" aria-label="anchor" href="#arg-lf-return"></a></dt>
 <dd><p>Logical. Whether the output should be returned. Defaults to
-<code>FALSE</code>. If <code>LF_out_file</code> is <code>NULL</code>, this parameter cannot be set to
+<code>FALSE</code>. If <code>lf_out_file</code> is <code>NULL</code>, this parameter cannot be set to
 <code>FALSE</code> because the function needs to return the result if it is not saved
 to a file.</p></dd>
 
 
-<dt id="arg-lf-inputfile">LF_inputFile<a class="anchor" aria-label="anchor" href="#arg-lf-inputfile"></a></dt>
+<dt id="arg-lf-input-file">lf_input_file<a class="anchor" aria-label="anchor" href="#arg-lf-input-file"></a></dt>
 <dd><p>Character. File name where the latent factor predictions
 are saved. If <code>NULL</code> (default), latent factor predictions will be computed.
 If specified, latent factor predictions are read from this path. This
 allows to predicting the latent factors for new sites only once.</p></dd>
 
 
-<dt id="arg-lf-only">LF_only<a class="anchor" aria-label="anchor" href="#arg-lf-only"></a></dt>
+<dt id="arg-lf-only">lf_only<a class="anchor" aria-label="anchor" href="#arg-lf-only"></a></dt>
 <dd><p>Logical. Whether to return the latent factor predictions only.
 Defaults to <code>FALSE</code>. This helps in predicting to new sites, allowing to
 predicting the latent factors only once, then the output can be loaded in
 other predictions when needed.</p></dd>
 
 
-<dt id="arg-n-cores-lf">n_cores_LF<a class="anchor" aria-label="anchor" href="#arg-n-cores-lf"></a></dt>
+<dt id="arg-n-cores-lf">n_cores_lf<a class="anchor" aria-label="anchor" href="#arg-n-cores-lf"></a></dt>
 <dd><p>Integer. Number of cores to use for parallel processing of
 latent factor prediction. Defaults to 8L.</p></dd>
 
 
-<dt id="arg-lf-check">LF_check<a class="anchor" aria-label="anchor" href="#arg-lf-check"></a></dt>
+<dt id="arg-lf-check">lf_check<a class="anchor" aria-label="anchor" href="#arg-lf-check"></a></dt>
 <dd><p>Logical. If <code>TRUE</code>, the function checks if the output files
 are already created and valid. If <code>FALSE</code>, the function will only check if
 the files exist without checking their integrity. Default is <code>FALSE</code>.</p></dd>
 
 
-<dt id="arg-lf-temp-cleanup">LF_temp_cleanup<a class="anchor" aria-label="anchor" href="#arg-lf-temp-cleanup"></a></dt>
+<dt id="arg-lf-temp-cleanup">lf_temp_cleanup<a class="anchor" aria-label="anchor" href="#arg-lf-temp-cleanup"></a></dt>
 <dd><p>Logical. Whether to delete temporary files in the
 <code>temp_dir</code> directory after finishing the LF predictions.</p></dd>
 
 
-<dt id="arg-lf-commands-only">LF_commands_only<a class="anchor" aria-label="anchor" href="#arg-lf-commands-only"></a></dt>
+<dt id="arg-lf-commands-only">lf_commands_only<a class="anchor" aria-label="anchor" href="#arg-lf-commands-only"></a></dt>
 <dd><p>Logical. If <code>TRUE</code>, returns the command to run the
 Python script. Default is <code>FALSE</code>.</p></dd>
 
@@ -242,17 +242,17 @@ Python script. Default is <code>FALSE</code>.</p></dd>
 <dt id="arg-pred-directory">pred_directory<a class="anchor" aria-label="anchor" href="#arg-pred-directory"></a></dt>
 <dd><p>Character. Directory path indicating where the
 predictions will be saved. Defaults to <code>NULL</code>, which saves model
-predictions to "<code>Model_Prediction</code>" folder of the current working
+predictions to "<code>model_prediction</code>" folder of the current working
 directory.</p></dd>
 
 
-<dt id="arg-pred-pa">pred_PA<a class="anchor" aria-label="anchor" href="#arg-pred-pa"></a></dt>
+<dt id="arg-pred-pa">pred_pa<a class="anchor" aria-label="anchor" href="#arg-pred-pa"></a></dt>
 <dd><p><code>matrix</code>. Presence-absence data for evaluation. If <code>NULL</code>
 (default), the presence-absence data from the model object is used. This
 argument is used only when <code>evaluate</code> is <code>TRUE</code>.</p></dd>
 
 
-<dt id="arg-pred-xy">pred_XY<a class="anchor" aria-label="anchor" href="#arg-pred-xy"></a></dt>
+<dt id="arg-pred-xy">pred_xy<a class="anchor" aria-label="anchor" href="#arg-pred-xy"></a></dt>
 <dd><p><code>matrix</code>. Coordinates to be added to predicted values. If
 <code>NULL</code> (default), the coordinates from the model object is used.</p></dd>
 

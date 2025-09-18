@@ -127,8 +127,7 @@ chelsa_prepare <- function(
               climate_scenario = climate_scenario)
           }
           return(out)
-        })
-    ) %>%
+        })) %>%
     tidyr::unnest_wider("model_scenario") %>%
     # Files for 2011-2040/UKESM1-0-LL/ssp126 are duplicated
     dplyr::filter(
@@ -143,7 +142,7 @@ chelsa_prepare <- function(
           stringr::str_remove_all(
             string = path_file,
             pattern = paste0(
-              "_r1i1p1f1_w5e5_|_norm|chelsa_|V.2.1|_V\\.2\\.1|", time_period,
+              "_r1i1p1f1_w5e5_|_norm|CHELSA_|V.2.1|_V\\.2\\.1|", time_period,
               "|.", extension, "|", climate_scenario)) %>%
             stringr::str_remove_all(
               pattern = stringr::str_glue(
@@ -154,8 +153,7 @@ chelsa_prepare <- function(
             ) %>%
             stringr::str_remove_all(pattern = "__|___") %>%
             stringr::str_remove_all(pattern = "^_|_$")
-        })
-    ) %>%
+        })) %>%
     # Process only selected variables
     dplyr::filter(stringr::str_detect(variable, selected_vars)) %>%
     dplyr::mutate(
@@ -189,8 +187,7 @@ chelsa_prepare <- function(
             stringr::str_replace(
               pattern = "1981-2010_current_current",
               replacement = "1981-2010_current")
-        })
-    ) %>%
+        })) %>%
     dplyr::select(-"path_dir") %>%
     dplyr::left_join(IASDT.R::chelsa_variables, by = "variable")
 

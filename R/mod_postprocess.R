@@ -5,19 +5,19 @@
 #' Model pipeline for post-processing fitted Hmsc models
 #'
 #' These functions post-process fitted Hmsc models on both CPU and GPU. The main
-#' functions in the pipeline includes `mod_postprocess_1_CPU`, `mod_prepare_TF`,
-#' and `mod_postprocess_2_CPU` for full models without cross-validation, as well
-#' as `mod_postprocess_CV_1_CPU` and `mod_postprocess_CV_2_CPU` for
+#' functions in the pipeline includes `mod_postprocess_1_cpu`, `mod_prepare_tf`,
+#' and `mod_postprocess_2_cpu` for full models without cross-validation, as well
+#' as `mod_postprocess_cv_1_cpu` and `mod_postprocess_cv_2_cpu` for
 #' cross-validated models. See details for more information.
 #' @param model_dir Character. Path to the root directory of the fitted model.
 #' @param job_runtime Character. Maximum allowed runtime for jobs for refitting
 #'   the models (if needed) and cross validating models. Defaults to "01:00:00"
 #'   for one hour. If not provided, the function throws an error.
-#' @param GPP_dist Integer. Distance in *kilometres* between knots for the
+#' @param gpp_dist Integer. Distance in *kilometres* between knots for the
 #'   selected model.
 #' @param use_trees Character. Whether a phylogenetic tree was used in the
-#'   selected model. Accepts "Tree" (default) or "NoTree".
-#' @param MCMC_thin,MCMC_n_samples Integer. Thinning value and the number of
+#'   selected model. Accepts "tree" (default) or "no_tree".
+#' @param mcmc_thin,mcmc_n_samples Integer. Thinning value and the number of
 #'   MCMC samples of the selected model.
 #' @param strategy Character. The parallel processing strategy to use. Valid
 #'   options are "sequential", "multisession" (default), "multicore", and
@@ -25,18 +25,18 @@
 #' @param future_max_size	Numeric. Maximum allowed total size (in megabytes) of
 #'   global variables identified. See `future.globals.maxSize` argument of
 #'   [future::future.options] for more details.
-#' @param n_cores,n_cores_pred,n_cores_LF,n_cores_VP,n_cores_RC Integer. Number
+#' @param n_cores,n_cores_pred,n_cores_lf,n_cores_vp,n_cores_rc Integer. Number
 #'   of cores to use for parallel processing. They are used for different
 #'   processing steps: `n_cores` for merging chains and plotting convergence
 #'   convergence diagnostics; `n_cores_pred` for predicting species' habitat
-#'   suitability; `n_cores_LF` for predicting latent factors; `n_cores_VP` for
-#'   processing variance partitioning; and `n_cores_RC` for response curve
+#'   suitability; `n_cores_lf` for predicting latent factors; `n_cores_vp` for
+#'   processing variance partitioning; and `n_cores_rc` for response curve
 #'   prediction. All default to `8L`. If `strategy = "sequential"`, all of these
 #'   arguments are set to `1L`.
-#' @param CV_name `NULL` or character vector. Column name(s) in the model input
+#' @param cv_name `NULL` or character vector. Column name(s) in the model input
 #'   data to be used to cross-validate the models (see [mod_prepare_data] and
-#'   [mod_CV_prepare]). If `CV_name = NULL`, no cross-validation data
-#'   preparation is done. See [mod_CV_fit] for valid options.
+#'   [mod_cv_prepare]). If `cv_name = NULL`, no cross-validation data
+#'   preparation is done. See [mod_cv_fit] for valid options.
 #' @param n_batch_files Integer. Number of output batch files to create. Must be
 #'   less than or equal to the maximum job limit of the HPC environment.
 #' @param working_directory Character. Optionally sets the working directory in
@@ -46,23 +46,23 @@
 #'   running commands. Defaults to `NULL`. This can not be `NULL`.
 #' @param partition_name Character. Name of the partition to submit the SLURM
 #'   jobs to. Default is `small-g`.
-#' @param LF_runtime,VP_runtime Character. Time limit for latent factor
+#' @param lf_runtime,vp_runtime Character. Time limit for latent factor
 #'   prediction and variance partitioning processing jobs, respectively.
 #'   Defaults are `01:00:00` and `02:00:00` respectively.
-#' @param temp_cleanup,LF_temp_cleanup Logical. Whether to delete temporary
+#' @param temp_cleanup,lf_temp_cleanup Logical. Whether to delete temporary
 #'   files after finishing predicting latent factor or species distribution.
 #'   Default: `TRUE`.
 #' @param width_omega,height_omega,width_beta,height_beta Integer. The width and
 #'   height of the generated heatmaps of the Omega and Beta parameters in
 #'   centimetres.
-#' @param spatial_model,plot_LF Logical. Whether the model is spatial (`TRUE`)
+#' @param spatial_model,plot_lf Logical. Whether the model is spatial (`TRUE`)
 #'   or not (`FALSE`) and whether to plot latent factors for spatial models as
 #'   JPEG files (using [plot_latent_factor]). Defaults to `TRUE`.
-#' @param RC_prepare,RC_plot Logical. Whether to prepare the data for response
-#'   curve prediction (using [resp_curv_prepare_data]) and plot the response
-#'   curves as JPEG files. (using [resp_curv_plot_SR], [resp_curv_plot_species],
-#'   and [resp_curv_plot_species_all]). Defaults to `TRUE`.
-#' @param VP_prepare,VP_plot Logical. Whether to prepare the data for variance
+#' @param rc_prepare,rc_plot Logical. Whether to prepare the data for response
+#'   curve prediction (using [rc_prepare_data]) and plot the response
+#'   curves as JPEG files. (using [rc_plot_sr], [rc_plot_species],
+#'   and [rc_plot_species_all]). Defaults to `TRUE`.
+#' @param vp_prepare,vp_plot Logical. Whether to prepare the data for variance
 #'   partitioning (using [variance_partitioning_compute]) and plot its results
 #'   (using [variance_partitioning_plot]). Defaults to `TRUE`.
 #' @param predict_suitability,tar_predictions,plot_predictions Logical. Whether
@@ -73,7 +73,7 @@
 #' @param plot_internal_evaluation Logical. Whether to compute and visualise
 #'   model internal evaluation (explanatory power) using [plot_evaluation].
 #'   Defaults to `TRUE`.
-#' @param process_VP,process_LF Logical. Whether to prepares batch scripts for
+#' @param process_vp,process_lf Logical. Whether to prepares batch scripts for
 #'   variance partitioning computations and latent factor predictions on GPUs.
 #'   Defaults to `TRUE`.
 #' @param is_cv_model Logical. Whether the model is a cross-validated model
@@ -84,7 +84,7 @@
 #' @order 1
 #' @importFrom foreach %dopar%
 #' @inheritParams predict_maps
-#' @inheritParams mod_CV_fit
+#' @inheritParams mod_cv_fit
 #' @inheritParams mod_merge_chains
 #' @inheritParams mod_inputs
 #' @inheritParams response_curves
@@ -94,12 +94,12 @@
 #' @export
 #' @details
 #'
-#' **mod_postprocess_1_CPU**
+#' **mod_postprocess_1_cpu**
 #'
 #' This function performs the initial post-processing step for habitat-specific
 #' fitted models, automating the following tasks:
 #'
-#' - check unsuccessful models: [mod_SLURM_refit]
+#' - check unsuccessful models: [mod_slurm_refit]
 #' - merge chains and save R objects (fitted model object and coda object) to
 #' `qs2` or `RData` files: [mod_merge_chains]
 #' - visualise the convergence of all model variants fitted
@@ -111,29 +111,29 @@
 #' - extract and save model summary: [mod_summary]
 #' - plotting model parameters: [mod_heatmap_omega], [mod_heatmap_beta]
 #' - prepare data for cross-validation and fit initial cross-validated models:
-#' [mod_CV_fit]
+#' [mod_cv_fit]
 #' - Prepare scripts for GPU processing, including:
 #'    - predicting latent factors of the response curves:
-#' [resp_curv_prepare_data]
+#' [rc_prepare_data]
 #'    - predicting latent factors for new sampling units: [predict_maps]
 #'    - computing variance partitioning: [variance_partitioning_compute]
 #'
 #' <br/>
 #'
-#' **mod_prepare_TF**
+#' **mod_prepare_tf**
 #'
-#' After running `mod_postprocess_1_CPU` for all habitat types, this function
+#' After running `mod_postprocess_1_cpu` for all habitat types, this function
 #' prepares batch scripts for GPU computations of all habitat types:
 #'    - for <u>variance partitioning</u>, the function matches all files with
-#' the pattern ` "VP_.+Command.txt"` (created by [variance_partitioning_compute]
+#' the pattern ` "vp_.+command.txt"` (created by [variance_partitioning_compute]
 #' and merges their contents into a single file
-#' (`model_prefix_TF/VP_Commands.txt`). Then, it prepares a SLURM script for
-#' variance partitioning computations (`model_prefix_TF/VP_SLURM.slurm`).
+#' (`model_prefix_TF/vp_commands.txt`). Then, it prepares a SLURM script for
+#' variance partitioning computations (`model_prefix_TF/vp_slurm.slurm`).
 #'    - for <u>latent factor predictions</u>, the function matches all files
-#' with the pattern `"^LF_NewSites_Commands_.+.txt|^LF_RC_Commands_.+txt"` and
+#' with the pattern `"^lf_new_sites_commands_.+.txt|^lf_rc_commands_.+txt"` and
 #' split their contents into multiple scripts at the `model_prefix_TF` directory
 #' for processing as a batch job. The function prepares a SLURM script for
-#' latent factor predictions (`LF_SLURM.slurm`).
+#' latent factor predictions (`lf_slurm.slurm`).
 #'
 #' This function is tailored for the LUMI HPC environment and assumes that the
 #' `tensorflow` module is installed and correctly configured with all required
@@ -143,7 +143,7 @@
 #'
 #' <br/><br/>
 #'
-#' **mod_postprocess_2_CPU**
+#' **mod_postprocess_2_cpu**
 #'
 #' This function continues running the analysis pipeline for post-processing
 #' Hmsc by automating the following steps:
@@ -160,24 +160,24 @@
 #' commands for latent factor predictions on GPU --- **Ongoing**
 #'
 #' This function should be run after:
-#' - completing `mod_postprocess_1_CPU` and `mod_prepare_TF` on CPU,
-#' - running `VP_SLURM.slurm` and `LF_SLURM.slurm` on GPU to process response
+#' - completing `mod_postprocess_1_cpu` and `mod_prepare_tf` on CPU,
+#' - running `vp_slurm.slurm` and `lf_slurm.slurm` on GPU to process response
 #' curves and latent factor predictions (both scripts are generated by
-#' `mod_prepare_TF`).
+#' `mod_prepare_tf`).
 #' - submitting SLURM jobs for cross-validated model fitting.
 #'
 #' <br/>
 #'
-#' **mod_postprocess_CV_1_CPU**
+#' **mod_postprocess_cv_1_cpu**
 #'
-#' This function is similar to `mod_postprocess_1_CPU`, but it is specifically
+#' This function is similar to `mod_postprocess_1_cpu`, but it is specifically
 #' designed for cross-validated models. It automates merging fitted
 #' cross-validated model chains into `Hmsc` model objects and prepare scripts
-#' for latent factor prediction on `TensorFlow` using [predict_maps_CV].
+#' for latent factor prediction on `TensorFlow` using [predict_maps_cv].
 #'
 #' <br/><br/>
 #'
-#' **mod_postprocess_CV_2_CPU**
+#' **mod_postprocess_cv_2_cpu**
 #'
 #' The function 1) processes `*.feather` files resulted from Latent Factor
 #' predictions (using `TensorFlow`) and saves LF predication to disk; 2)
@@ -187,27 +187,27 @@
 #'
 
 ## |------------------------------------------------------------------------| #
-# mod_postprocess_1_CPU ----
+# mod_postprocess_1_cpu ----
 ## |------------------------------------------------------------------------| #
 
-mod_postprocess_1_CPU <- function(
+mod_postprocess_1_cpu <- function(
     model_dir = NULL, hab_abb = NULL, strategy = "multisession",
     future_max_size = 1500L, n_cores = 8L, n_cores_pred = n_cores,
-    n_cores_LF = n_cores, n_cores_VP = n_cores, env_file = ".env",
-    path_Hmsc = NULL, memory_per_cpu = "64G", job_runtime = "01:00:00",
-    from_JSON = FALSE, GPP_dist = NULL, use_trees = "Tree",
-    MCMC_n_samples = 1000L, MCMC_thin = NULL, n_omega = 1000L,
-    CV_name = c("CV_Dist", "CV_Large"), n_grid = 50L, use_TF = TRUE,
-    TF_use_single = FALSE,  LF_temp_cleanup = TRUE, LF_check = FALSE,
-    temp_cleanup = TRUE, TF_environ = NULL, pred_new_sites = TRUE,
+    n_cores_lf = n_cores, n_cores_vp = n_cores, env_file = ".env",
+    path_hmsc = NULL, memory_per_cpu = "64G", job_runtime = "01:00:00",
+    from_json = FALSE, gpp_dist = NULL, use_trees = "tree",
+    mcmc_n_samples = 1000L, mcmc_thin = NULL, n_omega = 1000L,
+    cv_name = c("cv_dist", "cv_large"), n_grid = 50L, use_tf = TRUE,
+    tf_use_single = FALSE,  lf_temp_cleanup = TRUE, lf_check = FALSE,
+    temp_cleanup = TRUE, tf_environ = NULL, pred_new_sites = TRUE,
     width_omega = 26, height_omega = 22.5, width_beta = 25, height_beta = 35,
     spatial_model = TRUE, tar_predictions = TRUE, plot_predictions = TRUE,
     is_cv_model = FALSE, clamp_pred = TRUE, fix_efforts = "q90",
     fix_rivers = "q90",
-    CC_models = c(
+    climate_models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
-    CC_scenario = c("ssp126", "ssp370", "ssp585")) {
+    climate_scenario = c("ssp126", "ssp370", "ssp585")) {
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -215,18 +215,18 @@ mod_postprocess_1_CPU <- function(
 
   # Check input arguments ----
   ecokit::check_args(
-    args_to_check = c("model_dir", "use_trees", "path_Hmsc"),
+    args_to_check = c("model_dir", "use_trees", "path_hmsc"),
     args_type = "character")
 
   ecokit::check_args(
     args_to_check = c(
-      "from_JSON", "use_TF", "TF_use_single", "LF_temp_cleanup", "LF_check",
+      "from_json", "use_tf", "tf_use_single", "lf_temp_cleanup", "lf_check",
       "temp_cleanup", "pred_new_sites", "spatial_model", "tar_predictions",
       "plot_predictions", "clamp_pred", "is_cv_model"),
     args_type = "logical")
   ecokit::check_args(
     args_to_check = c(
-      "future_max_size", "n_omega", "MCMC_n_samples", "MCMC_thin", "n_grid",
+      "future_max_size", "n_omega", "mcmc_n_samples", "mcmc_thin", "n_grid",
       "height_omega", "width_omega", "width_beta", "height_beta"),
     args_type = "numeric")
 
@@ -234,11 +234,11 @@ mod_postprocess_1_CPU <- function(
 
   strategy <- .validate_strategy(strategy)
   if (strategy == "sequential") {
-    n_cores <- n_cores_LF <- n_cores_VP <- n_cores_pred <- 1L
+    n_cores <- n_cores_lf <- n_cores_vp <- n_cores_pred <- 1L
   }
   n_cores <- .validate_n_cores(n_cores)
-  n_cores_LF <- .validate_n_cores(n_cores_LF)
-  n_cores_VP <- .validate_n_cores(n_cores_VP)
+  n_cores_lf <- .validate_n_cores(n_cores_lf)
+  n_cores_vp <- .validate_n_cores(n_cores_vp)
   n_cores_pred <- .validate_n_cores(n_cores_pred)
 
   if (!ecokit::check_env_file(env_file, warning = FALSE)) {
@@ -252,21 +252,21 @@ mod_postprocess_1_CPU <- function(
       include_backtrace = TRUE)
   }
 
-  if (!(use_trees %in% c("Tree", "NoTree"))) {
+  if (!(use_trees %in% c("tree", "no_tree"))) {
     ecokit::stop_ctx(
       paste0(
-        "Invalid value for Tree argument. Valid values ",
-        "are: 'Tree' or 'NoTree'"),
+        "Invalid value for tree argument. Valid values ",
+        "are: 'tree' or 'no_tree'"),
       use_trees = use_trees, include_backtrace = TRUE)
   }
 
-  if (!is.null(CV_name) &&
-      !all(CV_name %in% c("CV_Dist", "CV_Large", "CV_SAC"))) {
+  if (!is.null(cv_name) &&
+      !all(cv_name %in% c("cv_dist", "cv_large", "cv_sac"))) {
     ecokit::stop_ctx(
       paste0(
-        "Invalid value for CV_name argument. Valid values ",
-        "are: 'CV_Dist', 'CV_Large', or `CV_SAC`"),
-      CV_name = CV_name, include_backtrace = TRUE)
+        "Invalid value for cv_name argument. Valid values ",
+        "are: 'cv_dist', 'cv_large', or `cv_sac`"),
+      cv_name = cv_name, include_backtrace = TRUE)
   }
 
   # Validate memory_per_cpu
@@ -278,7 +278,7 @@ mod_postprocess_1_CPU <- function(
   species_name <- non_focal_variables <- NULL
 
   ecokit::record_arguments(
-    out_path = fs::path(model_dir, "Args_mod_postprocess_1_CPU.RData"))
+    out_path = fs::path(model_dir, "Args_mod_postprocess_1_cpu.RData"))
 
   # ****************************************************************
 
@@ -292,7 +292,7 @@ mod_postprocess_1_CPU <- function(
       "\n  >>> Model root: ", model_dir,
       "\n  >>> n_cores: ", n_cores,
       "\n  >>> env_file: ", env_file,
-      "\n  >>> path_Hmsc: ", path_Hmsc,
+      "\n  >>> path_hmsc: ", path_hmsc,
       "\n  >>> SLURM memory_per_cpu: ", memory_per_cpu,
       "\n  >>> SLURM Time: ", job_runtime,
       "\n  >>> n_omega: ", n_omega,
@@ -309,11 +309,11 @@ mod_postprocess_1_CPU <- function(
     "Check unsuccessful models", level = 1L, line_char = "+",
     line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
-  IASDT.R::mod_SLURM_refit(
+  IASDT.R::mod_slurm_refit(
     model_dir = model_dir,
-    job_name = stringr::str_remove(basename(model_dir), "Mod_"),
+    job_name = stringr::str_remove(basename(model_dir), "mod_"),
     memory_per_cpu = memory_per_cpu, job_runtime = job_runtime,
-    env_file = env_file, path_Hmsc = path_Hmsc)
+    env_file = env_file, path_hmsc = path_hmsc)
 
   invisible(gc())
 
@@ -325,7 +325,7 @@ mod_postprocess_1_CPU <- function(
 
   IASDT.R::mod_merge_chains(
     model_dir = model_dir, n_cores = n_cores, strategy = strategy,
-    from_JSON = from_JSON)
+    from_json = from_json)
 
   invisible(gc())
 
@@ -351,30 +351,30 @@ mod_postprocess_1_CPU <- function(
     cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
   path_model <- fs::dir_ls(
-    fs::path(model_dir, "Model_Fitted"),
+    fs::path(model_dir, "model_fitted"),
     regexp = paste0(
-      ".+", use_trees, "_samp", MCMC_n_samples, "_th", MCMC_thin, "_Model.qs2"))
+      ".+", use_trees, "_samp", mcmc_n_samples, "_th", mcmc_thin, "_model.qs2"))
   if (length(path_model) > 1) {
-    path_model <- stringr::str_subset(path_model, paste0("^GPP", GPP_dist))
+    path_model <- stringr::str_subset(path_model, paste0("^gpp", gpp_dist))
   }
   if (length(path_model) == 0) {
     ecokit::stop_ctx("`path_model` is of length 0")
   }
 
   path_coda <- fs::dir_ls(
-    fs::path(model_dir, "Model_Coda"),
+    fs::path(model_dir, "model_coda"),
     regexp = paste0(
-      ".+", use_trees, "_samp", MCMC_n_samples, "_th", MCMC_thin, "_Coda.qs2"))
+      ".+", use_trees, "_samp", mcmc_n_samples, "_th", mcmc_thin, "_coda.qs2"))
   if (length(path_coda) > 1) {
     path_coda <- stringr::str_subset(
-      path_coda, paste0("^GPP", GPP_dist))
+      path_coda, paste0("^gpp", gpp_dist))
   }
   if (length(path_coda) == 0) {
     ecokit::stop_ctx("`path_coda` is of length 0")
   }
 
   cat(
-    paste0("path_model:\n\t", path_model, "\nPath_Coda:\n\t", path_coda, "\n"))
+    paste0("path_model:\n\t", path_model, "\npath_coda:\n\t", path_coda, "\n"))
 
   if (!all(fs::file_exists(c(path_model, path_coda)))) {
     ecokit::stop_ctx(
@@ -382,13 +382,13 @@ mod_postprocess_1_CPU <- function(
       path_model = path_model, path_coda = path_coda, include_backtrace = TRUE)
   }
 
-  temp_dir <- fs::path(model_dir, "TEMP_Pred")
+  temp_dir <- fs::path(model_dir, "temp_pred")
 
   # ****************************************************************
 
-  # Gelman_Plot -----
+  # gelman_plot -----
   ecokit::info_chunk(
-    "Gelman_Plot", level = 1L, line_char = "+", line_char_rep = 60L,
+    "gelman_plot", level = 1L, line_char = "+", line_char_rep = 60L,
     cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
   IASDT.R::plot_gelman(
@@ -456,16 +456,16 @@ mod_postprocess_1_CPU <- function(
 
   # Prepare input data for cross-validation -------
 
-  if (!is.null(CV_name)) {
+  if (!is.null(cv_name)) {
     ecokit::info_chunk(
       "Prepare input data for cross-validation", level = 1L, line_char = "+",
       line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
       cat_timestamp = FALSE)
 
-    IASDT.R::mod_CV_fit(
-      path_model = path_model, CV_name = CV_name, env_file = env_file,
-      job_name = paste0("CV_", hab_abb), memory_per_cpu = memory_per_cpu,
-      job_runtime = job_runtime, path_Hmsc = path_Hmsc)
+    IASDT.R::mod_cv_fit(
+      path_model = path_model, cv_name = cv_name, env_file = env_file,
+      job_name = paste0("cv_", hab_abb), memory_per_cpu = memory_per_cpu,
+      job_runtime = job_runtime, path_hmsc = path_hmsc)
 
     invisible(gc())
   }
@@ -481,13 +481,13 @@ mod_postprocess_1_CPU <- function(
       line_char = "+", line_char_rep = 90L, cat_red = TRUE, cat_bold = TRUE,
       cat_timestamp = FALSE, level = 1L)
 
-    IASDT.R::resp_curv_prepare_data(
+    IASDT.R::rc_prepare_data(
       path_model = path_model, n_grid = n_grid, n_cores = n_cores,
-      strategy = strategy, use_TF = use_TF, TF_environ = TF_environ,
-      TF_use_single = TF_use_single, n_cores_LF = n_cores_LF,
-      LF_temp_cleanup = LF_temp_cleanup, LF_check = LF_check,
+      strategy = strategy, use_tf = use_tf, tf_environ = tf_environ,
+      tf_use_single = tf_use_single, n_cores_lf = n_cores_lf,
+      lf_temp_cleanup = lf_temp_cleanup, lf_check = lf_check,
       temp_dir = temp_dir, temp_cleanup = temp_cleanup, verbose = TRUE,
-      LF_commands_only = TRUE)
+      lf_commands_only = TRUE)
 
     invisible(gc())
 
@@ -499,18 +499,19 @@ mod_postprocess_1_CPU <- function(
       cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE, level = 1L)
 
     rc_dir <- fs::path(
-      dirname(dirname(path_model)), "Model_Postprocessing", "RespCurv_DT")
+      dirname(dirname(path_model)),
+      "model_postprocessing", "response_curves_data")
     fs::dir_create(rc_dir)
     path_rc_data <- fs::path(rc_dir, "response_curve_data.qs2")
     path_observed_data <- fs::path(rc_dir, "observed_data.qs2")
 
     # Observed data
     if (!ecokit::check_data(path_observed_data, warning = FALSE)) {
-      Model <- ecokit::load_as(path_model)
-      model_vars <- names(Model$XData)
+      model_obj <- ecokit::load_as(path_model)
+      model_vars <- names(model_obj$XData)
       observed_data <- dplyr::bind_cols(
-        x_value = Model$XData, Model$Y,
-        species_richness = rowSums(Model$Y)) %>%
+        x_value = model_obj$XData, model_obj$Y,
+        species_richness = rowSums(model_obj$Y)) %>%
         tidyr::pivot_longer(
           cols = -tidyselect::all_of(model_vars), names_to = "species_name",
           values_to = "observed_value") %>%
@@ -518,14 +519,14 @@ mod_postprocess_1_CPU <- function(
         dplyr::arrange(species_name)
 
       ecokit::save_as(object = observed_data, out_path = path_observed_data)
-      rm(Model, observed_data, envir = environment())
+      rm(model_obj, observed_data, envir = environment())
       invisible(gc())
     }
 
     if (!ecokit::check_data(path_rc_data, warning = FALSE)) {
-      Model <- ecokit::load_as(path_model)
-      model_vars <- names(Model$XData)
-      rm(Model, envir = environment())
+      model_obj <- ecokit::load_as(path_model)
+      model_vars <- names(model_obj$XData)
+      rm(model_obj, envir = environment())
 
       response_curve_data <- tidyr::expand_grid(
         variable = model_vars, non_focal_variables = c(1, 2))
@@ -544,20 +545,20 @@ mod_postprocess_1_CPU <- function(
         X = seq_len(nrow(response_curve_data)),
         FUN = function(x) {
 
-          Model <- ecokit::load_as(path_model)
+          model_obj <- ecokit::load_as(path_model)
           variable <- response_curve_data$variable[x]
           nfv <- response_curve_data$non_focal_variables[x]
 
           Gradient <- Hmsc::constructGradient(
-            hM = Model, focalVariable = variable,
+            hM = model_obj, focalVariable = variable,
             non.focalVariables = nfv, ngrid  = 50)
           pred <- stats::predict(
-            object = Model, XData = Gradient$XDataNew,
+            object = model_obj, XData = Gradient$XDataNew,
             studyDesign = Gradient$studyDesignNew,
             ranLevels = Gradient$rLNew, expected = TRUE) %>%
             abind::abind(along = 3)
           x_vals <- Gradient$XDataNew[, variable]
-          rm(Model, Gradient, envir = environment())
+          rm(model_obj, Gradient, envir = environment())
           invisible(gc())
 
           pred_mean <- apply(pred, c(1, 2), mean)
@@ -633,10 +634,10 @@ mod_postprocess_1_CPU <- function(
     line_char = "+", line_char_rep = 90L, cat_red = TRUE, cat_bold = TRUE,
     cat_timestamp = FALSE, level = 1L)
   IASDT.R::variance_partitioning_compute(
-    path_model = path_model, n_cores = n_cores_VP, use_TF = use_TF,
-    TF_environ = TF_environ, TF_use_single = TF_use_single,
+    path_model = path_model, n_cores = n_cores_vp, use_tf = use_tf,
+    tf_environ = tf_environ, tf_use_single = tf_use_single,
     temp_cleanup = temp_cleanup, chunk_size = 50L, verbose = TRUE,
-    VP_file = "VarPar", VP_commands_only = TRUE)
+    vp_file = "VarPar", vp_commands_only = TRUE)
 
   # ****************************************************************
 
@@ -660,12 +661,12 @@ mod_postprocess_1_CPU <- function(
     # Do not clamp predictions for predicting latent factors
     clamp_pred = dplyr::if_else(spatial_model, FALSE, clamp_pred),
     fix_efforts = fix_efforts, fix_rivers = fix_rivers,
-    pred_new_sites = pred_new_sites, use_TF = use_TF, TF_environ = TF_environ,
+    pred_new_sites = pred_new_sites, use_tf = use_tf, tf_environ = tf_environ,
     temp_dir = temp_dir, temp_cleanup = temp_cleanup,
-    TF_use_single = TF_use_single, n_cores_LF = n_cores_LF,
-    LF_check = LF_check, LF_temp_cleanup = LF_temp_cleanup,
-    LF_only = spatial_model, LF_commands_only = spatial_model,
-    CC_models = CC_models, CC_scenario = CC_scenario,
+    tf_use_single = tf_use_single, n_cores_lf = n_cores_lf,
+    lf_check = lf_check, lf_temp_cleanup = lf_temp_cleanup,
+    lf_only = spatial_model, lf_commands_only = spatial_model,
+    climate_models = climate_models, climate_scenario = climate_scenario,
     spatial_model = spatial_model, tar_predictions = tar_predictions)
 
   if (isFALSE(spatial_model)) {
@@ -688,7 +689,7 @@ mod_postprocess_1_CPU <- function(
         level = 1L, line_char = "+", line_char_rep = 60L, cat_red = TRUE,
         cat_bold = TRUE, cat_timestamp = FALSE)
 
-      IASDT.R::mod_cv_evaluate(model_dir = model_dir, cv_type = "CV_Dist")
+      IASDT.R::mod_cv_evaluate(model_dir = model_dir, cv_type = "cv_dist")
     }
   }
 
@@ -706,7 +707,7 @@ mod_postprocess_1_CPU <- function(
 # # ========================================================================== #
 
 ## |------------------------------------------------------------------------| #
-# mod_prepare_TF ----
+# mod_prepare_tf ----
 ## |------------------------------------------------------------------------| #
 
 #' @export
@@ -715,28 +716,28 @@ mod_postprocess_1_CPU <- function(
 #' @order 2
 #' @author Ahmed El-Gabbas
 
-mod_prepare_TF <- function(
-    process_VP = TRUE, process_LF = TRUE,
+mod_prepare_tf <- function(
+    process_vp = TRUE, process_lf = TRUE,
     n_batch_files = 210L, env_file = ".env", working_directory = NULL,
-    partition_name = "small-g", LF_runtime = "01:00:00", model_prefix = NULL,
-    VP_runtime = "02:00:00") {
+    partition_name = "small-g", lf_runtime = "01:00:00", model_prefix = NULL,
+    vp_runtime = "02:00:00") {
 
   # ****************************************************************
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  ProjectID <- path_model <- NULL
+  project_id <- path_model <- NULL
 
   # ****************************************************************
 
   # Check input arguments ----
   ecokit::check_args(
     args_to_check = c(
-      "LF_runtime", "VP_runtime", "partition_name", "model_prefix"),
+      "lf_runtime", "vp_runtime", "partition_name", "model_prefix"),
     args_type = "character")
   ecokit::check_args(args_to_check = "n_batch_files", args_type = "numeric")
   ecokit::check_args(
-    args_to_check = c("process_VP", "process_LF"), args_type = "logical")
+    args_to_check = c("process_vp", "process_lf"), args_type = "logical")
 
   if (n_batch_files <= 0) {
     ecokit::stop_ctx(
@@ -753,7 +754,7 @@ mod_prepare_TF <- function(
 
   env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "ProjectID", "DP_R_lumi_gpu", FALSE, FALSE,
+    "project_id", "DP_R_lumi_gpu", FALSE, FALSE,
     "path_model", "DP_R_model_root_path", TRUE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
@@ -763,10 +764,10 @@ mod_prepare_TF <- function(
   # ****************************************************************
 
   # Path to store TF commands
-  Path_TF <- fs::path(path_model, paste0(model_prefix, "_TF"))
+  path_tf <- fs::path(path_model, paste0(model_prefix, "_TF"))
   # Path to store log files
-  Path_Log <- ecokit::normalize_path(fs::path(Path_TF, "log"))
-  fs::dir_create(c(Path_TF, Path_Log))
+  path_log <- ecokit::normalize_path(fs::path(path_tf, "log"))
+  fs::dir_create(c(path_tf, path_log))
 
   # ****************************************************************
   # ****************************************************************
@@ -775,15 +776,15 @@ mod_prepare_TF <- function(
   # VARIANCE PARTITIONING ----
   # # |||||||||||||||||||||||||||||||||||||||||||||||||| # #
 
-  if (process_VP) {
+  if (process_vp) {
 
     # Prepare post-processing data for calculating variance partitioning
     ecokit::cat_time(
       "Prepare post-processing data for calculating variance partitioning")
 
     # Create paths for VP SLURM script and commands
-    Path_VP_SLURM <- fs::path(Path_TF, "VP_SLURM.slurm")
-    Path_VP_Commands <- fs::path(Path_TF, "VP_Commands.txt")
+    path_vp_slurm <- fs::path(path_tf, "vp_slurm.slurm")
+    path_vp_commands <- fs::path(path_tf, "vp_commands.txt")
 
     # Merge and organise `TensorFlow` commands for computing variance
     # partitioning
@@ -792,40 +793,40 @@ mod_prepare_TF <- function(
       level = 1L, cat_timestamp = FALSE)
 
     # Find list of files matching the pattern
-    VP_InFiles <- fs::dir_ls(
+    vp_in_files <- fs::dir_ls(
       path = path_model, recurse = TRUE, type = "file",
-      regexp = paste0(model_prefix, ".+/TEMP_VP/VP_.+Command.txt")) %>%
+      regexp = paste0(model_prefix, ".+/temp_vp/vp_.+command.txt")) %>%
       purrr::map(readr::read_lines, progress = FALSE) %>%
       unlist() %>%
       gtools::mixedsort() %>%
       unique() %>%
       unname()
 
-    n_VP_InFiles <- length(VP_InFiles)
+    n_vp_in_files <- length(vp_in_files)
 
     # Save all VP commands to single file for batch processing
-    readr::write_lines(x = VP_InFiles, file = Path_VP_Commands, append = FALSE)
+    readr::write_lines(x = vp_in_files, file = path_vp_commands, append = FALSE)
 
     # ****************************************************************
 
     # Prepare batch files ----
     ecokit::cat_time("Prepare batch files", level = 1L, cat_timestamp = FALSE)
 
-    VP_Commands <- c(
+    vp_commands <- c(
       "#!/bin/bash",
-      "#SBATCH --job-name=VP_TF",
+      "#SBATCH --job-name=vp_tf",
       "#SBATCH --ntasks=1",
-      paste0("#SBATCH --account=", ProjectID),
+      paste0("#SBATCH --account=", project_id),
       "#SBATCH --cpus-per-task=1",
       "#SBATCH --gpus-per-node=1",
-      paste0("#SBATCH --time=", VP_runtime),
+      paste0("#SBATCH --time=", vp_runtime),
       paste0("#SBATCH --partition=", partition_name),
       "#SBATCH --mem=64G",
-      paste0("#SBATCH --output=", fs::path(Path_Log, "%x-%A-%a.out")),
-      paste0("#SBATCH --error=", fs::path(Path_Log, "%x-%A-%a.out")),
-      paste0("#SBATCH --array=1-", length(VP_InFiles)),
-      "\n# File containing commands to be executed",
-      paste0("File=", Path_VP_Commands),
+      paste0("#SBATCH --output=", fs::path(path_log, "%x-%A-%a.out")),
+      paste0("#SBATCH --error=", fs::path(path_log, "%x-%A-%a.out")),
+      paste0("#SBATCH --array=1-", length(vp_in_files)),
+      "\n# file containing commands to be executed",
+      paste0("file=", path_vp_commands),
       "\n# Load TensorFlow module and configure environment",
       "ml use /appl/local/csc/modulefiles",
       "ml tensorflow",
@@ -837,7 +838,7 @@ mod_prepare_TF <- function(
         'print(\\\"Num GPUs Available:\\\", ',
         'len(tf.config.list_physical_devices(\\\"GPU\\\")))"'),
       "\n# Run array job",
-      "head -n $SLURM_ARRAY_TASK_ID $File | tail -n 1 | bash",
+      "head -n $SLURM_ARRAY_TASK_ID $file | tail -n 1 | bash",
       "\necho End of program at `date`\n",
       paste0("# ", strrep("-", 50)),
       paste0(
@@ -847,22 +848,22 @@ mod_prepare_TF <- function(
       paste0("# ", strrep("-", 50)))
 
     ecokit::cat_time(
-      paste0("Writing SLURM script to: `", Path_VP_SLURM, "`"),
+      paste0("Writing SLURM script to: `", path_vp_slurm, "`"),
       level = 1L, cat_timestamp = FALSE)
 
-    readr::write_lines(x = VP_Commands, file = Path_VP_SLURM, append = FALSE)
+    readr::write_lines(x = vp_commands, file = path_vp_slurm, append = FALSE)
     # Make the file executable
-    Sys.chmod(Path_VP_SLURM, mode = "755")
+    Sys.chmod(path_vp_slurm, mode = "755")
 
     ecokit::cat_time(
       paste0(
         "To submit variance partitioning SLURM script:\n\tsbatch ",
-        Path_VP_SLURM),
+        path_vp_slurm),
       cat_timestamp = FALSE)
 
   } else {
 
-    n_VP_InFiles <- 0L
+    n_vp_in_files <- 0L
 
   }
 
@@ -873,14 +874,14 @@ mod_prepare_TF <- function(
   ## LF PREDICTIONS ----
   # # |||||||||||||||||||||||||||||||||||||||||||||||||| # #
 
-  if (process_LF) {
+  if (process_lf) {
 
     # Prepare post-processing data for LF predictions
     ecokit::cat_time("\nPrepare post-processing data for LF predictions")
 
     # Ensure that the total number of simultaneous jobs (LF + VP) =
     # n_batch_files; so both can be run on the same time.
-    n_batch_files <- n_batch_files - n_VP_InFiles
+    n_batch_files <- n_batch_files - n_vp_in_files
 
     ## Merge and organise `TensorFlow` commands for LF predictions ----
     ecokit::cat_time(
@@ -890,7 +891,7 @@ mod_prepare_TF <- function(
       level = 1L, cat_timestamp = FALSE)
 
     # Basic commands for `TensorFlow` setup
-    BasicCommands <- c(
+    basic_commands <- c(
       "#!/bin/bash\n",
       "# Load TensorFlow module and configure environment",
       "ml use /appl/local/csc/modulefiles",
@@ -908,75 +909,76 @@ mod_prepare_TF <- function(
     if (!is.null(working_directory)) {
       working_directory <- ecokit::normalize_path(
         working_directory, must_work = TRUE)
-      BasicCommands <- c(
-        BasicCommands, "# Change to working directory",
+      basic_commands <- c(
+        basic_commands, "# Change to working directory",
         paste0("cd ", working_directory), "")
     }
 
     # Find list of files matching the pattern
     # Regex pattern to match input files
-    LF_Pattern <- "(LF_NewSites_Commands_.+.txt|LF_RC_Commands_.+txt)"
-    LF_InFiles <- fs::dir_ls(
+    lf_pattern <- "(lf_new_sites_commands_.+.txt|lf_rc_commands_.+txt)"
+    lf_in_files <- fs::dir_ls(
       path = path_model, recurse = TRUE, type = "file",
-      regexp = paste0(model_prefix, ".+/TEMP_Pred/", LF_Pattern))
+      regexp = paste0(model_prefix, ".+/temp_pred/", lf_pattern))
 
-    if (length(LF_InFiles) == 0) {
+    if (length(lf_in_files) == 0) {
       ecokit::stop_ctx(
         "No files found matching the pattern",
-        LF_Pattern = LF_Pattern, path_model = path_model,
+        lf_pattern = lf_pattern, path_model = path_model,
         include_backtrace = TRUE)
     }
 
     ecokit::cat_time(
       paste0(
-        "Found ", length(LF_InFiles), " files matching the pattern `",
-        LF_Pattern, "`"),
+        "Found ", length(lf_in_files), " files matching the pattern `",
+        lf_pattern, "`"),
       level = 1L, cat_timestamp = FALSE)
-    purrr::walk(LF_InFiles, ecokit::cat_time, level = 2L, cat_timestamp = FALSE)
+    purrr::walk(
+      lf_in_files, ecokit::cat_time, level = 2L, cat_timestamp = FALSE)
 
     # Read and merge commands from input files
-    LF_commands <- purrr::map(
-      .x = LF_InFiles, .f = readr::read_lines, progress = FALSE) %>%
+    lf_commands <- purrr::map(
+      .x = lf_in_files, .f = readr::read_lines, progress = FALSE) %>%
       unlist() %>%
       gtools::mixedsort() %>%
       unname()
 
     ecokit::cat_time(
       paste0(
-        "Total number of commands to be executed: ", length(LF_commands)),
+        "Total number of commands to be executed: ", length(lf_commands)),
       level = 1L, cat_timestamp = FALSE)
 
-    if (length(LF_commands) < n_batch_files) {
+    if (length(lf_commands) < n_batch_files) {
       ecokit::cat_time(
         paste0(
           "Fewer commands than the requested number of files. ",
           "Setting `n_batch_files=", n_batch_files, "`."),
         level = 2L, cat_timestamp = FALSE)
-      n_batch_files <- length(LF_commands)
+      n_batch_files <- length(lf_commands)
     }
 
     ecokit::cat_time(
       paste0("Splitting commands into ", n_batch_files, " files"),
       cat_timestamp = FALSE, level = 1L)
-    LF_commands <- ecokit::split_vector(LF_commands, n_splits = n_batch_files)
+    lf_commands <- ecokit::split_vector(lf_commands, n_splits = n_batch_files)
 
     purrr::walk(
-      .x = seq_len(length(LF_commands)),
+      .x = seq_len(length(lf_commands)),
       .f = ~ {
 
-        File <- fs::path(
-          Path_TF,
+        file <- fs::path(
+          path_tf,
           paste0(
-            "TF_Chunk_",
+            "tf_chunk_",
             stringr::str_pad(
               .x, width = nchar(n_batch_files), pad = "0"), ".txt"))
 
-        readr::write_lines(x = BasicCommands, file = File, append = FALSE)
+        readr::write_lines(x = basic_commands, file = file, append = FALSE)
         readr::write_lines(
           x = paste0(
-            "# ", length(LF_commands[[.x]]), " commands to be executed:"),
-          file = File, append = TRUE)
-        readr::write_lines(x = LF_commands[[.x]], file = File, append = TRUE)
+            "# ", length(lf_commands[[.x]]), " commands to be executed:"),
+          file = file, append = TRUE)
+        readr::write_lines(x = lf_commands[[.x]], file = file, append = TRUE)
         readr::write_lines(
           x = c(
             paste0("\n#", strrep("_", 60)),
@@ -984,7 +986,7 @@ mod_prepare_TF <- function(
               "# This script was created on: ",
               format(lubridate::now(tzone = "CET"), "%Y-%m-%d %H:%M:%S")),
             paste0("#", strrep("_", 60))),
-          file = File, append = TRUE)
+          file = file, append = TRUE)
 
         return(invisible(NULL))
       })
@@ -994,38 +996,38 @@ mod_prepare_TF <- function(
     ## Prepare LF batch files ----
     ecokit::cat_time("Prepare batch files", level = 1L, cat_timestamp = FALSE)
 
-    LF_slurm_script <- c(
+    lf_slurm_script <- c(
       "#!/bin/bash",
-      "#SBATCH --job-name=PP_LF",
+      "#SBATCH --job-name=PP_lf",
       "#SBATCH --ntasks=1",
-      paste0("#SBATCH --account=", ProjectID),
+      paste0("#SBATCH --account=", project_id),
       "#SBATCH --mem=64G",
       "#SBATCH --cpus-per-task=1",
       "#SBATCH --gpus-per-node=1",
-      paste0("#SBATCH --time=", LF_runtime),
+      paste0("#SBATCH --time=", lf_runtime),
       paste0("#SBATCH --partition=", partition_name),
-      paste0("#SBATCH --output=", fs::path(Path_Log, "%x-%A-%a.out")),
-      paste0("#SBATCH --error=", fs::path(Path_Log, "%x-%A-%a.out")),
+      paste0("#SBATCH --output=", fs::path(path_log, "%x-%A-%a.out")),
+      paste0("#SBATCH --error=", fs::path(path_log, "%x-%A-%a.out")),
       paste0("#SBATCH --array=1-", n_batch_files),
       "",
       "# Define directories",
-      paste0('OutputDir="', Path_TF, '"'),
+      paste0('output_directory="', path_tf, '"'),
       "",
       "# Find all the split files and sort them explicitly",
       paste0(
-        'SplitFiles=($(find "$OutputDir" -type f ',
-        '-name "TF_Chunk_*.txt" | sort -V))'),
+        'split_files=($(find "$output_directory" -type f ',
+        '-name "tf_chunk_*.txt" | sort -V))'),
       "",
       "# Check if files were found",
-      "if [ ${#SplitFiles[@]} -eq 0 ]; then",
-      '    echo "Error: No files matching TF_Chunk_*.txt found in $OutputDir"',
+      "if [ ${#split_files[@]} -eq 0 ]; then",
+      '    echo "Error: No files matching tf_chunk_*.txt found in $output_directory"',
       "    exit 1",
       "fi",
       "",
       paste0("# Ensure no more than `, n_batch_files, ` files are processed"),
       paste0("MaxFiles=", n_batch_files),
-      "if [ ${#SplitFiles[@]} -gt $MaxFiles ]; then",
-      '    SplitFiles=("${SplitFiles[@]:0:$MaxFiles}")',
+      "if [ ${#split_files[@]} -gt $MaxFiles ]; then",
+      '    split_files=("${split_files[@]:0:$MaxFiles}")',
       paste0(
         '    echo "More than $MaxFiles files found, ',
         'limiting to the first $MaxFiles files."'),
@@ -1035,27 +1037,27 @@ mod_prepare_TF <- function(
       "TaskIndex=$((SLURM_ARRAY_TASK_ID - 1))",
       "",
       "# Validate TaskIndex",
-      "if [ $TaskIndex -ge ${#SplitFiles[@]} ] || [ $TaskIndex -lt 0 ]; then",
+      "if [ $TaskIndex -ge ${#split_files[@]} ] || [ $TaskIndex -lt 0 ]; then",
       paste0(
         '    echo "Error: TaskIndex $TaskIndex is out of range. ',
-        'Valid range: 0 to $((${#SplitFiles[@]} - 1))"'),
+        'Valid range: 0 to $((${#split_files[@]} - 1))"'),
       "    exit 1",
       "fi",
       "",
       "# Get the specific split file to process based on the job array task ID",
-      'SplitFile="${SplitFiles[$TaskIndex]}"',
+      'split_file="${split_files[$TaskIndex]}"',
       "",
       "# Verify the selected split file",
-      'if [ -z "$SplitFile" ] || [ ! -f "$SplitFile" ]; then',
-      '    echo "Error: File $SplitFile does not exist or is invalid."',
+      'if [ -z "$split_file" ] || [ ! -f "$split_file" ]; then',
+      '    echo "Error: file $split_file does not exist or is invalid."',
       "    exit 1",
       "fi",
       "",
       "# Processing file",
-      'echo "Processing file: $SplitFile"',
+      'echo "Processing file: $split_file"',
       "",
       "# Run the selected split file",
-      'bash "$SplitFile"',
+      'bash "$split_file"',
       "\necho End of program at `date`\n",
       paste0("# ", strrep("-", 50)),
       paste0(
@@ -1064,18 +1066,18 @@ mod_prepare_TF <- function(
           lubridate::now(tzone = "CET"), format = "%Y-%m-%d %H:%M"), " CET"),
       paste0("# ", strrep("-", 50)))
 
-    Path_LF_SLURM <- fs::path(Path_TF, "LF_SLURM.slurm")
+    path_lf_slurm <- fs::path(path_tf, "lf_slurm.slurm")
     ecokit::cat_time(
-      paste0("Writing SLURM script to: `", Path_LF_SLURM, "`"),
+      paste0("Writing SLURM script to: `", path_lf_slurm, "`"),
       level = 1L, cat_timestamp = FALSE)
     # Write the content to a file
-    readr::write_lines(LF_slurm_script, Path_LF_SLURM, append = FALSE)
+    readr::write_lines(lf_slurm_script, path_lf_slurm, append = FALSE)
     # Make the file executable
-    Sys.chmod(Path_LF_SLURM, mode = "755")
+    Sys.chmod(path_lf_slurm, mode = "755")
 
     ecokit::cat_time(
       paste0(
-        "\nTo submit LF prediction SLURM script:\n\tsbatch ", Path_LF_SLURM),
+        "\nTo submit LF prediction SLURM script:\n\tsbatch ", path_lf_slurm),
       cat_timestamp = FALSE)
 
   }
@@ -1092,7 +1094,7 @@ mod_prepare_TF <- function(
 # # ========================================================================== #
 
 ## |------------------------------------------------------------------------| #
-# mod_postprocess_2_CPU ----
+# mod_postprocess_2_cpu ----
 ## |------------------------------------------------------------------------| #
 
 #' @export
@@ -1101,21 +1103,21 @@ mod_prepare_TF <- function(
 #' @order 3
 #' @author Ahmed El-Gabbas
 
-mod_postprocess_2_CPU <- function(
+mod_postprocess_2_cpu <- function(
     model_dir = NULL, hab_abb = NULL, strategy = "multisession", n_cores = 8L,
-    n_cores_pred = n_cores, n_cores_LF = n_cores, n_cores_RC = n_cores,
-    env_file = ".env", GPP_dist = NULL, use_trees = "Tree",
-    MCMC_n_samples = 1000L, MCMC_thin = NULL, use_TF = TRUE, TF_environ = NULL,
-    TF_use_single = FALSE, LF_check = FALSE, LF_temp_cleanup = TRUE,
+    n_cores_pred = n_cores, n_cores_lf = n_cores, n_cores_rc = n_cores,
+    env_file = ".env", gpp_dist = NULL, use_trees = "tree",
+    mcmc_n_samples = 1000L, mcmc_thin = NULL, use_tf = TRUE, tf_environ = NULL,
+    tf_use_single = FALSE, lf_check = FALSE, lf_temp_cleanup = TRUE,
     temp_cleanup = TRUE, n_grid = 50L,
-    CC_models = c(
+    climate_models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
-    CC_scenario = c("ssp126", "ssp370", "ssp585"),
+    climate_scenario = c("ssp126", "ssp370", "ssp585"),
     clamp_pred = TRUE, fix_efforts = "q90", fix_rivers = "q90",
     pred_new_sites = TRUE, tar_predictions = TRUE,
-    RC_prepare = TRUE, RC_plot = TRUE, VP_prepare = TRUE, VP_plot = TRUE,
-    predict_suitability = TRUE, plot_predictions = TRUE, plot_LF = TRUE,
+    rc_prepare = TRUE, rc_plot = TRUE, vp_prepare = TRUE, vp_plot = TRUE,
+    predict_suitability = TRUE, plot_predictions = TRUE, plot_lf = TRUE,
     plot_internal_evaluation = TRUE, spatial_model = TRUE,
     is_cv_model = FALSE) {
 
@@ -1129,24 +1131,24 @@ mod_postprocess_2_CPU <- function(
     args_to_check = c("model_dir", "use_trees"), args_type = "character")
   ecokit::check_args(
     args_to_check = c(
-      "use_TF", "clamp_pred", "temp_cleanup", "RC_prepare", "tar_predictions",
-      "RC_plot", "VP_prepare", "VP_plot", "predict_suitability", "LF_check",
-      "plot_predictions", "plot_LF", "plot_internal_evaluation",
-      "spatial_model", "is_cv_model",  "LF_temp_cleanup", "pred_new_sites"),
+      "use_tf", "clamp_pred", "temp_cleanup", "rc_prepare", "tar_predictions",
+      "rc_plot", "vp_prepare", "vp_plot", "predict_suitability", "lf_check",
+      "plot_predictions", "plot_lf", "plot_internal_evaluation",
+      "spatial_model", "is_cv_model",  "lf_temp_cleanup", "pred_new_sites"),
     args_type = "logical")
   ecokit::check_args(
-    args_to_check = c("GPP_dist", "MCMC_n_samples", "MCMC_thin", "n_grid"),
+    args_to_check = c("gpp_dist", "mcmc_n_samples", "mcmc_thin", "n_grid"),
     args_type = "numeric")
 
   hab_abb <- .validate_hab_abb(as.character(hab_abb))
 
   strategy <- .validate_strategy(strategy)
   if (strategy == "sequential") {
-    n_cores <- n_cores_LF <- n_cores_RC <- n_cores_pred <- 1L
+    n_cores <- n_cores_lf <- n_cores_rc <- n_cores_pred <- 1L
   }
   n_cores <- .validate_n_cores(n_cores)
-  n_cores_LF <- .validate_n_cores(n_cores_LF)
-  n_cores_RC <- .validate_n_cores(n_cores_RC)
+  n_cores_lf <- .validate_n_cores(n_cores_lf)
+  n_cores_rc <- .validate_n_cores(n_cores_rc)
   n_cores_pred <- .validate_n_cores(n_cores_pred)
 
   if (!ecokit::check_env_file(env_file, warning = FALSE)) {
@@ -1160,45 +1162,45 @@ mod_postprocess_2_CPU <- function(
       include_backtrace = TRUE)
   }
 
-  if (!(use_trees %in% c("Tree", "NoTree"))) {
+  if (!(use_trees %in% c("tree", "no_tree"))) {
     ecokit::stop_ctx(
       paste0(
-        "Invalid value for Tree argument. Valid values ",
-        "are: 'Tree' or 'NoTree'"),
+        "Invalid value for tree argument. Valid values ",
+        "are: 'tree' or 'no_tree'"),
       use_trees = use_trees, include_backtrace = TRUE)
   }
 
   if (clamp_pred && is.null(fix_efforts)) {
     ecokit::stop_ctx(
-      "`fix_efforts` can not be NULL when Clamping is implemented",
+      "`fix_efforts` can not be NULL when clamping is implemented",
       clamp_pred = clamp_pred, fix_efforts = fix_efforts,
       include_backtrace = TRUE)
   }
 
-  ValidModels <- c(
+  valid_models <- c(
     "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
     "MRI-ESM2-0", "UKESM1-0-LL")
 
-  if (!all(CC_models %in% ValidModels)) {
+  if (!all(climate_models %in% valid_models)) {
     ecokit::stop_ctx(
       paste0(
         "Invalid climate models. Valid values are:\n >> ",
-        toString(ValidModels)),
-      CC_models = CC_models, include_backtrace = TRUE)
+        toString(valid_models)),
+      climate_models = climate_models, include_backtrace = TRUE)
   }
 
-  if (!all(CC_scenario %in% c("ssp126", "ssp370", "ssp585"))) {
+  if (!all(climate_scenario %in% c("ssp126", "ssp370", "ssp585"))) {
     ecokit::stop_ctx(
       paste0(
         "Invalid climate scenarios. Valid values are:\n >> ",
         toString(c("ssp126", "ssp370", "ssp585"))),
-      CC_scenario = CC_scenario, include_backtrace = TRUE)
+      climate_scenario = climate_scenario, include_backtrace = TRUE)
   }
 
   # ****************************************************************
 
   ecokit::record_arguments(
-    out_path = fs::path(model_dir, "Args_Mod_Postprocess_2_CPU.RData"))
+    out_path = fs::path(model_dir, "args_mod_postprocess_2_cpu.RData"))
 
   # ****************************************************************
 
@@ -1211,27 +1213,27 @@ mod_postprocess_2_CPU <- function(
       "\n  >>> Operating system: ", ecokit::os(),
       "\n  >>> Model root: ", model_dir,
       "\n  >>> n_cores: ", n_cores,
-      "\n  >>> n_cores_RC: ", n_cores_RC,
-      "\n  >>> n_cores_LF: ", n_cores_LF,
+      "\n  >>> n_cores_rc: ", n_cores_rc,
+      "\n  >>> n_cores_lf: ", n_cores_lf,
       "\n  >>> env_file: ", env_file,
       "\n  >>> hab_abb: ", hab_abb,
-      "\n  >>> use_TF: ", use_TF,
-      "\n  >>> Python environment: ", TF_environ,
+      "\n  >>> use_tf: ", use_tf,
+      "\n  >>> Python environment: ", tf_environ,
       "\n  >>> .libPaths(): \n",
       paste0("\t", .libPaths(), collapse = "\n"), # nolint: undesirable_function_linter
       "\n  >>> Loaded packages: \n", loaded_packages, "\n"))
 
   # ****************************************************************
 
-  temp_dir <- fs::path(model_dir, "TEMP_Pred")
+  temp_dir <- fs::path(model_dir, "temp_pred")
 
-  ModelData <- fs::path(model_dir, "ModDT_subset.RData")
-  if (!ecokit::check_data(ModelData)) {
+  model_data <- fs::path(model_dir, "model_data_subset.RData")
+  if (!ecokit::check_data(model_data)) {
     ecokit::stop_ctx(
       "Model data file not found",
-      ModelData = ModelData, include_backtrace = TRUE)
+      model_data = model_data, include_backtrace = TRUE)
   }
-  ModelData <- ecokit::load_as(ModelData)
+  model_data <- ecokit::load_as(model_data)
 
   # ****************************************************************
 
@@ -1241,30 +1243,30 @@ mod_postprocess_2_CPU <- function(
     cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
   path_model <- fs::dir_ls(
-    fs::path(model_dir, "Model_Fitted"),
+    fs::path(model_dir, "model_fitted"),
     regexp = paste0(
-      ".+", use_trees, "_samp", MCMC_n_samples, "_th", MCMC_thin, "_Model.qs2"))
+      ".+", use_trees, "_samp", mcmc_n_samples, "_th", mcmc_thin, "_model.qs2"))
   if (length(path_model) > 1) {
-    path_model <- stringr::str_subset(path_model, paste0("^GPP", GPP_dist))
+    path_model <- stringr::str_subset(path_model, paste0("^gpp", gpp_dist))
   }
   if (length(path_model) == 0) {
     ecokit::stop_ctx("`path_model` is of length 0")
   }
 
   path_coda <- fs::dir_ls(
-    fs::path(model_dir, "Model_Coda"),
+    fs::path(model_dir, "model_coda"),
     regexp = paste0(
-      ".+", use_trees, "_samp", MCMC_n_samples, "_th", MCMC_thin, "_Coda.qs2"))
+      ".+", use_trees, "_samp", mcmc_n_samples, "_th", mcmc_thin, "_coda.qs2"))
   if (length(path_coda) > 1) {
     path_coda <- stringr::str_subset(
-      path_coda, paste0("^GPP", GPP_dist))
+      path_coda, paste0("^gpp", gpp_dist))
   }
   if (length(path_coda) == 0) {
     ecokit::stop_ctx("`path_coda` is of length 0")
   }
 
   cat(
-    paste0("path_model:\n\t", path_model, "\nPath_Coda:\n\t", path_coda, "\n"))
+    paste0("path_model:\n\t", path_model, "\npath_coda:\n\t", path_coda, "\n"))
 
   if (!all(fs::file_exists(c(path_model, path_coda)))) {
     ecokit::stop_ctx(
@@ -1278,19 +1280,19 @@ mod_postprocess_2_CPU <- function(
 
     # Prepare response curve data -----
 
-    if (RC_prepare) {
+    if (rc_prepare) {
       ecokit::info_chunk(
         "Prepare response curve data", level = 1L, line_char = "+",
         line_char_rep = 60L, cat_red = TRUE,
         cat_bold = TRUE, cat_timestamp = FALSE)
 
-      IASDT.R::resp_curv_prepare_data(
-        path_model = path_model, n_grid = n_grid, n_cores = n_cores_RC,
-        strategy = strategy, use_TF = use_TF, TF_environ = TF_environ,
-        TF_use_single = TF_use_single, n_cores_LF = n_cores_LF,
-        LF_temp_cleanup = LF_temp_cleanup, LF_check = LF_check,
+      IASDT.R::rc_prepare_data(
+        path_model = path_model, n_grid = n_grid, n_cores = n_cores_rc,
+        strategy = strategy, use_tf = use_tf, tf_environ = tf_environ,
+        tf_use_single = tf_use_single, n_cores_lf = n_cores_lf,
+        lf_temp_cleanup = lf_temp_cleanup, lf_check = lf_check,
         temp_dir = temp_dir, temp_cleanup = temp_cleanup, verbose = TRUE,
-        LF_commands_only = FALSE, return_data = FALSE,
+        lf_commands_only = FALSE, return_data = FALSE,
         probabilities = c(0.025, 0.5, 0.975))
 
       invisible(gc())
@@ -1300,7 +1302,7 @@ mod_postprocess_2_CPU <- function(
 
     # Plotting response curves ----
 
-    if (RC_plot) {
+    if (rc_plot) {
 
       ## Species richness -----
       ecokit::info_chunk(
@@ -1308,8 +1310,8 @@ mod_postprocess_2_CPU <- function(
         line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
         cat_timestamp = FALSE)
 
-      IASDT.R::resp_curv_plot_SR(
-        model_dir = model_dir, verbose = TRUE, n_cores = n_cores_RC,
+      IASDT.R::rc_plot_sr(
+        model_dir = model_dir, verbose = TRUE, n_cores = n_cores_rc,
         strategy = strategy)
 
       invisible(gc())
@@ -1322,8 +1324,8 @@ mod_postprocess_2_CPU <- function(
         line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
         cat_timestamp = FALSE)
 
-      IASDT.R::resp_curv_plot_species(
-        model_dir = model_dir, n_cores = n_cores_RC, env_file = env_file)
+      IASDT.R::rc_plot_species(
+        model_dir = model_dir, n_cores = n_cores_rc, env_file = env_file)
 
       invisible(gc())
 
@@ -1335,8 +1337,8 @@ mod_postprocess_2_CPU <- function(
         line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
         cat_timestamp = FALSE)
 
-      IASDT.R::resp_curv_plot_species_all(
-        model_dir = model_dir, n_cores = n_cores_RC)
+      IASDT.R::rc_plot_species_all(
+        model_dir = model_dir, n_cores = n_cores_rc)
 
       invisible(gc())
     }
@@ -1357,12 +1359,12 @@ mod_postprocess_2_CPU <- function(
         n_cores = n_cores, n_cores_pred = n_cores_pred, strategy = strategy,
         clamp_pred = clamp_pred, fix_efforts = fix_efforts,
         fix_rivers = fix_rivers, pred_new_sites = pred_new_sites,
-        use_TF = use_TF, TF_environ = TF_environ, TF_use_single = TF_use_single,
-        n_cores_LF = n_cores_LF, LF_check = LF_check,
-        LF_temp_cleanup = LF_temp_cleanup, LF_only = FALSE,
-        LF_commands_only = FALSE, temp_dir = temp_dir,
+        use_tf = use_tf, tf_environ = tf_environ, tf_use_single = tf_use_single,
+        n_cores_lf = n_cores_lf, lf_check = lf_check,
+        lf_temp_cleanup = lf_temp_cleanup, lf_only = FALSE,
+        lf_commands_only = FALSE, temp_dir = temp_dir,
         temp_cleanup = temp_cleanup, tar_predictions = tar_predictions,
-        CC_models = CC_models, CC_scenario = CC_scenario,
+        climate_models = climate_models, climate_scenario = climate_scenario,
         spatial_model = spatial_model)
 
       invisible(gc())
@@ -1386,7 +1388,7 @@ mod_postprocess_2_CPU <- function(
           "Evaluating explanatory and predictive power of the model",
           level = 1L, line_char = "+", line_char_rep = 60L, cat_red = TRUE,
           cat_bold = TRUE, cat_timestamp = FALSE)
-        IASDT.R::mod_cv_evaluate(model_dir = model_dir, cv_type = "CV_Dist")
+        IASDT.R::mod_cv_evaluate(model_dir = model_dir, cv_type = "cv_dist")
       }
     }
 
@@ -1394,7 +1396,7 @@ mod_postprocess_2_CPU <- function(
 
     ## Plot latent factors as JPEG ------
 
-    if (plot_LF) {
+    if (plot_lf) {
       ecokit::info_chunk(
         "Plot latent factors as JPEG", level = 1L, line_char = "+",
         line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
@@ -1422,32 +1424,32 @@ mod_postprocess_2_CPU <- function(
 
   # Compute variance partitioning ------
 
-  if (VP_prepare) {
+  if (vp_prepare) {
     ecokit::info_chunk(
       "Compute variance partitioning", level = 1L, line_char = "+",
       line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
       cat_timestamp = FALSE)
 
     IASDT.R::variance_partitioning_compute(
-      path_model = path_model, n_cores = n_cores, use_TF = use_TF,
-      TF_environ = TF_environ, TF_use_single = TF_use_single,
+      path_model = path_model, n_cores = n_cores, use_tf = use_tf,
+      tf_environ = tf_environ, tf_use_single = tf_use_single,
       temp_cleanup = temp_cleanup, chunk_size = 50L, verbose = TRUE,
-      VP_file = "VarPar", VP_commands_only = FALSE)
+      vp_file = "VarPar", vp_commands_only = FALSE)
   }
 
   # ****************************************************************
 
   # Plot Variance partitioning ------
 
-  if (VP_plot) {
+  if (vp_plot) {
     ecokit::info_chunk(
       "Plot Variance partitioning", level = 1L, line_char = "+",
       line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
       cat_timestamp = FALSE)
 
     IASDT.R::variance_partitioning_plot(
-      path_model = path_model, env_file = env_file, VP_file = "VarPar",
-      use_TF = use_TF, TF_environ = TF_environ, n_cores = n_cores, width = 30,
+      path_model = path_model, env_file = env_file, vp_file = "VarPar",
+      use_tf = use_tf, tf_environ = tf_environ, n_cores = n_cores, width = 30,
       height = 15, spatial_model = spatial_model, is_cv_model = is_cv_model)
 
   }

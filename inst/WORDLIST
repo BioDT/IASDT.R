@@ -26,7 +26,7 @@ coda_object
 colour
 colours
 computeVariancePartitioning
-Coords
+coords
 copernicus
 Corine
 cov
@@ -125,10 +125,10 @@ NameY
 netCDF
 NetCDF
 NewName
-NewSites
+new_sites
 NGrids
 NoPhyloTree
-NoTree
+no_tree
 npp
 NUnique
 oligotrophic
@@ -154,7 +154,7 @@ Postprocess
 postprocessing
 Postprocessing
 pre
-Pred
+pred
 predictHmsc
 predictLatentFactor
 predictLF
@@ -183,7 +183,7 @@ reproducibility
 RespCurv
 return_data
 ReturnVal
-RoadRailLog
+road_rail_log
 roman
 RStudio
 RStudio's
@@ -197,7 +197,7 @@ shp
 shrublands
 slurm
 SLURM
-SLURM_prepare
+slurm_prepare
 socio
 Socioeconomic
 sp
@@ -282,3 +282,10 @@ SoilGrids
 gpp
 nonspatial
 TjurR
+cpu
+cv
+dist
+lf
+rc
+vp
+tr

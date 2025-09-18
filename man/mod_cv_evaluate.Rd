@@ -4,13 +4,13 @@
 \alias{mod_cv_evaluate}
 \title{Cross-validation Model Evaluation and Plotting}
 \usage{
-mod_cv_evaluate(model_dir = NULL, cv_type = "CV_Dist")
+mod_cv_evaluate(model_dir = NULL, cv_type = "cv_dist")
 }
 \arguments{
 \item{model_dir}{Character. Path to the root directory of the fitted model.}
 
-\item{cv_type}{Character. Cross-validation type. One of \code{CV_Dist} (default)
-or \code{CV_Large}. See \code{\link[=mod_CV_fit]{mod_CV_fit()}} for more details.}
+\item{cv_type}{Character. Cross-validation type. One of \code{cv_dist} (default)
+or \code{cv_large}. See \code{\link[=mod_cv_fit]{mod_cv_fit()}} for more details.}
 }
 \value{
 Invisibly returns the path to the saved evaluation data file.

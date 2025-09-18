@@ -33,7 +33,7 @@
 #'   `TRUE`.
 #' @param pred_directory Character. Directory path indicating where the
 #'   predictions will be saved. Defaults to `NULL`, which saves model
-#'   predictions to "`Model_Prediction`" folder of the current working
+#'   predictions to "`model_prediction`" folder of the current working
 #'   directory.
 #' @param evaluate Logical. Whether to evaluate the model predictions. Defaults
 #'   to `FALSE`.
@@ -45,16 +45,16 @@
 #'   (default), predictions are made for the latent factors. If `c`, predictions
 #'   are made for response curves at mean coordinates. If `i`, predictions are
 #'   made for response curves at infinite coordinates.
-#' @param pred_PA `matrix`. Presence-absence data for evaluation. If `NULL`
+#' @param pred_pa `matrix`. Presence-absence data for evaluation. If `NULL`
 #'   (default), the presence-absence data from the model object is used. This
 #'   argument is used only when `evaluate` is `TRUE`.
-#' @param pred_XY `matrix`. Coordinates to be added to predicted values. If
+#' @param pred_xy `matrix`. Coordinates to be added to predicted values. If
 #'   `NULL` (default), the coordinates from the model object is used.
-#' @param LF_inputFile Character. File name where the latent factor predictions
+#' @param lf_input_file Character. File name where the latent factor predictions
 #'   are saved. If `NULL` (default), latent factor predictions will be computed.
 #'   If specified, latent factor predictions are read from this path. This
 #'   allows to predicting the latent factors for new sites only once.
-#' @param LF_only Logical. Whether to return the latent factor predictions only.
+#' @param lf_only Logical. Whether to return the latent factor predictions only.
 #'   Defaults to `FALSE`. This helps in predicting to new sites, allowing to
 #'   predicting the latent factors only once, then the output can be loaded in
 #'   other predictions when needed.
@@ -70,13 +70,13 @@
 predict_hmsc <- function(
     path_model, Loff = NULL, x_data = NULL, X = NULL, XRRRData = NULL,
     XRRR = NULL, gradient = NULL, Yc = NULL, mcmcStep = 1L, expected = TRUE,
-    n_cores = 8L, strategy = "multisession", model_name = "Train",
-    temp_dir = "TEMP_Pred", temp_cleanup = TRUE, prediction_type = NULL,
-    use_TF = TRUE, TF_environ = NULL, TF_use_single = FALSE, LF_out_file = NULL,
-    LF_return = FALSE, LF_inputFile = NULL, LF_only = FALSE,
-    n_cores_LF = n_cores, LF_check = FALSE, LF_temp_cleanup = TRUE,
-    LF_commands_only = FALSE, pred_directory = NULL, pred_PA = NULL,
-    pred_XY = NULL, evaluate = FALSE, evaluation_name = NULL,
+    n_cores = 8L, strategy = "multisession", model_name = "train",
+    temp_dir = "temp_pred", temp_cleanup = TRUE, prediction_type = NULL,
+    use_tf = TRUE, tf_environ = NULL, tf_use_single = FALSE, lf_out_file = NULL,
+    lf_return = FALSE, lf_input_file = NULL, lf_only = FALSE,
+    n_cores_lf = n_cores, lf_check = FALSE, lf_temp_cleanup = TRUE,
+    lf_commands_only = FALSE, pred_directory = NULL, pred_pa = NULL,
+    pred_xy = NULL, evaluate = FALSE, evaluation_name = NULL,
     evaluation_directory = "Evaluation", verbose = TRUE,
     spatial_model = TRUE) {
 
@@ -85,24 +85,26 @@ predict_hmsc <- function(
   .start_time <- lubridate::now(tzone = "CET")
 
   strategy <- .validate_strategy(strategy)
-  if (strategy == "sequential") n_cores <- n_cores_LF <- 1L
+  if (strategy == "sequential") n_cores <- n_cores_lf <- 1L
   n_cores <- .validate_n_cores(n_cores)
-  n_cores_LF <- .validate_n_cores(n_cores_LF)
+  n_cores_lf <- .validate_n_cores(n_cores_lf)
 
   # To avoid non-standard evaluation
-  pred_XY <- pred_XY
-  pred_PA <- pred_PA
+  pred_xy <- pred_xy
+  pred_pa <- pred_pa
 
-  if (LF_only && is.null(LF_out_file)) {
+  if (lf_only && is.null(lf_out_file)) {
     ecokit::stop_ctx(
-      "`LF_out_file` must be specified when `LF_only` is `TRUE`",
-      LF_out_file = LF_out_file, LF_only = LF_only, include_backtrace = TRUE)
+      "`lf_out_file` must be specified when `lf_only` is `TRUE`",
+      lf_out_file = lf_out_file, lf_only = lf_only, include_backtrace = TRUE)
   }
 
-  if (!is.null(LF_out_file) && !is.null(LF_inputFile)) {
+  if (!is.null(lf_out_file) && !is.null(lf_input_file)) {
     ecokit::stop_ctx(
-      "only one of `LF_out_file` and `LF_inputFile` arguments can be specified",
-      LF_out_file = LF_out_file, LF_inputFile = LF_inputFile,
+      paste0(
+        "only one of `lf_out_file` and `lf_input_file` arguments",
+        "can be specified"),
+      lf_out_file = lf_out_file, lf_input_file = lf_input_file,
       include_backtrace = TRUE)
   }
 
@@ -110,8 +112,8 @@ predict_hmsc <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Chunk <- Sp <- ias_id <- Path_pred <- Sp_data <- data <- geometry <- x <-
-    y <- SR_mean <- SR_sd <- SR_cov <- NULL
+  chunk <- sp <- ias_id <- Path_pred <- sp_data <- data <- geometry <- x <-
+    y <- sr_mean <- sr_sd <- sr_cov <- NULL
 
   # # ..................................................................... ###
 
@@ -122,7 +124,7 @@ predict_hmsc <- function(
   }
 
   if (is.null(pred_directory)) {
-    pred_directory <- fs::path(dirname(dirname(path_model)), "Model_Prediction")
+    pred_directory <- fs::path(dirname(dirname(path_model)), "model_prediction")
   }
 
   if (is.null(prediction_type) || prediction_type == "c") {
@@ -148,16 +150,16 @@ predict_hmsc <- function(
   # Load model if it is a character
   if (inherits(path_model, "character")) {
     ecokit::cat_time("Load model object", verbose = verbose)
-    Model <- ecokit::load_as(path_model)
+    model_obj <- ecokit::load_as(path_model)
   }
 
   # # ..................................................................... ###
 
   # Combines a list of single or several MCMC chains into a single chain
   ecokit::cat_time("Combine list of posteriors", verbose = verbose)
-  post <- Hmsc::poolMcmcChains(Model$postList)
-  studyDesign <- Model$studyDesign
-  ranLevels <- Model$ranLevels
+  post <- Hmsc::poolMcmcChains(model_obj$postList)
+  studyDesign <- model_obj$studyDesign
+  ranLevels <- model_obj$ranLevels
 
   # # ..................................................................... ###
 
@@ -197,10 +199,10 @@ predict_hmsc <- function(
           "NA values are not allowed in 'x_data'", class_x = class_x,
           include_backtrace = TRUE)
       }
-      xlev <- lapply(Reduce(rbind, Model$XData), levels)
-      xlev <- xlev[unlist(lapply(Reduce(rbind, Model$XData), is.factor))]
+      xlev <- lapply(Reduce(rbind, model_obj$XData), levels)
+      xlev <- xlev[unlist(lapply(Reduce(rbind, model_obj$XData), is.factor))]
       X <- lapply(x_data, function(a) {
-        stats::model.matrix(Model$XFormula, a, xlev = xlev)
+        stats::model.matrix(model_obj$XFormula, a, xlev = xlev)
       })
 
     } else if (class_x == "data.frame") {
@@ -209,25 +211,25 @@ predict_hmsc <- function(
           "NA values are not allowed in 'x_data'", class_x = class_x,
           include_backtrace = TRUE)
       }
-      xlev <- lapply(Model$XData, levels)
-      xlev <- xlev[unlist(lapply(Model$XData, is.factor))]
-      X <- stats::model.matrix(Model$XFormula, x_data, xlev = xlev)
+      xlev <- lapply(model_obj$XData, levels)
+      xlev <- xlev[unlist(lapply(model_obj$XData, is.factor))]
+      X <- stats::model.matrix(model_obj$XFormula, x_data, xlev = xlev)
     }
 
   } else if (is.null(X)) {
-    X <- Model$X
+    X <- model_obj$X
   }
 
   if (!is.null(XRRRData)) {
-    xlev <- lapply(Model$XRRRData, levels)
-    xlev <- xlev[unlist(lapply(Model$XRRRData, is.factor))]
-    XRRR <- stats::model.matrix(Model$XRRRFormula, XRRRData, xlev = xlev)
+    xlev <- lapply(model_obj$XRRRData, levels)
+    xlev <- xlev[unlist(lapply(model_obj$XRRRData, is.factor))]
+    XRRR <- stats::model.matrix(model_obj$XRRRFormula, XRRRData, xlev = xlev)
   } else {
-    if (is.null(Model$ncRRR)) {
-      Model$ncRRR <- 0
+    if (is.null(model_obj$ncRRR)) {
+      model_obj$ncRRR <- 0
     }
-    if (is.null(XRRR) && Model$ncRRR > 0) {
-      XRRR <- Model$XRRR
+    if (is.null(XRRR) && model_obj$ncRRR > 0) {
+      XRRR <- model_obj$XRRR
     }
   }
 
@@ -242,10 +244,10 @@ predict_hmsc <- function(
 
 
   if (!is.null(Yc)) {
-    if (ncol(Yc) != Model$ns) {
+    if (ncol(Yc) != model_obj$ns) {
       ecokit::stop_ctx(
         "number of columns in Yc must be equal to ns",
-        ncol_Yc = ncol(Yc), model_ns = Model$ns, include_backtrace = TRUE)
+        ncol_Yc = ncol(Yc), model_ns = model_obj$ns, include_backtrace = TRUE)
     }
     if (nrow(Yc) != nyNew) {
       ecokit::stop_ctx(
@@ -255,10 +257,11 @@ predict_hmsc <- function(
   }
 
   if (!is.null(Loff)) {
-    if (ncol(Loff) != Model$ns) {
+    if (ncol(Loff) != model_obj$ns) {
       ecokit::stop_ctx(
         "number of columns in Loff must be equal to ns",
-        ncol_Loff = ncol(Loff), model_ns = Model$ns, include_backtrace = TRUE)
+        ncol_Loff = ncol(Loff), model_ns = model_obj$ns,
+        include_backtrace = TRUE)
     }
     if (nrow(Loff) != nyNew) {
       ecokit::stop_ctx(
@@ -267,36 +270,36 @@ predict_hmsc <- function(
     }
   }
 
-  if (!all(Model$rLNames %in% colnames(studyDesign))) {
+  if (!all(model_obj$rLNames %in% colnames(studyDesign))) {
     ecokit::stop_ctx(
       "dfPiNew does not contain all the necessary named columns",
-      model_rLNames = Model$rLNames, names_study_design = colnames(studyDesign),
-      include_backtrace = TRUE)
+      model_rLNames = model_obj$rLNames,
+      names_study_design = colnames(studyDesign), include_backtrace = TRUE)
   }
 
-  if (!all(Model$rLNames %in% names(ranLevels))) {
+  if (!all(model_obj$rLNames %in% names(ranLevels))) {
     ecokit::stop_ctx(
       "rL does not contain all the necessary named levels",
-      model_rLNames = Model$rLNames, names_ranLevels = names(ranLevels),
+      model_rLNames = model_obj$rLNames, names_ranLevels = names(ranLevels),
       include_backtrace = TRUE)
   }
 
   if (!is.null(studyDesign)) {
-    dfPiNew <- studyDesign[, Model$rLNames, drop = FALSE]
+    dfPiNew <- studyDesign[, model_obj$rLNames, drop = FALSE]
   } else {
     dfPiNew <- matrix(NA, nyNew, 0)
   }
-  rL <- ranLevels[Model$rLNames]
+  rL <- ranLevels[model_obj$rLNames]
 
 
   if (!is.null(Yc)) {
     ## object can have pre-computed data parameters, but not
     ## necessarily. These are needed only in updateEta(), but get it
     ## here anyway...
-    if (is.null(Model$rLPar)) {
-      rLPar <- Hmsc::computeDataParameters(Model)$rLPar
+    if (is.null(model_obj$rLPar)) {
+      rLPar <- Hmsc::computeDataParameters(model_obj)$rLPar
     } else {
-      rLPar <- Model$rLPar
+      rLPar <- model_obj$rLPar
     }
   } else {
     rLPar <- NULL
@@ -308,33 +311,34 @@ predict_hmsc <- function(
 
   # free some memory
   ecokit::cat_time("Free some memory", verbose = verbose)
-  Model <- IASDT.R::trim_hmsc(Model, c("postList", "YScaled", "X", "XScaled"))
+  model_obj <- IASDT.R::trim_hmsc(
+    model_obj, c("postList", "YScaled", "X", "XScaled"))
 
-  Mod_nr <- Model$nr
-  Mod_dfPi <- Model$dfPi
+  mod_nr <- model_obj$nr
+  mod_dfPi <- model_obj$dfPi
 
   # Save smaller version of the model object for later use
-  Model_File_small <- fs::path(temp_dir, paste0(model_name, "Model_small.qs2"))
+  model_file_small <- fs::path(temp_dir, paste0(model_name, "model_small.qs2"))
 
-  if (!file.exists(Model_File_small)) {
+  if (!file.exists(model_file_small)) {
     ecokit::cat_time(
       "Save smaller version of the model object to disk",
       level = 1L, verbose = verbose)
-    ecokit::save_as(object = Model, out_path = Model_File_small)
+    ecokit::save_as(object = model_obj, out_path = model_file_small)
   }
-  rm(Model, envir = environment())
+  rm(model_obj, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
 
   ecokit::cat_time("Predict Latent Factor", verbose = verbose)
 
-  predPostEta <- vector("list", Mod_nr)
-  PiNew <- matrix(NA, nrow(dfPiNew), Mod_nr)
+  predPostEta <- vector("list", mod_nr)
+  PiNew <- matrix(NA, nrow(dfPiNew), mod_nr)
 
   # Whether to use `predict_latent_factor` or read its results from file
-  if (!is.null(Mod_nr)) {
-    if (is.null(LF_inputFile) || length(LF_inputFile) != Mod_nr) {
+  if (!is.null(mod_nr)) {
+    if (is.null(lf_input_file) || length(lf_input_file) != mod_nr) {
       CalcLF <- TRUE
     } else {
       CalcLF <- FALSE
@@ -351,7 +355,7 @@ predict_hmsc <- function(
 
     nLF <- length(post[[1]]$Alpha[[1]])
 
-    for (r in seq_len(Mod_nr)) {
+    for (r in seq_len(mod_nr)) {
       if (rc_predict_i) {
         if (r == 1) {
           ecokit::cat_time(
@@ -385,7 +389,7 @@ predict_hmsc <- function(
   # Calculate latent factors
   if (CalcLF) {
 
-    for (r in seq_len(Mod_nr)) {
+    for (r in seq_len(mod_nr)) {
 
       post_alpha <- lapply(post, function(c) c$Alpha[[r]])
 
@@ -403,7 +407,7 @@ predict_hmsc <- function(
       }
 
       # Save post to file and load it later
-      if (r == Mod_nr) {
+      if (r == mod_nr) {
         post_file <- fs::path(temp_dir, paste0(model_name, "_post.qs2"))
 
         if (isFALSE(ecokit::check_data(post_file, warning = FALSE))) {
@@ -427,18 +431,18 @@ predict_hmsc <- function(
 
       predPostEta[[r]] <- IASDT.R::predict_latent_factor(
         units_pred = levels(dfPiNew[, r]),
-        units_model = levels(Mod_dfPi[, r]),
-        postEta = postEta_file, post_alpha = post_alpha, LF_rL = rL[[r]],
-        n_cores_LF = n_cores_LF, strategy = strategy,
-        LF_temp_cleanup = LF_temp_cleanup, LF_out_file = LF_out_file,
-        LF_return = LF_return, LF_check = LF_check,
-        LF_commands_only = LF_commands_only, temp_dir = temp_dir,
-        model_name = model_name, use_TF = use_TF, TF_environ = TF_environ,
-        TF_use_single = TF_use_single)
+        units_model = levels(mod_dfPi[, r]),
+        postEta = postEta_file, post_alpha = post_alpha, lf_rl = rL[[r]],
+        n_cores_lf = n_cores_lf, strategy = strategy,
+        lf_temp_cleanup = lf_temp_cleanup, lf_out_file = lf_out_file,
+        lf_return = lf_return, lf_check = lf_check,
+        lf_commands_only = lf_commands_only, temp_dir = temp_dir,
+        model_name = model_name, use_tf = use_tf, tf_environ = tf_environ,
+        tf_use_single = tf_use_single)
 
       rm(postEta_file, envir = environment())
 
-      if (LF_commands_only) {
+      if (lf_commands_only) {
         return(invisible(NULL))
       }
 
@@ -453,24 +457,24 @@ predict_hmsc <- function(
       ecokit::cat_time(
         "Loading LF prediction from disk", level = 1L, verbose = verbose)
       ecokit::cat_time(
-        LF_inputFile, level = 2L, cat_timestamp = FALSE, verbose = verbose)
+        lf_input_file, level = 2L, cat_timestamp = FALSE, verbose = verbose)
 
-      for (r in seq_len(Mod_nr)) {
-        predPostEta[[r]] <- ecokit::load_as(LF_inputFile[[r]])
+      for (r in seq_len(mod_nr)) {
+        predPostEta[[r]] <- ecokit::load_as(lf_input_file[[r]])
         rowNames <- rownames(predPostEta[[r]][[1]])
         PiNew[, r] <- fastmatch::fmatch(dfPiNew[, r], rowNames)
       }
     }
 
     if (isFALSE(spatial_model)) {
-      for (r in seq_len(Mod_nr)) {
+      for (r in seq_len(mod_nr)) {
         rowNames <- rownames(predPostEta[[r]][[1]])
         PiNew[, r] <- fastmatch::fmatch(dfPiNew[, r], rowNames)
       }
     }
   }
 
-  if (Mod_nr > 0) {
+  if (mod_nr > 0) {
     ppEta <- simplify2array(predPostEta)
   } else {
     ppEta <- matrix(list(), predN, 0)
@@ -478,8 +482,8 @@ predict_hmsc <- function(
 
   # Only predicting latent factor for new sites or for response curves at
   # median site
-  if (LF_only) {
-    return(LF_out_file)
+  if (lf_only) {
+    return(lf_out_file)
   }
 
   # free some memory
@@ -496,7 +500,7 @@ predict_hmsc <- function(
   }
 
   # Read model object from disk
-  Model <- ecokit::load_as(Model_File_small)
+  model_obj <- ecokit::load_as(model_file_small)
 
   # prediction data for response curves
   if (!is.null(prediction_type)) {
@@ -508,7 +512,7 @@ predict_hmsc <- function(
       seq_len(predN),
       function(pN, ...) {
         get1prediction(
-          Model, X, XRRR, Yc, Loff, rL, rLPar, post[[pN]],
+          model_obj, X, XRRR, Yc, Loff, rL, rLPar, post[[pN]],
           ppEta[pN, ], PiNew, dfPiNew, nyNew, expected, mcmcStep)
       })
 
@@ -522,11 +526,11 @@ predict_hmsc <- function(
   ecokit::cat_time(
     "Save ppEta / post as small chunks", level = 1L, verbose = verbose)
   chunk_size <- 25
-  ChunkIDs <- ceiling(seq_along(post) / chunk_size)
-  Chunks <- purrr::map_chr(
-    .x = seq_len(max(ChunkIDs)),
+  chunkIDs <- ceiling(seq_along(post) / chunk_size)
+  chunks <- purrr::map_chr(
+    .x = seq_len(max(chunkIDs)),
     .f = ~ {
-      IDs <- which(ChunkIDs == .x)
+      IDs <- which(chunkIDs == .x)
       Ch <- list(ppEta = ppEta[IDs], post = post[IDs])
       chunk_file <- fs::path(
         temp_dir, paste0(model_name, "_preds_ch", .x, ".qs2"))
@@ -534,7 +538,7 @@ predict_hmsc <- function(
       return(chunk_file)
     })
 
-  rm(ChunkIDs, post, ppEta, envir = environment())
+  rm(chunkIDs, post, ppEta, envir = environment())
   invisible(gc())
 
   seeds <- sample.int(.Machine$integer.max, predN)
@@ -543,82 +547,82 @@ predict_hmsc <- function(
     future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
-      n_cores = min(n_cores, length(Chunks)), level = 1L,
+      n_cores = min(n_cores, length(chunks)), level = 1L,
       future_max_size = 800L, strategy = strategy, cat_timestamp = FALSE)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
 
   ecokit::cat_time("Making predictions in parallel", level = 1L)
   pred <- future.apply::future_lapply(
-    X = seq_len(length(Chunks)),
-    FUN = function(Chunk) {
+    X = seq_len(length(chunks)),
+    FUN = function(chunk) {
 
-      chunk_file <- Chunks[Chunk]
+      chunk_file <- chunks[chunk]
       Ch <- ecokit::load_as(chunk_file)
       ppEta <- Ch$ppEta
       post <- Ch$post
       rm(Ch, envir = environment())
-      Seed <- (Chunk - 1) * chunk_size
+      Seed <- (chunk - 1) * chunk_size
       Seed <- seq(Seed + 1, Seed + chunk_size)
       Seed <- seeds[Seed]
 
-      PredChunk <- purrr::map(
+      pred_chunk <- purrr::map(
         .x = seq_len(chunk_size),
         .f = function(pN) {
           get1prediction(
-            object = Model, X = X, XRRR = XRRR, Yc = Yc,
+            object = model_obj, X = X, XRRR = XRRR, Yc = Yc,
             Loff = Loff, rL = rL, rLPar = rLPar, sam = post[[pN]],
             predPostEta = ppEta[pN], PiNew = PiNew,
             dfPiNew = dfPiNew, nyNew = nyNew, expected = expected,
             mcmcStep = mcmcStep, seed = Seed[pN])
         })
 
-      # Species richness
-      ChunkSR <- simplify2array(lapply(X = PredChunk, FUN = rowSums)) %>%
+      # species richness
+      chunk_sr <- simplify2array(lapply(X = pred_chunk, FUN = rowSums)) %>%
         float::fl()
-      dimnames(ChunkSR) <- NULL
-      ChunkSR_File <- fs::path(
-        temp_dir, paste0("Pred_", model_name, "_ch", Chunk, "_SR.qs2"))
-      ecokit::save_as(object = ChunkSR, out_path = ChunkSR_File)
+      dimnames(chunk_sr) <- NULL
+      chunk_sr_file <- fs::path(
+        temp_dir, paste0("pred_", model_name, "_ch", chunk, "_sr.qs2"))
+      ecokit::save_as(object = chunk_sr, out_path = chunk_sr_file)
 
-      rm(ChunkSR, envir = environment())
+      rm(chunk_sr, envir = environment())
 
-      # Species predictions
-      ChunkSp <- purrr::map_dfr(
-        .x = seq_len(length(Model$spNames)),
-        .f = function(Sp) {
+      # species predictions
+      chunk_sp <- purrr::map_dfr(
+        .x = seq_len(length(model_obj$spNames)),
+        .f = function(sp) {
 
-          SpD <- purrr::map(PredChunk, ~ .x[, Sp], ncol = 1) %>%
+          sp_data <- purrr::map(pred_chunk, ~ .x[, sp], ncol = 1) %>%
             simplify2array() %>%
             float::fl()
-          dimnames(SpD) <- NULL
+          dimnames(sp_data) <- NULL
 
-          ChunkSp_File <- fs::path(
+          chunk_sp_file <- fs::path(
             temp_dir,
-            paste0("Pred_", model_name, "_ch", Chunk, "_taxon", Sp, ".qs2"))
+            paste0("pred_", model_name, "_ch", chunk, "_taxon", sp, ".qs2"))
 
-          ecokit::save_as(object = SpD, out_path = ChunkSp_File)
+          ecokit::save_as(object = sp_data, out_path = chunk_sp_file)
 
-          return(
-            cbind.data.frame(
-              Chunk = Chunk, Sp = Sp, ias_id = Model$spNames[Sp],
-              ChunkSp_File = ChunkSp_File))
+          cbind.data.frame(
+            chunk = chunk, sp = sp, ias_id = model_obj$spNames[sp],
+            chunk_sp_file = chunk_sp_file)
         }) %>%
         dplyr::bind_rows(
           tibble::tibble(
-            Chunk = Chunk, Sp = 0, ias_id = "SR", ChunkSp_File = ChunkSR_File),
+            chunk = chunk, sp = 0, ias_id = "sr",
+            chunk_sp_file = chunk_sr_file),
           .)
 
-      rm(PredChunk, envir = environment())
+      rm(pred_chunk, envir = environment())
 
       invisible(gc())
-      return(ChunkSp)
+      chunk_sp
     },
     future.seed = TRUE,
     future.globals = c(
-      "Model", "X", "XRRR", "Yc", "Loff", "rL", "rLPar", "PiNew",
+      "model_obj", "X", "XRRR", "Yc", "Loff", "rL", "rLPar", "PiNew",
       "dfPiNew", "nyNew", "expected", "mcmcStep", "seeds", "chunk_size",
-      "Chunks", "temp_dir", "model_name", "get1prediction"),
+      "chunks", "temp_dir", "model_name", "get1prediction"),
     future.packages = pkg_to_export)
 
   pred <- tibble::tibble(dplyr::bind_rows(pred))
@@ -629,19 +633,19 @@ predict_hmsc <- function(
     "Summarizing prediction outputs / Evaluation",
     level = 1L, verbose = verbose)
 
-  evaluation_data <- dplyr::select(pred, -Chunk) %>%
-    dplyr::group_nest(Sp, ias_id) %>%
+  evaluation_data <- dplyr::select(pred, -chunk) %>%
+    dplyr::group_nest(sp, ias_id) %>%
     dplyr::mutate(data = purrr::map(data, unlist))
 
   evaluation_data <- future.apply::future_lapply(
     X = seq_len(nrow(evaluation_data)),
     FUN = function(ID) {
 
-      Sp <- evaluation_data$Sp[[ID]]
-      if (Sp == 0) {
-        Sp2 <- "SR"
+      sp <- evaluation_data$sp[[ID]]
+      if (sp == 0) {
+        sp_2 <- "sr"
       } else {
-        Sp2 <- paste0("taxon", Sp)
+        sp_2 <- paste0("taxon", sp)
       }
       ias_id <- evaluation_data$ias_id[[ID]]
       data <- as.vector(evaluation_data$data[[ID]])
@@ -666,12 +670,12 @@ predict_hmsc <- function(
       rm(species_data, envir = environment())
       invisible(gc())
 
-      if (is.null(pred_XY)) {
-        pred_XY <- Model$rL$sample$s
+      if (is.null(pred_xy)) {
+        pred_xy <- model_obj$rL$sample$s
       }
 
       pred_summary <- tibble::tibble(
-        as.data.frame(pred_XY),
+        as.data.frame(pred_xy),
         Mean = species_data_mean, SD = species_data_sd,
         Cov = species_data_cov) %>%
         stats::setNames(
@@ -681,15 +685,15 @@ predict_hmsc <- function(
         sf::st_as_sf(coords = c("x", "y"), crs = 3035, remove = FALSE)
 
       pred_summary_file <- fs::path(
-        pred_directory, paste0("Pred_", model_name, "_", Sp2, ".qs2"))
+        pred_directory, paste0("pred_", model_name, "_", sp_2, ".qs2"))
 
       ecokit::save_as(object = pred_summary, out_path = pred_summary_file)
 
-      if (evaluate && Sp2 != "SR") {
-        if (is.null(pred_PA)) {
-          PresAbs <- Model$Y[, Sp]
+      if (evaluate && sp_2 != "sr") {
+        if (is.null(pred_pa)) {
+          PresAbs <- model_obj$Y[, sp]
         } else {
-          PresAbs <- pred_PA[, Sp]
+          PresAbs <- pred_pa[, sp]
         }
 
         if (length(unique(PresAbs)) == 2) {
@@ -713,16 +717,15 @@ predict_hmsc <- function(
         RMSE <- TjurR2 <- AUC <- Boyce <- NA_real_
       }
 
-      return(
-        tibble::tibble(
-          Sp = Sp, ias_id = ias_id, Path_pred = pred_summary_file,
-          RMSE = RMSE, AUC = AUC, Boyce = Boyce, TjurR2 = TjurR2))
+      tibble::tibble(
+        sp = sp, ias_id = ias_id, Path_pred = pred_summary_file,
+        RMSE = RMSE, AUC = AUC, Boyce = Boyce, TjurR2 = TjurR2)
 
     },
     future.seed = TRUE, future.packages = pkg_to_export,
     future.globals = c(
       "evaluation_data", "evaluate", "pred_directory", "model_name",
-      "pred_PA", "pred_XY"))
+      "pred_pa", "pred_xy"))
 
   if (n_cores > 1) {
     ecokit::set_parallel(stop_cluster = TRUE, level = 1L, cat_timestamp = FALSE)
@@ -739,31 +742,31 @@ predict_hmsc <- function(
 
   evaluation_data <- dplyr::bind_rows(evaluation_data)
 
-  Predictions <- dplyr::select(evaluation_data, Path_pred, Sp, ias_id) %>%
+  predictions <- dplyr::select(evaluation_data, Path_pred, sp, ias_id) %>%
     dplyr::mutate(
-      Sp_data = purrr::map(
+      sp_data = purrr::map(
         .x = Path_pred,
         .f = ~ {
           ecokit::load_as(.x) %>%
             tidyr::pivot_longer(
-              cols = tidyselect::starts_with(c("Sp_", "SR_")),
-              names_to = "Species", values_to = "Prediction")
+              cols = tidyselect::starts_with(c("sp_", "sr")),
+              names_to = "species", values_to = "prediction")
         })) %>%
-    dplyr::pull(Sp_data) %>%
+    dplyr::pull(sp_data) %>%
     dplyr::bind_rows() %>%
-    tidyr::pivot_wider(names_from = "Species", values_from = "Prediction") %>%
+    tidyr::pivot_wider(names_from = "species", values_from = "prediction") %>%
     dplyr::relocate(gtools::mixedsort(names(.))) %>%
     dplyr::select(
-      x, y, geometry, SR_mean, SR_sd, SR_cov, tidyselect::everything()) %>%
-    dplyr::mutate(model_name = model_name, .before = "SR_mean")
+      x, y, geometry, sr_mean, sr_sd, sr_cov, tidyselect::everything()) %>%
+    dplyr::mutate(model_name = model_name, .before = "sr_mean")
 
-  Pred_File <- fs::path(
+  pred_file <- fs::path(
     pred_directory,
     paste0(
-      "Prediction_",
-      stringr::str_remove(model_name, "_Clamping|_NoClamping"), ".qs2"))
+      "prediction_",
+      stringr::str_remove(model_name, "_clamping|_no_clamping"), ".qs2"))
 
-  ecokit::save_as(object = Predictions, out_path = Pred_File)
+  ecokit::save_as(object = predictions, out_path = pred_file)
 
   if (temp_cleanup) {
     try(fs::file_delete(evaluation_data$Path_pred), silent = TRUE)
@@ -771,24 +774,24 @@ predict_hmsc <- function(
 
   ecokit::cat_time("Predictions were saved", level = 1L, verbose = verbose)
   ecokit::cat_time(
-    Pred_File, level = 2L, cat_timestamp = FALSE, verbose = verbose)
+    pred_file, level = 2L, cat_timestamp = FALSE, verbose = verbose)
 
   if (evaluate) {
     if (is.null(evaluation_name)) {
-      Eval_Path <- fs::path(
+      eval_path <- fs::path(
         evaluation_directory,
         paste0(
-          "Eval_", stringr::str_remove(model_name, "_Train|_Current"), ".qs2"))
+          "Eval_", stringr::str_remove(model_name, "_train|_current"), ".qs2"))
     } else {
-      Eval_Path <- fs::path(
+      eval_path <- fs::path(
         evaluation_directory,
         paste0(
-          "Eval_", stringr::str_remove(model_name, "_Train|_Current"),
+          "Eval_", stringr::str_remove(model_name, "_train|_current"),
           "_", evaluation_name, ".qs2"))
     }
 
     evaluation_data <- dplyr::select(evaluation_data, -Path_pred)
-    ecokit::save_as(object = evaluation_data, out_path = Eval_Path)
+    ecokit::save_as(object = evaluation_data, out_path = eval_path)
 
     ecokit::cat_time(
       "Evaluation results were saved", level = 1L, verbose = verbose)
@@ -797,15 +800,15 @@ predict_hmsc <- function(
       level = 2L, cat_timestamp = FALSE, verbose = verbose)
 
   } else {
-    Eval_Path <- NULL
+    eval_path <- NULL
   }
 
   # # ..................................................................... ###
 
-  if (is.null(LF_out_file)) {
-    LF_Path <- LF_inputFile
+  if (is.null(lf_out_file)) {
+    lf_path <- lf_input_file
   } else {
-    LF_Path <- LF_out_file
+    lf_path <- lf_out_file
   }
 
   # # ..................................................................... ###
@@ -818,15 +821,15 @@ predict_hmsc <- function(
 
     try(
       {
-        Pattern <- paste0("(Pred_){0,}", model_name, ".+qs2")
+        file_pattern <- paste0("(pred_){0,}", model_name, ".+qs2")
         file_paths <- list.files(
           path = ecokit::normalize_path(temp_dir),
-          pattern = Pattern, full.names = TRUE)
+          pattern = file_pattern, full.names = TRUE)
         try(fs::file_delete(file_paths), silent = TRUE)
       },
       silent = TRUE)
 
-    try(fs::file_delete(Model_File_small), silent = TRUE)
+    try(fs::file_delete(model_file_small), silent = TRUE)
 
   }
 
@@ -838,7 +841,7 @@ predict_hmsc <- function(
 
   return(
     tibble::tibble(
-      Pred_Path = Pred_File, Eval_Path = Eval_Path, LF_Path = LF_Path))
+      pred_path = pred_file, eval_path = eval_path, lf_path = lf_path))
 }
 
 ## ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -893,11 +896,11 @@ get1prediction <- function(
     }
   )
 
-  Mod_nr <- object$nr
-  LRan <- vector("list", Mod_nr)
-  Eta <- vector("list", Mod_nr)
+  mod_nr <- object$nr
+  LRan <- vector("list", mod_nr)
+  Eta <- vector("list", mod_nr)
 
-  for (r in seq_len(Mod_nr)) {
+  for (r in seq_len(mod_nr)) {
     Eta[[r]] <- predPostEta[[r]]
 
     if (rL[[r]]$xDim == 0) {
@@ -938,7 +941,7 @@ get1prediction <- function(
         distr = object$distr, rL = rL
       )
     }
-    for (r in seq_len(Mod_nr)) {
+    for (r in seq_len(mod_nr)) {
       if (rL[[r]]$xDim == 0) {
         LRan[[r]] <- Eta[[r]][as.character(dfPiNew[, r]), ] %*%
           sam$Lambda[[r]]

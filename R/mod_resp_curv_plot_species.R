@@ -1,6 +1,6 @@
 
 ## |------------------------------------------------------------------------| #
-# resp_curv_plot_species ----
+# rc_plot_species ----
 ## |------------------------------------------------------------------------| #
 
 #' @export
@@ -9,7 +9,7 @@
 #' @order 2
 #' @author Ahmed El-Gabbas
 
-resp_curv_plot_species <- function(
+rc_plot_species <- function(
     model_dir = NULL, n_cores = 20, env_file = ".env", return_data = FALSE) {
 
   .start_time <- lubridate::now(tzone = "CET")
@@ -28,23 +28,24 @@ resp_curv_plot_species <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_PA <- n_cells_naturalized <- NFV <- Coords <- Species <- Prefix <-
-    Data <- RC_Path_Prob <- Variable <- ias_id <- VarDesc <- VarDesc2 <-
-    RC_File <- NULL
+  path_pa <- n_cells_naturalized <- nfv <- coords <- species <- prefix <-
+    data <- path_rc_prob <- variable <- ias_id <- var_desc <- var_desc_2 <-
+    rc_file <- NULL
 
   # # ..................................................................... ###
 
   ecokit::cat_time("Plotting species response curves")
 
-  Path_RC_DT <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_DT")
-  if (!dir.exists(Path_RC_DT)) {
+  path_rc_data <- fs::path(
+    model_dir, "model_postprocessing", "response_curves_data")
+  if (!dir.exists(path_rc_data)) {
     ecokit::stop_ctx(
-      "Response curve data subfolder is missing.", Path_RC_DT = Path_RC_DT,
+      "Response curve data subfolder is missing.", path_rc_data = path_rc_data,
       include_backtrace = TRUE)
   }
-  Path_RC_Sp <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_Sp")
-  Path_RC_Sp_DT <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_Sp_DT")
-  fs::dir_create(c(Path_RC_Sp, Path_RC_Sp_DT))
+  path_rc_sp <- fs::path(model_dir, "model_postprocessing", "rc_sp")
+  path_rc_sp_data <- fs::path(model_dir, "model_postprocessing", "rc_sp_data")
+  fs::dir_create(c(path_rc_sp, path_rc_sp_data))
 
   # # ..................................................................... ###
 
@@ -58,13 +59,13 @@ resp_curv_plot_species <- function(
 
   env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "Path_PA", "DP_R_PA", TRUE, FALSE)
+    "path_pa", "DP_R_pa", TRUE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = env_vars_to_read)
   rm(env_vars_to_read, envir = environment())
 
-  sp_summary <- fs::path(Path_PA, "sp_pa_summary_df.RData")
+  sp_summary <- fs::path(path_pa, "sp_pa_summary_df.RData")
   if (!file.exists(sp_summary)) {
     ecokit::stop_ctx(
       "sp_summary file does not exist", sp_summary = sp_summary,
@@ -74,13 +75,13 @@ resp_curv_plot_species <- function(
   sp_summary <- readr::read_csv(
     file = sp_summary, show_col_types = FALSE, progress = FALSE) %>%
     dplyr::select(tidyselect::all_of(c("ias_id", "n_cells_naturalized"))) %>%
-    dplyr::rename(NCells = n_cells_naturalized)
+    dplyr::rename(n_cells = n_cells_naturalized)
 
   # # ..................................................................... ###
 
   # Load species names
   ecokit::cat_time("Load species names")
-  SpeciesNames <- IASDT.R::get_species_name(env_file = env_file)
+  sp_names <- IASDT.R::get_species_name(env_file = env_file)
 
   # # ..................................................................... ###
 
@@ -88,35 +89,35 @@ resp_curv_plot_species <- function(
 
   ecokit::cat_time("Prepare species-specific data in parallel")
 
-  Sp_DT_All <- fs::path(Path_RC_DT, "ResCurvDT.RData") %>%
+  sp_data_all <- fs::path(path_rc_data, "rc_data.RData") %>%
     ecokit::load_as() %>%
-    dplyr::select(tidyselect::all_of(c("Coords", "RC_Path_Prob"))) %>%
+    dplyr::select(tidyselect::all_of(c("coords", "path_rc_prob"))) %>%
     dplyr::mutate(
-      Data = purrr::map(.x = RC_Path_Prob, .f = ecokit::load_as)) %>%
-    tidyr::unnest(Data) %>%
-    dplyr::select(-RC_Path_Prob) %>%
+      data = purrr::map(.x = path_rc_prob, .f = ecokit::load_as)) %>%
+    tidyr::unnest(data) %>%
+    dplyr::select(-path_rc_prob) %>%
     tidyr::nest(
-      DT = tidyselect::everything(), .by = c(NFV, Coords, Species)) %>%
-    dplyr::mutate(ias_id = as.numeric(stringr::str_remove(Species, "^Sp_"))) %>%
+      data0 = tidyselect::everything(), .by = c(nfv, coords, species)) %>%
+    dplyr::mutate(ias_id = as.numeric(stringr::str_remove(species, "^sp_"))) %>%
     dplyr::left_join(sp_summary, by = "ias_id") %>%
     dplyr::mutate(
-      Prefix = paste0(Species, "_NFV_", NFV, "_Coords_", Coords),
-      path_JPEG_fixed = fs::path(Path_RC_Sp, paste0(Prefix, "_Fixed.jpeg")),
-      path_JPEG_free = fs::path(Path_RC_Sp, paste0(Prefix, "_Free.jpeg")),
-      Path_Sp_DT = fs::path(Path_RC_Sp_DT, paste0(Prefix, ".qs2")))
+      prefix = paste0(species, "_nfv_", nfv, "_coords_", coords),
+      path_jpeg_fixed = fs::path(path_rc_sp, paste0(prefix, "_fixed.jpeg")),
+      path_jpeg_free = fs::path(path_rc_sp, paste0(prefix, "_free.jpeg")),
+      path_sp_data = fs::path(path_rc_sp_data, paste0(prefix, ".qs2")))
 
 
   ecokit::cat_time("Export species-specific data", level = 1L)
   purrr::walk(
-    .x = seq_len(nrow(Sp_DT_All)),
-    .f = function(ID) {
-      DT <- dplyr::slice(Sp_DT_All, ID)
-      if (isFALSE(ecokit::check_data(DT$Path_Sp_DT, warning = FALSE))) {
-        ecokit::save_as(object = DT, out_path = DT$Path_Sp_DT)
+    .x = seq_len(nrow(sp_data_all)),
+    .f = function(id) {
+      data0 <- dplyr::slice(sp_data_all, id)
+      if (isFALSE(ecokit::check_data(data0$path_sp_data, warning = FALSE))) {
+        ecokit::save_as(object = data0, out_path = data0$path_sp_data)
       }
     })
 
-  Sp_DT_All <- gtools::mixedsort(Sp_DT_All$Path_Sp_DT)
+  sp_data_all <- gtools::mixedsort(sp_data_all$path_sp_data)
   invisible(gc())
 
   # # ..................................................................... ###
@@ -133,126 +134,126 @@ resp_curv_plot_species <- function(
     "ggplot2", "tibble", "ecokit", "ragg", "stringr", "scales", "stats",
     "fs", "grDevices", "grid", "rlang", "qs2")
 
-  Plots <- foreach::foreach(
-    RC_File = Sp_DT_All, .export = c("SpeciesNames", "Sp_DT_All"),
+  plots <- foreach::foreach(
+    rc_file = sp_data_all, .export = c("sp_names", "sp_data_all"),
     .packages = pkg_to_export) %dopar% {
 
-      DT <- ecokit::load_as(RC_File)
+      data0 <- ecokit::load_as(rc_file)
 
-      Coords <- DT$Coords
-      Species <- DT$Species
-      NCells <- DT$NCells
-      NFV <- DT$NFV
-      path_JPEG_fixed <- DT$path_JPEG_fixed
-      path_JPEG_free <- DT$path_JPEG_free
+      coords <- data0$coords
+      species <- data0$species
+      n_cells <- data0$n_cells
+      nfv <- data0$nfv
+      path_jpeg_fixed <- data0$path_jpeg_fixed
+      path_jpeg_free <- data0$path_jpeg_free
 
-      DT <- dplyr::select(DT, DT) %>%
-        tidyr::unnest(DT) %>%
-        dplyr::slice(gtools::mixedorder(Variable)) %>%
+      data0 <- dplyr::select(data0, data0) %>%
+        tidyr::unnest(data0) %>%
+        dplyr::slice(gtools::mixedorder(variable)) %>%
         dplyr::mutate(
-          VarDesc = dplyr::case_when(
-            startsWith(Variable, "bio") ~ stringr::str_to_sentence(Variable),
-            Variable == "RoadRailLog" ~ "Road + Rail intensity",
-            Variable == "EffortsLog" ~ "Sampling efforts",
-            Variable == "RiversLog" ~ "River length",
-            Variable == "HabLog" ~ "% habitat coverage",
-            Variable == "soil" ~ "Soil density",
-            Variable == "wetness" ~ "Wetness index",
-            .default = Variable),
-          VarDesc = paste0(
-            "<span style='font-size: 10pt;'><b>", VarDesc, "</b></span>"),
+          var_desc = dplyr::case_when(
+            startsWith(variable, "bio") ~ stringr::str_to_sentence(variable),
+            variable == "road_rail_log" ~ "Road + Rail intensity",
+            variable == "efforts_log" ~ "Sampling efforts",
+            variable == "rivers_log" ~ "River length",
+            variable == "habitat_log" ~ "% habitat coverage",
+            variable == "soil" ~ "Soil density",
+            variable == "wetness" ~ "Wetness index",
+            .default = variable),
+          var_desc = paste0(
+            "<span style='font-size: 10pt;'><b>", var_desc, "</b></span>"),
 
-          VarDesc2 = dplyr::case_when(
-            Variable == "bio1" ~ "annual mean temperature",
-            Variable == "bio2" ~ "mean diurnal range",
-            Variable == "bio3" ~ "isothermality (bio2/bio7) (&times;100)",
-            Variable == "bio4" ~ "temperature seasonality",
-            Variable == "bio5" ~ "max temperature of warmest month",
-            Variable == "bio6" ~ "temperature of the coldest month",
-            Variable == "bio7" ~ "temperature annual range (bio5-bio6)",
-            Variable == "bio8" ~ "temperatures of the wettest quarter",
-            Variable == "bio9" ~ "mean temperature of driest quarter",
-            Variable == "bio10" ~ "mean temperature of warmest quarter",
-            Variable == "bio11" ~ "mean temperature of coldest quarter",
-            Variable == "bio12" ~ "annual precipitation amount",
-            Variable == "bio13" ~ "precipitation of wettest month",
-            Variable == "bio14" ~ "precipitation of driest month",
-            Variable == "bio15" ~ "precipitation seasonality",
-            Variable == "bio16" ~ "precipitation of wettest quarter",
-            Variable == "bio17" ~ "precipitation of driest quarter",
-            Variable == "bio18" ~ "precipitation of the warmest quarter",
-            Variable == "bio19" ~ "precipitation of coldest quarter",
-            Variable == "npp" ~ "net primary productivity",
-            Variable == "RiversLog" ~ " (log<sub>10</sub>(x + 0.1))",
-            Variable == "RoadRailLog" ~ " (log<sub>10</sub>(x + 1))",
-            Variable == "EffortsLog" ~ " (log<sub>10</sub>(x + 1))",
-            Variable == "soil" ~ "Soil bulk density",
-            Variable == "wetness" ~ "Topographic wetness index",
-            Variable == "HabLog" ~ " (log<sub>10</sub>(x + 0.1))",
-            .default = Variable),
-          VarDesc2 = paste0(
-            "<span style='font-size: 8pt;'>", VarDesc2, "</span>"))
+          var_desc_2 = dplyr::case_when(
+            variable == "bio1" ~ "annual mean temperature",
+            variable == "bio2" ~ "mean diurnal range",
+            variable == "bio3" ~ "isothermality (bio2/bio7) (&times;100)",
+            variable == "bio4" ~ "temperature seasonality",
+            variable == "bio5" ~ "max temperature of warmest month",
+            variable == "bio6" ~ "temperature of the coldest month",
+            variable == "bio7" ~ "temperature annual range (bio5-bio6)",
+            variable == "bio8" ~ "temperatures of the wettest quarter",
+            variable == "bio9" ~ "mean temperature of driest quarter",
+            variable == "bio10" ~ "mean temperature of warmest quarter",
+            variable == "bio11" ~ "mean temperature of coldest quarter",
+            variable == "bio12" ~ "annual precipitation amount",
+            variable == "bio13" ~ "precipitation of wettest month",
+            variable == "bio14" ~ "precipitation of driest month",
+            variable == "bio15" ~ "precipitation seasonality",
+            variable == "bio16" ~ "precipitation of wettest quarter",
+            variable == "bio17" ~ "precipitation of driest quarter",
+            variable == "bio18" ~ "precipitation of the warmest quarter",
+            variable == "bio19" ~ "precipitation of coldest quarter",
+            variable == "npp" ~ "net primary productivity",
+            variable == "rivers_log" ~ " (log<sub>10</sub>(x + 0.1))",
+            variable == "road_rail_log" ~ " (log<sub>10</sub>(x + 1))",
+            variable == "efforts_log" ~ " (log<sub>10</sub>(x + 1))",
+            variable == "soil" ~ "Soil bulk density",
+            variable == "wetness" ~ "Topographic wetness index",
+            variable == "habitat_log" ~ " (log<sub>10</sub>(x + 0.1))",
+            .default = variable),
+          var_desc_2 = paste0(
+            "<span style='font-size: 8pt;'>", var_desc_2, "</span>"))
 
       # nolint start
-      Species2 <- dplyr::filter(SpeciesNames, ias_id == !!Species)
-      species_name <- Species2$species_name
-      Species_ID <- stringr::str_remove(Species, "^Sp_")
-      class <- Species2$class
-      order <- Species2$order
-      family <- Species2$family
-      TitleTxt <- stringr::str_glue(
+      species2 <- dplyr::filter(sp_names, ias_id == !!species)
+      species_name <- species2$species_name
+      species_id <- stringr::str_remove(species, "^sp_")
+      class <- species2$class
+      order <- species2$order
+      family <- species2$family
+      title_text <- stringr::str_glue(
         '<span style="font-size:13pt;"><b> Response curves of </b></span>\\
         <span style="color:blue; font-size:13pt;">\\
         <b><i>{species_name}</i></b></span>\\
         <span style="font-size:8pt;"> (\\
         <b>Class:</b> {class} &#8212; <b>Order:</b> {order} &#8212; \\
-        <b>Family:</b> {family} &#8212; <b>ID:</b> {Species_ID} \\
-        &#8212; <b># presence grids:</b> {NCells})</span>')
+        <b>Family:</b> {family} &#8212; <b>ID:</b> {species_id} \\
+        &#8212; <b># presence grids:</b> {n_cells})</span>')
       # nolint end
 
-      SubTitleTxt <- dplyr::if_else(
-        NFV == 1,
+      subtitle_text <- dplyr::if_else(
+        nfv == 1,
         paste0(
           "Non-focal variables are set to most likely value <i>",
           "[non.focalVariables = 1]</i>"),
         paste0(
           "Non-focal variables = most likely value given ",
           "value of focal variable <i>[non.focalVariables = 2]</i>"))
-      Caption <- dplyr::if_else(
-        Coords == "c", "Mean coordinates", "No spatial dependence")
-      Caption <- paste0(Caption, " --- ", SubTitleTxt)
+      plot_caption <- dplyr::if_else(
+        coords == "c", "Mean coordinates", "No spatial dependence")
+      plot_caption <- paste0(plot_caption, " --- ", subtitle_text)
 
-      if (nrow(DT) <= 9) {
-        NR <- NC <- 3
+      if (nrow(data0) <= 9) {
+        n_rows <- n_columns <- 3
         plot_width <- 24
         plot_height <- 22
       } else {
-        NR <- 3
-        NC <- 4
+        n_rows <- 3
+        n_columns <- 4
         plot_width <- 30
         plot_height <- 22
       }
 
-      Plots <- purrr::map(
-        .x = seq_len(nrow(DT)),
+      plots <- purrr::map(
+        .x = seq_len(nrow(data0)),
         .f = ~ {
 
-          PositiveTrendProb <- DT$PositiveTrendProb[[.x]]
-          Trend <- tibble::tibble(
-            Trend2 = stringr::str_glue(
+          positive_trend_prob <- data0$positive_trend_prob[[.x]]
+          trend <- tibble::tibble(
+            trend_2 = stringr::str_glue(
               "\n     Pr[pred(Var=max)] > Pr[pred(Var=min)] = \\
-              {round(PositiveTrendProb, 2)}"),
+              {round(positive_trend_prob, 2)}"),
             X = -Inf, Y = Inf)
 
-          Quant <- DT$PlotData_Quant[[.x]] %>%
+          quant_data <- data0$plot_data_quant[[.x]] %>%
             tidyr::pivot_wider(
-              id_cols = XVals, names_from = Quantile, values_from = Pred) %>%
-            stats::setNames(c("XVals", "Q25", "Q50", "Q975"))
+              id_cols = XVals, names_from = Quantile, values_from = pred) %>%
+            stats::setNames(c("XVals", "q_25", "q_50", "q_975"))
 
-          Rug_0 <- dplyr::filter(DT$Observed_PA[[.x]], Pred == 0)
-          Rug_1 <- dplyr::filter(DT$Observed_PA[[.x]], Pred == 1)
+          rug_0 <- dplyr::filter(data0$observed_pa[[.x]], pred == 0)
+          rug_1 <- dplyr::filter(data0$observed_pa[[.x]], pred == 1)
 
-          PlottingTheme <- ggplot2::theme_bw() +
+          plot_theme <- ggplot2::theme_bw() +
             ggplot2::theme(
               legend.position = "none",
               axis.title = ggtext::element_markdown(size = 12, face = "bold"),
@@ -268,85 +269,85 @@ resp_curv_plot_species <- function(
               plot.margin = ggplot2::unit(c(0.1, 0.2, 0.1, 0.2), "lines"))
 
           # Fixed y-axis
-          Plot_Fixed <- ggplot2::ggplot(
-            data = Quant, mapping = ggplot2::aes(x = XVals),
+          plot_fixed <- ggplot2::ggplot(
+            data = quant_data, mapping = ggplot2::aes(x = XVals),
             environment = emptyenv()) +
             ggplot2::geom_line(
-              ggplot2::aes(y = Q975), data = Quant,
+              ggplot2::aes(y = q_975), data = quant_data,
               linetype = 2, linewidth = 0.3, colour = "blue") +
             ggplot2::geom_line(
-              ggplot2::aes(y = Q25), data = Quant,
+              ggplot2::aes(y = q_25), data = quant_data,
               linetype = 2, linewidth = 0.3, colour = "blue") +
             ggplot2::geom_ribbon(
-              mapping = ggplot2::aes(ymin = Q25, ymax = Q975),
-              data = Quant, fill = "blue", alpha = 0.1) +
+              mapping = ggplot2::aes(ymin = q_25, ymax = q_975),
+              data = quant_data, fill = "blue", alpha = 0.1) +
             ggplot2::geom_line(
-              mapping = ggplot2::aes(y = Q50), data = Quant,
+              mapping = ggplot2::aes(y = q_50), data = quant_data,
               linetype = 1, linewidth = 0.6, colour = "blue") +
             ggplot2::geom_rug(
-              sides = "t", data = Rug_1, ggplot2::aes(x = XVals),
+              sides = "t", data = rug_1, ggplot2::aes(x = XVals),
               color = "blue", linewidth = 0.025, alpha = 0.25,
               length = grid::unit(0.03, "npc")) +
             ggplot2::geom_rug(
-              sides = "b", data = Rug_0, ggplot2::aes(x = XVals),
+              sides = "b", data = rug_0, ggplot2::aes(x = XVals),
               color = "red", linewidth = 0.025, alpha = 0.25,
               length = grid::unit(0.03, "npc")) +
             ggplot2::geom_text(
-              data = Trend, vjust = 0.5, hjust = -0.05,
-              mapping = ggplot2::aes(x = X, y = Y, label = Trend2),
+              data = trend, vjust = 0.5, hjust = -0.05,
+              mapping = ggplot2::aes(x = X, y = Y, label = trend_2),
               colour = "grey30", size = 2.75) +
             ggplot2::scale_y_continuous(
               limits = c(0, 1), oob = scales::squish_infinite) +
             ggplot2::scale_x_continuous(expand = c(0.015, 0.015)) +
             ggplot2::labs(
-              x = NULL, y = NULL, title = DT$VarDesc[[.x]],
-              subtitle = DT$VarDesc2[[.x]]) +
-            PlottingTheme
+              x = NULL, y = NULL, title = data0$var_desc[[.x]],
+              subtitle = data0$var_desc_2[[.x]]) +
+            plot_theme
 
           # Free y-axis
-          Plot_Free <- ggplot2::ggplot(
-            data = Quant, mapping = ggplot2::aes(x = XVals),
+          plot_free <- ggplot2::ggplot(
+            data = quant_data, mapping = ggplot2::aes(x = XVals),
             environment = emptyenv()) +
             ggplot2::geom_line(
-              ggplot2::aes(y = Q975), data = Quant,
+              ggplot2::aes(y = q_975), data = quant_data,
               linetype = 2, linewidth = 0.3, colour = "blue") +
             ggplot2::geom_line(
-              ggplot2::aes(y = Q25), data = Quant,
+              ggplot2::aes(y = q_25), data = quant_data,
               linetype = 2, linewidth = 0.3, colour = "blue") +
             ggplot2::geom_ribbon(
-              mapping = ggplot2::aes(ymin = Q25, ymax = Q975),
-              data = Quant, fill = "blue", alpha = 0.1) +
+              mapping = ggplot2::aes(ymin = q_25, ymax = q_975),
+              data = quant_data, fill = "blue", alpha = 0.1) +
             ggplot2::geom_line(
-              mapping = ggplot2::aes(y = Q50), data = Quant,
+              mapping = ggplot2::aes(y = q_50), data = quant_data,
               linetype = 1, linewidth = 0.6, colour = "blue") +
             ggplot2::geom_rug(
-              sides = "t", data = Rug_1, ggplot2::aes(x = XVals),
+              sides = "t", data = rug_1, ggplot2::aes(x = XVals),
               color = "blue", linewidth = 0.025, alpha = 0.25,
               length = grid::unit(0.03, "npc")) +
             ggplot2::geom_rug(
-              sides = "b", data = Rug_0, ggplot2::aes(x = XVals),
+              sides = "b", data = rug_0, ggplot2::aes(x = XVals),
               color = "red", linewidth = 0.025, alpha = 0.25,
               length = grid::unit(0.03, "npc")) +
             ggplot2::geom_text(
-              data = Trend, vjust = 0.5, hjust = -0.05,
-              mapping = ggplot2::aes(x = X, y = Y, label = Trend2),
+              data = trend, vjust = 0.5, hjust = -0.05,
+              mapping = ggplot2::aes(x = X, y = Y, label = trend_2),
               colour = "grey30", size = 2.75) +
             ggplot2::scale_y_continuous(oob = scales::squish_infinite) +
             ggplot2::scale_x_continuous(expand = c(0.015, 0.015)) +
             ggplot2::labs(
-              x = NULL, y = NULL, title = DT$VarDesc[[.x]],
-              subtitle = DT$VarDesc2[[.x]]) +
-            PlottingTheme +
+              x = NULL, y = NULL, title = data0$var_desc[[.x]],
+              subtitle = data0$var_desc_2[[.x]]) +
+            plot_theme +
             ggplot2::theme(
               axis.text.y = ggplot2::element_text(angle = 90, hjust = 0.5))
 
           return(
             tibble::tibble(
-              Plot_Fixed = list(Plot_Fixed), Plot_Free = list(Plot_Free)))
+              plot_fixed = list(plot_fixed), plot_free = list(plot_free)))
         }) %>%
         dplyr::bind_rows()
 
-      PlottingTheme2 <- ggplot2::theme(
+      plot_theme_2 <- ggplot2::theme(
         plot.margin = ggplot2::margin(0, 0, 0, 0, "cm"),
         plot.title = ggtext::element_markdown(
           hjust = 0, margin = ggplot2::margin(0, 0, -0.125, 0, "cm")),
@@ -354,17 +355,17 @@ resp_curv_plot_species <- function(
           size = 12, color = "grey", hjust = 0))
 
       # Fixed y-axis
-      Plot_Fixed <- patchwork::wrap_plots(
-        Plots$Plot_Fixed, nrow = NR, ncol = NC) +
+      plot_fixed <- patchwork::wrap_plots(
+        plots$plot_fixed, nrow = n_rows, ncol = n_columns) +
         patchwork::plot_annotation(
           title = stringr::str_glue(
-            "{TitleTxt}<span style = 'color:#ffffff;'>...........\\
+            "{title_text}<span style = 'color:#ffffff;'>...........\\
             </span><span style='font-size:10pt; color:grey;'>Fixed \\
             y-axis</span>"),
-          caption = Caption, theme = PlottingTheme2) +
+          caption = plot_caption, theme = plot_theme_2) +
         patchwork::plot_layout(axes = "collect")
 
-      Plot_Fixed <- patchwork::wrap_elements(panel = Plot_Fixed) +
+      plot_fixed <- patchwork::wrap_elements(panel = plot_fixed) +
         ggplot2::labs(tag = "<b>Predicted habitat suitability</b>") +
         ggplot2::theme(
           plot.tag = ggtext::element_markdown(
@@ -372,23 +373,23 @@ resp_curv_plot_species <- function(
           plot.tag.position = "left")
 
       ragg::agg_jpeg(
-        filename = path_JPEG_fixed, width = plot_width, height = plot_height,
+        filename = path_jpeg_fixed, width = plot_width, height = plot_height,
         res = 600, quality = 100, units = "cm")
-      print(Plot_Fixed)
+      print(plot_fixed)
       grDevices::dev.off()
 
 
       # Free y-axis
-      Plot_Free <- patchwork::wrap_plots(
-        Plots$Plot_Free, nrow = NR, ncol = NC) +
+      plot_free <- patchwork::wrap_plots(
+        plots$plot_free, nrow = n_rows, ncol = n_columns) +
         patchwork::plot_annotation(
           title = stringr::str_glue(
-            "{TitleTxt}<span style = 'color:#ffffff;'>...........</span><span \\
-            style='font-size:10pt; color:grey;'>Free y-axis</span>"),
-          caption = Caption, theme = PlottingTheme2) +
+            "{title_text}<span style = 'color:#ffffff;'>...........</span>\\",
+            "<span style='font-size:10pt; color:grey;'>Free y-axis</span>"),
+          caption = plot_caption, theme = plot_theme_2) +
         patchwork::plot_layout(axes = "collect")
 
-      Plot_Free <- patchwork::wrap_elements(panel = Plot_Free) +
+      plot_free <- patchwork::wrap_elements(panel = plot_free) +
         ggplot2::labs(tag = "<b>Predicted habitat suitability</b>") +
         ggplot2::theme(
           plot.tag = ggtext::element_markdown(
@@ -396,20 +397,20 @@ resp_curv_plot_species <- function(
           plot.tag.position = "left")
 
       ragg::agg_jpeg(
-        filename = path_JPEG_free, width = plot_width, height = plot_height,
+        filename = path_jpeg_free, width = plot_width, height = plot_height,
         res = 600, quality = 100, units = "cm")
-      print(Plot_Free)
+      print(plot_free)
       grDevices::dev.off()
 
-      OutDF <- tibble::tibble(
-        Coords = Coords, Species = Species, NCells = NCells, NFV = NFV,
-        path_JPEG_fixed = path_JPEG_fixed, path_JPEG_free = path_JPEG_free,
+      out_data <- tibble::tibble(
+        coords = coords, species = species, n_cells = n_cells, nfv = nfv,
+        path_jpeg_fixed = path_jpeg_fixed, path_jpeg_free = path_jpeg_free,
         plot_height = plot_height, plot_width = plot_width)
 
-      return(OutDF)
+      return(out_data)
     }
 
-  Plots <- dplyr::bind_rows(Plots)
+  plots <- dplyr::bind_rows(plots)
 
   # stopping the cluster
   doParallel::stopImplicitCluster()
@@ -419,7 +420,7 @@ resp_curv_plot_species <- function(
 
   # Save data
   ecokit::cat_time("Save data")
-  save(Plots, file = fs::path(Path_RC_Sp, "Sp_DT_All.RData"))
+  save(plots, file = fs::path(path_rc_sp, "sp_data_all.RData"))
 
   # # ..................................................................... ###
 
@@ -429,7 +430,7 @@ resp_curv_plot_species <- function(
   # # ..................................................................... ###
 
   if (return_data) {
-    return(Sp_DT_All)
+    return(sp_data_all)
   } else {
     return(invisible(NULL))
   }

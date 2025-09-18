@@ -93,7 +93,7 @@ This article outlines the preparation of input data for model fitting and the su
 
 ## Model input data
 
-The primary function for preparing model-fitting data and initialising models is <cc>`mod_prepare_HPC()`</cc>. It structures data for each habitat-specific model into distinct directories (e.g., <ff>datasets/processed/model_fitting/HabX</ff>, where <i>X</i> represents a <a href="workflow_1_overview.html#models" class="ll">habitat type</a>). This function orchestrates a suite of specialised sub-functions to perform the following tasks:
+The primary function for preparing model-fitting data and initialising models is <cc>`mod_prepare_hpc()`</cc>. It structures data for each habitat-specific model into distinct directories (e.g., <ff>datasets/processed/model_fitting/HabX</ff>, where <i>X</i> represents a <a href="workflow_1_overview.html#models" class="ll">habitat type</a>). This function orchestrates a suite of specialised sub-functions to perform the following tasks:
 
 <br/>
 
@@ -127,7 +127,7 @@ DT %>%
 
 <br/><br/>
 
-- `mod_CV_prepare()`: prepare and visualise options for spatial-block cross-validation. In the <i>CV_Dist</i> strategy, block size is governed by the *CV_n_grids* argument, whereas in the <i>CV_Large</i> strategy, the study area is partitioned into larger blocks based on the *CV_n_rows* and *CV_n_columns* arguments.
+- `mod_cv_prepare()`: prepare and visualise options for spatial-block cross-validation. In the <i>cv_dist</i> strategy, block size is governed by the *cv_n_grids* argument, whereas in the <i>cv_large</i> strategy, the study area is partitioned into larger blocks based on the *cv_n_rows* and *cv_n_columns* arguments.
 
 ```{r}
 #| echo = FALSE,
@@ -136,10 +136,10 @@ DT %>%
 #| eval = TRUE
 DT <- tibble::tribble(
   ~Argument, ~Description,
-  "CV_n_folds", "number of cross-validation folds",
-  "CV_n_grids", "number of grid cells in each directions for the <i>CV_Dist</i> cross-validation strategy (default: 20, yielding 20 &times; 20 grid cell blocks).",
+  "cv_n_folds", "number of cross-validation folds",
+  "cv_n_grids", "number of grid cells in each directions for the <i>cv_dist</i> cross-validation strategy (default: 20, yielding 20 &times; 20 grid cell blocks).",
   
-  "CV_n_rows / CV_n_columns", "number of rows and columns defining in the <i>CV_Large</i> cross-validation strategy, partitioning the study area into large blocks (default: *CV_n_rows = CV_n_columns = 2*, resulting in four blocks divided at median coordinates).") %>% 
+  "cv_n_rows / cv_n_columns", "number of rows and columns defining in the <i>cv_large</i> cross-validation strategy, partitioning the study area into large blocks (default: *cv_n_rows = cv_n_columns = 2*, resulting in four blocks divided at median coordinates).") %>% 
   dplyr::mutate(Argument = paste0("<cc>", Argument, "</cc><tab0>"))
   
 DT %>% 
@@ -165,9 +165,9 @@ DT %>%
 DT <- tibble::tribble(
   ~Argument, ~Description,
   "GPP", "whether to incorporate spatial random effects using the Gaussian Predictive Process (GPP)",
-  "GPP_dists", "distance (in kilometres; controlled by the `min_distance` argument of `prepare_knots()`) specifying both the spacing between knots and the minimum distance between a knot and the nearest sampling point",
+  "gpp_dists", "distance (in kilometres; controlled by the `min_distance` argument of `prepare_knots()`) specifying both the spacing between knots and the minimum distance between a knot and the nearest sampling point",
   "GPP_plot", "whether to plot the coordinates of sampling units and knots",
-  "min_LF / max_LF", "minimum and maximum number of latent factors to be include",
+  "min_lf / max_lf", "minimum and maximum number of latent factors to be include",
   "alphapw", "prior specification for the alpha parameter") %>% 
   dplyr::mutate(Argument = paste0("<cc>", Argument, "</cc><tab0>"))
 
@@ -182,7 +182,7 @@ DT %>%
 
 <br/><br/>
 
-- `mod_SLURM()`: generate SLURM scripts to facilitate model fitting on GPUs using the `Hmsc-HPC` extension.
+- `mod_slurm()`: generate SLURM scripts to facilitate model fitting on GPUs using the `Hmsc-HPC` extension.
 
 ```{r}
 #| echo = FALSE,
@@ -196,7 +196,7 @@ DT <- tibble::tribble(
   "cpus_per_task / gpus_per_node", "Number of CPUs and GPUs allocated per node",
   "memory_per_cpu", "memory allocation per CPU",
   "job_runtime", "maximum duration for job execution",
-  "HPC_partition", "name of the HPC partition",
+  "hpc_partition", "name of the HPC partition",
   "n_array_jobs", "number of jobs within each SLURM script") %>% 
   dplyr::mutate(Argument = paste0("<cc>", Argument, "</cc><tab0>"))
 
@@ -253,11 +253,11 @@ DT %>%
 #| eval = TRUE
 DT <- tibble::tribble(
   ~Argument, ~Description,
-  "MCMC_n_chains", "number of MCMC chains",
-  "MCMC_thin", "thinning value(s) in MCMC sampling",
-  "MCMC_samples", "number of MCMC samples per chain",
-  "MCMC_transient_factor", "transient multiplication factor. The value of transient will equal the multiplication of <cc>transientFactor</cc> and <cc>thin</cc>",
-  "MCMC_verbose", "interval at which MCMC sampling progress is reported",
+  "mcmc_n_chains", "number of MCMC chains",
+  "mcmc_thin", "thinning value(s) in MCMC sampling",
+  "mcmc_samples", "number of MCMC samples per chain",
+  "mcmc_transient_factor", "transient multiplication factor. The value of transient will equal the multiplication of <cc>transientFactor</cc> and <cc>thin</cc>",
+  "mcmc_verbose", "interval at which MCMC sampling progress is reported",
   "precision", "floating-point precision mode for Hmsc-HPC sampling") %>% 
   dplyr::mutate(Argument = paste0("<cc>", Argument, "</cc><tab0>"))
 
@@ -277,16 +277,16 @@ DT %>%
 - <cc>n_species_per_grid</cc>: minimum number of IAS per grid cell for a grid cell to be included in the analysis
 - <cc>model_country</cc>: fit the model for a specific country or countries
 - whether or not to use phylogenetic trees: <cc>use_phylo_tree</cc> and <cc>no_phylo_tree</cc>
-- <cc>path_Hmsc</cc>: directory path to `Hmsc-HPC` extension installation
-- <cc>SLURM_prepare</cc>: whether to prepare SLURM script for model fitting on GPU via `mod_SLURM()`
+- <cc>path_hmsc</cc>: directory path to `Hmsc-HPC` extension installation
+- <cc>slurm_prepare</cc>: whether to prepare SLURM script for model fitting on GPU via `mod_slurm()`
 
 <hr class="hr1">
 
 ## Model fitting on GPUs
 
-Following the preparation of model input data and initialisation of models, the subsequent phase involves fitting these models on GPUs. For each habitat type, the `mod_prepare_HPC()` function produces:
+Following the preparation of model input data and initialisation of models, the subsequent phase involves fitting these models on GPUs. For each habitat type, the `mod_prepare_hpc()` function produces:
 
-- python commands (<ff>Commands2Fit.txt</ff>) for fitting model chains across all model variants on GPUs, with each line corresponding to a single chain.
+- python commands (<ff>commands_to_fit.txt</ff>) for fitting model chains across all model variants on GPUs, with each line corresponding to a single chain.
 
 ```{r}
 #| results = "asis",
@@ -300,7 +300,7 @@ collapsible_script_section(
 
 <br/>
 
-- one or more SLURM script files (<ff>Bash_Fit.slurm</ff>) designed to submit all model-fitting commands (<ff>Commands2Fit.txt</ff>) as batch jobs on a high-performance computing (HPC) system.
+- one or more SLURM script files (<ff>bash_fit.slurm</ff>) designed to submit all model-fitting commands (<ff>commands_to_fit.txt</ff>) as batch jobs on a high-performance computing (HPC) system.
 
 <br/>
 
@@ -320,7 +320,7 @@ Batch jobs for model fitting can be submitted using the `sbatch` command, for ex
 
 ```{bash}
 #| echo = TRUE
-sbatch datasets/processed/model_fitting/Hab1/Bash_Fit.slurm
+sbatch datasets/processed/model_fitting/Hab1/bash_fit.slurm
 ```
 
 <hr class="hr1">

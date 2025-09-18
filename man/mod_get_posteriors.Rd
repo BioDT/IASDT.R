@@ -4,18 +4,18 @@
 \alias{mod_get_posteriors}
 \title{Combines posteriors exported by \code{Hmsc-HPC} into an Hmsc object}
 \usage{
-mod_get_posteriors(path_posterior = NULL, from_JSON = FALSE)
+mod_get_posteriors(path_posterior = NULL, from_json = FALSE)
 }
 \arguments{
 \item{path_posterior}{Character vector. Path to the RDS files containing the
 exported posterior files. This argument is mandatory and cannot be empty.}
 
-\item{from_JSON}{Logical. Whether the loaded models should be converted from
+\item{from_json}{Logical. Whether the loaded models should be converted from
 \code{JSON} format. Defaults to \code{FALSE}, meaning the data will be read directly
 from RDS files without conversion.}
 }
 \value{
-Depending on the \code{from_JSON} parameter, returns an Hmsc object either
+Depending on the \code{from_json} parameter, returns an Hmsc object either
 directly from the RDS files or after converting it from JSON format.
 }
 \description{

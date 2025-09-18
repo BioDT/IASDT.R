@@ -8,8 +8,8 @@
 #' @order 2
 
 variance_partitioning_plot <- function(
-    path_model = NULL, env_file = ".env", VP_file = "varpar", use_TF = TRUE,
-    TF_environ = NULL, n_cores = 1L, width = 30, height = 15, axis_text = 4,
+    path_model = NULL, env_file = ".env", vp_file = "varpar", use_tf = TRUE,
+    tf_environ = NULL, n_cores = 1L, width = 30, height = 15, axis_text = 4,
     spatial_model = TRUE, is_cv_model = FALSE) {
 
   .start_time <- lubridate::now(tzone = "CET")
@@ -20,9 +20,9 @@ variance_partitioning_plot <- function(
   # Check input arguments ------
 
   ecokit::check_args(
-    args_to_check = c("path_model", "VP_file"), args_type = "character")
+    args_to_check = c("path_model", "vp_file"), args_type = "character")
   ecokit::check_args(
-    args_to_check = c("use_TF", "spatial_model", "is_cv_model"),
+    args_to_check = c("use_tf", "spatial_model", "is_cv_model"),
     args_type = "logical")
   ecokit::check_args(
     args_to_check = c("width", "height", "axis_text"), args_type = "numeric")
@@ -33,8 +33,9 @@ variance_partitioning_plot <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  ias_id <- species_name <- Species <- Variable <- VP_Value <- species <-
-    taxa_info_file <- Sp <- TjurR2 <- Label <- VP_Sum <- evaluation_type <- NULL
+  ias_id <- species_name <- species <- variable <- vp_value <- species <-
+    taxa_info_file <- sp <- TjurR2 <- plot_label <- vp_sum <-
+    evaluation_type <- NULL
 
   # Set null device for `cairo`. This is to properly render the plots using
   # ggtext - https://github.com/wilkelab/cowplot/issues/73
@@ -62,26 +63,26 @@ variance_partitioning_plot <- function(
     env_file = env_file, env_variables_data = env_vars_to_read)
   rm(env_vars_to_read, envir = environment())
 
-  SpList <- ecokit::load_as(taxa_info_file) %>%
-    dplyr::select(Species = ias_id, species_name) %>%
+  sp_list <- ecokit::load_as(taxa_info_file) %>%
+    dplyr::select(species = ias_id, species_name) %>%
     dplyr::distinct() %>%
     dplyr::mutate(
-      Species = stringr::str_pad(string = Species, width = 4, pad = "0"),
-      Species = paste0("Sp_", Species))
+      species = stringr::str_pad(string = species, width = 4, pad = "0"),
+      species = paste0("sp_", species))
 
   # # ..................................................................... ###
 
   path_root <- ecokit::parent_dir(
     path = path_model, levels = 1L, check_dir = TRUE, warning = FALSE)
   path_varpar <- fs::path(
-    path_root, "Model_Postprocessing", "Variance_Partitioning")
+    path_root, "model_postprocessing", "Variance_Partitioning")
 
   # # ..................................................................... ###
   # # ..................................................................... ###
 
   # Model evaluation ----
 
-  eval_dir <- fs::path(path_root, "Model_Evaluation")
+  eval_dir <- fs::path(path_root, "model_evaluation")
   if (!fs::dir_exists(eval_dir)) {
     ecokit::stop_ctx(
       "Model evaluation directory is not found: ", path_root = path_root,
@@ -108,8 +109,7 @@ variance_partitioning_plot <- function(
       dplyr::select(
         tidyselect::all_of(
           c("species", "RMSE", "AUC", "Boyce", "TjurR2"))) %>%
-      dplyr::rename(Species = species) %>%
-      dplyr::left_join(SpList, by = "Species")
+      dplyr::left_join(sp_list, by = "species")
 
     ecokit::cat_time(
       "Loading model testing data", level = 1L, cat_timestamp = FALSE)
@@ -118,8 +118,7 @@ variance_partitioning_plot <- function(
       dplyr::select(
         tidyselect::all_of(
           c("species", "RMSE", "AUC", "Boyce", "TjurR2"))) %>%
-      dplyr::rename(Species = species) %>%
-      dplyr::left_join(SpList, by = "Species")
+      dplyr::left_join(sp_list, by = "species")
     rm(mod_eval, envir = environment())
 
   } else {
@@ -128,7 +127,7 @@ variance_partitioning_plot <- function(
       "Loading model training evaluation data", level = 1L,
       cat_timestamp = FALSE)
 
-    path_eval_train <- fs::path(eval_dir, "Eval_Current_NoClamping.qs2")
+    path_eval_train <- fs::path(eval_dir, "eval_current_no_clamping.qs2")
     if (!ecokit::check_data(path_eval_train, warning = FALSE)) {
       ecokit::stop_ctx(
         "Model evaluation file is not found: ",
@@ -138,10 +137,10 @@ variance_partitioning_plot <- function(
 
     mod_eval_train <- ecokit::load_as(path_eval_train) %>%
       # filter out the species that are not in the model
-      dplyr::filter(stringr::str_starts(ias_id, "Sp_")) %>%
-      dplyr::rename(Species = ias_id) %>%
-      dplyr::select(-Sp) %>%
-      dplyr::left_join(SpList, by = "Species")
+      dplyr::filter(stringr::str_starts(ias_id, "sp_")) %>%
+      dplyr::rename(species = ias_id) %>%
+      dplyr::select(-sp) %>%
+      dplyr::left_join(sp_list, by = "species")
 
     mod_eval_test <- NULL
   }
@@ -154,11 +153,11 @@ variance_partitioning_plot <- function(
   ecokit::cat_time(
     "Compute or load variance partitioning", cat_timestamp = FALSE)
 
-  if (is.null(VP_file)) {
-    VP_file <- "varpar"
+  if (is.null(vp_file)) {
+    vp_file <- "varpar"
   }
 
-  file_varpar <- fs::path(path_varpar, paste0(VP_file, ".RData"))
+  file_varpar <- fs::path(path_varpar, paste0(vp_file, ".RData"))
 
   if (ecokit::check_data(file_varpar, warning = FALSE)) {
 
@@ -171,12 +170,12 @@ variance_partitioning_plot <- function(
     ecokit::cat_time(
       paste0(
         "Variance partitioning will be computed using ", n_cores, " cores ",
-        dplyr::if_else(use_TF, "and", "without"), " `TensorFlow`."),
+        dplyr::if_else(use_tf, "and", "without"), " `TensorFlow`."),
       level = 1L, cat_timestamp = FALSE)
 
     varpar <- IASDT.R::variance_partitioning_compute(
-      path_model = path_model, n_cores = n_cores, use_TF = use_TF,
-      TF_environ = TF_environ, verbose = TRUE, VP_file = VP_file)
+      path_model = path_model, n_cores = n_cores, use_tf = use_tf,
+      tf_environ = tf_environ, verbose = TRUE, vp_file = vp_file)
 
   }
 
@@ -220,65 +219,65 @@ variance_partitioning_plot <- function(
   ## Plotting data ----
   ecokit::cat_time("Preparing data", level = 1L, cat_timestamp = FALSE)
   varpar_data <- tidyr::pivot_longer(
-    data = varpar$vals, cols = -Variable,
-    names_to = "Species", values_to = "VP_Value") %>%
-    dplyr::left_join(SpList, by = "Species")
+    data = varpar$vals, cols = -variable,
+    names_to = "species", values_to = "vp_value") %>%
+    dplyr::left_join(sp_list, by = "species")
 
   # Calculate mean Variance partitioning per variable and prepare labels for the
   # plot
   varpar_mean <- varpar_data %>%
     dplyr::summarise(
-      VP_Value = mean(VP_Value, na.rm = TRUE), .by = "Variable") %>%
-    dplyr::arrange(dplyr::desc(VP_Value)) %>%
+      vp_value = mean(vp_value, na.rm = TRUE), .by = "variable") %>%
+    dplyr::arrange(dplyr::desc(vp_value)) %>%
     dplyr::mutate(
-      Label = dplyr::case_when(
-        Variable == "HabLog" ~ "Habitat coverage",
-        Variable == "RoadRailLog" ~ "Road+Rail intensity",
-        Variable == "EffortsLog" ~ "Sampling efforts",
-        Variable == "RiversLog" ~ "River length",
-        Variable == "npp" ~ "NPP",
-        Variable == "wetness" ~ "Wetness index",
-        Variable == "soil" ~ "Soil density",
-        Variable == "Random: sample" ~
+      plot_label = dplyr::case_when(
+        variable == "habitat_log" ~ "Habitat coverage",
+        variable == "road_rail_log" ~ "Road+Rail intensity",
+        variable == "efforts_log" ~ "Sampling efforts",
+        variable == "rivers_log" ~ "River length",
+        variable == "npp" ~ "NPP",
+        variable == "wetness" ~ "Wetness index",
+        variable == "soil" ~ "Soil density",
+        variable == "Random: sample" ~
           dplyr::if_else(spatial_model, "Spatial effect", "Random effect"),
-        .default = Variable),
-      Label = paste0(
-        "<b>", Label, "</b><br>(", round(VP_Value * 100, 1), "%)"),
-      Label = factor(Label, .data$Label),
-      VP_Value = NULL)
+        .default = variable),
+      plot_label = paste0(
+        "<b>", plot_label, "</b><br>(", round(vp_value * 100, 1), "%)"),
+      plot_label = factor(plot_label, .data$plot_label),
+      vp_value = NULL)
 
   # Order variables by the mean variance partitioning
-  var_order <- dplyr::pull(varpar_mean, Variable)
+  var_order <- dplyr::pull(varpar_mean, variable)
 
-  # Order species by the mean variance partitioning per Variable
+  # Order species by the mean variance partitioning per variable
   sp_order <- varpar_data %>%
-    dplyr::mutate(Variable = factor(Variable, var_order)) %>%
+    dplyr::mutate(variable = factor(variable, var_order)) %>%
     dplyr::summarise(
-      VP_Value = sum(VP_Value), .by = c(species_name, Variable)) %>%
-    dplyr::arrange(Variable, dplyr::desc(VP_Value)) %>%
+      vp_value = sum(vp_value), .by = c(species_name, variable)) %>%
+    dplyr::arrange(variable, dplyr::desc(vp_value)) %>%
     dplyr::distinct(species_name) %>%
     dplyr::pull(species_name)
 
   # Order species by total variance, excluding the spatial random effect
   sp_order_nonspatial <- varpar_data %>%
-    dplyr::filter(!startsWith(Variable, "Random")) %>%
+    dplyr::filter(!startsWith(variable, "Random")) %>%
     dplyr::summarise(
-      VP_Value = sum(VP_Value), .by = c("Species", "species_name")) %>%
-    dplyr::arrange(dplyr::desc(VP_Value)) %>%
+      vp_value = sum(vp_value), .by = c("species", "species_name")) %>%
+    dplyr::arrange(dplyr::desc(vp_value)) %>%
     dplyr::distinct(species_name) %>%
     dplyr::pull(species_name)
 
 
   # Plotting data for variance partitioning
 
-  # 1. ordered by mean variance partitioning per Variable
-  data_relative <- dplyr::arrange(varpar_data, Variable, VP_Value) %>%
+  # 1. ordered by mean variance partitioning per variable
+  data_relative <- dplyr::arrange(varpar_data, variable, vp_value) %>%
     dplyr::mutate(species_name = factor(species_name, sp_order)) %>%
-    dplyr::left_join(varpar_mean, by = "Variable")
+    dplyr::left_join(varpar_mean, by = "variable")
 
   # 2. original species order
-  sp_order_orig <- dplyr::distinct(varpar_data, Species, species_name) %>%
-    dplyr::arrange(Species) %>%
+  sp_order_orig <- dplyr::distinct(varpar_data, species, species_name) %>%
+    dplyr::arrange(species) %>%
     dplyr::pull(species_name)
   data_relative_orig <- data_relative %>%
     dplyr::mutate(species_name = factor(species_name, sp_order_orig))
@@ -324,10 +323,11 @@ variance_partitioning_plot <- function(
 
   plot_relative <- data_relative %>%
     ggplot2::ggplot(
-      mapping = ggplot2::aes(x = VP_Value, y = species_name, fill = Label)) +
+      mapping = ggplot2::aes(
+        x = vp_value, y = species_name, fill = plot_label)) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
-    ggplot2::ylab("Species") +
+    ggplot2::ylab("species") +
     ggplot2::xlab("Proportion of variance explained") +
     ggplot2::scale_fill_brewer(palette = "Paired") +
     ggplot2::coord_flip(xlim = c(0, 1), expand = FALSE) +
@@ -357,11 +357,11 @@ variance_partitioning_plot <- function(
 
   plot_relative_orig <- data_relative_orig %>%
     ggplot2::ggplot(
-      mapping = ggplot2::aes(x = VP_Value, y = species_name, fill = Label),
+      mapping = ggplot2::aes(x = vp_value, y = species_name, fill = plot_label),
       environment = emptyenv()) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
-    ggplot2::ylab("Species") +
+    ggplot2::ylab("species") +
     ggplot2::xlab("Proportion of variance explained") +
     ggplot2::scale_fill_brewer(palette = "Paired") +
     ggplot2::coord_flip(xlim = c(0, 1), expand = FALSE) +
@@ -390,11 +390,11 @@ variance_partitioning_plot <- function(
 
   plot_relative_tjurr2_train <- data_relative_tjurr2_train %>%
     ggplot2::ggplot(
-      mapping = ggplot2::aes(x = VP_Value, y = species_name, fill = Label),
+      mapping = ggplot2::aes(x = vp_value, y = species_name, fill = plot_label),
       environment = emptyenv()) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
-    ggplot2::ylab("Species") +
+    ggplot2::ylab("species") +
     ggplot2::xlab("Proportion of variance explained") +
     ggplot2::scale_fill_brewer(palette = "Paired") +
     ggplot2::coord_flip(xlim = c(0, 1), expand = FALSE) +
@@ -426,11 +426,12 @@ variance_partitioning_plot <- function(
 
     plot_relative_tjurr2_test <- data_relative_tjurr2_test %>%
       ggplot2::ggplot(
-        mapping = ggplot2::aes(x = VP_Value, y = species_name, fill = Label),
+        mapping = ggplot2::aes(
+          x = vp_value, y = species_name, fill = plot_label),
         environment = emptyenv()) +
       ggplot2::geom_bar(stat = "identity", width = 1) +
       ggplot2::theme_classic() +
-      ggplot2::ylab("Species") +
+      ggplot2::ylab("species") +
       ggplot2::xlab("Proportion of variance explained") +
       ggplot2::scale_fill_brewer(palette = "Paired") +
       ggplot2::coord_flip(xlim = c(0, 1), expand = FALSE) +
@@ -465,11 +466,11 @@ variance_partitioning_plot <- function(
 
   plot_relative_nonspatial <- data_relative_nonspatial %>%
     ggplot2::ggplot(
-      mapping = ggplot2::aes(x = VP_Value, y = species_name, fill = Label),
+      mapping = ggplot2::aes(x = vp_value, y = species_name, fill = plot_label),
       environment = emptyenv()) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
-    ggplot2::ylab("Species") +
+    ggplot2::ylab("species") +
     ggplot2::xlab("Proportion of variance explained") +
     ggplot2::scale_fill_brewer(palette = "Paired") +
     ggplot2::coord_flip(xlim = c(0, 1), expand = FALSE) +
@@ -509,38 +510,38 @@ variance_partitioning_plot <- function(
   }
 
   varpar_data_raw_train <- tidyr::pivot_longer(
-    data = varpar$vals, cols = -Variable,
-    names_to = "Species", values_to = "VP_Value") %>%
-    dplyr::left_join(mod_eval_train, by = "Species") %>%
-    dplyr::mutate(VP_Value = VP_Value * TjurR2)
+    data = varpar$vals, cols = -variable,
+    names_to = "species", values_to = "vp_value") %>%
+    dplyr::left_join(mod_eval_train, by = "species") %>%
+    dplyr::mutate(vp_value = vp_value * TjurR2)
 
   varpar_raw_mean_train <- varpar_data_raw_train %>%
     dplyr::summarise(
-      VP_Value = mean(VP_Value, na.rm = TRUE), .by = "Variable") %>%
-    dplyr::arrange(dplyr::desc(VP_Value)) %>%
+      vp_value = mean(vp_value, na.rm = TRUE), .by = "variable") %>%
+    dplyr::arrange(dplyr::desc(vp_value)) %>%
     dplyr::mutate(
-      Label = dplyr::case_when(
-        Variable == "HabLog" ~ "Habitat coverage",
-        Variable == "RoadRailLog" ~ "Road+Rail intensity",
-        Variable == "EffortsLog" ~ "Sampling efforts",
-        Variable == "RiversLog" ~ "River length",
-        Variable == "npp" ~ "NPP",
-        Variable == "wetness" ~ "Wetness index",
-        Variable == "soil" ~ "Soil density",
-        Variable == "Random: sample" ~
+      plot_label = dplyr::case_when(
+        variable == "habitat_log" ~ "Habitat coverage",
+        variable == "road_rail_log" ~ "Road+Rail intensity",
+        variable == "efforts_log" ~ "Sampling efforts",
+        variable == "rivers_log" ~ "River length",
+        variable == "npp" ~ "NPP",
+        variable == "wetness" ~ "Wetness index",
+        variable == "soil" ~ "Soil density",
+        variable == "Random: sample" ~
           dplyr::if_else(spatial_model, "Spatial effect", "Random effect"),
-        .default = Variable),
-      Label = paste0(
-        "<b>", Label, "</b><br>(", round(VP_Value * 100, 1), "%)"),
-      Label = factor(Label, .data$Label),
-      VP_Value = NULL)
+        .default = variable),
+      plot_label = paste0(
+        "<b>", plot_label, "</b><br>(", round(vp_value * 100, 1), "%)"),
+      plot_label = factor(plot_label, .data$plot_label),
+      vp_value = NULL)
 
   # Plotting data for relative variance partitioning - ordered by mean
-  # variance partitioning per Variable
+  # variance partitioning per variable
   data_raw_train <- varpar_data_raw_train %>%
-    dplyr::arrange(Variable, VP_Value) %>%
+    dplyr::arrange(variable, vp_value) %>%
     dplyr::mutate(species_name = factor(species_name, sp_order)) %>%
-    dplyr::left_join(varpar_raw_mean_train, by = "Variable") %>%
+    dplyr::left_join(varpar_raw_mean_train, by = "variable") %>%
     dplyr::mutate(species_name = as.character(species_name))
 
   # Plotting data for relative variance partitioning - original species order
@@ -550,18 +551,18 @@ variance_partitioning_plot <- function(
   # Plotting data for relative variance partitioning - original species order
   sp_order_total_raw_train <- data_raw_train %>%
     dplyr::summarize(
-      VP_Sum = sum(VP_Value), .by = c(Species, species_name)) %>%
-    dplyr::arrange(dplyr::desc(VP_Sum)) %>%
+      vp_sum = sum(vp_value), .by = c(species, species_name)) %>%
+    dplyr::arrange(dplyr::desc(vp_sum)) %>%
     dplyr::pull(species_name)
   data_raw_train_total_raw_train <- data_raw_train %>%
     dplyr::mutate(species_name = factor(species_name, sp_order_total_raw_train))
 
   # Order species by total variance, excluding the spatial random effect
   sp_order_raw_train_nonspatial <- data_raw_train %>%
-    dplyr::filter(!startsWith(Variable, "Random")) %>%
+    dplyr::filter(!startsWith(variable, "Random")) %>%
     dplyr::summarise(
-      VP_Value = sum(VP_Value), .by = c("Species", "species_name")) %>%
-    dplyr::arrange(dplyr::desc(VP_Value)) %>%
+      vp_value = sum(vp_value), .by = c("species", "species_name")) %>%
+    dplyr::arrange(dplyr::desc(vp_value)) %>%
     dplyr::distinct(species_name) %>%
     dplyr::pull(species_name)
   data_raw_train_nonspatial <- data_raw_train %>%
@@ -586,11 +587,11 @@ variance_partitioning_plot <- function(
 
   plot_raw_train <- data_raw_train_orig %>%
     ggplot2::ggplot(
-      mapping = ggplot2::aes(x = VP_Value, y = species_name, fill = Label),
+      mapping = ggplot2::aes(x = vp_value, y = species_name, fill = plot_label),
       environment = emptyenv()) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
-    ggplot2::ylab("Species") +
+    ggplot2::ylab("species") +
     ggplot2::xlab("Raw variance explained") +
     ggplot2::scale_fill_brewer(palette = "Paired") +
     ggplot2::coord_flip(xlim = c(0, 1), expand = FALSE) +
@@ -621,11 +622,11 @@ variance_partitioning_plot <- function(
 
   plot_raw_train_total_raw <- data_raw_train_total_raw_train %>%
     ggplot2::ggplot(
-      mapping = ggplot2::aes(x = VP_Value, y = species_name, fill = Label),
+      mapping = ggplot2::aes(x = vp_value, y = species_name, fill = plot_label),
       environment = emptyenv()) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
-    ggplot2::ylab("Species") +
+    ggplot2::ylab("species") +
     ggplot2::xlab("Raw variance explained") +
     ggplot2::scale_fill_brewer(palette = "Paired") +
     ggplot2::coord_flip(xlim = c(0, 1), expand = FALSE) +
@@ -658,11 +659,11 @@ variance_partitioning_plot <- function(
 
   plot_raw_train_nonspatial <- data_raw_train_nonspatial %>%
     ggplot2::ggplot(
-      mapping = ggplot2::aes(x = VP_Value, y = species_name, fill = Label),
+      mapping = ggplot2::aes(x = vp_value, y = species_name, fill = plot_label),
       environment = emptyenv()) +
     ggplot2::geom_bar(stat = "identity", width = 1) +
     ggplot2::theme_classic() +
-    ggplot2::ylab("Species") +
+    ggplot2::ylab("species") +
     ggplot2::xlab("Raw variance explained") +
     ggplot2::scale_fill_brewer(palette = "Paired") +
     ggplot2::coord_flip(xlim = c(0, 1), expand = FALSE) +
@@ -704,43 +705,43 @@ variance_partitioning_plot <- function(
     }
 
     varpar_data_raw_test <- tidyr::pivot_longer(
-      data = varpar$vals, cols = -Variable,
-      names_to = "Species", values_to = "VP_Value") %>%
-      dplyr::left_join(mod_eval_test, by = "Species") %>%
-      dplyr::mutate(VP_Value = VP_Value * TjurR2)
+      data = varpar$vals, cols = -variable,
+      names_to = "species", values_to = "vp_value") %>%
+      dplyr::left_join(mod_eval_test, by = "species") %>%
+      dplyr::mutate(vp_value = vp_value * TjurR2)
 
     varpar_raw_mean_test <- varpar_data_raw_test %>%
       dplyr::summarise(
-        VP_Value = mean(VP_Value, na.rm = TRUE), .by = "Variable") %>%
-      dplyr::arrange(dplyr::desc(VP_Value)) %>%
+        vp_value = mean(vp_value, na.rm = TRUE), .by = "variable") %>%
+      dplyr::arrange(dplyr::desc(vp_value)) %>%
       dplyr::mutate(
-        Label = dplyr::case_when(
-          Variable == "HabLog" ~ "Habitat coverage",
-          Variable == "RoadRailLog" ~ "Road+Rail intensity",
-          Variable == "EffortsLog" ~ "Sampling efforts",
-          Variable == "RiversLog" ~ "River length",
-          Variable == "npp" ~ "NPP",
-          Variable == "wetness" ~ "Wetness index",
-          Variable == "soil" ~ "Soil density",
-          Variable == "Random: sample" ~
+        plot_label = dplyr::case_when(
+          variable == "habitat_log" ~ "Habitat coverage",
+          variable == "road_rail_log" ~ "Road+Rail intensity",
+          variable == "efforts_log" ~ "Sampling efforts",
+          variable == "rivers_log" ~ "River length",
+          variable == "npp" ~ "NPP",
+          variable == "wetness" ~ "Wetness index",
+          variable == "soil" ~ "Soil density",
+          variable == "Random: sample" ~
             dplyr::if_else(spatial_model, "Spatial effect", "Random effect"),
-          .default = Variable),
-        Label = paste0(
-          "<b>", Label, "</b><br>(", round(VP_Value * 100, 1), "%)"),
-        Label = factor(Label, .data$Label),
-        VP_Value = NULL)
+          .default = variable),
+        plot_label = paste0(
+          "<b>", plot_label, "</b><br>(", round(vp_value * 100, 1), "%)"),
+        plot_label = factor(plot_label, .data$plot_label),
+        vp_value = NULL)
 
     # Plotting data for relative variance partitioning - ordered by mean
-    # variance partitioning per Variable
+    # variance partitioning per variable
     data_raw_test <- varpar_data_raw_test %>%
-      dplyr::arrange(Variable, VP_Value) %>%
+      dplyr::arrange(variable, vp_value) %>%
       dplyr::mutate(species_name = factor(species_name, sp_order)) %>%
-      dplyr::left_join(varpar_raw_mean_test, by = "Variable") %>%
+      dplyr::left_join(varpar_raw_mean_test, by = "variable") %>%
       dplyr::mutate(
         species_name = as.character(species_name),
         # replace NAs with zero for cases for which there is no testing
         # evaluation data
-        VP_Value = ifelse(is.na(VP_Value), 0, VP_Value))
+        vp_value = ifelse(is.na(vp_value), 0, vp_value))
 
     # Plotting data for relative variance partitioning - original species order
     data_raw_test_orig <- data_raw_test %>%
@@ -749,8 +750,8 @@ variance_partitioning_plot <- function(
     # Plotting data for relative variance partitioning - original species order
     sp_order_total_raw_test <- data_raw_test %>%
       dplyr::summarize(
-        VP_Sum = sum(VP_Value), .by = c(Species, species_name)) %>%
-      dplyr::arrange(dplyr::desc(VP_Sum)) %>%
+        vp_sum = sum(vp_value), .by = c(species, species_name)) %>%
+      dplyr::arrange(dplyr::desc(vp_sum)) %>%
       dplyr::pull(species_name)
     data_raw_test_total_raw_test <- data_raw_test %>%
       dplyr::mutate(
@@ -758,10 +759,10 @@ variance_partitioning_plot <- function(
 
     # Order species by total variance, excluding the spatial random effect
     sp_order_raw_test_nonspatial <- data_raw_test %>%
-      dplyr::filter(!startsWith(Variable, "Random")) %>%
+      dplyr::filter(!startsWith(variable, "Random")) %>%
       dplyr::summarise(
-        VP_Value = sum(VP_Value), .by = c("Species", "species_name")) %>%
-      dplyr::arrange(dplyr::desc(VP_Value)) %>%
+        vp_value = sum(vp_value), .by = c("species", "species_name")) %>%
+      dplyr::arrange(dplyr::desc(vp_value)) %>%
       dplyr::distinct(species_name) %>%
       dplyr::pull(species_name)
     data_raw_test_nonspatial <- data_raw_test %>%
@@ -786,11 +787,12 @@ variance_partitioning_plot <- function(
 
     plot_raw_test <- data_raw_test_orig %>%
       ggplot2::ggplot(
-        mapping = ggplot2::aes(x = VP_Value, y = species_name, fill = Label),
+        mapping = ggplot2::aes(
+          x = vp_value, y = species_name, fill = plot_label),
         environment = emptyenv()) +
       ggplot2::geom_bar(stat = "identity", width = 1) +
       ggplot2::theme_classic() +
-      ggplot2::ylab("Species") +
+      ggplot2::ylab("species") +
       ggplot2::xlab("Raw variance explained") +
       ggplot2::scale_fill_brewer(palette = "Paired") +
       ggplot2::coord_flip(xlim = c(0, 1), expand = FALSE) +
@@ -822,11 +824,12 @@ variance_partitioning_plot <- function(
 
     plot_raw_test_total_raw <- data_raw_test_total_raw_test %>%
       ggplot2::ggplot(
-        mapping = ggplot2::aes(x = VP_Value, y = species_name, fill = Label),
+        mapping = ggplot2::aes(
+          x = vp_value, y = species_name, fill = plot_label),
         environment = emptyenv()) +
       ggplot2::geom_bar(stat = "identity", width = 1) +
       ggplot2::theme_classic() +
-      ggplot2::ylab("Species") +
+      ggplot2::ylab("species") +
       ggplot2::xlab("Raw variance explained") +
       ggplot2::scale_fill_brewer(palette = "Paired") +
       ggplot2::coord_flip(xlim = c(0, 1), expand = FALSE) +
@@ -859,11 +862,12 @@ variance_partitioning_plot <- function(
 
     plot_raw_test_nonspatial <- data_raw_test_nonspatial %>%
       ggplot2::ggplot(
-        mapping = ggplot2::aes(x = VP_Value, y = species_name, fill = Label),
+        mapping = ggplot2::aes(
+          x = vp_value, y = species_name, fill = plot_label),
         environment = emptyenv()) +
       ggplot2::geom_bar(stat = "identity", width = 1) +
       ggplot2::theme_classic() +
-      ggplot2::ylab("Species") +
+      ggplot2::ylab("species") +
       ggplot2::xlab("Raw variance explained") +
       ggplot2::scale_fill_brewer(palette = "Paired") +
       ggplot2::coord_flip(xlim = c(0, 1), expand = FALSE) +

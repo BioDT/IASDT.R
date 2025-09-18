@@ -227,7 +227,7 @@ def process_beta_file(x, beta_file, task_index, dtype, file_output):
 # ======================================================================
 # ======================================================================
 
-def validate_and_get_beta_files(beta_dir, prefix="VP_Beta_", extension=".feather"):
+def validate_and_get_beta_files(beta_dir, prefix="vp_beta_", extension=".feather"):
     """
     Validate and list Beta files in the directory.
     
@@ -236,7 +236,7 @@ def validate_and_get_beta_files(beta_dir, prefix="VP_Beta_", extension=".feather
     
     Args:
         beta_dir (str): Directory with Beta files.
-        prefix (str): File name prefix (default: "VP_Beta_").
+        prefix (str): File name prefix (default: "vp_beta_").
         extension (str): File extension (default: ".feather").
     
     Returns:
@@ -246,7 +246,7 @@ def validate_and_get_beta_files(beta_dir, prefix="VP_Beta_", extension=".feather
         FileNotFoundError: If files are missing or none are found.
     """
 
-    # Define pattern for Beta files (e.g., VP_Beta_0001.feather)
+    # Define pattern for Beta files (e.g., vp_beta_0001.feather)
     pattern = re.compile(rf"^{re.escape(prefix)}(\d+){re.escape(extension)}$")
     beta_files = []
     file_indices = []

@@ -5,30 +5,30 @@
 \title{run_crossprod_solve}
 \usage{
 run_crossprod_solve(
-  TF_environ,
+  tf_environ,
   s1,
   s2,
-  postEta,
+  post_eta,
   path_out,
   denom,
   chunk_size = 1000L,
   threshold_mb = 2000L,
-  TF_use_single = TRUE,
+  tf_use_single = TRUE,
   verbose = TRUE,
   solve_chunk_size = 50L,
   solve_max_attempts = 5L,
-  LF_commands_only = FALSE
+  lf_commands_only = FALSE
 )
 }
 \arguments{
-\item{TF_environ}{Character. Path to the Python environment. This argument is
-required if \code{use_TF} is \code{TRUE} under Windows. Defaults to \code{NULL}.}
+\item{tf_environ}{Character. Path to the Python environment. This argument is
+required if \code{use_tf} is \code{TRUE} under Windows. Defaults to \code{NULL}.}
 
 \item{s1}{Character. Path to the input file containing s1 coordinates.}
 
 \item{s2}{Character Path to the input file containing s2 coordinates.}
 
-\item{postEta}{Character. Path to the file containing the \code{postEta} matrix
+\item{post_eta}{Character. Path to the file containing the \code{post_eta} matrix
 data.}
 
 \item{path_out}{Character. Path to rds file where the output results will be
@@ -42,7 +42,7 @@ Default is 1000.}
 \item{threshold_mb}{Numeric (Optional). Memory threshold (in MB) to manage
 processing. Default is 2000.}
 
-\item{TF_use_single}{Logical. Whether to use single precision for the
+\item{tf_use_single}{Logical. Whether to use single precision for the
 \code{TensorFlow} calculations. Defaults to \code{FALSE}.}
 
 \item{verbose}{Logical. If \code{TRUE}, logs detailed information during
@@ -54,7 +54,7 @@ function. Default is 50L.}
 \item{solve_max_attempts}{Integer. Maximum number of attempts to run solve
 and crossprod internal function \link{run_crossprod_solve}. Default is 5L.}
 
-\item{LF_commands_only}{Logical. If \code{TRUE}, returns the command to run the
+\item{lf_commands_only}{Logical. If \code{TRUE}, returns the command to run the
 Python script. Default is \code{FALSE}.}
 }
 \value{

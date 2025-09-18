@@ -9,7 +9,7 @@ fit_sdm_models(
   model_settings = NULL,
   model_dir = NULL,
   hab_abb = NULL,
-  cv_type = "CV_Dist",
+  cv_type = "cv_dist",
   n_cores = 8L,
   future_max_size = 2000L,
   selected_species = NULL,
@@ -36,14 +36,14 @@ For details and supported options, see \code{\link[sdm:add]{sdm::getmethodNames(
 
 \item{model_dir}{Character. Path to the directory containing model data and
 where outputs and results will be saved. Model data are prepared using the
-\code{\link[=mod_prepare_HPC]{mod_prepare_HPC()}} and \code{\link[=mod_prepare_data]{mod_prepare_data()}} functions.}
+\code{\link[=mod_prepare_hpc]{mod_prepare_hpc()}} and \code{\link[=mod_prepare_data]{mod_prepare_data()}} functions.}
 
 \item{hab_abb}{Character. Abbreviation for a single SynHab habitat type.
 Valid values: "0", "1", "2", "3", "4a", "4b", "10", "12a", "12b". See
-\code{\link[=mod_prepare_HPC]{mod_prepare_HPC()}} for more details.}
+\code{\link[=mod_prepare_hpc]{mod_prepare_hpc()}} for more details.}
 
-\item{cv_type}{Character. Cross-validation type. One of \code{CV_Dist} (default)
-or \code{CV_Large}. See \code{\link[=mod_CV_fit]{mod_CV_fit()}} for more details.}
+\item{cv_type}{Character. Cross-validation type. One of \code{cv_dist} (default)
+or \code{cv_large}. See \code{\link[=mod_cv_fit]{mod_cv_fit()}} for more details.}
 
 \item{n_cores}{Integer. Number of CPU cores for parallel processing. Default
 is 8.}

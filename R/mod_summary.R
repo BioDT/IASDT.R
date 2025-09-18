@@ -46,9 +46,9 @@ mod_summary <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  VarSp <- Sp1_abb <- Sp2_abb <- ias_id <- Val <- taxon_name <- species_name <-
-    Sp1_Species_name <- Sp2_Species_name <- Q2_5 <- Q97_5 <- Sp1_Sp_abb <-
-    Sp2_Sp_abb <- taxa_info_file <- NULL
+  var_species <- sp1_abb <- sp2_abb <- ias_id <- value <- taxon_name <-
+    species_name <- sp1_species_name <- sp1_species_name <- q_2_5 <- q_97_5 <-
+    sp1_sp_abb <- sp2_sp_abb <- taxa_info_file <- NULL
 
   # # ..................................................................... ###
 
@@ -70,50 +70,50 @@ mod_summary <- function(
 
   # # ..................................................................... ###
 
-  # DataPrep helper function -------
-  DataPrep <- function(DT) {
-    as.data.frame(DT) %>%
-      tibble::rownames_to_column(var = "VarSp") %>%
+  # data_prep helper function -------
+  data_prep <- function(data) {
+    as.data.frame(data) %>%
+      tibble::rownames_to_column(var = "var_species") %>%
       tibble::as_tibble() %>%
       dplyr::rename(
         dplyr::any_of(c(
           Naive_SE = "Naive SE", TimeSeries_SE = "Time-series SE",
-          Q2_5 = "2.5%", Q25 = "25%", Q50 = "50%", Q75 = "75%",
-          Q97_5 = "97.5%")))
+          q_2_5 = "2.5%", q_25 = "25%", q_50 = "50%", q75 = "75%",
+          q_97_5 = "97.5%")))
   }
 
   # # ..................................................................... ###
 
   # Loading coda object ------
   ecokit::cat_time("Loading coda object")
-  Coda <- ecokit::load_as(path_coda)
-  coda_names <- names(Coda)
+  coda_obj <- ecokit::load_as(path_coda)
+  coda_names <- names(coda_obj)
 
   ecokit::cat_time("Beta summary", level = 1L)
-  Beta_Summary <- summary(Coda$Beta)
+  beta_summary <- summary(coda_obj$Beta)
 
   if (("Alpha" %in% coda_names) && spatial_model) {
     ecokit::cat_time("Alpha summary", level = 1L)
-    Alpha_Summary <- summary(Coda$Alpha[[1]])
+    alpha_summary <- summary(coda_obj$Alpha[[1]])
   } else {
-    Alpha_Summary <- NULL
+    alpha_summary <- NULL
   }
 
   if ("Omega" %in% coda_names) {
     ecokit::cat_time("Omega summary", level = 1L)
-    Omega_Summary <- summary(Coda$Omega[[1]])
+    omega_summary <- summary(coda_obj$Omega[[1]])
   } else {
-    Omega_Summary <- NULL
+    omega_summary <- NULL
   }
 
   if ("Rho" %in% coda_names) {
     ecokit::cat_time("Rho summary", level = 1L)
-    Rho_Summary <- summary(Coda$Rho)
+    rho_summary <- summary(coda_obj$Rho)
   } else {
-    Rho_Summary <- NULL
+    rho_summary <- NULL
   }
 
-  rm(Coda, envir = environment())
+  rm(coda_obj, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -122,11 +122,11 @@ mod_summary <- function(
 
   # Beta ------
   ecokit::cat_time("Beta", level = 1L)
-  Beta_Summary <- DataPrep(Beta_Summary$statistics) %>%
-    dplyr::full_join(DataPrep(Beta_Summary$quantiles), by = "VarSp") %>%
+  beta_summary <- data_prep(beta_summary$statistics) %>%
+    dplyr::full_join(data_prep(beta_summary$quantiles), by = "var_species") %>%
     dplyr::mutate(
-      VarSp = purrr::map(
-        .x = VarSp,
+      var_species = purrr::map(
+        .x = var_species,
         .f = ~{
           .x %>%
             stringr::str_remove_all("B\\[|B\\[|\\(|\\)|\\]|stats::poly") %>%
@@ -134,30 +134,31 @@ mod_summary <- function(
             stringr::str_split(",", simplify = TRUE) %>%
             as.data.frame() %>%
             tibble::as_tibble() %>%
-            stats::setNames(c("Variable", "ias_id")) %>%
+            stats::setNames(c("variable", "ias_id")) %>%
             dplyr::mutate_all(stringr::str_trim) %>%
             dplyr::mutate(
-              Variable = purrr::map_chr(
-                .x = Variable,
-                .f = function(V) {
-                  V %>%
+              variable = purrr::map_chr(
+                .x = variable,
+                .f = function(v) {
+                  v %>%
                     stringr::str_replace_all("_1$", "_L") %>%
                     stringr::str_replace_all("_2$", "_Q")
                 }))
         })) %>%
-    tidyr::unnest_wider(col = VarSp) %>%
+    tidyr::unnest_wider(col = var_species) %>%
     dplyr::mutate(
       CI_Overlap_0 = purrr::map2_lgl(
-        .x = Q2_5, .y = Q97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
+        .x = q_2_5, .y = q_97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
 
   # Alpha -----
   if (("Alpha" %in% coda_names) && spatial_model) {
     ecokit::cat_time("Alpha", level = 1L)
-    Alpha_Summary <- DataPrep(Alpha_Summary$statistics) %>%
-      dplyr::full_join(DataPrep(Alpha_Summary$quantiles), by = "VarSp") %>%
+    alpha_summary <- data_prep(alpha_summary$statistics) %>%
+      dplyr::full_join(
+        data_prep(alpha_summary$quantiles), by = "var_species") %>%
       dplyr::mutate(
-        VarSp = purrr::map(
-          .x = VarSp,
+        var_species = purrr::map(
+          .x = var_species,
           .f = ~{
             stringr::str_split(
               string = .x, pattern = "\\[", simplify = TRUE) %>%
@@ -166,35 +167,38 @@ mod_summary <- function(
               stringr::str_trim() %>%
               stats::setNames(c("Alpha", "Factor"))
           })) %>%
-      tidyr::unnest_wider(col = VarSp) %>%
+      tidyr::unnest_wider(col = var_species) %>%
       dplyr::mutate(
         CI_Overlap_0 = purrr::map2_lgl(
-          .x = Q2_5, .y = Q97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
+          .x = q_2_5, .y = q_97_5,
+          ~dplyr::between(x = 0, left = .x, right = .y)))
   } else {
-    Alpha_Summary <- tibble::tibble()
+    alpha_summary <- tibble::tibble()
   }
 
   # Rho ----
   if ("Rho" %in% coda_names) {
     ecokit::cat_time("Rho", level = 1L)
-    Rho_Summary <- dplyr::bind_rows(
-      as.data.frame(as.matrix(Rho_Summary$statistics)),
-      as.data.frame(as.matrix(Rho_Summary$quantiles))) %>%
-      stats::setNames("Val") %>%
+    rho_summary <- dplyr::bind_rows(
+      as.data.frame(as.matrix(rho_summary$statistics)),
+      as.data.frame(as.matrix(rho_summary$quantiles))) %>%
+      stats::setNames("value") %>%
       tibble::rownames_to_column(var = "Var") %>%
       tibble::as_tibble() %>%
-      tidyr::pivot_wider(names_from = "Var", values_from = Val) %>%
+      tidyr::pivot_wider(names_from = "Var", values_from = value) %>%
       dplyr::rename(
         dplyr::any_of(c(
           Naive_SE = "Naive SE", TimeSeries_SE = "Time-series SE",
-          Q2_5 = "2.5%", Q25 = "25%", Q50 = "50%", Q75 = "75%", Q97_5 = "97.5%")
+          q_2_5 = "2.5%", q_25 = "25%", q_50 = "50%",
+          q75 = "75%", q_97_5 = "97.5%")
         )) %>%
       dplyr::mutate(Rho = "Taxonomy", .before = 1) %>%
       dplyr::mutate(  # nolint: consecutive_mutate_linter
         CI_Overlap_0 = purrr::map2_lgl(
-          .x = Q2_5, .y = Q97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
+          .x = q_2_5, .y = q_97_5,
+          ~dplyr::between(x = 0, left = .x, right = .y)))
   } else {
-    Rho_Summary <- tibble::tibble()
+    rho_summary <- tibble::tibble()
   }
 
   # Omega ------
@@ -202,62 +206,64 @@ mod_summary <- function(
   if ("Omega" %in% coda_names) {
     ecokit::cat_time("Omega", level = 1L)
 
-    ListSp <- utils::read.delim(taxa_info_file, sep = "\t") %>%
+    list_sp <- utils::read.delim(taxa_info_file, sep = "\t") %>%
       tibble::tibble() %>%
       dplyr::mutate(
         ias_id = stringr::str_pad(ias_id, pad = "0", width = 4),
-        ias_id = paste0("Sp_", ias_id)) %>%
+        ias_id = paste0("sp_", ias_id)) %>%
       dplyr::select(
-        Sp_abb = ias_id, taxon_name, species_name, tidyselect::everything())
+        sp_abb = ias_id, taxon_name, species_name, tidyselect::everything())
 
     # Prepare summary for the omega parameter
-    Omega_Summary <- DataPrep(Omega_Summary$statistics) %>%
-      dplyr::full_join(DataPrep(Omega_Summary$quantiles), by = "VarSp") %>%
+    omega_summary <- data_prep(omega_summary$statistics) %>%
+      dplyr::full_join(
+        data_prep(omega_summary$quantiles), by = "var_species") %>%
       dplyr::mutate(
-        VarSp = purrr::map(
-          .x = VarSp,
+        var_species = purrr::map(
+          .x = var_species,
           .f = ~{
             stringr::str_remove_all(.x, pattern = "\\]|Omega1|\\[") %>%
               stringr::str_split(pattern = ",", simplify = TRUE) %>%
               as.data.frame() %>%
               tibble::tibble() %>%
-              stats::setNames(c("Sp1_abb", "Sp2_abb")) %>%
+              stats::setNames(c("sp1_abb", "sp2_abb")) %>%
               dplyr::mutate_all(stringr::str_trim)
           })) %>%
-      tidyr::unnest_wider(col = VarSp) %>%
+      tidyr::unnest_wider(col = var_species) %>%
       dplyr::left_join(
-        dplyr::rename_all(ListSp, ~paste0("Sp1_", .x)),
-        by = dplyr::join_by(Sp1_abb == Sp1_Sp_abb)) %>%
+        dplyr::rename_all(list_sp, ~paste0("sp1_", .x)),
+        by = dplyr::join_by(sp1_abb == sp1_sp_abb)) %>%
       dplyr::left_join(
-        dplyr::rename_all(ListSp, ~paste0("Sp2_", .x)),
-        by = dplyr::join_by(Sp2_abb == Sp2_Sp_abb)) %>%
+        dplyr::rename_all(list_sp, ~paste0("sp2_", .x)),
+        by = dplyr::join_by(sp2_abb == sp2_sp_abb)) %>%
       dplyr::select(
-        Sp1_abb, Sp2_abb, tidyselect::everything(),
-        tidyselect::starts_with("Sp1"), tidyselect::starts_with("Sp2"),
+        sp1_abb, sp2_abb, tidyselect::everything(),
+        tidyselect::starts_with("sp1"), tidyselect::starts_with("sp2"),
         -tidyselect::ends_with("_name2"), -tidyselect::ends_with("_File")) %>%
-      dplyr::relocate(Sp1 = Sp1_Species_name, .after = "Sp1_abb") %>%
-      dplyr::relocate(Sp2 = Sp2_Species_name, .after = "Sp2_abb") %>%
+      dplyr::relocate(sp1 = sp1_species_name, .after = "sp1_abb") %>%
+      dplyr::relocate(sp2 = sp1_species_name, .after = "sp2_abb") %>%
       dplyr::mutate(
         CI_Overlap_0 = purrr::map2_lgl(
-          .x = Q2_5, .y = Q97_5, ~dplyr::between(x = 0, left = .x, right = .y)))
+          .x = q_2_5, .y = q_97_5,
+          ~dplyr::between(x = 0, left = .x, right = .y)))
   } else {
-    Omega_Summary <- tibble::tibble()
+    omega_summary <- tibble::tibble()
   }
 
   # # ..................................................................... ###
 
   # Saving ------
   ecokit::cat_time("Saving")
-  Path_Out <- dirname(dirname(path_coda)) %>%
-    fs::path("Model_Postprocessing", "Parameters_Summary")
-  fs::dir_create(Path_Out)
+  path_out <- dirname(dirname(path_coda)) %>%
+    fs::path("model_postprocessing", "parameters_summary")
+  fs::dir_create(path_out)
 
   ecokit::save_as(
     object = list(
-      Alpha = Alpha_Summary, Beta = Beta_Summary,
-      Rho = Rho_Summary, Omega = Omega_Summary),
-    object_name = "Parameters_Summary",
-    out_path = fs::path(Path_Out, "Parameters_Summary.RData"))
+      Alpha = alpha_summary, Beta = beta_summary,
+      Rho = rho_summary, Omega = omega_summary),
+    object_name = "parameters_summary",
+    out_path = fs::path(path_out, "parameters_summary.RData"))
 
   # # ..................................................................... ###
 
@@ -269,8 +275,8 @@ mod_summary <- function(
   if (return_data) {
     return(
       list(
-        Alpha = Alpha_Summary, Beta = Beta_Summary,
-        Rho = Rho_Summary, Omega = Omega_Summary
+        Alpha = alpha_summary, Beta = beta_summary,
+        Rho = rho_summary, Omega = omega_summary
       ))
   } else {
     return(invisible(NULL))

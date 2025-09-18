@@ -52,7 +52,7 @@ convergence_alpha <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Factor <- Value <- PointEst <- UpperCI <- NULL
+  factor <- value <- point_est <- upper_ci <- NULL
 
   # # ..................................................................... ###
 
@@ -94,22 +94,22 @@ convergence_alpha <- function(
   }
 
   # Number of latent factors
-  NLV <- ncol(posterior[[1]])
+  n_lf <- ncol(posterior[[1]])
 
   # # ..................................................................... ###
 
   ## Gelman convergence diagnostic
 
-  Gelman <- coda::gelman.diag(x = posterior, multivariate = FALSE) %>%
+  gelman <- coda::gelman.diag(x = posterior, multivariate = FALSE) %>%
     magrittr::extract2("psrf") %>%
     as.data.frame() %>%
-    stats::setNames(c("PointEst", "UpperCI")) %>%
+    stats::setNames(c("point_est", "upper_ci")) %>%
     round(2) %>%
-    dplyr::mutate(Gelman = paste0(PointEst, " / ", UpperCI)) %>%
-    dplyr::pull(Gelman)
+    dplyr::mutate(gelman = paste0(point_est, " / ", upper_ci)) %>%
+    dplyr::pull(gelman)
 
   ## Effective sample size
-  ESS <- coda::effectiveSize(x = posterior) %>%  # nolint: object_name_linter
+  ess <- coda::effectiveSize(x = posterior) %>%  # nolint: object_name_linter
     magrittr::divide_by(n_chains) %>%
     round(1)
 
@@ -120,29 +120,29 @@ convergence_alpha <- function(
     magrittr::divide_by(1000L) %>%
     round(3)
 
-  AlphaDF <- IASDT.R::coda_to_tibble(      # nolint: object_name_linter
+  alpha_data <- IASDT.R::coda_to_tibble(      # nolint: object_name_linter
     coda_object = posterior, posterior_type = "alpha") %>%
     dplyr::mutate(
-      Factor2 = purrr::map_int(
-        .x = Factor,
+      factor2 = purrr::map_int(
+        .x = factor,
         .f = ~ {
           as.character(.x) %>%
             stringr::str_remove("factor") %>%
             as.integer()
         }),
-      Value = Value / 1000)
+      value = value / 1000)
 
   if (is.null(n_rc_alpha)) {
     n_rc_alpha <- dplyr::case_when(
-      NLV == 1 ~ c(1, 1), NLV == 2 ~ c(1, 2),
-      NLV == 3 ~ c(1, 3), NLV == 4 ~ c(2, 2),
+      n_lf == 1 ~ c(1, 1), n_lf == 2 ~ c(1, 2),
+      n_lf == 3 ~ c(1, 3), n_lf == 4 ~ c(2, 2),
       .default = c(2, 3))
   }
 
   # # ..................................................................... ###
 
-  Plots <- purrr::map(
-    .x = seq_len(NLV),
+  plots <- purrr::map(
+    .x = seq_len(n_lf),
     .f = ~ {
 
       temp_file <- fs::file_temp(ext = "pdf")
@@ -153,38 +153,38 @@ convergence_alpha <- function(
       },
       add = TRUE)
 
-      ESS0 <- paste0(
-        "<b><i>Mean effective sample size:</i></b> ", ESS[.x],
+      ess_0 <- paste0(
+        "<b><i>Mean effective sample size:</i></b> ", ess[.x],
         " / ", n_samples, " samples")
 
-      CI0 <- paste(round(CI[.x, ], 2), collapse = " to ") %>%
+      ci_0 <- paste(round(CI[.x, ], 2), collapse = " to ") %>%
         paste0("<b><i>95% credible interval:</i></b> ", ., " km")
 
-      ESS_CI <- data.frame(
-        x = -Inf, y = -Inf, label = paste0(ESS0, "<br>", CI0))
+      ess_ci <- data.frame(
+        x = -Inf, y = -Inf, label = paste0(ess_0, "<br>", ci_0))
 
-      Gelman0 <- paste0(
-        "<b><i>Gelman convergence diagnostic:</i></b> ", Gelman[.x])
+      gelman_0 <- paste0(
+        "<b><i>Gelman convergence diagnostic:</i></b> ", gelman[.x])
 
-      title2 <- data.frame(x = Inf, y = Inf, label = Gelman0)
+      title2 <- data.frame(x = Inf, y = Inf, label = gelman_0)
       title3 <- data.frame(
         x = -Inf, y = Inf, label = paste0("<b>Factor", .x, "</b>"))
 
-      PlotDT <- dplyr::filter(AlphaDF, Factor2 == .x)
+      plot_data <- dplyr::filter(alpha_data, factor2 == .x)
 
       # Pre-calculate smoothed lines
-      summary_data <- PlotDT %>%
-        dplyr::group_by(Chain) %>%
-        dplyr::mutate(Smoothed = pmax(predict(loess(Value ~ Iter)), 0))
+      summary_data <- plot_data %>%
+        dplyr::group_by(chain) %>%
+        dplyr::mutate(Smoothed = pmax(predict(loess(value ~ iter)), 0))
 
-      Plot <- ggplot2::ggplot(
-        data = PlotDT, environment = emptyenv(),
+      plot <- ggplot2::ggplot(
+        data = plot_data, environment = emptyenv(),
         mapping = ggplot2::aes(
-          x = Iter, y = Value, color = Chain, group = Chain)) +
+          x = iter, y = value, color = chain, group = chain)) +
         ggplot2::geom_line(linewidth = 0.125, alpha = 0.6) +
         ggplot2::geom_line(
           data = summary_data, linewidth = 0.8, alpha = 0.6,
-          mapping = ggplot2::aes(x = Iter, y = Smoothed, color = Chain)) +
+          mapping = ggplot2::aes(x = iter, y = Smoothed, color = chain)) +
         ggplot2::geom_point(alpha = 0) +
         ggplot2::geom_hline(
           yintercept = CI[.x, ], linetype = "dashed", color = "black",
@@ -192,7 +192,7 @@ convergence_alpha <- function(
         ggplot2::scale_color_manual(values = chain_colors) +
         ggplot2::scale_x_continuous(expand = c(0, 0)) +
         ggplot2::scale_y_continuous(
-          limits = c(0, max(AlphaDF$Value) * 1.05),
+          limits = c(0, max(alpha_data$value) * 1.05),
           expand = c(0, 0), oob = scales::squish) +
         ggtext::geom_richtext(
           mapping = ggplot2::aes(x = x, y = y, label = label), data = title2,
@@ -204,7 +204,7 @@ convergence_alpha <- function(
           color = "blue", lineheight = 0, fill = NA, label.color = NA) +
         ggtext::geom_richtext(
           mapping = ggplot2::aes(x = x, y = y, label = label),
-          data = ESS_CI, inherit.aes = FALSE, size = 4,
+          data = ess_ci, inherit.aes = FALSE, size = 4,
           hjust = 0, vjust = 0, lineheight = 0, fill = NA, label.color = NA) +
         ggplot2::labs(x = NULL, y = "Distance (km)") +
         ggplot2::theme_bw() +
@@ -214,54 +214,54 @@ convergence_alpha <- function(
           axis.text = ggplot2::element_text(size = 12))
 
       if (margin_type == "histogram") {
-        Plot <- ggExtra::ggMarginal(
-          p = Plot, type = margin_type, margins = "y", size = 6,
+        plot <- ggExtra::ggMarginal(
+          p = plot, type = margin_type, margins = "y", size = 6,
           color = "steelblue4", fill = "steelblue4", bins = 100)
       } else {
-        Plot <- ggExtra::ggMarginal(
-          p = Plot, type = margin_type, margins = "y", size = 6,
+        plot <- ggExtra::ggMarginal(
+          p = plot, type = margin_type, margins = "y", size = 6,
           color = "steelblue4")
       }
 
       # Making marginal background matching the plot background
       # https://stackoverflow.com/a/78196022/3652584
-      Plot$layout$t[1] <- 1
-      Plot$layout$r[1] <- max(Plot$layout$r)
+      plot$layout$t[1] <- 1
+      plot$layout$r[1] <- max(plot$layout$r)
 
-      return(Plot)
+      return(plot)
     })
 
   layout_matrix <- matrix(
     seq_len(n_rc_alpha[1] * n_rc_alpha[2]), nrow = n_rc_alpha[1], byrow = TRUE)
 
   if (add_title && add_footer) {
-    Plots <- gridExtra::marrangeGrob(
-      Plots, bottom = bquote(paste0("page ", g, " of ", npages)),
+    plots <- gridExtra::marrangeGrob(
+      plots, bottom = bquote(paste0("page ", g, " of ", npages)),
       top = grid::textGrob(
         label = title, gp = grid::gpar(fontface = "bold", fontsize = 20)),
       nrow = n_rc_alpha[1], ncol = n_rc_alpha[2], layout_matrix = layout_matrix)
   }
 
   if (add_title && isFALSE(add_footer)) {
-    Plots <- gridExtra::marrangeGrob(
-      Plots, bottom = NULL,
+    plots <- gridExtra::marrangeGrob(
+      plots, bottom = NULL,
       top = grid::textGrob(
         label = title, gp = grid::gpar(fontface = "bold", fontsize = 20)),
       nrow = n_rc_alpha[1], ncol = n_rc_alpha[2], layout_matrix = layout_matrix)
   }
 
   if (isFALSE(add_title) && add_footer) {
-    Plots <- gridExtra::marrangeGrob(
-      Plots, bottom = bquote(paste0("page ", g, " of ", npages)),
+    plots <- gridExtra::marrangeGrob(
+      plots, bottom = bquote(paste0("page ", g, " of ", npages)),
       top = NULL, nrow = n_rc_alpha[1], ncol = n_rc_alpha[2],
       layout_matrix = layout_matrix)
   }
 
   if (isFALSE(add_title) && isFALSE(add_footer)) {
-    Plots <- cowplot::plot_grid(
-      plotlist = Plots, ncol = n_rc_alpha[2], nrow = n_rc_alpha[1],
+    plots <- cowplot::plot_grid(
+      plotlist = plots, ncol = n_rc_alpha[2], nrow = n_rc_alpha[1],
       align = "hv", byrow = TRUE)
   }
 
-  return(Plots)
+  return(plots)
 }

@@ -6,7 +6,7 @@
 \usage{
 mod_fit_windows(
   path_model = NULL,
-  python_VE = NULL,
+  python_ve = NULL,
   n_cores = NULL,
   strategy = "multisession"
 )
@@ -15,7 +15,7 @@ mod_fit_windows(
 \item{path_model}{Character. Path to the model files. This argument can not
 be empty.}
 
-\item{python_VE}{Character. Path to a valid Python virtual environment.
+\item{python_ve}{Character. Path to a valid Python virtual environment.
 Defaults to \code{NULL}. This argument can not be empty.}
 
 \item{n_cores}{Integer. Number of CPU cores to use for parallel processing.}

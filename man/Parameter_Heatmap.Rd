@@ -35,7 +35,7 @@ for \code{beta}.}
 }
 \value{
 Both functions do not return a value but saves heatmap plots as JPEG
-files in the \code{Model_Postprocessing/Parameters_Summary} subdirectory.
+files in the \code{model_postprocessing/parameters_summary} subdirectory.
 }
 \description{
 The \code{mod_heatmap_beta()} and \code{mod_heatmap_omega()} functions generate
@@ -50,7 +50,7 @@ The functions exports three types of visualisations (see
 \link[Hmsc:plotBeta]{Hmsc::plotBeta}):
 \itemize{
 \item \code{Mean}: posterior mean estimate,
-\item \code{Support}: statistical support level, measured by the posterior
+\item \code{support}: statistical support level, measured by the posterior
 probability for a positive or negative response,
 \item \code{Sign}: indicates whether the response is positive, negative, or neither
 of these based on the chosen \code{support_level}.

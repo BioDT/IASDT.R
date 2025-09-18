@@ -1,5 +1,5 @@
 ## |------------------------------------------------------------------------| #
-# resp_curv_plot_species_all ----
+# rc_plot_species_all ----
 ## |------------------------------------------------------------------------| #
 
 #' @export
@@ -8,7 +8,7 @@
 #' @order 3
 #' @author Ahmed El-Gabbas
 
-resp_curv_plot_species_all <- function(
+rc_plot_species_all <- function(
     model_dir = NULL, n_cores = 8L, return_data = FALSE, plotting_alpha = 0.3) {
 
   ecokit::cat_time("Plotting species response curves")
@@ -35,21 +35,23 @@ resp_curv_plot_species_all <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Coords <- RC_Path_Prob <- NFV <- Data <- DT <- Variable <- Variable2 <- i <-
-    VarDesc <- VarDesc2 <- NULL
+  coords <- path_rc_prob <- nfv <- data <- plot_data <- variable <-
+    variable_2 <- i <- var_desc <- var_desc_2 <- NULL
 
   # # ..................................................................... ###
 
-  Path_RC_DT <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_DT")
-  Path_RC_All <- fs::path(model_dir, "Model_Postprocessing", "RespCurv_All")
+  path_rc_data <- fs::path(
+    model_dir, "model_postprocessing", "response_curves_data")
+  path_rc_all <- fs::path(
+    model_dir, "model_postprocessing", "response_curves_all")
 
-  if (!dir.exists(Path_RC_DT)) {
+  if (!dir.exists(path_rc_data)) {
     ecokit::stop_ctx(
-      "Response curve data subfolder is missing.", Path_RC_DT = Path_RC_DT,
+      "Response curve data subfolder is missing.", path_rc_data = path_rc_data,
       include_backtrace = TRUE)
   }
 
-  fs::dir_create(Path_RC_All)
+  fs::dir_create(path_rc_all)
 
   # # ..................................................................... ###
 
@@ -58,28 +60,28 @@ resp_curv_plot_species_all <- function(
   ecokit::cat_time(
     "Loading & processing species response curve data in parallel", level = 1L)
 
-  Sp_DT_All <- fs::path(Path_RC_DT, "ResCurvDT.RData") %>%
+  sp_data_all <- fs::path(path_rc_data, "rc_data.RData") %>%
     ecokit::load_as() %>%
-    dplyr::select(Coords, RC_Path_Prob)
+    dplyr::select(coords, path_rc_prob)
 
   doParallel::registerDoParallel(cores = n_cores)
   ecokit::load_packages(package_list = "foreach")
   withr::defer(doParallel::stopImplicitCluster())
 
-  RC_data <- foreach::foreach(
-    i = Sp_DT_All$RC_Path_Prob, .packages = c("ecokit", "magrittr", "dplyr")
+  rc_data <- foreach::foreach(
+    i = sp_data_all$path_rc_prob, .packages = c("ecokit", "magrittr", "dplyr")
   ) %dopar% { # nolint: object_usage_linter
     ecokit::load_as(i) %>%
       dplyr::select(
-        tidyselect::all_of(c("Variable", "NFV", "Species", "PlotData_Quant")))
+        tidyselect::all_of(c("variable", "nfv", "species", "plot_data_quant")))
   }
 
-  Sp_DT_All <- Sp_DT_All %>%
-    dplyr::mutate(Data = RC_data) %>%
-    tidyr::unnest(Data) %>%
-    dplyr::select(-RC_Path_Prob) %>%
-    dplyr::slice(gtools::mixedorder(Variable)) %>%
-    tidyr::nest(DT = -c(NFV, Coords))
+  sp_data_all <- sp_data_all %>%
+    dplyr::mutate(data = rc_data) %>%
+    tidyr::unnest(data) %>%
+    dplyr::select(-path_rc_prob) %>%
+    dplyr::slice(gtools::mixedorder(variable)) %>%
+    tidyr::nest(data = -c(nfv, coords))
 
   doParallel::stopImplicitCluster()
 
@@ -87,100 +89,100 @@ resp_curv_plot_species_all <- function(
 
   # # ..................................................................... ###
 
-  # Plot all species response curves
+  # plot all species response curves
 
   ecokit::cat_time("Plot all species response curves", level = 1L)
 
-  Plots <- purrr::map_dfr(
-    .x = seq_len(nrow(Sp_DT_All)),
-    .f = function(ID) {
+  plots <- purrr::map_dfr(
+    .x = seq_len(nrow(sp_data_all)),
+    .f = function(id) {
 
-      NFV <- Sp_DT_All$NFV[[ID]]
-      Coords <- Sp_DT_All$Coords[[ID]]
+      nfv <- sp_data_all$nfv[[id]]
+      coords <- sp_data_all$coords[[id]]
 
-      FilePrefix <- paste0("RespCurv_All_NFV_", NFV, "_Coords_", Coords)
-      path_JPEG <- fs::path(Path_RC_All, paste0(FilePrefix, ".jpeg"))
+      file_prefix <- paste0("rc_all_nfv_", nfv, "_coords_", coords)
+      path_jpeg <- fs::path(path_rc_all, paste0(file_prefix, ".jpeg"))
 
-      DT <- Sp_DT_All$DT[[ID]] %>%
+      plot_data <- sp_data_all$data[[id]] %>%
         dplyr::mutate(
-          VarDesc = dplyr::case_when(
-            startsWith(Variable, "bio") ~ stringr::str_to_sentence(Variable),
-            Variable == "RoadRailLog" ~ "Road + Rail intensity",
-            Variable == "EffortsLog" ~ "Sampling efforts",
-            Variable == "RiversLog" ~ "River length",
-            Variable == "HabLog" ~ "% habitat coverage",
-            Variable == "soil" ~ "Soil density",
-            Variable == "wetness" ~ "Wetness index",
-            .default = Variable),
-          VarDesc = paste0(
-            "<span style='font-size: 10pt;'><b>", VarDesc, "</b></span>"),
+          var_desc = dplyr::case_when(
+            startsWith(variable, "bio") ~ stringr::str_to_sentence(variable),
+            variable == "road_rail_log" ~ "Road + Rail intensity",
+            variable == "efforts_log" ~ "Sampling efforts",
+            variable == "rivers_log" ~ "River length",
+            variable == "habitat_log" ~ "% habitat coverage",
+            variable == "soil" ~ "Soil density",
+            variable == "wetness" ~ "Wetness index",
+            .default = variable),
+          var_desc = paste0(
+            "<span style='font-size: 10pt;'><b>", var_desc, "</b></span>"),
 
-          VarDesc2 = dplyr::case_when(
-            Variable == "bio1" ~ "annual mean temperature",
-            Variable == "bio2" ~ "mean diurnal range",
-            Variable == "bio3" ~ "isothermality (bio2/bio7) (&times;100)",
-            Variable == "bio4" ~ "temperature seasonality",
-            Variable == "bio5" ~ "max temperature of warmest month",
-            Variable == "bio6" ~ "temperature of the coldest month",
-            Variable == "bio7" ~ "temperature annual range (bio5-bio6)",
-            Variable == "bio8" ~ "temperatures of the wettest quarter",
-            Variable == "bio9" ~ "mean temperature of driest quarter",
-            Variable == "bio10" ~ "mean temperature of warmest quarter",
-            Variable == "bio11" ~ "mean temperature of coldest quarter",
-            Variable == "bio12" ~ "annual precipitation amount",
-            Variable == "bio13" ~ "precipitation of wettest month",
-            Variable == "bio14" ~ "precipitation of driest month",
-            Variable == "bio15" ~ "precipitation seasonality",
-            Variable == "bio16" ~ "precipitation of wettest quarter",
-            Variable == "bio17" ~ "precipitation of driest quarter",
-            Variable == "bio18" ~ "precipitation of the warmest quarter",
-            Variable == "bio19" ~ "precipitation of coldest quarter",
-            Variable == "npp" ~ "net primary productivity",
-            Variable == "RiversLog" ~ " (log<sub>10</sub>(x + 0.1))",
-            Variable == "RoadRailLog" ~ " (log<sub>10</sub>(x + 1))",
-            Variable == "EffortsLog" ~ " (log<sub>10</sub>(x + 1))",
-            Variable == "soil" ~ "Soil bulk density",
-            Variable == "wetness" ~ "Topographic wetness index",
-            Variable == "HabLog" ~ " (log<sub>10</sub>(x + 0.1))",
-            .default = Variable),
-          VarDesc2 = paste0(
-            "<span style='font-size: 8pt;'>", VarDesc2, "</span>"),
+          var_desc_2 = dplyr::case_when(
+            variable == "bio1" ~ "annual mean temperature",
+            variable == "bio2" ~ "mean diurnal range",
+            variable == "bio3" ~ "isothermality (bio2/bio7) (&times;100)",
+            variable == "bio4" ~ "temperature seasonality",
+            variable == "bio5" ~ "max temperature of warmest month",
+            variable == "bio6" ~ "temperature of the coldest month",
+            variable == "bio7" ~ "temperature annual range (bio5-bio6)",
+            variable == "bio8" ~ "temperatures of the wettest quarter",
+            variable == "bio9" ~ "mean temperature of driest quarter",
+            variable == "bio10" ~ "mean temperature of warmest quarter",
+            variable == "bio11" ~ "mean temperature of coldest quarter",
+            variable == "bio12" ~ "annual precipitation amount",
+            variable == "bio13" ~ "precipitation of wettest month",
+            variable == "bio14" ~ "precipitation of driest month",
+            variable == "bio15" ~ "precipitation seasonality",
+            variable == "bio16" ~ "precipitation of wettest quarter",
+            variable == "bio17" ~ "precipitation of driest quarter",
+            variable == "bio18" ~ "precipitation of the warmest quarter",
+            variable == "bio19" ~ "precipitation of coldest quarter",
+            variable == "npp" ~ "net primary productivity",
+            variable == "rivers_log" ~ " (log<sub>10</sub>(x + 0.1))",
+            variable == "road_rail_log" ~ " (log<sub>10</sub>(x + 1))",
+            variable == "efforts_log" ~ " (log<sub>10</sub>(x + 1))",
+            variable == "soil" ~ "Soil bulk density",
+            variable == "wetness" ~ "Topographic wetness index",
+            variable == "habitat_log" ~ " (log<sub>10</sub>(x + 0.1))",
+            .default = variable),
+          var_desc_2 = paste0(
+            "<span style='font-size: 8pt;'>", var_desc_2, "</span>"),
 
-          Variable2 = factor(Variable, levels = unique(Variable))) %>%
-        dplyr::group_split(Variable2)
+          variable_2 = factor(variable, levels = unique(variable))) %>%
+        dplyr::group_split(variable_2)
 
-      SubTitleTxt <- dplyr::if_else(
-        NFV == 1,
+      plot_subtitle <- dplyr::if_else(
+        nfv == 1,
         paste0(
           "Non-focal variables are set to most likely value <i>",
           "[non.focalVariables = 1]</i>"),
         paste0(
           "Non-focal variables = most likely value given ",
           "value of focal variable <i>[non.focalVariables = 2]</i>"))
-      Caption <- dplyr::if_else(
-        Coords == "c", "Mean coordinates", "No spatial dependence")
-      Caption <- paste0(Caption, " --- ", SubTitleTxt)
+      plot_caption <- dplyr::if_else(
+        coords == "c", "Mean coordinates", "No spatial dependence")
+      plot_caption <- paste0(plot_caption, " --- ", plot_subtitle)
 
-      if (length(DT) <= 9) {
-        NR <- NC <- 3
+      if (length(plot_data) <= 9) {
+        n_rows <- n_columns <- 3
         plot_width <- 24
         plot_height <- 22
       } else {
-        NR <- 3
-        NC <- 4
+        n_rows <- 3
+        n_columns <- 4
         plot_width <- 30
         plot_height <- 22
       }
 
-      Plots <- purrr::map(
-        .x = DT,
+      plots <- purrr::map(
+        .x = plot_data,
         .f = ~ {
-          Plot <- dplyr::select(.x, Species, PlotData_Quant) %>%
-            tidyr::unnest("PlotData_Quant") %>%
-            dplyr::filter(Quantile == 0.5)
-          Plot <- Plot %>%
+          plot <- dplyr::select(.x, species, plot_data_quant) %>%
+            tidyr::unnest("plot_data_quant") %>%
+            dplyr::filter(quantile == 0.5)
+          plot <- plot %>%
             ggplot2::ggplot(
-              mapping = ggplot2::aes(x = XVals, y = Pred, group = Species),
+              mapping = ggplot2::aes(x = XVals, y = pred, group = species),
               environment = emptyenv()) +
             ggplot2::geom_line(
               linetype = 1, linewidth = 0.3,
@@ -191,7 +193,7 @@ resp_curv_plot_species_all <- function(
             ggplot2::scale_x_continuous(expand = c(0.015, 0.015)) +
             ggplot2::labs(
               x = NULL, y = NULL,
-              title = .x$VarDesc[[1]], subtitle = .x$VarDesc2[[1]]) +
+              title = .x$var_desc[[1]], subtitle = .x$var_desc_2[[1]]) +
             ggplot2::theme_bw() +
             ggplot2::theme(
               legend.position = "none",
@@ -208,13 +210,13 @@ resp_curv_plot_species_all <- function(
               panel.grid.major = ggplot2::element_line(linewidth = 0.25),
               panel.grid.minor = ggplot2::element_line(linewidth = 0.1),
               plot.margin = ggplot2::unit(c(0.1, 0.2, 0.1, 0.2), "lines"))
-          Plot
+          plot
 
         }) %>%
-        patchwork::wrap_plots(nrow = NR, ncol = NC) +
+        patchwork::wrap_plots(nrow = n_rows, ncol = n_columns) +
         patchwork::plot_annotation(
           title = "Response curves for all species",
-          caption = Caption,
+          caption = plot_caption,
           theme = ggplot2::theme(
             plot.margin = ggplot2::margin(0.1, 0, 0, 0, "cm"),
             plot.title = ggtext::element_markdown(face = "bold"),
@@ -222,7 +224,7 @@ resp_curv_plot_species_all <- function(
               size = 12, color = "grey", hjust = 0))) +
         patchwork::plot_layout(axes = "collect")
 
-      Plots <- patchwork::wrap_elements(Plots) +
+      plots <- patchwork::wrap_elements(plots) +
         ggplot2::labs(tag = "<b>Predicted habitat suitability</b>") +
         ggplot2::theme(
           plot.tag = ggtext::element_markdown(
@@ -233,16 +235,14 @@ resp_curv_plot_species_all <- function(
       # Using ggplot2::ggsave directly does not show non-ascii characters
       # correctly
       ragg::agg_jpeg(
-        filename = path_JPEG, width = plot_width, height = plot_height,
+        filename = path_jpeg, width = plot_width, height = plot_height,
         res = 600, quality = 100, units = "cm")
-      print(Plots)
+      print(plots)
       grDevices::dev.off()
 
-      OutDF <- tibble::tibble(
-        path_JPEG = path_JPEG, plot_height = plot_height,
+      tibble::tibble(
+        path_jpeg = path_jpeg, plot_height = plot_height,
         plot_width = plot_width)
-
-      return(OutDF)
     })
 
   # # ..................................................................... ###
@@ -250,10 +250,10 @@ resp_curv_plot_species_all <- function(
   # Save data
   ecokit::cat_time("Save data", level = 1L)
 
-  Sp_DT_All <- dplyr::select(Sp_DT_All, -DT) %>%
-    dplyr::bind_cols(Plots = Plots)
+  sp_data_all <- dplyr::select(sp_data_all, -plot_data) %>%
+    dplyr::bind_cols(plots = plots)
 
-  save(Sp_DT_All, file = fs::path(Path_RC_All, "Sp_DT_All.RData"))
+  save(sp_data_all, file = fs::path(path_rc_all, "sp_data_all.RData"))
 
   # # ..................................................................... ###
 
@@ -264,7 +264,7 @@ resp_curv_plot_species_all <- function(
   # # ..................................................................... ###
 
   if (return_data) {
-    return(Sp_DT_All)
+    return(sp_data_all)
   } else {
     return(invisible(NULL))
   }

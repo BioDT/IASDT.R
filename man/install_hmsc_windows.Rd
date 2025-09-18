@@ -6,22 +6,22 @@
 \usage{
 install_hmsc_windows(
   path_python,
-  path_VE,
-  URL_Hmsc = "https://github.com/trossi/hmsc-hpc.git@simplify-io",
-  URL_rdata = "https://github.com/trossi/rdata.git@test-for-hmsc-v2",
+  path_ve,
+  url_hmsc = "https://github.com/trossi/hmsc-hpc.git@simplify-io",
+  url_rdata = "https://github.com/trossi/rdata.git@test-for-hmsc-v2",
   force = FALSE
 )
 }
 \arguments{
 \item{path_python}{Character. Path to the Python executable.}
 
-\item{path_VE}{Character. Path where the virtual environment will be created.
+\item{path_ve}{Character. Path where the virtual environment will be created.
 This can not be an existing folder.}
 
-\item{URL_Hmsc}{Character. URL of the Git repository (and branch name) of the
+\item{url_hmsc}{Character. URL of the Git repository (and branch name) of the
 \code{Hmsc-HPC} package.}
 
-\item{URL_rdata}{Character. URL of the Git repository (and branch name) of
+\item{url_rdata}{Character. URL of the Git repository (and branch name) of
 the \code{rdata} package. This is temporary to allow \code{rdata} package to write
 rds file. In the near future, this functionality will be pushed to the
 main branch of \code{rdata}.}
@@ -56,7 +56,7 @@ an error if it does
 \dontrun{
 install_hmsc_windows(
    path_python = "C:/Python/Python310/python.exe",
-   path_VE = "D:/Hmsc-HPC")
+   path_ve = "D:/Hmsc-HPC")
 }
 }
 \author{

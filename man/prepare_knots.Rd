@@ -8,8 +8,8 @@ prepare_knots(
   coordinates = NULL,
   min_distance = NULL,
   jitter_distance = 100,
-  min_LF = NULL,
-  max_LF = NULL,
+  min_lf = NULL,
+  max_lf = NULL,
   alphapw = list(Prior = NULL, Min = 10, Max = 1500, Samples = 101)
 )
 }
@@ -24,7 +24,7 @@ distance is used for both \code{knotDist} and \code{minKnotDist} parameters of t
 \item{jitter_distance}{Numeric. The jitter distance applied to overlapping
 coordinates to avoid exact duplicates. Defaults to 100 meters.}
 
-\item{min_LF, max_LF}{Integer. Minimum and maximum number of latent factors to
+\item{min_lf, max_lf}{Integer. Minimum and maximum number of latent factors to
 be used. Both default to \code{NULL} which means that the number of latent
 factors will be estimated from the data. If either is provided, the
 respective values will be used as arguments to \link[Hmsc:setPriors]{Hmsc::setPriors}.}
@@ -39,7 +39,7 @@ from 10 to 1500 km, with the first value in the second column set to 0.5.}
 \value{
 An object of class \code{HmscRandomLevel}, suitable for specifying the
 random level in HMSC GPP models. This object contains the prepared knot
-locations as a data frame with columns \code{Var1} and \code{Var2} (numeric
+locations as a data frame with columns \code{var_1} and \code{var_2} (numeric
 coordinates), after possible jittering and conversion to avoid overlap.
 }
 \description{

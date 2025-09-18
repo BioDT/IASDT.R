@@ -48,17 +48,17 @@ reference:
 
 - title: Prepare species distribution data
   contents:
-  - GBIF_data
-  - EASIN_data
-  - eLTER_process
-  - IAS_data
+  - gbif_data
+  - easin_data
+  - elter_process
+  - naps_data
   - get_species_name
 
 - title: Prepare abiotic data
   contents:
   - clc_process
-  - CHELSA_variables
-  - CHELSA_data
+  - chelsa_variables
+  - chelsa_data
   - efforts_data
   - railway_intensity
   - road_intensity
@@ -72,13 +72,13 @@ reference:
 - subtitle: Data preparation
   desc: Prepare input data and scripts for fitting Hmsc-HPC on GPU
   contents:
-  - mod_CV_prepare
+  - mod_cv_prepare
   - prepare_knots
   - mod_inputs
-  - mod_SLURM
-  - mod_SLURM_refit
+  - mod_slurm
+  - mod_slurm_refit
   - mod_fit_windows
-  - mod_CV_fit
+  - mod_cv_fit
   - install_hmsc_windows
   - cpp_functions
   - fit_sdm_models
@@ -95,7 +95,7 @@ reference:
   - plot_latent_factor
   - predict_hmsc
   - predict_maps
-  - predict_maps_CV
+  - predict_maps_cv
   - plot_prediction
   - mod_cv_evaluate
   - mod_cv_evaluate_plot

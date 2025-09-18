@@ -4,7 +4,7 @@
 
 #' Plot Gelman-Rubin-Brooks
 #'
-#' The `PlotGelman_*()` functions generate plots visualising the evolution of
+#' The `plot_gelman_*()` functions generate plots visualising the evolution of
 #' the Gelman-Rubin-Brooks shrink factor for different model parameters as the
 #' number of iterations increases. These plots help assess whether MCMC chains
 #' have converged to a common distribution. Each plot includes: median (solid
@@ -72,7 +72,7 @@ plot_gelman <- function(
 
   # # ..................................................................... ###
 
-  out_path <- fs::path(dirname(dirname(path_coda)), "Model_Convergence")
+  out_path <- fs::path(dirname(dirname(path_coda)), "model_convergence")
   fs::dir_create(out_path)
 
   # # ..................................................................... ###
@@ -81,10 +81,10 @@ plot_gelman <- function(
 
   if (alpha && ("Alpha" %in% names_coda)) {
     ecokit::cat_time("alpha")
-    PlotObj_Alpha <- plot_gelman_alpha(
+    plot_obj_alpha <- plot_gelman_alpha(
       coda_object = coda_object$Alpha[[1]], plotting_alpha = plotting_alpha)
   } else {
-    PlotObj_Alpha <- NULL
+    plot_obj_alpha <- NULL
   }
 
   # # ..................................................................... ###
@@ -93,11 +93,11 @@ plot_gelman <- function(
 
   if (beta) {
     ecokit::cat_time("beta")
-    PlotObj_Beta <- IASDT.R::plot_gelman_beta(
+    plot_obj_beta <- IASDT.R::plot_gelman_beta(
       coda_object = coda_object$Beta, env_file = env_file,
       plotting_alpha = plotting_alpha)
   } else {
-    PlotObj_Beta <- NULL
+    plot_obj_beta <- NULL
   }
 
   # # ..................................................................... ###
@@ -106,11 +106,11 @@ plot_gelman <- function(
 
   if (omega && ("Omega" %in% names_coda)) {
     ecokit::cat_time("omega")
-    PlotObj_Omega <- IASDT.R::plot_gelman_omega(
+    plot_obj_omega <- IASDT.R::plot_gelman_omega(
       coda_object = coda_object$Omega[[1]], n_omega = n_omega,
       plotting_alpha = plotting_alpha)
   } else {
-    PlotObj_Omega <- NULL
+    plot_obj_omega <- NULL
   }
 
   # # ..................................................................... ###
@@ -119,28 +119,28 @@ plot_gelman <- function(
 
   if (rho && ("Rho" %in% names_coda)) {
     ecokit::cat_time("rho")
-    PlotObj_Rho <- IASDT.R::plot_gelman_rho(coda_object$Rho)
+    plot_obj_rho <- IASDT.R::plot_gelman_rho(coda_object$Rho)
   } else {
-    PlotObj_Rho <- NULL
+    plot_obj_rho <- NULL
   }
 
   # # ..................................................................... ###
 
   # Saving plots as PDF -----
 
-  PlotList <- list(
-    Alpha = PlotObj_Alpha, Beta = PlotObj_Beta,
-    Omega = PlotObj_Omega, Rho = PlotObj_Rho)
+  plot_list <- list(
+    Alpha = plot_obj_alpha, Beta = plot_obj_beta,
+    Omega = plot_obj_omega, Rho = plot_obj_rho)
 
-  PlotList4Plot <- purrr::list_flatten(purrr::discard(PlotList, is.null))
+  plot_list_for_plot <- purrr::list_flatten(purrr::discard(plot_list, is.null))
 
-  if (length(PlotList4Plot) > 0) {
+  if (length(plot_list_for_plot) > 0) {
     # Using ggplot2::ggsave directly does not show non-ascii characters
     # correctly
     grDevices::cairo_pdf(
       filename = fs::path(out_path, "gelman_plots.pdf"),
       width = 13, height = 7, onefile = TRUE)
-    purrr::walk(PlotList4Plot, grid::grid.draw)
+    purrr::walk(plot_list_for_plot, grid::grid.draw)
     grDevices::dev.off()
   } else {
     warning("No plots to save", call. = FALSE)
@@ -184,72 +184,72 @@ plot_gelman_alpha <- function(coda_object, plotting_alpha = 0.25) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Var_LV <- Type <- Iter <- Plot <- data <- Median <- NULL
+  var_lv <- type <- iter <- plot <- data <- median <- NULL
 
   # # ..................................................................... ###
 
-  Gelman_Alpha_DT <- magrittr::extract2(coda_object, 1) %>%
+  gelman_alpha_data <- magrittr::extract2(coda_object, 1) %>%
     attr("dimnames") %>%
     magrittr::extract2(2) %>%
     sort() %>%
     purrr::map_dfr(
       .f = function(x) {
 
-        Alpha_Preplot1 <- lapply(coda_object, function(Y) {
-          Y[, x, drop = TRUE]
+        alpha_pre_plot_1 <- lapply(coda_object, function(y) {
+          y[, x, drop = TRUE]
         }) %>%
           coda::mcmc.list()
 
-        Alpha_Preplot2 <- try(
+        alpha_pre_plot_2 <- try(
           gelman_preplot(
-            x = Alpha_Preplot1,
-            bin.width = 10, max.bins = 50, confidence = 0.95,
+            x = alpha_pre_plot_1,
+            bin_width = 10, max.bins = 50, confidence = 0.95,
             transform = FALSE, autoburnin = TRUE),
           silent = TRUE)
 
-        if (inherits(Alpha_Preplot2, "try-error")) {
-          Alpha_Preplot2 <- gelman_preplot(
-            x = Alpha_Preplot1,
-            bin.width = 10, max.bins = 50, confidence = 0.95,
+        if (inherits(alpha_pre_plot_2, "try-error")) {
+          alpha_pre_plot_2 <- gelman_preplot(
+            x = alpha_pre_plot_1,
+            bin_width = 10, max.bins = 50, confidence = 0.95,
             transform = FALSE, autoburnin = FALSE)
         }
 
-        Alpha_Preplot2 %>%
+        alpha_pre_plot_2 %>%
           magrittr::extract2("shrink") %>%
-          tibble::as_tibble(rownames = "Iter") %>%
-          purrr::set_names(c("Iter", "Median", "Q97_5")) %>%
-          dplyr::filter(!is.nan(Median)) %>%
-          dplyr::mutate(Iter = as.integer(Iter)) %>%
+          tibble::as_tibble(rownames = "iter") %>%
+          purrr::set_names(c("iter", "median", "q_97_5")) %>%
+          dplyr::filter(!is.nan(median)) %>%
+          dplyr::mutate(iter = as.integer(iter)) %>%
           tidyr::pivot_longer(
-            cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
-          dplyr::arrange(Type, Iter) %>%
-          dplyr::mutate(Type = factor(Type), Var_LV = x)
+            cols = -iter, names_to = "type", values_to = "shrink_factor") %>%
+          dplyr::arrange(type, iter) %>%
+          dplyr::mutate(type = factor(type), var_lv = x)
       })
 
-  Gelman_Alpha_Plot <- Gelman_Alpha_DT %>%
+  gelman_alpha_plot <- gelman_alpha_data %>%
     dplyr::mutate(
-      group = paste0(Var_LV, "_", Type),
-      Var_LV = purrr::map_chr(
-        .x = Var_LV, .f = stringr::str_remove_all,
+      group = paste0(var_lv, "_", type),
+      var_lv = purrr::map_chr(
+        .x = var_lv, .f = stringr::str_remove_all,
         pattern = "Alpha1\\[|\\]")) %>%
-    tidyr::nest(.by = "Var_LV") %>%
+    tidyr::nest(.by = "var_lv") %>%
     dplyr::mutate(
-      Plot = purrr::map2(
-        .x = Var_LV, .y = data,
+      plot = purrr::map2(
+        .x = var_lv, .y = data,
         .f = ~{
-          Plot <- ggplot2::ggplot(data = .y, environment = emptyenv()) +
+          plot <- ggplot2::ggplot(data = .y, environment = emptyenv()) +
             ggplot2::geom_line(
               mapping = ggplot2::aes(
-                x = Iter, y = ShrinkFactor, group = group, color = Type),
+                x = iter, y = shrink_factor, group = group, color = type),
               alpha = plotting_alpha) +
             ggplot2::scale_color_manual(
-              values = c(Median = "red", Q97_5 = "black")) +
+              values = c(median = "red", q_97_5 = "black")) +
             ggplot2::geom_hline(
               yintercept = 1.1, linetype = "dashed", col = "darkgrey",
               linewidth = 0.8) +
-            ggplot2::facet_grid(~ Type, labeller = ggplot2::label_parsed) +
+            ggplot2::facet_grid(~ type, labeller = ggplot2::label_parsed) +
             ggplot2::scale_x_continuous(
-              limits = range(Gelman_Alpha_DT$Iter), expand = c(0, 0)) +
+              limits = range(gelman_alpha_data$iter), expand = c(0, 0)) +
             ggplot2::coord_cartesian(expand = FALSE, clip = "off") +
             ggplot2::labs(
               title = "Gelman-Rubin-Brooks plot --- alpha",
@@ -276,13 +276,13 @@ plot_gelman_alpha <- function(coda_object, plotting_alpha = 0.25) {
               panel.spacing = ggplot2::unit(0.85, "lines"),
               plot.caption = ggplot2::element_text(
                 color = "darkgrey", face = "italic", size = 10))
-          Plot
+          plot
 
         })
     ) %>%
-    dplyr::pull(Plot)
+    dplyr::pull(plot)
 
-  return(Gelman_Alpha_Plot)
+  return(gelman_alpha_plot)
 }
 
 
@@ -329,75 +329,75 @@ plot_gelman_beta <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Iter <- Type <- Var_Sp <- ShrinkFactor <- group <- NULL
+  iter <- type <- var_sp <- shrink_factor <- group <- NULL
 
   # # ..................................................................... ###
 
-  Beta_Coda <- IASDT.R::coda_to_tibble(
+  beta_coda <- IASDT.R::coda_to_tibble(
     coda_object = coda_object, posterior_type = "beta", env_file = env_file)
 
-  NVars <- length(unique(Beta_Coda$Variable))
-  NSp <- length(unique(Beta_Coda$Species))
-  SubTitle <- paste0(NVars, " covariates - ", NSp, " species")
-  rm(Beta_Coda, envir = environment())
+  n_vars <- length(unique(beta_coda$variable))
+  n_sp <- length(unique(beta_coda$species))
+  plot_subtitle <- paste0(n_vars, " covariates - ", n_sp, " species")
+  rm(beta_coda, envir = environment())
 
-  Gelman_Beta_Vals <- magrittr::extract2(coda_object, 1) %>%
+  gelman_beta_vals <- magrittr::extract2(coda_object, 1) %>%
     attr("dimnames") %>%
     magrittr::extract2(2) %>%
     sort() %>%
     purrr::map_dfr(
       .f = function(x) {
 
-        Beta_Preplot1 <- lapply(coda_object, function(Y) {
-          Y[, x, drop = TRUE]
+        beta_pre_plot_1 <- lapply(coda_object, function(y) {
+          y[, x, drop = TRUE]
         }) %>%
           coda::mcmc.list()
 
-        Beta_Preplot2 <- try(
+        beta_pre_plot_2 <- try(
           gelman_preplot(
-            x = Beta_Preplot1,
-            bin.width = 10, max.bins = 50, confidence = 0.95,
+            x = beta_pre_plot_1,
+            bin_width = 10, max.bins = 50, confidence = 0.95,
             transform = FALSE, autoburnin = TRUE),
           silent = TRUE)
 
-        if (inherits(Beta_Preplot2, "try-error")) {
-          Beta_Preplot2 <- gelman_preplot(
-            x = Beta_Preplot1,
-            bin.width = 10, max.bins = 50, confidence = 0.95,
+        if (inherits(beta_pre_plot_2, "try-error")) {
+          beta_pre_plot_2 <- gelman_preplot(
+            x = beta_pre_plot_1,
+            bin_width = 10, max.bins = 50, confidence = 0.95,
             transform = FALSE, autoburnin = FALSE)
         }
 
-        Beta_Preplot2 %>%
+        beta_pre_plot_2 %>%
           magrittr::extract2("shrink") %>%
-          tibble::as_tibble(rownames = "Iter") %>%
-          purrr::set_names(c("Iter", "Median", "Q97_5")) %>%
-          dplyr::mutate(Iter = as.integer(Iter)) %>%
+          tibble::as_tibble(rownames = "iter") %>%
+          purrr::set_names(c("iter", "median", "q_97_5")) %>%
+          dplyr::mutate(iter = as.integer(iter)) %>%
           tidyr::pivot_longer(
-            cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
-          dplyr::arrange(Type, Iter) %>%
-          dplyr::mutate(Type = factor(Type), Var_Sp = x)
+            cols = -iter, names_to = "type", values_to = "shrink_factor") %>%
+          dplyr::arrange(type, iter) %>%
+          dplyr::mutate(type = factor(type), var_sp = x)
       }) %>%
-    dplyr::mutate(group = paste0(Var_Sp, "_", Type))
+    dplyr::mutate(group = paste0(var_sp, "_", type))
 
   # # ..................................................................... ###
 
-  Gelman_Beta_Plot <- ggplot2::ggplot(
-    data = Gelman_Beta_Vals, environment = emptyenv()) +
+  gelman_beta_plot <- ggplot2::ggplot(
+    data = gelman_beta_vals, environment = emptyenv()) +
     ggplot2::geom_line(
       mapping = ggplot2::aes(
-        x = Iter, y = ShrinkFactor, group = group, color = Type),
+        x = iter, y = shrink_factor, group = group, color = type),
       alpha = plotting_alpha) +
-    ggplot2::scale_color_manual(values = c(Median = "red", Q97_5 = "black")) +
+    ggplot2::scale_color_manual(values = c(median = "red", q_97_5 = "black")) +
     ggplot2::geom_hline(
       yintercept = 1.1, linetype = "dashed", col = "darkgrey",
       linewidth = 0.8) +
     ggplot2::facet_grid(
-      ~Type,
-      labeller = ggplot2::as_labeller(c(Median = "Median", Q97_5 = "97.5%"))) +
+      ~type,
+      labeller = ggplot2::as_labeller(c(median = "median", q_97_5 = "97.5%"))) +
     ggplot2::coord_cartesian(expand = FALSE) +
     ggplot2::theme_bw() +
     ggplot2::labs(
-      title = "Gelman-Rubin-Brooks plot --- beta", subtitle = SubTitle,
+      title = "Gelman-Rubin-Brooks plot --- beta", subtitle = plot_subtitle,
       caption = paste0(
         "This plot shows the evolution of Gelman and Rubin's shrink factor as ",
         "the number of iterations increases.")) +
@@ -418,11 +418,10 @@ plot_gelman_beta <- function(
       panel.spacing = ggplot2::unit(0.85, "lines"),
       plot.caption = ggplot2::element_text(
         color = "darkgrey", face = "italic", size = 10))
-  return(Gelman_Beta_Plot)
 
   # # ..................................................................... ###
 
-  return(Gelman_Beta_Plot)
+  return(gelman_beta_plot)
 }
 
 # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| ##
@@ -470,11 +469,11 @@ plot_gelman_omega <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Iter <- Type <- Sp_comb <- ShrinkFactor <- group <- NULL
+  iter <- type <- sp_comb <- shrink_factor <- group <- NULL
 
   # # ..................................................................... ###
 
-  Gelman_OmegaDT <- magrittr::extract2(coda_object, 1) %>%
+  gelman_omega_data <- magrittr::extract2(coda_object, 1) %>%
     attr("dimnames") %>%
     magrittr::extract2(2) %>%
     sample(min(n_omega, length(.))) %>%
@@ -482,52 +481,52 @@ plot_gelman_omega <- function(
     purrr::map_dfr(
       .f = function(x) {
 
-        Omega_Preplot1 <- lapply(coda_object, function(Y) {
-          Y[, x, drop = TRUE]
+        omega_pre_plot_1 <- lapply(coda_object, function(y) {
+          y[, x, drop = TRUE]
         }) %>%
           coda::mcmc.list()
 
-        Omega_Preplot2 <- try(
+        omega_pre_plot_2 <- try(
           gelman_preplot(
-            x = Omega_Preplot1,
-            bin.width = 10, max.bins = 50, confidence = 0.95,
+            x = omega_pre_plot_1,
+            bin_width = 10, max.bins = 50, confidence = 0.95,
             transform = FALSE, autoburnin = TRUE),
           silent = TRUE)
 
-        if (inherits(Omega_Preplot2, "try-error")) {
-          Omega_Preplot2 <- gelman_preplot(
-            x = Omega_Preplot1,
-            bin.width = 10, max.bins = 50, confidence = 0.95,
+        if (inherits(omega_pre_plot_2, "try-error")) {
+          omega_pre_plot_2 <- gelman_preplot(
+            x = omega_pre_plot_1,
+            bin_width = 10, max.bins = 50, confidence = 0.95,
             transform = FALSE, autoburnin = FALSE)
         }
 
-        Omega_Preplot2 %>%
+        omega_pre_plot_2 %>%
           magrittr::extract2("shrink") %>%
-          tibble::as_tibble(rownames = "Iter") %>%
-          purrr::set_names(c("Iter", "Median", "Q97_5")) %>%
-          dplyr::mutate(Iter = as.integer(Iter)) %>%
+          tibble::as_tibble(rownames = "iter") %>%
+          purrr::set_names(c("iter", "median", "q_97_5")) %>%
+          dplyr::mutate(iter = as.integer(iter)) %>%
           tidyr::pivot_longer(
-            cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
-          dplyr::arrange(Type, Iter) %>%
-          dplyr::mutate(Type = factor(Type), Sp_comb = x)
+            cols = -iter, names_to = "type", values_to = "shrink_factor") %>%
+          dplyr::arrange(type, iter) %>%
+          dplyr::mutate(type = factor(type), sp_comb = x)
       }) %>%
-    dplyr::mutate(group = paste0(Sp_comb, "_", Type))
+    dplyr::mutate(group = paste0(sp_comb, "_", type))
 
   # # ..................................................................... ###
 
-  Gelman_Omega_Plot <- ggplot2::ggplot(
-    data = Gelman_OmegaDT, environment = emptyenv()) +
+  gelman_omega_plot <- ggplot2::ggplot(
+    data = gelman_omega_data, environment = emptyenv()) +
     ggplot2::geom_line(
       mapping = ggplot2::aes(
-        x = Iter, y = ShrinkFactor, group = group, color = Type),
+        x = iter, y = shrink_factor, group = group, color = type),
       alpha = plotting_alpha) +
-    ggplot2::scale_color_manual(values = c(Median = "red", Q97_5 = "black")) +
+    ggplot2::scale_color_manual(values = c(median = "red", q_97_5 = "black")) +
     ggplot2::geom_hline(
       yintercept = 1.1, linetype = "dashed", col = "darkgrey",
       linewidth = 0.8) +
     ggplot2::facet_grid(
-      ~Type,
-      labeller = ggplot2::as_labeller(c(Median = "Median", Q97_5 = "97.5%"))) +
+      ~type,
+      labeller = ggplot2::as_labeller(c(median = "median", q_97_5 = "97.5%"))) +
     ggplot2::coord_cartesian(expand = FALSE) +
     ggplot2::labs(
       title = paste0(
@@ -557,7 +556,7 @@ plot_gelman_omega <- function(
       plot.caption = ggplot2::element_text(
         color = "darkgrey", face = "italic", size = 10))
 
-  return(Gelman_Omega_Plot)
+  return(gelman_omega_plot)
 }
 
 
@@ -585,40 +584,40 @@ plot_gelman_rho <- function(coda_object) {
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Iter <- Type <- ShrinkFactor <- NULL
+  iter <- type <- shrink_factor <- NULL
 
-  Gelman_Rho_Plot <- try(
+  gelman_rho_plot <- try(
     gelman_preplot(
-      x = coda_object, bin.width = 10, max.bins = 50, confidence = 0.95,
+      x = coda_object, bin_width = 10, max.bins = 50, confidence = 0.95,
       transform = FALSE, autoburnin = TRUE),
     silent = TRUE)
 
-  if (inherits(Gelman_Rho_Plot, "try-error")) {
-    Gelman_Rho_Plot <- gelman_preplot(
-      x = coda_object, bin.width = 10, max.bins = 50, confidence = 0.95,
+  if (inherits(gelman_rho_plot, "try-error")) {
+    gelman_rho_plot <- gelman_preplot(
+      x = coda_object, bin_width = 10, max.bins = 50, confidence = 0.95,
       transform = FALSE, autoburnin = FALSE)
   }
 
-  Gelman_Rho_Plot <- Gelman_Rho_Plot %>%
+  gelman_rho_plot <- gelman_rho_plot %>%
     magrittr::extract2("shrink") %>%
-    tibble::as_tibble(rownames = "Iter") %>%
-    purrr::set_names(c("Iter", "Median", "Q97_5")) %>%
-    dplyr::mutate(Iter = as.integer(Iter)) %>%
+    tibble::as_tibble(rownames = "iter") %>%
+    purrr::set_names(c("iter", "median", "q_97_5")) %>%
+    dplyr::mutate(iter = as.integer(iter)) %>%
     tidyr::pivot_longer(
-      cols = -Iter, names_to = "Type", values_to = "ShrinkFactor") %>%
-    dplyr::arrange(Type, Iter) %>%
-    dplyr::mutate(Type = factor(Type))
-  Gelman_Rho_Plot <- ggplot2::ggplot(
-    Gelman_Rho_Plot, environment = emptyenv()) +
+      cols = -iter, names_to = "type", values_to = "shrink_factor") %>%
+    dplyr::arrange(type, iter) %>%
+    dplyr::mutate(type = factor(type))
+  gelman_rho_plot <- ggplot2::ggplot(
+    gelman_rho_plot, environment = emptyenv()) +
     ggplot2::geom_line(
-      mapping = ggplot2::aes(x = Iter, y = ShrinkFactor, color = Type)) +
-    ggplot2::scale_color_manual(values = c(Median = "red", Q97_5 = "black")) +
+      mapping = ggplot2::aes(x = iter, y = shrink_factor, color = type)) +
+    ggplot2::scale_color_manual(values = c(median = "red", q_97_5 = "black")) +
     ggplot2::geom_hline(
       yintercept = 1.1, linetype = "dashed", col = "darkgrey",
       linewidth = 0.8) +
     ggplot2::facet_grid(
-      ~Type,
-      labeller = ggplot2::as_labeller(c(Median = "Median", Q97_5 = "97.5%"))) +
+      ~type,
+      labeller = ggplot2::as_labeller(c(median = "median", q_97_5 = "97.5%"))) +
     ggplot2::coord_cartesian(expand = FALSE) +
     ggplot2::labs(
       title = "Gelman-Rubin-Brooks plot --- rho",
@@ -645,5 +644,6 @@ plot_gelman_rho <- function(coda_object) {
       panel.spacing = ggplot2::unit(0.85, "lines"),
       plot.caption = ggplot2::element_text(
         color = "darkgrey", face = "italic", size = 10))
-  return(Gelman_Rho_Plot)
+
+  gelman_rho_plot
 }

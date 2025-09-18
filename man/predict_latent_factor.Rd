@@ -7,21 +7,21 @@
 predict_latent_factor(
   units_pred,
   units_model,
-  postEta,
+  post_eta,
   post_alpha,
-  LF_rL,
-  n_cores_LF = 8L,
+  lf_rl,
+  n_cores_lf = 8L,
   strategy = "multisession",
-  temp_dir = "TEMP_Pred",
-  LF_temp_cleanup = TRUE,
+  temp_dir = "temp_pred",
+  lf_temp_cleanup = TRUE,
   model_name = NULL,
-  use_TF = TRUE,
-  TF_environ = NULL,
-  TF_use_single = FALSE,
-  LF_out_file = NULL,
-  LF_return = FALSE,
-  LF_check = FALSE,
-  LF_commands_only = FALSE,
+  use_tf = TRUE,
+  tf_environ = NULL,
+  tf_use_single = FALSE,
+  lf_out_file = NULL,
+  lf_return = FALSE,
+  lf_check = FALSE,
+  lf_commands_only = FALSE,
   solve_max_attempts = 5L,
   solve_chunk_size = 50L,
   verbose = TRUE
@@ -34,16 +34,16 @@ predictions are to be made}
 \item{units_model}{a factor vector with random level units that are
 conditioned on}
 
-\item{postEta}{Character. Path of \code{postEta}; a list containing samples of
+\item{post_eta}{Character. Path of \code{post_eta}; a list containing samples of
 random factors at conditioned units}
 
 \item{post_alpha}{a list containing samples of range (lengthscale) parameters
 for latent factors}
 
-\item{LF_rL}{a HmscRandomLevel-class object that describes the random level
+\item{lf_rl}{a HmscRandomLevel-class object that describes the random level
 structure}
 
-\item{n_cores_LF}{Integer. Number of cores to use for parallel processing of
+\item{n_cores_lf}{Integer. Number of cores to use for parallel processing of
 latent factor prediction. Defaults to 8L.}
 
 \item{strategy}{Character. The parallel processing strategy to use. Valid
@@ -52,35 +52,35 @@ options are "sequential", "multisession" (default), "multicore", and
 
 \item{temp_dir}{Character. Path for temporary storage of intermediate files.}
 
-\item{LF_temp_cleanup}{Logical. Whether to delete temporary files in the
+\item{lf_temp_cleanup}{Logical. Whether to delete temporary files in the
 \code{temp_dir} directory after finishing the LF predictions.}
 
 \item{model_name}{Character. Prefix for temporary file names. Defaults to
 \code{NULL}, in which case no prefix is used.}
 
-\item{use_TF}{Logical. Whether to use \code{TensorFlow} for calculations. Defaults
+\item{use_tf}{Logical. Whether to use \code{TensorFlow} for calculations. Defaults
 to \code{TRUE}.}
 
-\item{TF_environ}{Character. Path to the Python environment. This argument is
-required if \code{use_TF} is \code{TRUE} under Windows. Defaults to \code{NULL}.}
+\item{tf_environ}{Character. Path to the Python environment. This argument is
+required if \code{use_tf} is \code{TRUE} under Windows. Defaults to \code{NULL}.}
 
-\item{TF_use_single}{Logical. Whether to use single precision for the
+\item{tf_use_single}{Logical. Whether to use single precision for the
 \code{TensorFlow} calculations. Defaults to \code{FALSE}.}
 
-\item{LF_out_file}{Character. Path to save the outputs. If \code{NULL} (default),
+\item{lf_out_file}{Character. Path to save the outputs. If \code{NULL} (default),
 the predicted latent factors are not saved to a file. This should end with
 either \verb{*.qs2} or \verb{*.RData}.}
 
-\item{LF_return}{Logical. Whether the output should be returned. Defaults to
-\code{FALSE}. If \code{LF_out_file} is \code{NULL}, this parameter cannot be set to
+\item{lf_return}{Logical. Whether the output should be returned. Defaults to
+\code{FALSE}. If \code{lf_out_file} is \code{NULL}, this parameter cannot be set to
 \code{FALSE} because the function needs to return the result if it is not saved
 to a file.}
 
-\item{LF_check}{Logical. If \code{TRUE}, the function checks if the output files
+\item{lf_check}{Logical. If \code{TRUE}, the function checks if the output files
 are already created and valid. If \code{FALSE}, the function will only check if
 the files exist without checking their integrity. Default is \code{FALSE}.}
 
-\item{LF_commands_only}{Logical. If \code{TRUE}, returns the command to run the
+\item{lf_commands_only}{Logical. If \code{TRUE}, returns the command to run the
 Python script. Default is \code{FALSE}.}
 
 \item{solve_max_attempts}{Integer. Maximum number of attempts to run solve
@@ -105,16 +105,16 @@ when working in parallel.
 
 The main difference is that this function:
 \itemize{
-\item allow for parallel processing (\code{n_cores_LF} argument);
-\item when \code{TensorFlow} is used (\code{use_TF = TRUE}), matrix
+\item allow for parallel processing (\code{n_cores_lf} argument);
+\item when \code{TensorFlow} is used (\code{use_tf = TRUE}), matrix
 calculations are much faster, particularly when used on GPU. The following
 Python modules are needed: \code{numpy}, \code{tensorflow}, \code{rdata}, \code{xarray}, and
-\code{pandas}. To use \code{TensorFlow} under Windows, the argument \code{TF_environ}
+\code{pandas}. To use \code{TensorFlow} under Windows, the argument \code{tf_environ}
 should be set to the path of a Python environment with \code{TensorFlow}
 installed;
-\item if \code{use_TF} is set to \code{FALSE}, the function uses \code{R} (supported by
+\item if \code{use_tf} is set to \code{FALSE}, the function uses \code{R} (supported by
 relatively faster \code{CPP} functions) in the calculations;
-\item \code{D11} and \code{D12} matrices are processed only once and saved to disk and
+\item \code{d11} and \code{d12} matrices are processed only once and saved to disk and
 called when needed.
 }
 }

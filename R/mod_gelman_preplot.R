@@ -6,7 +6,7 @@
 #'
 #'
 #' @param x x
-#' @param bin.width bin.width
+#' @param bin_width bin_width
 #' @param max.bins max.bins
 #' @param confidence confidence
 #' @param transform transform
@@ -20,7 +20,7 @@
 #' @noRd
 
 gelman_preplot <- function(
-    x, bin.width = bin.width, max.bins = max.bins,
+    x, bin_width = bin_width, max.bins = max.bins,
     confidence = confidence, transform = transform,
     autoburnin = autoburnin) {
 
@@ -32,18 +32,18 @@ gelman_preplot <- function(
       include_backtrace = TRUE)
   }
   binw <- floor((coda::niter(x) - 50) / nbin)
-  last.iter <- c(
+  last_iter <- c(
     seq(from = stats::start(x) + 50 * coda::thin(x), by = binw * coda::thin(x),
         length = nbin),
     stats::end(x))
   shrink <- array(dim = c(nbin + 1, coda::nvar(x), 2))
   dimnames(shrink) <- list(
-    last.iter, coda::varnames(x),
+    last_iter, coda::varnames(x),
     c("median", paste0(50 * (confidence + 1), "%")))
 
   for (i in seq_len(nbin + 1)) {
     shrink[i, , ] <- coda::gelman.diag(
-      stats::window(x, end = last.iter[i]),
+      stats::window(x, end = last_iter[i]),
       confidence = confidence,
       transform = transform,
       autoburnin = autoburnin,
@@ -56,5 +56,5 @@ gelman_preplot <- function(
     cat("segments for variables", coda::varnames(x)[all.na], "\n")
     cat("This indicates convergence failure\n")
   }
-  return(list(shrink = shrink, last.iter = last.iter))
+  return(list(shrink = shrink, last_iter = last_iter))
 }

@@ -48,7 +48,7 @@ data sources. Defaults to \code{.env}.}
 distributions from an Hmsc model.}
 }
 \description{
-The \verb{PlotGelman_*()} functions generate plots visualising the evolution of
+The \verb{plot_gelman_*()} functions generate plots visualising the evolution of
 the Gelman-Rubin-Brooks shrink factor for different model parameters as the
 number of iterations increases. These plots help assess whether MCMC chains
 have converged to a common distribution. Each plot includes: median (solid

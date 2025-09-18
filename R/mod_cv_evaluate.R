@@ -9,14 +9,14 @@
 #' plots for explanatory and predictive power.
 #'
 #' @param model_dir Character. Path to the root directory of the fitted model.
-#' @param cv_type Character. Cross-validation type. One of `CV_Dist` (default)
-#'   or `CV_Large`. See [mod_CV_fit()] for more details.
+#' @param cv_type Character. Cross-validation type. One of `cv_dist` (default)
+#'   or `cv_large`. See [mod_cv_fit()] for more details.
 #'
 #' @return Invisibly returns the path to the saved evaluation data file.
 #' @author Ahmed El-Gabbas
 #' @export
 
-mod_cv_evaluate <- function(model_dir = NULL, cv_type = "CV_Dist") {
+mod_cv_evaluate <- function(model_dir = NULL, cv_type = "cv_dist") {
 
   metric <- AUC <- TjurR2 <- Boyce <- RMSE <- n_pres <- n_abs <- species <-
     evaluation_type <- value <- training <- testing <- NULL
@@ -31,7 +31,7 @@ mod_cv_evaluate <- function(model_dir = NULL, cv_type = "CV_Dist") {
   }
 
   # Training data ------
-  file_training <- fs::path(model_dir, "ModDT_training.RData")
+  file_training <- fs::path(model_dir, "model_data_training.RData")
   if (!ecokit::check_data(file_training)) {
     ecokit::stop_ctx(
       "Training data file does not exist", file_training = file_training,
@@ -40,7 +40,7 @@ mod_cv_evaluate <- function(model_dir = NULL, cv_type = "CV_Dist") {
   training_data <- ecokit::load_as(file_training)
 
   # Testing data ------
-  file_testing <- fs::path(model_dir, "ModDT_testing.RData")
+  file_testing <- fs::path(model_dir, "model_data_testing.RData")
   if (!ecokit::check_data(file_testing)) {
     ecokit::stop_ctx(
       "Testing data file does not exist", file_testing = file_testing,
@@ -64,14 +64,14 @@ mod_cv_evaluate <- function(model_dir = NULL, cv_type = "CV_Dist") {
 
   # Model predictions -----
   model_predictions <- fs::path(
-    model_dir, "Model_Prediction", "NoClamp", "Prediction_Current_R.qs2")
+    model_dir, "model_prediction", "no_clamp", "prediction_current_R.qs2")
   if (!ecokit::check_data(model_predictions)) {
     ecokit::stop_ctx(
       "Model prediction file does not exist",
       model_predictions = model_predictions, include_backtrace = TRUE)
   }
   model_predictions <- ecokit::load_as(model_predictions, unwrap_r = TRUE) %>%
-    terra::subset(stringr::str_detect(names(.), "^Sp.+_mean$")) %>%
+    terra::subset(stringr::str_detect(names(.), "^sp.+_mean$")) %>%
     stats::setNames(stringr::str_remove_all(names(.), "_mean$"))
 
   if (!all(names(model_predictions) %in% names(training_data))) {
@@ -107,7 +107,7 @@ mod_cv_evaluate <- function(model_dir = NULL, cv_type = "CV_Dist") {
     dplyr::arrange(species, evaluation_type)
 
   evaluation_path <- fs::path(
-    model_dir, "Model_Evaluation", "eval_cv_data.RData")
+    model_dir, "model_evaluation", "eval_cv_data.RData")
   ecokit::save_as(
     object = eval_cv_data, object_name = "eval_cv_data",
     out_path = evaluation_path)
@@ -168,7 +168,7 @@ mod_cv_evaluate <- function(model_dir = NULL, cv_type = "CV_Dist") {
     patchwork::plot_layout(heights = c(0.25, 12), widths = c(1, 1))
 
   ragg::agg_jpeg(
-    filename = fs::path(model_dir, "Model_Evaluation", "Evaluation_plot.jpeg"),
+    filename = fs::path(model_dir, "model_evaluation", "Evaluation_plot.jpeg"),
     width = 20, height = 30, res = 600, quality = 100, units = "cm")
   print(final_plot)
   grDevices::dev.off()
@@ -217,7 +217,7 @@ mod_cv_evaluate <- function(model_dir = NULL, cv_type = "CV_Dist") {
 
   ragg::agg_jpeg(
     filename = fs::path(
-      model_dir, "Model_Evaluation", "training_vs_testing.jpeg"),
+      model_dir, "model_evaluation", "training_vs_testing.jpeg"),
     width = 30.5, height = 30, res = 600, quality = 100, units = "cm")
   print(training_vs_testing)
   grDevices::dev.off()
@@ -391,7 +391,7 @@ mod_cv_evaluate_plot <- function(
       path_prefix = paste0(model_prefix, hab_abb, "_", spatial),
       eval_file = fs::path(
         dir_fit, paste0(path_prefix, "_cv", fold),
-        "Model_Evaluation", "eval_cv_data.RData"))
+        "model_evaluation", "eval_cv_data.RData"))
 
   eval_files <- eval_summary$eval_file
   eval_okay <- purrr::map_lgl(eval_files, ecokit::check_data, warning = FALSE)
@@ -508,7 +508,7 @@ mod_cv_evaluate_plot <- function(
         min = min(value, na.rm = TRUE),
         max = max(value, na.rm = TRUE), .groups = "drop")
 
-    Spatial_nonspatial_theme <- ggplot2::theme(
+    spatial_nonspatial_theme <- ggplot2::theme(
       plot.margin = ggplot2::margin(4, 10, 6, 8),
       panel.grid.minor = ggplot2::element_blank(),
       panel.grid.major = ggplot2::element_line(
@@ -528,7 +528,7 @@ mod_cv_evaluate_plot <- function(
       panel.border = ggplot2::element_rect(
         colour = "grey90", fill = NA, linewidth = 0.6))
 
-    Spatial_nonspatial_training <- eval_summary2 %>%
+    spatial_nonspatial_training <- eval_summary2 %>%
       dplyr::filter(evaluation_type == "training") %>%
       tidyr::pivot_wider(names_from = spatial, values_from = "value") %>%
       dplyr::left_join(metric_ranges, by = "metric") %>%
@@ -545,15 +545,15 @@ mod_cv_evaluate_plot <- function(
       ggplot2::labs(
         x = "Non-spatial Hmsc", y = "Spatial Hmsc",
         title = "Spatial vs non-spatial Hmsc --- exploratory power") +
-      Spatial_nonspatial_theme
+      spatial_nonspatial_theme
 
     ragg::agg_jpeg(
       filename = fs::path(dir_eval, "spatial_nonspatial_training.jpeg"),
       width = 30.5, height = 30, res = 600, quality = 100, units = "cm")
-    print(Spatial_nonspatial_training)
+    print(spatial_nonspatial_training)
     grDevices::dev.off()
 
-    Spatial_nonspatial_testing <- eval_summary2 %>%
+    spatial_nonspatial_testing <- eval_summary2 %>%
       dplyr::filter(evaluation_type == "testing") %>%
       tidyr::pivot_wider(names_from = spatial, values_from = "value") %>%
       dplyr::left_join(metric_ranges, by = "metric") %>%
@@ -570,12 +570,12 @@ mod_cv_evaluate_plot <- function(
       ggplot2::labs(
         x = "Non-spatial Hmsc", y = "Spatial Hmsc",
         title = "Spatial vs non-spatial Hmsc --- predictive power") +
-      Spatial_nonspatial_theme
+      spatial_nonspatial_theme
 
     ragg::agg_jpeg(
       filename = fs::path(dir_eval, "spatial_nonspatial_testing.jpeg"),
       width = 30.5, height = 30, res = 600, quality = 100, units = "cm")
-    print(Spatial_nonspatial_testing)
+    print(spatial_nonspatial_testing)
     grDevices::dev.off()
   }
   invisible(NULL)

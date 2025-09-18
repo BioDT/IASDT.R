@@ -16,7 +16,7 @@ convergence_plot_all(
 }
 \arguments{
 \item{model_dir}{Character. Path to the root directory of the fitted model.
-The convergence outputs will be saved to the \code{Model_Convergence_All}
+The convergence outputs will be saved to the \code{model_convergence_All}
 subdirectory.}
 
 \item{n_omega}{Integer. Number of species interactions sampled for Omega

@@ -22,12 +22,12 @@
 #'   `NULL`, defaults to custom settings defined within the workflow.
 #' @param model_dir Character. Path to the directory containing model data and
 #'   where outputs and results will be saved. Model data are prepared using the
-#'   [mod_prepare_HPC()] and [mod_prepare_data()] functions.
+#'   [mod_prepare_hpc()] and [mod_prepare_data()] functions.
 #' @param hab_abb Character. Abbreviation for a single SynHab habitat type.
 #'   Valid values: "0", "1", "2", "3", "4a", "4b", "10", "12a", "12b". See
-#'   [mod_prepare_HPC()] for more details.
-#' @param cv_type Character. Cross-validation type. One of `CV_Dist` (default)
-#'   or `CV_Large`. See [mod_CV_fit()] for more details.
+#'   [mod_prepare_hpc()] for more details.
+#' @param cv_type Character. Cross-validation type. One of `cv_dist` (default)
+#'   or `cv_large`. See [mod_cv_fit()] for more details.
 #' @param n_cores Integer. Number of CPU cores for parallel processing. Default
 #'   is 8.
 #' @param future_max_size Numeric. Maximum allowed total size (in megabytes) of
@@ -119,7 +119,7 @@
 
 fit_sdm_models <- function(
     sdm_method = NULL, model_settings = NULL, model_dir = NULL,
-    hab_abb = NULL, cv_type = "CV_Dist", n_cores = 8L, future_max_size = 2000L,
+    hab_abb = NULL, cv_type = "cv_dist", n_cores = 8L, future_max_size = 2000L,
     selected_species = NULL, excluded_species = NULL, env_file = ".env",
     clamp_pred = TRUE, fix_efforts = "q90", fix_rivers = "q90",
     climate_models = "all", climate_scenarios = "all", climate_periods = "all",
@@ -151,7 +151,7 @@ fit_sdm_models <- function(
   # |||||||||||||||||||||||||||||||||||||||||||
 
   # cv_type
-  valid_cv_types <- c("CV_Dist", "CV_Large")
+  valid_cv_types <- c("cv_dist", "cv_large")
   if (!cv_type %in% valid_cv_types) {
     ecokit::stop_ctx(
       "Invalid CV type", cv_type = cv_type, valid_cv_types = valid_cv_types)

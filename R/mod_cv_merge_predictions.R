@@ -41,7 +41,7 @@ mod_cv_merge_predictions <- function(
     dplyr::if_else(spatial_model, "gpp", "nonspatial"))
   cols_remove <- c(
     "tif_path_cov", "tif_path_sd", "cv_fold",
-    "tif_path_anomaly", "Dir_Ensemble", "tifs")
+    "tif_path_anomaly", "Dir_ensemble", "tifs")
   path_summary <- fs::path(
     dir_fitting, paste0(model_prefix, hab_abb, "_cv_summary"),
     paste0("predictions_", dplyr::if_else(spatial_model, "gpp", "nonspatial")))
@@ -62,10 +62,10 @@ mod_cv_merge_predictions <- function(
           dir_no_clamp = fs::path(
             dir_fitting,
             paste0(path_prefix, "_cv", fold),
-            "Model_Prediction", "NoClamp"),
+            "model_prediction", "no_clamp"),
           files_no_clamp = purrr::map(
             dir_no_clamp,
-            list.files, pattern = "_Summary.RData", full.names = TRUE),
+            list.files, pattern = "_summary.RData", full.names = TRUE),
           data_no_clamp = purrr::map2(
             .x = files_no_clamp, .y = fold,
             .f = ~ {
@@ -113,9 +113,9 @@ mod_cv_merge_predictions <- function(
         dplyr::mutate(
           dir_clamp = fs::path(
             dir_fitting,
-            paste0(path_prefix, "_cv", fold), "Model_Prediction", "Clamp"),
+            paste0(path_prefix, "_cv", fold), "model_prediction", "clamp"),
           files_clamp = purrr::map(
-            dir_clamp, list.files, pattern = "_Summary.RData",
+            dir_clamp, list.files, pattern = "_summary.RData",
             full.names = TRUE),
           data_clamp = purrr::map2(
             .x = files_clamp, .y = fold,
@@ -149,24 +149,24 @@ mod_cv_merge_predictions <- function(
     }
 
     preds_sr <- dplyr::filter(
-      preds_clamp, ias_id == "SR",
-      climate_model %in% c("Current", "Ensemble")) %>%
+      preds_clamp, ias_id == "sr",
+      climate_model %in% c("current", "ensemble")) %>%
       dplyr::pull(path_pred_mean) %>%
       terra::rast()
     preds_anomaly <- preds_sr[[2:10]] - preds_sr[[1]]
 
-    Xlim <- c(2600000, 6500000)
-    Ylim <- c(1450000, 5420000)
+    x_lim <- c(2600000, 6500000)
+    y_lim <- c(1450000, 5420000)
 
     sr_map <- ggplot2::ggplot(environment = emptyenv()) +
       tidyterra::geom_spatraster(data = preds_sr[[1]], maxcell = Inf)  +
       paletteer::scale_fill_paletteer_c(
         na.value = "transparent", palette = "viridis::plasma", name = NULL) +
       ggplot2::scale_x_continuous(
-        expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim,
+        expand = ggplot2::expansion(mult = c(0, 0)), limits = x_lim,
         oob = scales::oob_keep) +
       ggplot2::scale_y_continuous(
-        expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
+        expand = ggplot2::expansion(mult = c(0, 0)), limits = y_lim) +
       ggplot2::labs(title = "Level of invasion") +
       ggplot2::theme_bw() +
       ggplot2::theme(
@@ -204,7 +204,7 @@ mod_cv_merge_predictions <- function(
 
     # Build custom titles dynamically
     custom_titles <- names(preds_anomaly) %>%
-      stringr::str_remove_all("SR_|_Ensemble_|_mean") %>%
+      stringr::str_remove_all("sr_|_ensemble_|_mean") %>%
       stringr::str_replace_all("ssp", " --- ssp") %>%
       stringr::str_replace_all("_", "-")
     names(custom_titles) <-  names(preds_anomaly)
@@ -239,10 +239,10 @@ mod_cv_merge_predictions <- function(
         cols = ggplot2::vars(scenario = scenario_labeller(lyr))) +
       ggplot2::labs(title = "Prediction anomaly") +
       ggplot2::scale_x_continuous(
-        expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim,
+        expand = ggplot2::expansion(mult = c(0, 0)), limits = x_lim,
         oob = scales::oob_keep) +
       ggplot2::scale_y_continuous(
-        expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
+        expand = ggplot2::expansion(mult = c(0, 0)), limits = y_lim) +
       ggplot2::theme_bw() +
       ggplot2::theme(
         plot.margin = ggplot2::margin(0, 0, 0, 0),
@@ -327,7 +327,7 @@ summarize_cv_maps <- function(
       sub_data <- dplyr::slice(data, row_id)
       tif_paths <- magrittr::extract2(magrittr::extract2(sub_data, "paths"), 1)
       option_name <- stringr::str_replace_all(
-        unique(tif_paths$option_name), "1981_2010_Current_Current", "1981_2010")
+        unique(tif_paths$option_name), "1981_2010_current_current", "1981_2010")
 
       dir_out <- basename(dirname(tif_paths$tif_path_mean)) %>%
         unique() %>%

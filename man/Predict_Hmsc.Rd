@@ -17,24 +17,24 @@ predict_hmsc(
   expected = TRUE,
   n_cores = 8L,
   strategy = "multisession",
-  model_name = "Train",
-  temp_dir = "TEMP_Pred",
+  model_name = "train",
+  temp_dir = "temp_pred",
   temp_cleanup = TRUE,
   prediction_type = NULL,
-  use_TF = TRUE,
-  TF_environ = NULL,
-  TF_use_single = FALSE,
-  LF_out_file = NULL,
-  LF_return = FALSE,
-  LF_inputFile = NULL,
-  LF_only = FALSE,
-  n_cores_LF = n_cores,
-  LF_check = FALSE,
-  LF_temp_cleanup = TRUE,
-  LF_commands_only = FALSE,
+  use_tf = TRUE,
+  tf_environ = NULL,
+  tf_use_single = FALSE,
+  lf_out_file = NULL,
+  lf_return = FALSE,
+  lf_input_file = NULL,
+  lf_only = FALSE,
+  n_cores_lf = n_cores,
+  lf_check = FALSE,
+  lf_temp_cleanup = TRUE,
+  lf_commands_only = FALSE,
   pred_directory = NULL,
-  pred_PA = NULL,
-  pred_XY = NULL,
+  pred_pa = NULL,
+  pred_xy = NULL,
   evaluate = FALSE,
   evaluation_name = NULL,
   evaluation_directory = "Evaluation",
@@ -92,57 +92,57 @@ options are "sequential", "multisession" (default), "multicore", and
 are made for response curves at mean coordinates. If \code{i}, predictions are
 made for response curves at infinite coordinates.}
 
-\item{use_TF}{Logical. Whether to use \code{TensorFlow} for calculations. Defaults
+\item{use_tf}{Logical. Whether to use \code{TensorFlow} for calculations. Defaults
 to \code{TRUE}.}
 
-\item{TF_environ}{Character. Path to the Python environment. This argument is
-required if \code{use_TF} is \code{TRUE} under Windows. Defaults to \code{NULL}.}
+\item{tf_environ}{Character. Path to the Python environment. This argument is
+required if \code{use_tf} is \code{TRUE} under Windows. Defaults to \code{NULL}.}
 
-\item{TF_use_single}{Logical. Whether to use single precision for the
+\item{tf_use_single}{Logical. Whether to use single precision for the
 \code{TensorFlow} calculations. Defaults to \code{FALSE}.}
 
-\item{LF_out_file}{Character. Path to save the outputs. If \code{NULL} (default),
+\item{lf_out_file}{Character. Path to save the outputs. If \code{NULL} (default),
 the predicted latent factors are not saved to a file. This should end with
 either \verb{*.qs2} or \verb{*.RData}.}
 
-\item{LF_return}{Logical. Whether the output should be returned. Defaults to
-\code{FALSE}. If \code{LF_out_file} is \code{NULL}, this parameter cannot be set to
+\item{lf_return}{Logical. Whether the output should be returned. Defaults to
+\code{FALSE}. If \code{lf_out_file} is \code{NULL}, this parameter cannot be set to
 \code{FALSE} because the function needs to return the result if it is not saved
 to a file.}
 
-\item{LF_inputFile}{Character. File name where the latent factor predictions
+\item{lf_input_file}{Character. File name where the latent factor predictions
 are saved. If \code{NULL} (default), latent factor predictions will be computed.
 If specified, latent factor predictions are read from this path. This
 allows to predicting the latent factors for new sites only once.}
 
-\item{LF_only}{Logical. Whether to return the latent factor predictions only.
+\item{lf_only}{Logical. Whether to return the latent factor predictions only.
 Defaults to \code{FALSE}. This helps in predicting to new sites, allowing to
 predicting the latent factors only once, then the output can be loaded in
 other predictions when needed.}
 
-\item{n_cores_LF}{Integer. Number of cores to use for parallel processing of
+\item{n_cores_lf}{Integer. Number of cores to use for parallel processing of
 latent factor prediction. Defaults to 8L.}
 
-\item{LF_check}{Logical. If \code{TRUE}, the function checks if the output files
+\item{lf_check}{Logical. If \code{TRUE}, the function checks if the output files
 are already created and valid. If \code{FALSE}, the function will only check if
 the files exist without checking their integrity. Default is \code{FALSE}.}
 
-\item{LF_temp_cleanup}{Logical. Whether to delete temporary files in the
+\item{lf_temp_cleanup}{Logical. Whether to delete temporary files in the
 \code{temp_dir} directory after finishing the LF predictions.}
 
-\item{LF_commands_only}{Logical. If \code{TRUE}, returns the command to run the
+\item{lf_commands_only}{Logical. If \code{TRUE}, returns the command to run the
 Python script. Default is \code{FALSE}.}
 
 \item{pred_directory}{Character. Directory path indicating where the
 predictions will be saved. Defaults to \code{NULL}, which saves model
-predictions to "\code{Model_Prediction}" folder of the current working
+predictions to "\code{model_prediction}" folder of the current working
 directory.}
 
-\item{pred_PA}{\code{matrix}. Presence-absence data for evaluation. If \code{NULL}
+\item{pred_pa}{\code{matrix}. Presence-absence data for evaluation. If \code{NULL}
 (default), the presence-absence data from the model object is used. This
 argument is used only when \code{evaluate} is \code{TRUE}.}
 
-\item{pred_XY}{\code{matrix}. Coordinates to be added to predicted values. If
+\item{pred_xy}{\code{matrix}. Coordinates to be added to predicted values. If
 \code{NULL} (default), the coordinates from the model object is used.}
 
 \item{evaluate}{Logical. Whether to evaluate the model predictions. Defaults

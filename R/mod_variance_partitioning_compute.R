@@ -27,16 +27,16 @@
 #'   the focal species is NA when computing variance-covariance matrices for
 #'   each species.
 #' @param n_cores Integer. Number of CPU cores to use for computing variance
-#'   partitioning using `TensorFlow`. This is only effective when `use_TF` is
+#'   partitioning using `TensorFlow`. This is only effective when `use_tf` is
 #'   `TRUE`. Default: `1`.
 #' @param chunk_size Integer. Size of each chunk of samples to process in
 #'   parallel. Only relevant for `TensorFlow`. Default: `50`.
 #' @param verbose Logical. Whether to print progress messages. Default: `TRUE`.
 #' @param temp_cleanup Logical. Whether to delete temporary files after
 #'   processing. Default: `TRUE`.
-#' @param VP_commands_only Logical. If `TRUE`, returns the commands to run the
-#'   Python script. Default is `FALSE`. Only relevant when `use_TF` is `TRUE`.
-#' @param VP_file Character. Name of the output file to save the results.
+#' @param vp_commands_only Logical. If `TRUE`, returns the commands to run the
+#'   Python script. Default is `FALSE`. Only relevant when `use_tf` is `TRUE`.
+#' @param vp_file Character. Name of the output file to save the results.
 #'   Default: `varpar`.
 #' @param env_file Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
@@ -58,9 +58,9 @@
 
 variance_partitioning_compute <- function(
     path_model, group = NULL, group_names = NULL, start = 1L, na.ignore = FALSE,
-    n_cores = 8L, use_TF = TRUE, TF_environ = NULL, TF_use_single = FALSE,
-    temp_cleanup = TRUE, chunk_size = 50L, verbose = TRUE, VP_file = "varpar",
-    VP_commands_only = FALSE) {
+    n_cores = 8L, use_tf = TRUE, tf_environ = NULL, tf_use_single = FALSE,
+    temp_cleanup = TRUE, chunk_size = 50L, verbose = TRUE, vp_file = "varpar",
+    vp_commands_only = FALSE) {
 
   x <- NULL
 
@@ -81,45 +81,45 @@ variance_partitioning_compute <- function(
   # Create folder for variance partitioning results
   Path_VarPar <- fs::path(
     dirname(dirname(path_model)),
-    "Model_Postprocessing", "Variance_Partitioning")
+    "model_postprocessing", "Variance_Partitioning")
   fs::dir_create(Path_VarPar)
 
-  File_VarPar <- fs::path(Path_VarPar, paste0(VP_file, ".RData"))
-  if (ecokit::check_data(File_VarPar)) {
-    return(ecokit::load_as(File_VarPar))
+  file_var_par <- fs::path(Path_VarPar, paste0(vp_file, ".RData"))
+  if (ecokit::check_data(file_var_par)) {
+    return(ecokit::load_as(file_var_par))
   }
 
   # # .................................................................... ###
 
   # Check if the virtual environment and Python scripts exist
 
-  if (use_TF) {
+  if (use_tf) {
 
     # Check python virtual environment
-    if (isFALSE(VP_commands_only) && .Platform$OS.type == "windows" &&
-        (is.null(TF_environ) || !dir.exists(TF_environ))) {
+    if (isFALSE(vp_commands_only) && .Platform$OS.type == "windows" &&
+        (is.null(tf_environ) || !dir.exists(tf_environ))) {
       ecokit::stop_ctx(
         paste0(
-          "When running on Windows and `use_TF` is TRUE, `TF_environ` must ",
+          "When running on Windows and `use_tf` is TRUE, `tf_environ` must ",
           "be specified and point to an existing directory with a ",
           "Python virtual environment"),
-        VP_commands_only = VP_commands_only, OS = .Platform$OS.type,
-        TF_environ = TF_environ, include_backtrace = TRUE)
+        vp_commands_only = vp_commands_only, OS = .Platform$OS.type,
+        tf_environ = tf_environ, include_backtrace = TRUE)
     }
 
     # Determine the Python executable path
 
     # On Windows, the TF calculations has to be done through a valid virtual
     # environment; the path to the virtual environment must be specified in
-    # `TF_environ`. On LUMI, this is not needed as the compatible python
+    # `tf_environ`. On LUMI, this is not needed as the compatible python
     # installation is loaded automatically when loading `tensorflow` module.
     # When using another HPC system, the function needs to be adapted
     # accordingly to point to a valid python virtual environment.
 
     if (.Platform$OS.type == "windows") {
-      python_executable <- fs::path(TF_environ, "Scripts", "python.exe")
+      python_executable <- fs::path(tf_environ, "Scripts", "python.exe")
 
-      if (isFALSE(VP_commands_only) && !file.exists(python_executable)) {
+      if (isFALSE(vp_commands_only) && !file.exists(python_executable)) {
         ecokit::stop_ctx(
           "Python executable not found in the virtual environment",
           python_executable = python_executable, include_backtrace = TRUE)
@@ -129,7 +129,7 @@ variance_partitioning_compute <- function(
     }
 
     # Check GPU availability
-    if (isFALSE(VP_commands_only) && .Platform$OS.type == "windows") {
+    if (isFALSE(vp_commands_only) && .Platform$OS.type == "windows") {
       result <- system(
         paste0(
           python_executable,
@@ -151,14 +151,14 @@ variance_partitioning_compute <- function(
     }
 
     # Paths to the Python scripts
-    Script_geta <- system.file("VP_geta.py", package = "IASDT.R")
-    Script_getf <- system.file("VP_getf.py", package = "IASDT.R")
-    Script_gemu <- system.file("VP_gemu.py", package = "IASDT.R")
-    if (!all(file.exists(c(Script_geta, Script_getf, Script_gemu)))) {
+    script_geta <- system.file("VP_geta.py", package = "IASDT.R")
+    script_getf <- system.file("VP_getf.py", package = "IASDT.R")
+    script_gemu <- system.file("VP_gemu.py", package = "IASDT.R")
+    if (!all(file.exists(c(script_geta, script_getf, script_gemu)))) {
       ecokit::stop_ctx(
         "Necessary python scripts do not exist",
-        Script_geta = Script_geta, Script_getf = Script_getf,
-        Script_gemu = Script_gemu, include_backtrace = TRUE)
+        script_geta = script_geta, script_getf = script_getf,
+        script_gemu = script_gemu, include_backtrace = TRUE)
     }
   }
 
@@ -173,25 +173,25 @@ variance_partitioning_compute <- function(
       include_backtrace = TRUE)
   }
 
-  Model <- ecokit::load_as(path_model)
+  model_obj <- ecokit::load_as(path_model)
 
   # # .................................................................... ###
 
-  ny <- Model$ny
-  nc <- Model$nc
-  ns <- Model$ns
-  nr <- Model$nr
+  ny <- model_obj$ny
+  nc <- model_obj$nc
+  ns <- model_obj$ns
+  nr <- model_obj$nr
 
   if (is.null(group)) {
     # names of variables used in the model
-    group_names <- names(Model$XData)
+    group_names <- names(model_obj$XData)
 
     # actual variables used in the model, including quadratic terms
-    ModelVars <- dimnames(Model$X)[[2]][-1]
+    model_vars <- dimnames(model_obj$X)[[2]][-1]
 
     # group variable to combine variable and its quadratic terms together
     group <- purrr::map(
-      ModelVars, ~ which(stringr::str_detect(.x, group_names))) %>%
+      model_vars, ~ which(stringr::str_detect(.x, group_names))) %>%
       unlist() %>%
       # add intercept to the first group
       c(.[1], .)
@@ -201,24 +201,25 @@ variance_partitioning_compute <- function(
   if (na.ignore) {
     xl <- list()
     for (s in seq_len(ns)) {
-      xl[[s]] <- Model$X
+      xl[[s]] <- model_obj$X
     }
-    Model$X <- xl
+    model_obj$X <- xl
   }
 
   switch(
-    class(Model$X)[1L],
+    class(model_obj$X)[1L],
     matrix = {
-      cMA <- stats::cov(Model$X)
+      cMA <- stats::cov(model_obj$X)
     },
     list = {
       if (na.ignore) {
         cMA <- list()
         for (s in seq_len(ns)) {
-          cMA[[s]] <- stats::cov(Model$X[[s]][which(Model$Y[, s] > -Inf), ])
+          cMA[[s]] <- stats::cov(
+            model_obj$X[[s]][which(model_obj$Y[, s] > -Inf), ])
         }
       } else {
-        cMA <- lapply(Model$X, stats::cov)
+        cMA <- lapply(model_obj$X, stats::cov)
       }
     }
   )
@@ -228,7 +229,7 @@ variance_partitioning_compute <- function(
   # Prepare postList-----
 
   ecokit::cat_time("Prepare postList", verbose = verbose)
-  postList <- Hmsc::poolMcmcChains(Model$postList, start = start)
+  postList <- Hmsc::poolMcmcChains(model_obj$postList, start = start)
 
   # Remove not-needed items
 
@@ -252,10 +253,11 @@ variance_partitioning_compute <- function(
     "distr", "V0", "UGamma", "YScaled")
 
   # This takes long time in some cases (when submitted via SLURM)
-  # Model[names_to_remove] <- NULL
+  # model_obj[names_to_remove] <- NULL
 
   # `trim_hmsc` is much faster
-  Model <- IASDT.R::trim_hmsc(model = Model, names_to_remove = Items2Delete)
+  model_obj <- IASDT.R::trim_hmsc(
+    model = model_obj, names_to_remove = Items2Delete)
   invisible(gc())
 
   poolN <- length(postList)
@@ -266,75 +268,75 @@ variance_partitioning_compute <- function(
 
   # Prepare `la`/`lf`/`lmu` lists -----
 
-  if (use_TF) {
+  if (use_tf) {
 
     ecokit::cat_time(
       "Prepare/check VP files for `TensorFlow`", verbose = verbose)
 
     # Create the temporary directory
-    Path_Temp <- fs::path(dirname(dirname(path_model)), "TEMP_VP")
-    fs::dir_create(Path_Temp)
-    path_VP_input_files <- fs::path(Path_Temp, "VP_input_files.txt")
+    path_temp <- fs::path(dirname(dirname(path_model)), "temp_vp")
+    fs::dir_create(path_temp)
+    path_vp_input_files <- fs::path(path_temp, "vp_input_files.txt")
 
-    FileSuffix <- stringr::str_pad(
+    file_suffix <- stringr::str_pad(
       string = seq_len(poolN), pad = "0", width = 4)
 
     # List of feather files resulted from `geta` function
-    Files_la <- fs::path(Path_Temp, paste0("VP_A_", FileSuffix, ".feather"))
-    Files_la_Exist <- all(fs::file_exists(Files_la))
+    Files_la <- fs::path(path_temp, paste0("vp_A_", file_suffix, ".feather"))
+    files_la_exist <- all(fs::file_exists(Files_la))
 
-    if (Files_la_Exist) {
-      Files_la_Exist <- foreach::foreach(
+    if (files_la_exist) {
+      files_la_exist <- foreach::foreach(
         i = Files_la, .combine = c, .multicombine = TRUE,
         .packages = c("ecokit", "arrow")) %dopar% { # nolint: object_usage_linter
           ecokit::check_data(i, warning = FALSE)
         }
-      Files_la_Exist <- all(Files_la_Exist)
+      files_la_exist <- all(files_la_exist)
     }
-    if (Files_la_Exist) {
+    if (files_la_exist) {
       ecokit::cat_time(
-        "All `VP_A*.feather` files are available",
+        "All `vp_A*.feather` files are available",
         verbose = verbose, level = 1L)
     }
 
     # List of feather files resulted from `getf` function
-    Files_lf <- fs::path(Path_Temp, paste0("VP_F_", FileSuffix, ".feather"))
-    Files_lf_Exist <- all(fs::file_exists(Files_lf))
-    if (Files_lf_Exist) {
-      Files_lf_Exist <- foreach::foreach(
+    Files_lf <- fs::path(path_temp, paste0("vp_f_", file_suffix, ".feather"))
+    files_lf_exist <- all(fs::file_exists(Files_lf))
+    if (files_lf_exist) {
+      files_lf_exist <- foreach::foreach(
         i = Files_lf, .combine = c, .multicombine = TRUE,
         .packages = c("ecokit", "arrow")) %dopar% { # nolint: object_usage_linter
           ecokit::check_data(i, warning = FALSE)
         }
-      Files_lf_Exist <- all(Files_lf_Exist)
+      files_lf_exist <- all(files_lf_exist)
     }
-    if (Files_lf_Exist) {
+    if (files_lf_exist) {
       ecokit::cat_time(
-        "All `VP_F*.feather` files are available",
+        "All `vp_f*.feather` files are available",
         verbose = verbose, level = 1L)
     }
 
     # List of feather files resulted from `gemu` function
-    Files_lmu <- fs::path(Path_Temp, paste0("VP_Mu_", FileSuffix, ".feather"))
-    Files_lmu_Exist <- all(fs::file_exists(Files_lmu))
-    if (Files_lmu_Exist) {
-      Files_lmu_Exist <- foreach::foreach(
+    Files_lmu <- fs::path(path_temp, paste0("vp_mu_", file_suffix, ".feather"))
+    files_lmu_exist <- all(fs::file_exists(Files_lmu))
+    if (files_lmu_exist) {
+      files_lmu_exist <- foreach::foreach(
         i = Files_lmu, .combine = c, .multicombine = TRUE,
         .packages = c("ecokit", "arrow")) %dopar% { # nolint: object_usage_linter
           ecokit::check_data(i, warning = FALSE)
         }
-      Files_lmu_Exist <- all(Files_lmu_Exist)
+      files_lmu_exist <- all(files_lmu_exist)
     }
-    if (Files_lmu_Exist) {
+    if (files_lmu_exist) {
       ecokit::cat_time(
-        "All `VP_Mu*.feather` files are available",
+        "All `vp_mu*.feather` files are available",
         verbose = verbose, level = 1L)
     }
 
-    Beta_Files <- fs::path(
-      Path_Temp, paste0("VP_Beta_", FileSuffix, ".feather"))
+    beta_files <- fs::path(
+      path_temp, paste0("vp_beta_", file_suffix, ".feather"))
 
-    if (all(c(Files_la_Exist, Files_lf_Exist, Files_lmu_Exist))) {
+    if (all(c(files_la_exist, files_lf_exist, files_lmu_exist))) {
 
       # All feather data are already processed and available on disk
       ecokit::cat_time(
@@ -345,7 +347,7 @@ variance_partitioning_compute <- function(
 
       # Write the contents of Files_la, Files_lf, Files_lmu to a text file
       readr::write_lines(
-        x = c(Files_la, Files_lf, Files_lmu), file = path_VP_input_files)
+        x = c(Files_la, Files_lf, Files_lmu), file = path_vp_input_files)
 
       ## Prepare la/lf/lmu lists using `TensorFlow` ----
       ecokit::cat_time(
@@ -357,54 +359,54 @@ variance_partitioning_compute <- function(
 
       #### X data -----
       # needed only to calculate `geta` and `getf` functions
-      if (!all(c(Files_la_Exist, Files_lf_Exist))) {
+      if (!all(c(files_la_exist, files_lf_exist))) {
         ecokit::cat_time("X", level = 2L, verbose = verbose)
-        Path_X <- fs::path(Path_Temp, "VP_X.feather")
-        if (!file.exists(Path_X)) {
-          arrow::write_feather(as.data.frame(Model$X), Path_X)
+        path_x <- fs::path(path_temp, "vp_x.feather")
+        if (!file.exists(path_x)) {
+          arrow::write_feather(as.data.frame(model_obj$X), path_x)
         }
       }
 
       #### Tr / Gamma ------
       # needed only to calculate `geta` and `gemu` functions
-      if (!all(c(Files_la_Exist, Files_lmu_Exist))) {
+      if (!all(c(files_la_exist, files_lmu_exist))) {
         ecokit::cat_time("Tr", level = 2L, verbose = verbose)
-        Path_Tr <- fs::path(Path_Temp, "VP_Tr.feather")
-        if (!file.exists(Path_Tr)) {
-          arrow::write_feather(as.data.frame(Model$Tr), Path_Tr)
+        path_tr <- fs::path(path_temp, "vp_tr.feather")
+        if (!file.exists(path_tr)) {
+          arrow::write_feather(as.data.frame(model_obj$Tr), path_tr)
         }
 
         # Gamma - convert each list item into a column in a data frame
         ecokit::cat_time("Gamma", level = 2L, verbose = verbose)
-        Path_Gamma <- fs::path(Path_Temp, "VP_Gamma.feather")
-        if (!file.exists(Path_Gamma)) {
+        path_gamma <- fs::path(path_temp, "vp_gamma.feather")
+        if (!file.exists(path_gamma)) {
           Gamma_data <- postList %>%
             purrr::map(~as.vector(.x[["Gamma"]])) %>%
             as.data.frame() %>%
             stats::setNames(paste0("Sample_", seq_len(ncol(.))))
-          arrow::write_feather(Gamma_data, Path_Gamma)
+          arrow::write_feather(Gamma_data, path_gamma)
         }
       }
 
       #### Beta -----
       # only needed for `getf` function
-      if (!Files_lf_Exist) {
+      if (!files_lf_exist) {
 
         # Beta -- Each element of Beta is a matrix, so each list item is saved
         # to separate feather file
         ecokit::cat_time("Beta", level = 2L, verbose = verbose)
 
-        Beta_Files_Exist <- all(fs::file_exists(Beta_Files))
-        if (Beta_Files_Exist) {
-          Beta_Files_Exist <- foreach::foreach(
-            i = Beta_Files, .combine = c, .multicombine = TRUE,
+        beta_files_Exist <- all(fs::file_exists(beta_files))
+        if (beta_files_Exist) {
+          beta_files_Exist <- foreach::foreach(
+            i = beta_files, .combine = c, .multicombine = TRUE,
             .packages = c("ecokit", "arrow")) %dopar% { # nolint: object_usage_linter
               ecokit::check_data(i, warning = FALSE)
             }
-          Beta_Files_Exist <- all(Beta_Files_Exist)
+          beta_files_Exist <- all(beta_files_Exist)
         }
 
-        if (!Beta_Files_Exist) {
+        if (!beta_files_Exist) {
 
           ecokit::cat_time(
             "Processing beta in parallel", level = 3L, verbose = verbose)
@@ -412,16 +414,16 @@ variance_partitioning_compute <- function(
           Beta0 <- foreach::foreach(
             x = seq_along(postList), .combine = c, .multicombine = TRUE,
             .packages = c("ecokit", "fs", "purrr", "arrow", "magrittr"),
-            .export = c("Beta_Files", "postList")) %dopar% { # nolint: object_usage_linter
+            .export = c("beta_files", "postList")) %dopar% { # nolint: object_usage_linter
 
-              Beta_File <- Beta_Files[x]
+              beta_file <- beta_files[x]
 
-              if (ecokit::check_data(Beta_File, warning = FALSE)) {
+              if (ecokit::check_data(beta_file, warning = FALSE)) {
                 return(NULL)
               }
 
-              if (fs::file_exists(Beta_File)) {
-                try(fs::file_delete(Beta_File), silent = TRUE)
+              if (fs::file_exists(beta_file)) {
+                try(fs::file_delete(beta_file), silent = TRUE)
               }
 
               Beta <- purrr::pluck(postList, x, "Beta") %>%
@@ -430,17 +432,17 @@ variance_partitioning_compute <- function(
               attempt <- 1
               repeat {
 
-                arrow::write_feather(x = Beta, sink = Beta_File)
+                arrow::write_feather(x = Beta, sink = beta_file)
                 Sys.sleep(1)
 
-                if (ecokit::check_data(Beta_File, warning = FALSE)) {
+                if (ecokit::check_data(beta_file, warning = FALSE)) {
                   break
                 }
 
                 if (attempt >= 5) {
                   ecokit::stop_ctx(
                     "Failed to create Beta file after multiple attempts",
-                    Beta_File = Beta_File, attempt = attempt,
+                    beta_file = beta_file, attempt = attempt,
                     include_backtrace = TRUE)
                 }
 
@@ -458,7 +460,7 @@ variance_partitioning_compute <- function(
 
       ### Processing geta -----
 
-      if (Files_la_Exist) {
+      if (files_la_exist) {
 
         ecokit::cat_time(
           "All `la` data were already available on disk",
@@ -468,30 +470,30 @@ variance_partitioning_compute <- function(
 
         ecokit::cat_time(
           "Processing `geta` function", level = 1L, verbose = verbose)
-        Path_Out_a <- fs::path(Path_Temp, "VP_A.feather") %>%
+        path_out_a <- fs::path(path_temp, "vp_a.feather") %>%
           ecokit::normalize_path()
 
         cmd_a <- paste(
-          python_executable, Script_geta,
-          "--tr", ecokit::normalize_path(Path_Tr, must_work = TRUE),
-          "--x", ecokit::normalize_path(Path_X, must_work = TRUE),
-          "--gamma", ecokit::normalize_path(Path_Gamma, must_work = TRUE),
-          "--output", Path_Out_a,
+          python_executable, script_geta,
+          "--tr", ecokit::normalize_path(path_tr, must_work = TRUE),
+          "--x", ecokit::normalize_path(path_x, must_work = TRUE),
+          "--gamma", ecokit::normalize_path(path_gamma, must_work = TRUE),
+          "--output", path_out_a,
           "--chunk_size", chunk_size)
 
-        if (TF_use_single) {
+        if (tf_use_single) {
           cmd_a <- paste0(cmd_a, " --use_single")
         }
 
-        if (VP_commands_only) {
+        if (vp_commands_only) {
 
           # Save command to file
           # Redirect results of time to a log file
-          path_log_a <- stringr::str_replace(Path_Out_a, ".feather", ".log")
+          path_log_a <- stringr::str_replace(path_out_a, ".feather", ".log")
           cmd_a <- paste0(cmd_a, paste0(" >> ", path_log_a, " 2>&1"))
           readr::write_lines(
             x = cmd_a,
-            file = fs::path(Path_Temp, "VP_A_Command.txt"), append = FALSE)
+            file = fs::path(path_temp, "vp_a_command.txt"), append = FALSE)
 
         } else {
 
@@ -517,7 +519,7 @@ variance_partitioning_compute <- function(
 
       ### Processing getf ----
 
-      if (Files_la_Exist) {
+      if (files_la_exist) {
 
         ecokit::cat_time(
           "All `lf` data were already available on disk",
@@ -527,29 +529,29 @@ variance_partitioning_compute <- function(
 
         ecokit::cat_time(
           "Processing `getf` function", level = 1L, verbose = verbose)
-        Path_Out_f <- fs::path(Path_Temp, "VP_F.feather") %>%
+        path_out_f <- fs::path(path_temp, "vp_f.feather") %>%
           ecokit::normalize_path()
 
         cmd_f <- paste(
-          python_executable, Script_getf,
-          "--x", ecokit::normalize_path(Path_X, must_work = TRUE),
-          "--beta_dir", ecokit::normalize_path(Path_Temp, must_work = TRUE),
-          "--output", Path_Out_f,
+          python_executable, script_getf,
+          "--x", ecokit::normalize_path(path_x, must_work = TRUE),
+          "--beta_dir", ecokit::normalize_path(path_temp, must_work = TRUE),
+          "--output", path_out_f,
           "--ncores", 1)
 
-        if (TF_use_single) {
+        if (tf_use_single) {
           cmd_f <- paste0(cmd_f, " --use_single")
         }
 
-        if (VP_commands_only) {
+        if (vp_commands_only) {
 
           # Save command to file
           # Redirect results of time to a log file
-          path_log_f <- stringr::str_replace(Path_Out_f, ".feather", ".log")
+          path_log_f <- stringr::str_replace(path_out_f, ".feather", ".log")
           cmd_f <- paste0(cmd_f, paste0(" >> ", path_log_f, " 2>&1"))
           readr::write_lines(
             x = cmd_f,
-            file = fs::path(Path_Temp, "VP_F_Command.txt"),
+            file = fs::path(path_temp, "vp_f_command.txt"),
             append = FALSE)
 
         } else {
@@ -576,7 +578,7 @@ variance_partitioning_compute <- function(
 
       ### Processing gemu ----
 
-      if (Files_lmu_Exist) {
+      if (files_lmu_exist) {
 
         ecokit::cat_time(
           "All `lmu` data were already available on disk",
@@ -586,30 +588,30 @@ variance_partitioning_compute <- function(
 
         ecokit::cat_time(
           "Processing `gemu` function", level = 1L, verbose = verbose)
-        Path_Out_mu <- fs::path(Path_Temp, "VP_Mu.feather") %>%
+        path_out_mu <- fs::path(path_temp, "vp_mu.feather") %>%
           ecokit::normalize_path()
 
         cmd_mu <- paste(
-          python_executable, Script_gemu,
-          "--tr", ecokit::normalize_path(Path_Tr, must_work = TRUE),
-          "--gamma", ecokit::normalize_path(Path_Gamma, must_work = TRUE),
-          "--output", Path_Out_mu,
+          python_executable, script_gemu,
+          "--tr", ecokit::normalize_path(path_tr, must_work = TRUE),
+          "--gamma", ecokit::normalize_path(path_gamma, must_work = TRUE),
+          "--output", path_out_mu,
           "--ncores", 1,
           "--chunk_size", chunk_size)
 
-        if (TF_use_single) {
+        if (tf_use_single) {
           cmd_mu <- paste0(cmd_mu, " --use_single")
         }
 
-        if (VP_commands_only) {
+        if (vp_commands_only) {
 
           # Save command to file
           # Redirect results of time to a log file
-          path_log_mu <- stringr::str_replace(Path_Out_mu, ".feather", ".log")
+          path_log_mu <- stringr::str_replace(path_out_mu, ".feather", ".log")
           cmd_mu <- paste0(cmd_mu, paste0(" >> ", path_log_mu, " 2>&1"))
           readr::write_lines(
             x = cmd_mu,
-            file = fs::path(Path_Temp, "VP_mu_Command.txt"),
+            file = fs::path(path_temp, "vp_mu_command.txt"),
             append = FALSE)
 
         } else {
@@ -633,7 +635,7 @@ variance_partitioning_compute <- function(
 
     invisible(gc())
 
-    if (VP_commands_only) {
+    if (vp_commands_only) {
       return(invisible(NULL))
     }
 
@@ -648,17 +650,18 @@ variance_partitioning_compute <- function(
     ecokit::cat_time("Running geta", level = 1L, verbose = verbose)
     geta <- function(a) {
       switch(
-        class(Model$X)[1L],
+        class(model_obj$X)[1L],
         matrix = {
-          res <- Model$X %*% (t(Model$Tr %*% t(a$Gamma)))
+          res <- model_obj$X %*% (t(model_obj$Tr %*% t(a$Gamma)))
         },
         list = {
           res <- matrix(NA, ny, ns)
           for (j in seq_len(ns)) {
-            res[, j] <- Model$X[[j]] %*% (t(Model$Tr[j, ] %*% t(a$Gamma)))
+            res[, j] <- model_obj$X[[j]] %*%
+              (t(model_obj$Tr[j, ] %*% t(a$Gamma)))
           }
         })
-      return(res)
+      res
     }
 
     la <- lapply(postList, geta)
@@ -672,15 +675,15 @@ variance_partitioning_compute <- function(
     ecokit::cat_time("Running getf", level = 1L, verbose = verbose)
     getf <- function(a) {
       switch(
-        class(Model$X)[1L],
+        class(model_obj$X)[1L],
         matrix = {
-          res <- Model$X %*% (a$Beta)
+          res <- model_obj$X %*% (a$Beta)
         },
         list = {
           res <- matrix(NA, ny, ns)
-          for (j in seq_len(ns)) res[, j] <- Model$X[[j]] %*% a$Beta[, j]
+          for (j in seq_len(ns)) res[, j] <- model_obj$X[[j]] %*% a$Beta[, j]
         })
-      return(res)
+      res
     }
 
     lf <- lapply(postList, getf)
@@ -693,8 +696,7 @@ variance_partitioning_compute <- function(
 
     ecokit::cat_time("Running gemu", level = 1L, verbose = verbose)
     gemu <- function(a) {
-      res <- t(Model$Tr %*% t(a$Gamma))
-      return(res)
+      t(model_obj$Tr %*% t(a$Gamma))
     }
 
     lmu <- lapply(postList, gemu)
@@ -708,8 +710,7 @@ variance_partitioning_compute <- function(
   # Running gebeta -------
   ecokit::cat_time("Running gebeta", verbose = verbose)
   gebeta <- function(a) {
-    res <- a$Beta
-    return(res)
+    a$Beta
   }
   lbeta <- lapply(postList, gebeta)
 
@@ -731,7 +732,7 @@ variance_partitioning_compute <- function(
 
   # Computing variance partitioning -------
 
-  if (use_TF) {
+  if (use_tf) {
 
     # compute variance partitioning in parallel if `TensorFlow` was used
 
@@ -740,7 +741,7 @@ variance_partitioning_compute <- function(
 
     ecokit::cat_time(
       "Split `lbeta` list into small qs2 files", level = 1L, verbose = verbose)
-    path_lbeta <- fs::path(Path_Temp, "lbeta")
+    path_lbeta <- fs::path(path_temp, "lbeta")
     purrr::walk(
       .x = seq_along(lbeta),
       .f = ~ {
@@ -755,7 +756,7 @@ variance_partitioning_compute <- function(
     ecokit::cat_time(
       "Split `postList` list into small qs2 files",
       level = 1L, verbose = verbose)
-    path_postList <- fs::path(Path_Temp, "postList")
+    path_postList <- fs::path(path_temp, "postList")
     purrr::walk(
       .x = seq_along(postList),
       .f = ~{
@@ -773,16 +774,16 @@ variance_partitioning_compute <- function(
     n_postList <- length(postList)
     rm(postList, lbeta, envir = environment())
 
-    Model_x <- Model$X
-    Model <- IASDT.R::trim_hmsc(
-      model = Model, names_to_remove = c("X", "covNames"))
+    model_x <- model_obj$X
+    model_obj <- IASDT.R::trim_hmsc(
+      model = model_obj, names_to_remove = c("X", "covNames"))
     invisible(gc())
 
     ecokit::cat_time("Processing in parallel", level = 1L, verbose = verbose)
 
     vars_to_export <- c(
       "ngroups", "Files_la", "Files_lf", "Files_lmu", "path_lbeta", "nc",
-      "Model_x", "path_postList", "ns", "nr", "cMA", "group")
+      "model_x", "path_postList", "ns", "nr", "cMA", "group")
     packages_to_load <- c(
       "Matrix", "dplyr", "arrow", "purrr", "qs2", "methods",
       "stringr", "fs", "ecokit", "magrittr")
@@ -805,31 +806,31 @@ variance_partitioning_compute <- function(
 
         # Suppress warnings when no trait information is used in the models
         # cor(Beta[k, ], lmu[k, ]) : the standard deviation is zero
-        DT_lmu <- as.matrix(arrow::read_feather(Files_lmu[i]))      # nolint: object_name_linter
+        data_lmu <- as.matrix(arrow::read_feather(Files_lmu[i]))      # nolint: object_name_linter
         curr_lbeta <- fs::path(      # nolint: object_name_linter
           path_lbeta,
           paste0(
             "lbeta_", stringr::str_pad(i, width = 4, pad = "0"), ".qs2")) %>%
           ecokit::load_as()
-        R2T.Beta <- purrr::map_dbl(
+        r2t_beta <- purrr::map_dbl(
           .x = seq_len(nc),
           .f = ~ {
-            suppressWarnings(stats::cor(curr_lbeta[.x, ], DT_lmu[.x, ])^2)
+            suppressWarnings(stats::cor(curr_lbeta[.x, ], data_lmu[.x, ])^2)
           })
 
-        rm(curr_lbeta, DT_lmu, envir = environment())
+        rm(curr_lbeta, data_lmu, envir = environment())
         invisible(gc())
 
         fixed1 <- matrix(0, nrow = ns, ncol = 1)
         fixedsplit1 <- matrix(0, nrow = ns, ncol = ngroups)
         random1 <- matrix(0, nrow = ns, ncol = nr)
 
-        DT_la <- as.matrix(arrow::read_feather(Files_la[i]))
-        DT_lf <- as.matrix(arrow::read_feather(Files_lf[i]))
-        # a <- DT_la - matrix(rep(rowMeans(DT_la), ns), ncol = ns)
-        # f <- DT_lf - matrix(rep(rowMeans(DT_lf), ns), ncol = ns)
-        a <- DT_la - Matrix::rowMeans(DT_la)
-        f <- DT_lf - Matrix::rowMeans(DT_lf)
+        data_la <- as.matrix(arrow::read_feather(Files_la[i]))
+        data_lf <- as.matrix(arrow::read_feather(Files_lf[i]))
+        # a <- data_la - matrix(rep(rowMeans(data_la), ns), ncol = ns)
+        # f <- data_lf - matrix(rep(rowMeans(data_lf), ns), ncol = ns)
+        a <- data_la - Matrix::rowMeans(data_la)
+        f <- data_lf - Matrix::rowMeans(data_lf)
 
         res1 <- sum((Matrix::rowSums((a * f)) / (ns - 1))^2)
         res2 <- sum((Matrix::rowSums((a * a)) / (ns - 1)) *
@@ -838,7 +839,7 @@ variance_partitioning_compute <- function(
 
         for (j in seq_len(ns)) {
           switch(
-            class(Model_x)[1L],
+            class(model_x)[1L],
             matrix = {
               cM <- cMA
             },
@@ -893,7 +894,7 @@ variance_partitioning_compute <- function(
         return(
           list(
             fixed = fixed, random = random, fixedsplit = fixedsplit,
-            R2T.Y = R2T.Y, R2T.Beta = R2T.Beta))
+            R2T.Y = R2T.Y, r2t_beta = r2t_beta))
       }
 
     # Check if foreach returned a flattened list
@@ -921,7 +922,7 @@ variance_partitioning_compute <- function(
     R2T.Y <- Reduce("+", purrr::map(Res, ~ .x$R2T.Y)) / poolN
     R2T.Beta <- Reduce("+", purrr::map(Res, ~ .x$R2T.Beta)) / poolN
 
-    rm(Res, Model_x, envir = environment())
+    rm(Res, model_x, envir = environment())
     invisible(gc())
 
   } else {
@@ -944,16 +945,16 @@ variance_partitioning_compute <- function(
           sprintf("Processing iteration %d of %d", i, poolN), verbose = verbose)
       }
 
-      DT_la <- la[[i]]
-      DT_lf <- lf[[i]]
-      DT_lmu <- lmu[[i]]
+      data_la <- la[[i]]
+      data_lf <- lf[[i]]
+      data_lmu <- lmu[[i]]
 
       # Suppress warnings when no trait information is used in the models
       # cor(Beta[k, ], lmu[k, ]) : the standard deviation is zero
       suppressWarnings({
         for (k in seq_len(nc)) {
           R2T.Beta[k] <- R2T.Beta[k] +
-            stats::cor(lbeta[[i]][k, ], DT_lmu[k, ])^2
+            stats::cor(lbeta[[i]][k, ], data_lmu[k, ])^2
         }
       })
 
@@ -963,8 +964,8 @@ variance_partitioning_compute <- function(
       Beta <- postList[[i]]$Beta
       Lambdas <- postList[[i]]$Lambda
 
-      a <- DT_la - matrix(rep(rowMeans(DT_la), ns), ncol = ns)
-      f <- DT_lf - matrix(rep(rowMeans(DT_lf), ns), ncol = ns)
+      a <- data_la - matrix(rep(rowMeans(data_la), ns), ncol = ns)
+      f <- data_lf - matrix(rep(rowMeans(data_lf), ns), ncol = ns)
 
       res1 <- sum((rowSums((a * f)) / (ns - 1))^2)
       res2 <- sum((rowSums((a * a)) / (ns - 1)) *
@@ -973,7 +974,7 @@ variance_partitioning_compute <- function(
 
       for (j in seq_len(ns)) {
         switch(
-          class(Model$X)[1L],
+          class(model_obj$X)[1L],
           matrix = {
             cM <- cMA
           },
@@ -1034,21 +1035,21 @@ variance_partitioning_compute <- function(
     vals[ngroups + i, ] <- random[, i]
   }
 
-  names(R2T.Beta) <- Model$covNames
+  names(r2t_beta) <- model_obj$covNames
   leg <- group_names
   for (r in seq_len(nr)) {
-    leg <- c(leg, paste0("Random: ", Model$rLNames[r]))
+    leg <- c(leg, paste0("Random: ", model_obj$rLNames[r]))
   }
 
   vals <- data.frame(vals) %>%
     tibble::tibble() %>%
-    stats::setNames(Model$spNames) %>%
-    dplyr::mutate(Variable = leg, .before = 1)
+    stats::setNames(model_obj$spNames) %>%
+    dplyr::mutate(variable = leg, .before = 1)
 
-  VP <- list(
+  vp <- list(
     vals = vals,
-    species_names = Model$spNames,
-    R2T = list(Beta = R2T.Beta, Y = R2T.Y),
+    species_names = model_obj$spNames,
+    R2T = list(Beta = r2t_beta, Y = R2T.Y),
     group = group,
     groupnames = group_names)
 
@@ -1056,9 +1057,9 @@ variance_partitioning_compute <- function(
 
   # Save the results
   ecokit::cat_time("Save the variance partitioning results", verbose = verbose)
-  ecokit::save_as(object = VP, object_name = VP_file, out_path = File_VarPar)
+  ecokit::save_as(object = vp, object_name = vp_file, out_path = file_var_par)
 
-  VP$File <- File_VarPar
+  vp$file <- file_var_par
 
   # # .................................................................... ###
 
@@ -1066,7 +1067,7 @@ variance_partitioning_compute <- function(
 
     ecokit::cat_time("Clean up temporary files", verbose = verbose)
 
-    if (use_TF) {
+    if (use_tf) {
 
       if (fs::dir_exists(path_lbeta)) {
         try({
@@ -1086,21 +1087,21 @@ variance_partitioning_compute <- function(
       }
     }
 
-    Path_Temp <- ecokit::normalize_path(Path_Temp)
+    path_temp <- ecokit::normalize_path(path_temp)
     try(
       expr = {
         file_paths <- list.files(
-          path = Path_Temp,
-          pattern = "(VP_).+(feather|log)$", full.names = TRUE)
+          path = path_temp,
+          pattern = "(vp_).+(feather|log)$", full.names = TRUE)
 
         fs::file_delete(file_paths)
       },
       silent = TRUE)
 
-    if (fs::dir_exists(Path_Temp) && length(fs::dir_ls(Path_Temp)) == 0) {
+    if (fs::dir_exists(path_temp) && length(fs::dir_ls(path_temp)) == 0) {
       try({
         ecokit::system_command(
-          paste0("rm -rf ", Path_Temp),
+          paste0("rm -rf ", path_temp),
           ignore.stderr = TRUE, ignore.stdout = TRUE)
       },
       silent = TRUE)
@@ -1113,5 +1114,5 @@ variance_partitioning_compute <- function(
 
   doParallel::stopImplicitCluster()
 
-  return(VP)
+  return(vp)
 }

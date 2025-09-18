@@ -14,22 +14,22 @@ variance_partitioning_compute(
   start = 1L,
   na.ignore = FALSE,
   n_cores = 8L,
-  use_TF = TRUE,
-  TF_environ = NULL,
-  TF_use_single = FALSE,
+  use_tf = TRUE,
+  tf_environ = NULL,
+  tf_use_single = FALSE,
   temp_cleanup = TRUE,
   chunk_size = 50L,
   verbose = TRUE,
-  VP_file = "varpar",
-  VP_commands_only = FALSE
+  vp_file = "varpar",
+  vp_commands_only = FALSE
 )
 
 variance_partitioning_plot(
   path_model = NULL,
   env_file = ".env",
-  VP_file = "varpar",
-  use_TF = TRUE,
-  TF_environ = NULL,
+  vp_file = "varpar",
+  use_tf = TRUE,
+  tf_environ = NULL,
   n_cores = 1L,
   width = 30,
   height = 15,
@@ -56,16 +56,16 @@ the focal species is NA when computing variance-covariance matrices for
 each species.}
 
 \item{n_cores}{Integer. Number of CPU cores to use for computing variance
-partitioning using \code{TensorFlow}. This is only effective when \code{use_TF} is
+partitioning using \code{TensorFlow}. This is only effective when \code{use_tf} is
 \code{TRUE}. Default: \code{1}.}
 
-\item{use_TF}{Logical. Whether to use \code{TensorFlow} for calculations. Defaults
+\item{use_tf}{Logical. Whether to use \code{TensorFlow} for calculations. Defaults
 to \code{TRUE}.}
 
-\item{TF_environ}{Character. Path to the Python environment. This argument is
-required if \code{use_TF} is \code{TRUE} under Windows. Defaults to \code{NULL}.}
+\item{tf_environ}{Character. Path to the Python environment. This argument is
+required if \code{use_tf} is \code{TRUE} under Windows. Defaults to \code{NULL}.}
 
-\item{TF_use_single}{Logical. Whether to use single precision for the
+\item{tf_use_single}{Logical. Whether to use single precision for the
 \code{TensorFlow} calculations. Defaults to \code{FALSE}.}
 
 \item{temp_cleanup}{Logical. Whether to delete temporary files after
@@ -76,11 +76,11 @@ parallel. Only relevant for \code{TensorFlow}. Default: \code{50}.}
 
 \item{verbose}{Logical. Whether to print progress messages. Default: \code{TRUE}.}
 
-\item{VP_file}{Character. Name of the output file to save the results.
+\item{vp_file}{Character. Name of the output file to save the results.
 Default: \code{varpar}.}
 
-\item{VP_commands_only}{Logical. If \code{TRUE}, returns the commands to run the
-Python script. Default is \code{FALSE}. Only relevant when \code{use_TF} is \code{TRUE}.}
+\item{vp_commands_only}{Logical. If \code{TRUE}, returns the commands to run the
+Python script. Default is \code{FALSE}. Only relevant when \code{use_tf} is \code{TRUE}.}
 
 \item{env_file}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}

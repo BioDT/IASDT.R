@@ -10,7 +10,7 @@
 #' required.
 #' @param path_model Character. Path to the model files. This argument can not
 #'   be empty.
-#' @param python_VE Character. Path to a valid Python virtual environment.
+#' @param python_ve Character. Path to a valid Python virtual environment.
 #'   Defaults to `NULL`. This argument can not be empty.
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #' @param strategy Character. The parallel processing strategy to use. Valid
@@ -23,7 +23,7 @@
 #' @export
 
 mod_fit_windows <- function(
-    path_model = NULL, python_VE = NULL, n_cores = NULL,
+    path_model = NULL, python_ve = NULL, n_cores = NULL,
     strategy = "multisession") {
 
   # # |||||||||||||||||||||||||||||||||||
@@ -31,7 +31,7 @@ mod_fit_windows <- function(
   # # |||||||||||||||||||||||||||||||||||
 
   ecokit::check_args(
-    args_to_check = c("path_model", "python_VE"), args_type = "character")
+    args_to_check = c("path_model", "python_ve"), args_type = "character")
   strategy <- .validate_strategy(strategy)
   if (strategy == "sequential") n_cores <- 1L
   n_cores <- .validate_n_cores(n_cores)
@@ -50,24 +50,24 @@ mod_fit_windows <- function(
       include_backtrace = TRUE)
   }
 
-  # Check if python_VE is a valid directory
-  if (!fs::dir_exists(python_VE)) {
+  # Check if python_ve is a valid directory
+  if (!fs::dir_exists(python_ve)) {
     ecokit::stop_ctx(
       "Python virtual environment directory does not exist",
-      python_VE = python_VE, include_backtrace = TRUE)
+      python_ve = python_ve, include_backtrace = TRUE)
   }
 
-  # Check if python_VE directory contains python virtual environment
-  python_exe <- fs::path(python_VE, "Scripts", "python.exe")
+  # Check if python_ve directory contains python virtual environment
+  python_exe <- fs::path(python_ve, "Scripts", "python.exe")
   if (!fs::file_exists(python_exe)) {
     ecokit::stop_ctx(
-      "Python virtual environment does not exist", python_VE = python_VE,
+      "Python virtual environment does not exist", python_ve = python_ve,
       include_backtrace = TRUE)
   }
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Path_ModProg <- Command_WS <- Path_Hmsc_WS <- NULL
+  path_mod_progress <- command_ws <- path_hmsc_ws <- NULL
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -75,15 +75,15 @@ mod_fit_windows <- function(
   # # List of models to be fitted
   # # |||||||||||||||||||||||||||||||||||
 
-  Model2Run <- fs::path(path_model, "Model_Info.RData") %>%
+  model_to_run <- fs::path(path_model, "model_info.RData") %>%
     ecokit::load_as() %>%
-    dplyr::select(Path_ModProg, Command_WS) %>%
-    tidyr::unnest(cols = c("Path_ModProg", "Command_WS")) %>%
-    dplyr::filter(!file.exists(Path_ModProg))
+    dplyr::select(path_mod_progress, command_ws) %>%
+    tidyr::unnest(cols = c("path_mod_progress", "command_ws")) %>%
+    dplyr::filter(!file.exists(path_mod_progress))
 
-  if (nrow(Model2Run) > 0) {
+  if (nrow(model_to_run) > 0) {
     ecokit::cat_time(
-      paste0("There are ", nrow(Model2Run), " model variants to be fitted."))
+      paste0("There are ", nrow(model_to_run), " model variants to be fitted."))
 
     if (n_cores == 1) {
       future::plan("sequential", gc = TRUE)
@@ -94,18 +94,18 @@ mod_fit_windows <- function(
       withr::defer(future::plan("sequential", gc = TRUE))
     }
 
-    RunCommands <- future.apply::future_lapply(
-      X = seq_len(nrow(Model2Run)),
+    run_commands <- future.apply::future_lapply(
+      X = seq_len(nrow(model_to_run)),
       FUN = function(x) {
         system2(
-          command = Path_Hmsc_WS, args = Model2Run$Command_WS[x],
-          stdout = Model2Run$Path_ModProg[x],
-          stderr = Model2Run$Path_ModProg[x])
+          command = path_hmsc_ws, args = model_to_run$command_ws[x],
+          stdout = model_to_run$path_mod_progress[x],
+          stderr = model_to_run$path_mod_progress[x])
       },
       future.scheduling = Inf, future.seed = TRUE,
-      future.globals = c("Path_Hmsc_WS", "Model2Run"))
+      future.globals = c("path_hmsc_ws", "model_to_run"))
 
-    rm(RunCommands, envir = environment())
+    rm(run_commands, envir = environment())
 
     if (n_cores > 1) {
       ecokit::set_parallel(stop_cluster = TRUE, level = 1L)

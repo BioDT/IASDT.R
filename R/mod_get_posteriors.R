@@ -9,21 +9,21 @@
 #' from JSON format if specified.
 #' @param path_posterior Character vector. Path to the RDS files containing the
 #'   exported posterior files. This argument is mandatory and cannot be empty.
-#' @param from_JSON Logical. Whether the loaded models should be converted from
+#' @param from_json Logical. Whether the loaded models should be converted from
 #'   `JSON` format. Defaults to `FALSE`, meaning the data will be read directly
 #'   from RDS files without conversion.
 #' @name mod_get_posteriors
 #' @author Ahmed El-Gabbas
-#' @return Depending on the `from_JSON` parameter, returns an Hmsc object either
+#' @return Depending on the `from_json` parameter, returns an Hmsc object either
 #'   directly from the RDS files or after converting it from JSON format.
 #' @export
 
-mod_get_posteriors <- function(path_posterior = NULL, from_JSON = FALSE) {
+mod_get_posteriors <- function(path_posterior = NULL, from_json = FALSE) {
 
   # Checking arguments
   ecokit::check_args(
     args_to_check = "path_posterior", args_type = "character")
-  ecokit::check_args(args_to_check = "from_JSON", args_type = "logical")
+  ecokit::check_args(args_to_check = "from_json", args_type = "logical")
 
   if (!ecokit::check_data(path_posterior)) {
     ecokit::stop_ctx(
@@ -31,15 +31,15 @@ mod_get_posteriors <- function(path_posterior = NULL, from_JSON = FALSE) {
       path_posterior = path_posterior)
   }
 
-  if (from_JSON) {
-    Out <- readRDS(file = path_posterior) %>%
+  if (from_json) {
+    out <- readRDS(file = path_posterior) %>%
       magrittr::extract2(1) %>%
       jsonify::from_json() %>%
       magrittr::extract2(1)
   } else {
-    Out <- readRDS(file = path_posterior) %>%
+    out <- readRDS(file = path_posterior) %>%
       magrittr::extract2(1) %>%
       magrittr::extract2(1)
   }
-  return(Out)
+  return(out)
 }

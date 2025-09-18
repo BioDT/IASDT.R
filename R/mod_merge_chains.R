@@ -8,13 +8,13 @@
 #' into unified `Hmsc` and `coda` objects, facilitating further analysis. They
 #' check for missing or incomplete chains, optionally report these issues, and
 #' save the processed results to disk. `mod_merge_chains` handles regular
-#' models, while `mod_merge_chains_CV` is designed for cross-validated models.
+#' models, while `mod_merge_chains_cv` is designed for cross-validated models.
 #'
 #' @param model_dir Character. Path to the root directory where the model was
-#'   fitted. For `mod_merge_chains`, subdirectories `Model_Fitted` and
-#'   `Model_Coda` are created within this path to store the merged `Hmsc` and
-#'   `coda` objects, respectively. For `mod_merge_chains_CV`, merged objects are
-#'   stored under `Model_Fitting_CV/Model_Fitted`.
+#'   fitted. For `mod_merge_chains`, subdirectories `model_fitted` and
+#'   `model_coda` are created within this path to store the merged `Hmsc` and
+#'   `coda` objects, respectively. For `mod_merge_chains_cv`, merged objects are
+#'   stored under `model_fitting_cv/model_fitted`.
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
 #'   Defaults to 8L.
 #' @param strategy Character. The parallel processing strategy to use. Valid
@@ -22,22 +22,22 @@
 #'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param model_info_name Character. Name of the file (without extension) where
 #'   updated model information is saved. If `NULL`, overwrites the existing
-#'   `Model_Info.RData` file in `model_dir` directory. If specified, creates a
+#'   `model_info.RData` file in `model_dir` directory. If specified, creates a
 #'   new `.RData` file with this name in `model_dir` directory. Applies only to
 #'   `mod_merge_chains`.
 #' @param print_incomplete Logical. If `TRUE`, prints the names of model
 #'   variants that failed to merge due to missing or incomplete chains. Defaults
 #'   to `TRUE`.
-#' @param from_JSON Logical. Whether to convert loaded models from JSON format
+#' @param from_json Logical. Whether to convert loaded models from JSON format
 #'   before reading. Defaults to `FALSE`.
 #' @param out_extension Character. File extension (without dot) for output files
 #'   containing merged `Hmsc` and `coda` objects. Options are `qs2` (faster
 #'   read/write via the `qs2` package) or `RData` (standard R format). Defaults
 #'   to `qs2`.
-#' @param CV_names Character vector. Names of cross-validation strategies to
-#'   merge, matching those used during model setup. Defaults to `c("CV_Dist",
-#'   "CV_Large")`. The names should be one of `CV_Dist`, `CV_Large`, or
-#'   `CV_SAC`. Applies only to `mod_merge_chains_CV`.
+#' @param cv_names Character vector. Names of cross-validation strategies to
+#'   merge, matching those used during model setup. Defaults to `c("cv_dist",
+#'   "cv_large")`. The names should be one of `cv_dist`, `cv_large`, or
+#'   `cv_sac`. Applies only to `mod_merge_chains_cv`.
 #' @export
 #' @rdname mod_merge_chains
 #' @name mod_merge_chains
@@ -52,9 +52,9 @@
 #' if alignment fails), and saves a merged `Hmsc` object and a `coda` object for
 #' MCMC diagnostics. It also records fitting time and memory usage from progress
 #' files.
-#' - `mod_merge_chains_CV` performs a similar merging process for
+#' - `mod_merge_chains_cv` performs a similar merging process for
 #' cross-validated `Hmsc` models, processing each fold of the specified
-#' `CV_names` separately. It saves merged `Hmsc` objects per fold but does not
+#' `cv_names` separately. It saves merged `Hmsc` objects per fold but does not
 #' generate `coda` objects.
 
 ## |------------------------------------------------------------------------| #
@@ -63,7 +63,7 @@
 
 mod_merge_chains <- function(
     model_dir = NULL, n_cores = 8L, strategy = "multisession",
-    model_info_name = NULL, print_incomplete = TRUE, from_JSON = FALSE,
+    model_info_name = NULL, print_incomplete = TRUE, from_json = FALSE,
     out_extension = "qs2") {
 
   .start_time <- lubridate::now(tzone = "CET")
@@ -73,7 +73,7 @@ mod_merge_chains <- function(
   ecokit::check_args(
     args_to_check = c("model_dir", "out_extension"), args_type = "character")
   ecokit::check_args(
-    args_to_check = c("print_incomplete", "from_JSON"), args_type = "logical")
+    args_to_check = c("print_incomplete", "from_json"), args_type = "logical")
 
   strategy <- .validate_strategy(strategy)
   if (strategy == "sequential") n_cores <- 1L
@@ -83,9 +83,9 @@ mod_merge_chains <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Post_Path <- Post_Path <- M_Name_Fit <- Path_FittedMod <- Path_Coda <-
-    NMissingChains <- MissingModels <- Model_Finished <- Path_ModProg <-
-    Post_Aligned2 <- FittingTime <- FittingMemory <- NULL
+  path_post <- m_name_fit <- path_fitted_model <- path_coda <-
+    n_missing_chains <- missing_models <- model_finished <- path_mod_progress <-
+    post_aligned_2 <- fitting_time <- fitting_memory <- NULL
 
   # # ..................................................................... ###
 
@@ -112,19 +112,19 @@ mod_merge_chains <- function(
 
   # Creating paths -----
 
-  Path_Fitted_Models <- fs::path(model_dir, "Model_Fitted")
-  Path_Coda <- fs::path(model_dir, "Model_Coda")
-  fs::dir_create(c(Path_Fitted_Models, Path_Coda))
+  path_fitted_models <- fs::path(model_dir, "model_fitted")
+  path_coda <- fs::path(model_dir, "model_coda")
+  fs::dir_create(c(path_fitted_models, path_coda))
 
   # # ..................................................................... ###
 
   # Loading model info ----
 
-  Path_ModInfo <- fs::path(model_dir, "Model_Info.RData")
+  path_mod_info <- fs::path(model_dir, "model_info.RData")
 
-  if (!file.exists(Path_ModInfo)) {
+  if (!file.exists(path_mod_info)) {
     ecokit::stop_ctx(
-      "ModInfo file does not exist", Path_ModInfo = Path_ModInfo,
+      "ModInfo file does not exist", path_mod_info = path_mod_info,
       include_backtrace = TRUE)
   }
 
@@ -132,22 +132,22 @@ mod_merge_chains <- function(
 
   # Remove temp files and incomplete RDs files ----
 
-  Path_Model_Fit <- fs::path(model_dir, "Model_Fitting_HPC")
-  tempFiles <- list.files(
-    path = Path_Model_Fit, pattern = ".rds_temp$", full.names = TRUE)
+  path_model_fit <- fs::path(model_dir, "model_fitting_hpc")
+  temp_files <- list.files(
+    path = path_model_fit, pattern = ".rds_temp$", full.names = TRUE)
 
-  if (length(tempFiles) > 0) {
+  if (length(temp_files) > 0) {
     ecokit::cat_time(
       paste0(
-        "There are ", length(tempFiles),
+        "There are ", length(temp_files),
         " unsuccessful model variants to be removed"))
 
-    tempFilesRDs <- stringr::str_replace_all(tempFiles, ".rds_temp$", ".rds")
-    tempFilesProgress <- stringr::str_replace_all(
-      tempFiles, "_post.rds_temp", "_Progress.txt")
+    temp_files_rds <- stringr::str_replace_all(temp_files, ".rds_temp$", ".rds")
+    temp_files_progress <- stringr::str_replace_all(
+      temp_files, "_post.rds_temp", "_Progress.txt")
 
     purrr::walk(
-      .x = c(tempFilesRDs, tempFiles, tempFilesProgress),
+      .x = c(temp_files_rds, temp_files, temp_files_progress),
       .f = ~{
         if (file.exists(.x)) {
           file.remove(.x)
@@ -157,24 +157,24 @@ mod_merge_chains <- function(
 
   # # ..................................................................... ###
 
-  Model_Info2 <- ecokit::load_as(Path_ModInfo)
+  model_info_2 <- ecokit::load_as(path_mod_info)
 
   # Prepare working in parallel -----
   if (n_cores == 1) {
     future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
-      n_cores = min(n_cores, nrow(Model_Info2)), cat_timestamp = FALSE,
+      n_cores = min(n_cores, nrow(model_info_2)), cat_timestamp = FALSE,
       future_max_size = 800L, strategy = strategy)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
 
   ecokit::cat_time("Check if any posterior files is missing")
   # Check if any posterior files is missing
-  Model_Info2 <- Model_Info2 %>%
+  model_info_2 <- model_info_2 %>%
     dplyr::mutate(
-      Post_Missing = furrr::future_map_lgl(
-        .x = Post_Path,
+      post_missing = furrr::future_map_lgl(
+        .x = path_post,
         .f = function(x) {
 
           purrr::map_lgl(
@@ -182,152 +182,150 @@ mod_merge_chains <- function(
             .f = function(y) {
 
               if (isFALSE(fs::file_exists(y))) {
-                return(TRUE)
+                TRUE
               } else if (ecokit::check_data(y, warning = FALSE)) {
-                return(FALSE)
+                FALSE
               } else {
                 fs::file_delete(y)
-                return(TRUE)
+                TRUE
               }
 
             }) %>%
             any()
         }),
       # delete these columns if already exist from previous function execution
-      Path_FittedMod = NULL, Path_Coda = NULL)
+      path_fitted_model = NULL, path_coda = NULL)
 
   # # ..................................................................... ###
 
   # Merge posteriors and save as Hmsc model / coda object
   ecokit::cat_time("Merge posteriors and save as Hmsc model / coda object")
 
-  Model_Info3 <- future.apply::future_lapply(
-    X = seq_len(nrow(Model_Info2)),
+  model_info_3 <- future.apply::future_lapply(
+    X = seq_len(nrow(model_info_2)),
     FUN = function(x) {
 
-      if (Model_Info2$Post_Missing[[x]]) {
+      if (model_info_2$post_missing[[x]]) {
         return(
           list(
-            Path_FittedMod = NA_character_,
-            Path_Coda = NA_character_, Post_Aligned2 = NA))
+            path_fitted_model = NA_character_,
+            path_coda = NA_character_, post_aligned_2 = NA))
       }
 
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
       # Merge fitted models
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-      M_Name_Fit <- Model_Info2$M_Name_Fit[[x]]
+      m_name_fit <- model_info_2$m_name_fit[[x]]
 
-      Path_FittedMod <- fs::path(
-        Path_Fitted_Models, paste0(M_Name_Fit, "_Model.", out_extension))
+      path_fitted_model <- fs::path(
+        path_fitted_models, paste0(m_name_fit, "_model.", out_extension))
 
       # Check if model exists and is valid
-      ModelFileOkay <- ecokit::check_data(Path_FittedMod, warning = FALSE)
+      model_file_okay <- ecokit::check_data(path_fitted_model, warning = FALSE)
 
-      if (isFALSE(ModelFileOkay)) {
+      if (isFALSE(model_file_okay)) {
 
         # delete corrupted file
-        if (file.exists(Path_FittedMod)) {
-          fs::file_delete(Path_FittedMod)
+        if (file.exists(path_fitted_model)) {
+          fs::file_delete(path_fitted_model)
         }
 
         # Get posteriors
-        Posts <- purrr::map(
-          .x = as.character(Model_Info2$Post_Path[[x]]),
-          .f = IASDT.R::mod_get_posteriors, from_JSON = from_JSON)
+        posts <- purrr::map(
+          .x = as.character(model_info_2$path_post[[x]]),
+          .f = IASDT.R::mod_get_posteriors, from_json = from_json)
 
         # Convert to Hmsc object
         # Try with `alignPost = TRUE`
-        Model_Fit <- Hmsc::importPosteriorFromHPC(
-          m = ecokit::load_as(Model_Info2$M_Init_Path[x]),
-          postList = Posts, nSamples = Model_Info2$M_samples[x],
-          thin = Model_Info2$M_thin[x],
-          transient = Model_Info2$M_transient[x],
+        model_fit <- Hmsc::importPosteriorFromHPC(
+          m = ecokit::load_as(model_info_2$path_m_init[x]),
+          postList = posts, nSamples = model_info_2$m_samples[x],
+          thin = model_info_2$m_thin[x],
+          transient = model_info_2$m_transient[x],
           alignPost = TRUE) %>%
           try(silent = TRUE)
 
         # If failed, use `alignPost = FALSE`
-        if (inherits(Model_Fit, "try-error")) {
-          Model_Fit <- try(
+        if (inherits(model_fit, "try-error")) {
+          model_fit <- try(
             Hmsc::importPosteriorFromHPC(
-              m = ecokit::load_as(Model_Info2$M_Init_Path[x]),
-              postList = Posts, nSamples = Model_Info2$M_samples[x],
-              thin = Model_Info2$M_thin[x],
-              transient = Model_Info2$M_transient[x], alignPost = FALSE),
+              m = ecokit::load_as(model_info_2$path_m_init[x]),
+              postList = posts, nSamples = model_info_2$m_samples[x],
+              thin = model_info_2$m_thin[x],
+              transient = model_info_2$m_transient[x], alignPost = FALSE),
             silent = TRUE)
-          Post_Aligned2 <- FALSE
+          post_aligned_2 <- FALSE
         } else {
-          Post_Aligned2 <- TRUE
+          post_aligned_2 <- TRUE
         }
 
-        rm(Posts, envir = environment())
+        rm(posts, envir = environment())
         invisible(gc())
 
-        if (inherits(Model_Fit, "try-error")) {
+        if (inherits(model_fit, "try-error")) {
           return(
             list(
-              Path_FittedMod = NA_character_,
-              Path_Coda = NA_character_,
-              Post_Aligned2 = NA))
+              path_fitted_model = NA_character_,
+              path_coda = NA_character_, post_aligned_2 = NA))
         }
         ecokit::save_as(
-          object = Model_Fit, object_name = paste0(M_Name_Fit, "_Model"),
-          out_path = Path_FittedMod)
+          object = model_fit, object_name = paste0(m_name_fit, "_model"),
+          out_path = path_fitted_model)
 
       } else {
-        Post_Aligned2 <- Model_Info2$Post_Aligned[[x]]
+        post_aligned_2 <- model_info_2$post_aligned[[x]]
       }
 
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
       # Convert to Coda object
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-      Path_Coda <- fs::path(
-        Path_Coda, paste0(M_Name_Fit, "_Coda.", out_extension))
+      path_coda <- fs::path(
+        path_coda, paste0(m_name_fit, "_coda.", out_extension))
 
-      if (!exists("Model_Fit") && !file.exists(Path_FittedMod)) {
+      if (!exists("model_fit") && !file.exists(path_fitted_model)) {
         return(
           list(
-            Path_FittedMod = NA_character_, Path_Coda = NA_character_,
-            Post_Aligned2 = NA))
+            path_fitted_model = NA_character_, path_coda = NA_character_,
+            post_aligned_2 = NA))
       }
 
-      if (!exists("Model_Fit")) {
-        Model_Fit <- ecokit::load_as(Path_FittedMod)
+      if (!exists("model_fit")) {
+        model_fit <- ecokit::load_as(path_fitted_model)
       }
 
       # Check if coda file exists and is valid
-      if (isFALSE(ecokit::check_data(Path_Coda, warning = FALSE))) {
+      if (isFALSE(ecokit::check_data(path_coda, warning = FALSE))) {
 
-        if (file.exists(Path_Coda)) {
-          fs::file_delete(Path_Coda)
+        if (file.exists(path_coda)) {
+          fs::file_delete(path_coda)
         }
 
-        Mod_Coda <- Hmsc::convertToCodaObject(
-          Model_Fit, spNamesNumbers = c(TRUE, FALSE),
+        mod_coda <- Hmsc::convertToCodaObject(
+          model_fit, spNamesNumbers = c(TRUE, FALSE),
           covNamesNumbers = c(TRUE, FALSE))
 
         ecokit::save_as(
-          object = Mod_Coda, object_name = paste0(M_Name_Fit, "_Coda"),
-          out_path = Path_Coda)
+          object = mod_coda, object_name = paste0(m_name_fit, "_coda"),
+          out_path = path_coda)
 
-        rm(Mod_Coda, envir = environment())
+        rm(mod_coda, envir = environment())
       }
 
-      rm(Model_Fit, envir = environment())
+      rm(model_fit, envir = environment())
       invisible(gc())
 
       # Return list of objects
-      return(
-        list(
-          Path_FittedMod = Path_FittedMod, Path_Coda = Path_Coda,
-          Post_Aligned2 = Post_Aligned2))
+      list(
+        path_fitted_model = path_fitted_model, path_coda = path_coda,
+        post_aligned_2 = post_aligned_2)
     },
     future.scheduling = Inf, future.seed = TRUE,
     future.packages = pkg_to_export,
     future.globals = c(
-      "out_extension", "Model_Info2", "Path_Fitted_Models",
-      "from_JSON", "Path_Coda"))
+      "out_extension", "model_info_2", "path_fitted_models",
+      "from_json", "path_coda"))
 
   if (n_cores > 1) {
     ecokit::set_parallel(stop_cluster = TRUE, cat_timestamp = FALSE)
@@ -338,26 +336,26 @@ mod_merge_chains <- function(
 
   ecokit::cat_time("Extract information on elapsed time and memory usage")
 
-  Model_Info2 <- dplyr::mutate(Model_Info2, ModelPosts = Model_Info3) %>%
-    tidyr::unnest_wider("ModelPosts") %>%
-    dplyr::mutate(Post_Aligned = dplyr::coalesce(Post_Aligned2)) %>%
-    dplyr::select(-Post_Aligned2) %>%
+  model_info_2 <- dplyr::mutate(model_info_2, model_posts = model_info_3) %>%
+    tidyr::unnest_wider("model_posts") %>%
+    dplyr::mutate(post_aligned = dplyr::coalesce(post_aligned_2)) %>%
+    dplyr::select(-post_aligned_2) %>%
     dplyr::mutate(
 
       # Check if both merged fitted model and coda file exist
-      Model_Finished = purrr::map2_lgl(
-        .x = Path_FittedMod, .y = Path_Coda,
+      model_finished = purrr::map2_lgl(
+        .x = path_fitted_model, .y = path_coda,
         .f = ~all(file.exists(c(.x, .y)))),
 
       # Extract fitting time from the progress file
-      FittingTime = purrr::map(
-        .x = Path_ModProg,
+      fitting_time = purrr::map(
+        .x = path_mod_progress,
         .f = ~{
           purrr::map(
             .x = .x,
-            .f = function(File) {
-              if (file.exists(File)) {
-                readr::read_lines(file = File, progress = FALSE) %>%
+            .f = function(file) {
+              if (file.exists(file)) {
+                readr::read_lines(file = file, progress = FALSE) %>%
                   stringr::str_subset("Whole Gibbs sampler elapsed") %>%
                   stringr::str_remove("Whole Gibbs sampler elapsed") %>%
                   stringr::str_trim() %>%
@@ -372,8 +370,8 @@ mod_merge_chains <- function(
         }),
 
       # Mean elapsed time
-      FittingTimeMean = purrr::map2_dbl(
-        .x = Model_Finished, .y = FittingTime,
+      fitting_time_mean = purrr::map2_dbl(
+        .x = model_finished, .y = fitting_time,
         .f = ~{
           if (.x) {
             mean(.y)
@@ -383,14 +381,14 @@ mod_merge_chains <- function(
         }),
 
       # Maximum memory
-      FittingMemory = purrr::map(
-        .x = Path_ModProg,
+      fitting_memory = purrr::map(
+        .x = path_mod_progress,
         .f = ~{
           purrr::map(
             .x = .x,
-            .f = function(File) {
-              if (file.exists(File)) {
-                readr::read_lines(file = File, progress = FALSE) %>%
+            .f = function(file) {
+              if (file.exists(file)) {
+                readr::read_lines(file = file, progress = FALSE) %>%
                   stringr::str_subset("Maximum resident set size") %>%
                   stringr::str_remove_all(
                     "\t|:|Maximum resident set size \\(kbytes\\)") %>%
@@ -406,8 +404,8 @@ mod_merge_chains <- function(
         }),
 
       # Mean memory
-      FittingMemoryMean = purrr::map2_dbl(
-        .x = Model_Finished, .y = FittingMemory,
+      fitting_memory_mean = purrr::map2_dbl(
+        .x = model_finished, .y = fitting_memory,
         .f = ~{
           if (.x) {
             mean(.y)
@@ -422,34 +420,35 @@ mod_merge_chains <- function(
   # files
 
   if (print_incomplete) {
-    MissingModelVars <- Model_Info2 %>%
-      dplyr::filter(!Model_Finished) %>%
+    missing_model_vars <- model_info_2 %>%
+      dplyr::filter(!model_finished) %>%
       dplyr::mutate(
-        NMissingChains = purrr::map_int(
-          .x = Post_Path, .f = ~sum(!file.exists(.x))),
-        MissingModels = paste0(M_Name_Fit, " (", NMissingChains, " chains)")
+        n_missing_chains = purrr::map_int(
+          .x = path_post, .f = ~sum(!file.exists(.x))),
+        missing_models = paste0(m_name_fit, " (", n_missing_chains, " chains)")
       ) %>%
-      dplyr::pull(MissingModels) %>%
+      dplyr::pull(missing_models) %>%
       gtools::mixedsort()
 
-    if (length(MissingModelVars) > 0) {
+    if (length(missing_model_vars) > 0) {
       ecokit::cat_time("Unsuccessful models")
       purrr::walk(
-        .x = MissingModelVars, .f = ecokit::cat_time,
+        .x = missing_model_vars, .f = ecokit::cat_time,
         cat_timestamp = FALSE, level = 1L)
     }
   }
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  # Save Model_Info to disk
+  # Save model_info to disk
 
   if (is.null(model_info_name)) {
     ecokit::save_as(
-      object = Model_Info2, object_name = "Model_Info", out_path = Path_ModInfo)
+      object = model_info_2, object_name = "model_info",
+      out_path = path_mod_info)
   } else {
     ecokit::save_as(
-      object = Model_Info2, object_name = model_info_name,
+      object = model_info_2, object_name = model_info_name,
       out_path = fs::path(model_dir, paste0(model_info_name, ".RData")))
   }
 
@@ -464,7 +463,7 @@ mod_merge_chains <- function(
 # # ========================================================================== #
 
 ## |------------------------------------------------------------------------| #
-# mod_merge_chains_CV ----
+# mod_merge_chains_cv ----
 # Merge chains for cross-validated models
 ## |------------------------------------------------------------------------| #
 
@@ -474,9 +473,9 @@ mod_merge_chains <- function(
 #' @order 2
 #' @author Ahmed El-Gabbas
 
-mod_merge_chains_CV <- function(
+mod_merge_chains_cv <- function(
     model_dir = NULL, n_cores = 8L, strategy = "multisession",
-    CV_names = c("CV_Dist", "CV_Large"), from_JSON = FALSE,
+    cv_names = c("cv_dist", "cv_large"), from_json = FALSE,
     out_extension = "qs2") {
 
   ecokit::cat_time("Merge chains for cross-validated models")
@@ -488,7 +487,7 @@ mod_merge_chains_CV <- function(
 
   ecokit::check_args(
     args_to_check = c("model_dir", "out_extension"), args_type = "character")
-  ecokit::check_args(args_to_check = "from_JSON", args_type = "logical")
+  ecokit::check_args(args_to_check = "from_json", args_type = "logical")
 
   strategy <- .validate_strategy(strategy)
   if (strategy == "sequential") n_cores <- 1L
@@ -498,8 +497,8 @@ mod_merge_chains_CV <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Model_Finished <- FittingMemory <- Path_Post <- Path_ModFitted <-
-    FittingTime <- Path_ModProg <- CV_name <- NULL
+  model_finished <- fitting_memory <- path_post <- path_mod_fitted <-
+    fitting_time <- path_mod_progress <- cv_name <- NULL
 
   # # ..................................................................... ###
 
@@ -515,12 +514,12 @@ mod_merge_chains_CV <- function(
       out_extension = out_extension, include_backtrace = TRUE)
   }
 
-  if (!all(CV_names %in% c("CV_Dist", "CV_Large", "CV_SAC"))) {
+  if (!all(cv_names %in% c("cv_dist", "cv_large", "cv_sac"))) {
     ecokit::stop_ctx(
       paste0(
-        "Invalid value for CV_names argument. Valid values ",
-        "are: 'CV_Dist', 'CV_Large', or `CV_SAC`"),
-      CV_names = CV_names, include_backtrace = TRUE)
+        "Invalid value for cv_names argument. Valid values ",
+        "are: 'cv_dist', 'cv_large', or `cv_sac`"),
+      cv_names = cv_names, include_backtrace = TRUE)
   }
 
   # # ..................................................................... ###
@@ -535,28 +534,28 @@ mod_merge_chains_CV <- function(
 
   # Creating paths -----
 
-  Path_Fitted_Models <- fs::path(model_dir, "Model_Fitting_CV", "Model_Fitted")
-  fs::dir_create(Path_Fitted_Models)
+  path_fitted_models <- fs::path(model_dir, "model_fitting_cv", "model_fitted")
+  fs::dir_create(path_fitted_models)
 
   # # ..................................................................... ###
 
   # Loading CV model info -----
 
-  Path_CV_DT <- fs::path(model_dir, "Model_Fitting_CV", "CV_DT.RData")
-  if (!file.exists(Path_CV_DT)) {
+  path_cv_data <- fs::path(model_dir, "model_fitting_cv", "cv_data.RData")
+  if (!file.exists(path_cv_data)) {
     ecokit::stop_ctx(
-      "CV_DT file does not exist", Path_CV_DT = Path_CV_DT,
+      "cv_data file does not exist", path_cv_data = path_cv_data,
       include_backtrace = TRUE)
   }
-  if (isFALSE(ecokit::check_data(Path_CV_DT, warning = FALSE))) {
+  if (isFALSE(ecokit::check_data(path_cv_data, warning = FALSE))) {
     ecokit::stop_ctx(
-      "CV_DT file is not a valid file", Path_CV_DT = Path_CV_DT,
+      "cv_data file is not a valid file", path_cv_data = path_cv_data,
       include_backtrace = TRUE)
   }
 
-  CV_DT <- ecokit::load_as(Path_CV_DT) %>%
+  cv_data <- ecokit::load_as(path_cv_data) %>%
     # filter only selected cross-validation strategies
-    dplyr::filter(CV_name %in% stringr::str_remove(CV_names, "CV_"))
+    dplyr::filter(cv_name %in% stringr::str_remove(cv_names, "cv_"))
 
   # # ..................................................................... ###
 
@@ -565,37 +564,37 @@ mod_merge_chains_CV <- function(
     future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
-      n_cores = min(n_cores, nrow(CV_DT)), future_max_size = 800L,
+      n_cores = min(n_cores, nrow(cv_data)), future_max_size = 800L,
       strategy = strategy, cat_timestamp = FALSE)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
 
   # # ..................................................................... ###
 
-  CV_DT <- CV_DT %>%
+  cv_data <- cv_data %>%
     dplyr::mutate(
-      Post_Missing = furrr::future_map_lgl(
-        .x = Path_Post,
+      post_missing = furrr::future_map_lgl(
+        .x = path_post,
         .f = function(x) {
           purrr::map_lgl(
             .x = as.character(x),
             .f = function(y) {
 
               if (isFALSE(fs::file_exists(y))) {
-                return(TRUE)
+                TRUE
               } else if (ecokit::check_data(y, warning = FALSE)) {
-                return(FALSE)
+                FALSE
               } else {
                 fs::file_delete(y)
-                return(TRUE)
+                TRUE
               }
             }) %>%
             any()
         },
         .options = furrr::furrr_options(seed = TRUE, packages = "fs")),
 
-      Path_ModFitted = stringr::str_replace_all(
-        Path_ModFitted, "RData$|qs2$", out_extension))
+      path_mod_fitted = stringr::str_replace_all(
+        path_mod_fitted, "RData$|qs2$", out_extension))
 
   invisible(gc())
 
@@ -604,78 +603,78 @@ mod_merge_chains_CV <- function(
   # Merge posteriors and save as Hmsc object
   ecokit::cat_time("Merge posteriors and save as Hmsc object", level = 1L)
 
-  CV_DT2 <- future.apply::future_lapply(
-    X = seq_len(nrow(CV_DT)),
+  cv_data2 <- future.apply::future_lapply(
+    X = seq_len(nrow(cv_data)),
     FUN = function(x) {
 
-      if (CV_DT$Post_Missing[[x]]) {
+      if (cv_data$post_missing[[x]]) {
         return(NA)
       }
 
-      Path_Fitted <- CV_DT$Path_ModFitted[[x]]
+      path_fitted <- cv_data$path_mod_fitted[[x]]
 
       # Check if model exists and is valid
-      ModelFileOkay <- ecokit::check_data(Path_Fitted, warning = FALSE)
+      model_file_okay <- ecokit::check_data(path_fitted, warning = FALSE)
 
-      if (isFALSE(ModelFileOkay)) {
+      if (isFALSE(model_file_okay)) {
 
         # delete corrupted file
-        if (file.exists(Path_Fitted)) {
-          fs::file_delete(Path_Fitted)
+        if (file.exists(path_fitted)) {
+          fs::file_delete(path_fitted)
         }
 
         # Get posteriors
-        Posts <- purrr::map(
-          .x = as.character(CV_DT$Path_Post[[x]]),
-          .f = IASDT.R::mod_get_posteriors, from_JSON = from_JSON)
+        posts <- purrr::map(
+          .x = as.character(cv_data$path_post[[x]]),
+          .f = IASDT.R::mod_get_posteriors, from_json = from_json)
 
         # Convert to Hmsc object
-        Model_init_rds <- ecokit::load_as(CV_DT$Path_ModInit_rds[x])
-        Model_init <- ecokit::load_as(CV_DT$Path_ModInit[x])
-        Model_Fit <- Hmsc::importPosteriorFromHPC(
-          m = Model_init, postList = Posts, nSamples = Model_init_rds$samples,
-          thin = Model_init_rds$thin, transient = Model_init_rds$transient,
+        model_init_rds <- ecokit::load_as(cv_data$path_mod_init_rds[x])
+        model_init <- ecokit::load_as(cv_data$path_mod_init[x])
+        model_fit <- Hmsc::importPosteriorFromHPC(
+          m = model_init, postList = posts, nSamples = model_init_rds$samples,
+          thin = model_init_rds$thin, transient = model_init_rds$transient,
           alignPost = TRUE) %>%
           try(silent = TRUE)
 
         # If failed, use `alignPost = FALSE`
-        if (inherits(Model_Fit, "try-error")) {
-          Model_Fit <- try(
+        if (inherits(model_fit, "try-error")) {
+          model_fit <- try(
             Hmsc::importPosteriorFromHPC(
-              m = ecokit::load_as(CV_DT$M_Init_Path[x]),
-              postList = Posts, nSamples = CV_DT$M_samples[x],
-              thin = CV_DT$M_thin[x],
-              transient = CV_DT$M_transient[x], alignPost = FALSE),
+              m = ecokit::load_as(cv_data$path_m_init[x]),
+              postList = posts, nSamples = cv_data$m_samples[x],
+              thin = cv_data$m_thin[x],
+              transient = cv_data$m_transient[x], alignPost = FALSE),
             silent = TRUE)
-          Post_Aligned <- FALSE
+          post_aligned <- FALSE
         } else {
-          Post_Aligned <- TRUE
+          post_aligned <- TRUE
         }
 
-        rm(Posts, envir = environment())
+        rm(posts, envir = environment())
 
-        if (inherits(Model_Fit, "try-error")) {
+        if (inherits(model_fit, "try-error")) {
           return(NA)
         }
 
         ecokit::save_as(
-          object = Model_Fit,
+          object = model_fit,
           object_name = stringr::str_remove(
-            basename(Path_Fitted), ".RData$|.qs2"),
-          out_path = Path_Fitted)
+            basename(path_fitted), ".RData$|.qs2"),
+          out_path = path_fitted)
 
       } else {
-        Post_Aligned <- NA
+        post_aligned <- NA
       }
 
       invisible(gc())
 
       # Return list of objects
-      return(Post_Aligned)
+      post_aligned
     },
     future.scheduling = Inf, future.seed = TRUE,
     future.packages = pkg_to_export,
-    future.globals = c("out_extension", "CV_DT", "from_JSON"))
+    future.globals = c("out_extension", "cv_data", "from_json"))
 
   invisible(gc())
 
@@ -686,24 +685,24 @@ mod_merge_chains_CV <- function(
     "Check saved Hmsc object and extract info on model fitting", level = 1L)
 
   # Check if both merged fitted model file exist
-  CV_DT <- CV_DT %>%
+  cv_data <- cv_data %>%
     dplyr::mutate(
 
-      Post_Aligned = unlist(CV_DT2),
+      post_aligned = unlist(cv_data2),
 
-      Model_Finished = furrr::future_map_lgl(
-        .x = Path_ModFitted, .f = ecokit::check_data, warning = FALSE,
+      model_finished = furrr::future_map_lgl(
+        .x = path_mod_fitted, .f = ecokit::check_data, warning = FALSE,
         .options = furrr::furrr_options(seed = TRUE, packages = pkg_to_export)),
 
       # Extract fitting time from the progress file
-      FittingTime = purrr::map(
-        .x = Path_ModProg,
+      fitting_time = purrr::map(
+        .x = path_mod_progress,
         .f = ~{
           purrr::map(
             .x = .x,
-            .f = function(File) {
-              if (file.exists(File)) {
-                readr::read_lines(file = File, progress = FALSE) %>%
+            .f = function(file) {
+              if (file.exists(file)) {
+                readr::read_lines(file = file, progress = FALSE) %>%
                   stringr::str_subset("Whole Gibbs sampler elapsed") %>%
                   stringr::str_remove("Whole Gibbs sampler elapsed") %>%
                   stringr::str_trim() %>%
@@ -718,8 +717,8 @@ mod_merge_chains_CV <- function(
         }),
 
       # Mean elapsed time
-      FittingTimeMean = purrr::map2_dbl(
-        .x = Model_Finished, .y = FittingTime,
+      fitting_time_mean = purrr::map2_dbl(
+        .x = model_finished, .y = fitting_time,
         .f = ~{
           if (.x) {
             mean(.y)
@@ -729,14 +728,14 @@ mod_merge_chains_CV <- function(
         }),
 
       # Maximum memory
-      FittingMemory = purrr::map(
-        .x = Path_ModProg,
+      fitting_memory = purrr::map(
+        .x = path_mod_progress,
         .f = ~{
           purrr::map(
             .x = .x,
-            .f = function(File) {
-              if (file.exists(File)) {
-                readr::read_lines(file = File, progress = FALSE) %>%
+            .f = function(file) {
+              if (file.exists(file)) {
+                readr::read_lines(file = file, progress = FALSE) %>%
                   stringr::str_subset("Maximum resident set size") %>%
                   stringr::str_remove_all(
                     "\t|:|Maximum resident set size \\(kbytes\\)") %>%
@@ -752,8 +751,8 @@ mod_merge_chains_CV <- function(
         }),
 
       # Mean memory
-      FittingMemoryMean = purrr::map2_dbl(
-        .x = Model_Finished, .y = FittingMemory,
+      fitting_memory_mean = purrr::map2_dbl(
+        .x = model_finished, .y = fitting_memory,
         .f = ~{
           if (.x) {
             mean(.y)
@@ -774,11 +773,11 @@ mod_merge_chains_CV <- function(
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  # Save Model_Info to disk
+  # Save model_info to disk
 
   ecokit::save_as(
-    object = CV_DT, object_name = "CV_DT_fitted",
-    out_path = fs::path(model_dir, "Model_Fitting_CV", "CV_DT_fitted.RData"))
+    object = cv_data, object_name = "cv_data_fitted",
+    out_path = fs::path(model_dir, "model_fitting_cv", "cv_data_fitted.RData"))
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 

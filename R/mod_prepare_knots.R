@@ -15,7 +15,7 @@
 #'   [Hmsc::constructKnots] function.
 #' @param jitter_distance Numeric. The jitter distance applied to overlapping
 #'   coordinates to avoid exact duplicates. Defaults to 100 meters.
-#' @param min_LF,max_LF Integer. Minimum and maximum number of latent factors to
+#' @param min_lf,max_lf Integer. Minimum and maximum number of latent factors to
 #'   be used. Both default to `NULL` which means that the number of latent
 #'   factors will be estimated from the data. If either is provided, the
 #'   respective values will be used as arguments to [Hmsc::setPriors].
@@ -32,29 +32,29 @@
 #' @author Ahmed El-Gabbas
 #' @return An object of class `HmscRandomLevel`, suitable for specifying the
 #'   random level in HMSC GPP models. This object contains the prepared knot
-#'   locations as a data frame with columns `Var1` and `Var2` (numeric
+#'   locations as a data frame with columns `var_1` and `var_2` (numeric
 #'   coordinates), after possible jittering and conversion to avoid overlap.
 #' @export
 
 prepare_knots <- function(
     coordinates = NULL, min_distance = NULL, jitter_distance = 100,
-    min_LF = NULL, max_LF = NULL,
+    min_lf = NULL, max_lf = NULL,
     alphapw = list(Prior = NULL, Min = 10, Max = 1500, Samples = 101)) {
 
   # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  Var1 <- Var2 <- Identical <- geometry <- NULL
+  var_1 <- var_2 <- identical <- geometry <- NULL
 
   # # ..................................................................... ###
 
   # alphapw Prior values
-  AlphaPrior <- function(MinVal, MaxVal, NSamples) {
-    values <- round(seq(MinVal, MaxVal, length.out = (NSamples - 1)) * 1000)
+  alpha_prior <- function(min_val, max_val, n_samples) {
+    values <- round(seq(min_val, max_val, length.out = (n_samples - 1)) * 1000)
     prs <- cbind(
       c(0, values),
-      c(0.5, rep(0.5 / (NSamples - 1), (NSamples - 1))))
+      c(0.5, rep(0.5 / (n_samples - 1), (n_samples - 1))))
     dimnames(prs) <- NULL
     prs
   }
@@ -70,10 +70,10 @@ prepare_knots <- function(
   # Validate alphapw input ----
 
   if (is.null(alphapw)) {
-    Prior <- NULL
+    prior <- NULL
   } else {
     if (all(purrr::map_lgl(alphapw, is.null))) {
-      Prior <- NULL
+      prior <- NULL
     } else {
 
       if (is.null(alphapw$Prior)) {
@@ -96,56 +96,56 @@ prepare_knots <- function(
             include_backtrace = TRUE)
         }
 
-        Prior <- AlphaPrior(
-          MinVal = alphapw$Min, MaxVal = alphapw$Max,
-          NSamples = alphapw$Samples)
+        prior <- alpha_prior(
+          min_val = alphapw$Min, max_val = alphapw$Max,
+          n_samples = alphapw$Samples)
 
       } else {
 
-        Prior <- alphapw$Prior
+        prior <- alphapw$Prior
 
         # Check if Prior is a matrix
-        if (!inherits(Prior, "matrix")) {
+        if (!inherits(prior, "matrix")) {
           ecokit::stop_ctx(
-            "`Prior` must be a matrix",
-            Prior = Prior, class_prior = class(Prior), include_backtrace = TRUE)
+            "`prior` must be a matrix",
+            prior = prior, class_prior = class(prior), include_backtrace = TRUE)
         }
 
-        # Check if Prior has 2 columns
-        if (ncol(Prior) != 2) {
+        # Check if prior has 2 columns
+        if (ncol(prior) != 2) {
           ecokit::stop_ctx(
-            "`Prior` should have exactly 2 columns.",
-            Prior = Prior, ncol_Prior = ncol(Prior), include_backtrace = TRUE)
+            "`prior` should have exactly 2 columns.",
+            prior = prior, ncol_prior = ncol(prior), include_backtrace = TRUE)
         }
 
-        # Check if Prior has at least 100 rows
-        if (nrow(Prior) < 100) {
+        # Check if prior has at least 100 rows
+        if (nrow(prior) < 100) {
           ecokit::stop_ctx(
-            "`Prior` must have >= 100 rows.",
-            Prior = Prior, nrow_Prior = nrow(Prior), include_backtrace = TRUE)
+            "`prior` must have >= 100 rows.",
+            prior = prior, nrow_prior = nrow(prior), include_backtrace = TRUE)
         }
 
         # Check if the first element of the second column is 0.5
-        # if (Prior[1, 2] != 0.5) {
+        # if (prior[1, 2] != 0.5) {
         #   ecokit::stop_ctx(
         #      "The first element of the second column is not 0.5.",
-        #        prior_1_2 = Prior[1, 2], include_backtrace = TRUE)
+        #        prior_1_2 = prior[1, 2], include_backtrace = TRUE)
         # }
 
         # Check if all values are positive
-        if (any(as.vector(Prior) < 0)) {
+        if (any(as.vector(prior) < 0)) {
           ecokit::stop_ctx(
-            "`Prior` can not contain negative numbers",
-            sum_negative = sum(as.vector(Prior) < 0), include_backtrace = TRUE)
+            "`prior` can not contain negative numbers",
+            sum_negative = sum(as.vector(prior) < 0), include_backtrace = TRUE)
         }
 
         # Check if the sum of the second column is equal to 1
-        if (isFALSE(all.equal(sum(Prior[, 2]), 1))) {
+        if (isFALSE(all.equal(sum(prior[, 2]), 1))) {
           ecokit::stop_ctx(
             paste0(
               "The sum of the second column is not equal to 1 ",
               "(within floating-point tolerance)."),
-            sum_prior_2 = sum(Prior[, 2]), include_backtrace = TRUE)
+            sum_prior_2 = sum(prior[, 2]), include_backtrace = TRUE)
         }
       }
     }
@@ -155,105 +155,104 @@ prepare_knots <- function(
 
   # Validation for latent factors -----
 
-  if (!is.null(max_LF) && !is.numeric(max_LF)) {
+  if (!is.null(max_lf) && !is.numeric(max_lf)) {
     ecokit::stop_ctx(
-      "`max_LF` must be NULL or a numeric value", max_LF = max_LF,
+      "`max_lf` must be NULL or a numeric value", max_lf = max_lf,
       include_backtrace = TRUE)
   }
 
-  if (!is.null(min_LF) && !is.numeric(min_LF)) {
+  if (!is.null(min_lf) && !is.numeric(min_lf)) {
     ecokit::stop_ctx(
-      "`min_LF` must be NULL or a numeric value", min_LF = min_LF,
+      "`min_lf` must be NULL or a numeric value", min_lf = min_lf,
       include_backtrace = TRUE)
   }
 
-  # Ensure min_LF >= 1 and < max_LF
-  if (!is.null(min_LF) && min_LF < 1) {
+  # Ensure min_lf >= 1 and < max_lf
+  if (!is.null(min_lf) && min_lf < 1) {
     ecokit::stop_ctx(
-      "`min_LF` must be >= 1", min_LF = min_LF, include_backtrace = TRUE)
+      "`min_lf` must be >= 1", min_lf = min_lf, include_backtrace = TRUE)
   }
 
-  if (!is.null(min_LF) && !is.null(max_LF) && min_LF >= max_LF) {
+  if (!is.null(min_lf) && !is.null(max_lf) && min_lf >= max_lf) {
     ecokit::stop_ctx(
-      "`min_LF` must be strictly less than `max_LF`",
-      min_LF = min_LF, max_LF = max_LF)
+      "`min_lf` must be strictly less than `max_lf`",
+      min_lf = min_lf, max_lf = max_lf)
   }
 
-  # convert max_LF and min_LF to integer
-  if (!is.null(max_LF)) {
-    max_LF <- as.integer(max_LF)
+  # convert max_lf and min_lf to integer
+  if (!is.null(max_lf)) {
+    max_lf <- as.integer(max_lf)
   }
 
-  if (!is.null(min_LF)) {
-    min_LF <- as.integer(min_LF)
+  if (!is.null(min_lf)) {
+    min_lf <- as.integer(min_lf)
   }
 
   # # ..................................................................... ###
 
   # coordinates of the sampling units as sf object -----
 
-  SU_Sf <- tibble::as_tibble(coordinates) %>%
+  su_sf <- tibble::as_tibble(coordinates) %>%
     stats::setNames(c("x", "y")) %>%
     sf::st_as_sf(coords = c("x", "y"), remove = FALSE, crs = 3035L)
 
   # # ..................................................................... ###
 
   # Prepare knots ----
-  Knots <- Hmsc::constructKnots(
+  knots <- Hmsc::constructKnots(
     sData = coordinates, knotDist = min_distance,
     minKnotDist = min_distance) %>%
     tibble::as_tibble() %>%
     # Hmsc::constructKnots may return duplicated points; discard them
     dplyr::distinct() %>%
     dplyr::mutate(
-      Identical = purrr::map2_lgl(
-        .x = Var1, .y = Var2,
+      identical = purrr::map2_lgl(
+        .x = var_1, .y = var_2,
         .f = ~ {
-          ident0 <- dplyr::filter(SU_Sf, x == .x, y == .y)
+          ident0 <- dplyr::filter(su_sf, x == .x, y == .y)
           nrow(ident0) > 0
         }))
-  rm(SU_Sf, envir = environment())
+  rm(su_sf, envir = environment())
 
-  if (any(Knots$Identical)) {
-    Knots <- sf::st_as_sf(
-      x = Knots, coords = c("Var1", "Var2"), remove = FALSE, crs = 3035) %>%
+  if (any(knots$identical)) {
+    knots <- sf::st_as_sf(
+      x = knots, coords = c("var_1", "var_2"), remove = FALSE, crs = 3035) %>%
       dplyr::mutate(
         geometry = sf::st_sfc(
           dplyr::if_else(
-            Identical, sf::st_jitter(geometry, jitter_distance), geometry))) %>%
+            identical, sf::st_jitter(geometry, jitter_distance), geometry))) %>%
       sf::st_coordinates() %>%
       as.data.frame() %>%
-      stats::setNames(c("Var1", "Var2"))
+      stats::setNames(c("var_1", "var_2"))
   } else {
-    Knots <- as.data.frame(dplyr::select(Knots, Var1, Var2))
+    knots <- as.data.frame(dplyr::select(knots, var_1, var_2))
   }
 
   # # ..................................................................... ###
 
   # Prepare random level ----
 
-  rL <- Hmsc::HmscRandomLevel(
-    sData = coordinates, sMethod = "GPP", sKnot = Knots)
+  rl <- Hmsc::HmscRandomLevel(
+    sData = coordinates, sMethod = "GPP", sKnot = knots)
 
-  if (is.null(min_LF) && !is.null(max_LF)) {
-    rL <- Hmsc::setPriors(rL, nfMax = max_LF)
+  if (is.null(min_lf) && !is.null(max_lf)) {
+    rl <- Hmsc::setPriors(rl, nfMax = max_lf)
   }
-  if (!is.null(min_LF) && is.null(max_LF)) {
-    rL <- Hmsc::setPriors(rL, nfMin = min_LF)
+  if (!is.null(min_lf) && is.null(max_lf)) {
+    rl <- Hmsc::setPriors(rl, nfMin = min_lf)
   }
-  if (!is.null(min_LF) && !is.null(max_LF)) {
-    rL <- Hmsc::setPriors(rL, nfMin = min_LF, nfMax = max_LF)
+  if (!is.null(min_lf) && !is.null(max_lf)) {
+    rl <- Hmsc::setPriors(rl, nfMin = min_lf, nfMax = max_lf)
   }
 
   # # ..................................................................... ###
 
   # Set prior for alphapw ----
-  if (!is.null(Prior)) {
-    rL <- Hmsc::setPriors(rL, alphapw = Prior)
+  if (!is.null(prior)) {
+    rl <- Hmsc::setPriors(rl, alphapw = prior)
   }
 
   # # ..................................................................... ###
 
-  # Return the random level object
-  return(rL)
+  rl
 }

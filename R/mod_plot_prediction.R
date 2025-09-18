@@ -26,8 +26,8 @@ plot_prediction <- function(
 
   .start_time <- lubridate::now(tzone = "CET")
 
-  tif_path_mean <- tif_path_sd <- tif_path_cov <- Path_CLC <- Path_Grid <- x <-
-    ias_id <- species_file <- Observed <- Clamp <- NoClamp <- Path_PA <- NULL
+  tif_path_mean <- tif_path_sd <- tif_path_cov <- path_clc <- path_grid <- x <-
+    ias_id <- species_file <- observed <- clamp <- no_clamp <- path_pa <- NULL
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -57,9 +57,9 @@ plot_prediction <- function(
 
   env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
-    "Path_CLC", "DP_R_clc_processed", TRUE, FALSE,
-    "Path_Grid", "DP_R_grid_processed", TRUE, FALSE,
-    "Path_PA", "DP_R_PA", TRUE, FALSE)
+    "path_clc", "DP_R_clc_processed", TRUE, FALSE,
+    "path_grid", "DP_R_grid_processed", TRUE, FALSE,
+    "path_pa", "DP_R_pa", TRUE, FALSE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = env_vars_to_read)
@@ -67,13 +67,13 @@ plot_prediction <- function(
   invisible(gc())
 
   # Reference grid
-  Gird10 <- fs::path(Path_Grid, "grid_10_land_crop.RData")
-  if (!file.exists(Gird10)) {
+  gird_10 <- fs::path(path_grid, "grid_10_land_crop.RData")
+  if (!file.exists(gird_10)) {
     ecokit::stop_ctx(
-      "Path for the Europe boundaries does not exist", Gird10 = Gird10,
+      "Path for the Europe boundaries does not exist", gird_10 = gird_10,
       include_backtrace = TRUE)
   }
-  Gird10 <- ecokit::load_as(Gird10, unwrap_r = TRUE)
+  gird_10 <- ecokit::load_as(gird_10, unwrap_r = TRUE)
 
   # # ..................................................................... ###
 
@@ -82,38 +82,38 @@ plot_prediction <- function(
   ecokit::cat_time("Load summary of prediction maps")
 
   # Without clamping
-  Map_summary_NoClamp <- fs::path(
-    model_dir, "Model_Prediction", "NoClamp",
-    "Prediction_Current_Summary.RData")
+  map_summary_no_clamp <- fs::path(
+    model_dir, "model_prediction", "no_clamp",
+    "prediction_current_summary.RData")
 
-  if (!file.exists(Map_summary_NoClamp)) {
+  if (!file.exists(map_summary_no_clamp)) {
     ecokit::stop_ctx(
-      "`Map_summary_NoClamp` file does not exist",
-      Map_summary_NoClamp = Map_summary_NoClamp, include_backtrace = TRUE)
+      "`map_summary_no_clamp` file does not exist",
+      map_summary_no_clamp = map_summary_no_clamp, include_backtrace = TRUE)
   }
-  Map_summary_NoClamp <- ecokit::load_as(Map_summary_NoClamp) %>%
+  map_summary_no_clamp <- ecokit::load_as(map_summary_no_clamp) %>%
     dplyr::rename(
       tif_path_mean_no_clamp = tif_path_mean,
       tif_path_sd_no_clamp = tif_path_sd,
       tif_path_cov_no_clamp = tif_path_cov)
 
   # With clamping
-  Map_summary_Clamp <- fs::path(
-    model_dir, "Model_Prediction", "Clamp", "Prediction_Current_Summary.RData")
-  if (!file.exists(Map_summary_Clamp)) {
+  map_summary_clamp <- fs::path(
+    model_dir, "model_prediction", "clamp", "prediction_current_summary.RData")
+  if (!file.exists(map_summary_clamp)) {
     ecokit::stop_ctx(
-      "`Map_summary_Clamp` file does not exist",
-      Map_summary_Clamp = Map_summary_Clamp, include_backtrace = TRUE)
+      "`map_summary_clamp` file does not exist",
+      map_summary_clamp = map_summary_clamp, include_backtrace = TRUE)
   }
-  Map_summary_Clamp <- ecokit::load_as(Map_summary_Clamp) %>%
+  map_summary_clamp <- ecokit::load_as(map_summary_clamp) %>%
     dplyr::rename(
       tif_path_mean_clamp = tif_path_mean,
       tif_path_sd_clamp = tif_path_sd,
       tif_path_cov_clamp = tif_path_cov)
 
   # combined data
-  Map_summary <- dplyr::full_join(
-    Map_summary_NoClamp, Map_summary_Clamp,
+  map_summary <- dplyr::full_join(
+    map_summary_no_clamp, map_summary_clamp,
     by = c(
       "hab_abb", "hab_name", "time_period", "climate_model",
       "climate_scenario", "ias_id", "taxon_name", "species_name", "class",
@@ -122,9 +122,9 @@ plot_prediction <- function(
       "hab_abb", "hab_name", "time_period", "climate_model",
       "climate_scenario", "taxon_name"))
 
-  HabAbb <- Map_summary_Clamp$hab_abb[[1]]
+  hab_abb <- map_summary_clamp$hab_abb[[1]]
   # nolint start
-  hab_name <- paste0(HabAbb, ". ", Map_summary_Clamp$hab_name[[1]])
+  hab_name <- paste0(hab_abb, ". ", map_summary_clamp$hab_name[[1]])
   # nolint end
 
   # # ..................................................................... ###
@@ -135,39 +135,39 @@ plot_prediction <- function(
   ecokit::cat_time("Calculate observed species richness")
 
   if (is_cv_model) {
-    Model_Data <- fs::path(model_dir, "ModDT_training.RData")
-    if (!ecokit::check_data(Model_Data)) {
+    model_data <- fs::path(model_dir, "model_data_training.RData")
+    if (!ecokit::check_data(model_data)) {
       ecokit::stop_ctx(
         "Model data file not found",
-        Model_Data = Model_Data, include_backtrace = TRUE)
+        model_data = model_data, include_backtrace = TRUE)
     }
-    R_SR <- ecokit::load_as(Model_Data) %>%
+    r_sr <- ecokit::load_as(model_data) %>%
       dplyr::mutate(
-        SR = rowSums(
-          dplyr::select(., tidyselect::starts_with("Sp")), na.rm = TRUE)) %>%
-      dplyr::select(tidyselect::all_of(c("x", "y", "SR"))) %>%
+        sr = rowSums(
+          dplyr::select(., tidyselect::starts_with("sp")), na.rm = TRUE)) %>%
+      dplyr::select(tidyselect::all_of(c("x", "y", "sr"))) %>%
       sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
-      terra::rasterize(Gird10, field = "SR") %>%
+      terra::rasterize(gird_10, field = "sr") %>%
       terra::wrap()
 
   } else {
 
-    Model_Data <- fs::path(model_dir, "ModDT_subset.RData")
-    if (!ecokit::check_data(Model_Data)) {
+    model_data <- fs::path(model_dir, "model_data_subset.RData")
+    if (!ecokit::check_data(model_data)) {
       ecokit::stop_ctx(
         "Model data file not found",
-        Model_Data = Model_Data, include_backtrace = TRUE)
+        model_data = model_data, include_backtrace = TRUE)
     }
-    Model_Data <- ecokit::load_as(Model_Data)
-    R_SR <- tibble::tibble(
-      as.data.frame(Model_Data$DT_xy), SR = rowSums(Model_Data$DT_y)) %>%
+    model_data <- ecokit::load_as(model_data)
+    r_sr <- tibble::tibble(
+      as.data.frame(model_data$data_xy), sr = rowSums(model_data$data_y)) %>%
       sf::st_as_sf(coords = c("x", "y"), crs = 3035) %>%
-      terra::rasterize(Gird10, field = "SR") %>%
+      terra::rasterize(gird_10, field = "sr") %>%
       terra::wrap()
 
   }
 
-  rm(Model_Data, Map_summary_NoClamp, Map_summary_Clamp, envir = environment())
+  rm(model_data, map_summary_no_clamp, map_summary_clamp, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
@@ -177,16 +177,16 @@ plot_prediction <- function(
 
   ecokit::cat_time("Load habitat map")
 
-  Path_Hab <- fs::path(
-    Path_CLC, "summary_rdata", "perc_cover_synhab_crop.RData")
-  if (!file.exists(Path_Hab)) {
+  path_hab <- fs::path(
+    path_clc, "summary_rdata", "perc_cover_synhab_crop.RData")
+  if (!file.exists(path_hab)) {
     ecokit::stop_ctx(
-      "Path_Hab file does not exist", Path_Hab = Path_Hab,
+      "path_hab file does not exist", path_hab = path_hab,
       include_backtrace = TRUE)
   }
-  R_habitat <- ecokit::load_as(Path_Hab, unwrap_r = TRUE) %>%
+  r_habitat <- ecokit::load_as(path_hab, unwrap_r = TRUE) %>%
     terra::classify(rcl = cbind(0, NA)) %>%
-    terra::subset(paste0("SynHab_", HabAbb)) %>%
+    terra::subset(paste0("SynHab_", hab_abb)) %>%
     terra::wrap()
 
   invisible(gc())
@@ -194,75 +194,75 @@ plot_prediction <- function(
   # # ..................................................................... ###
   # # ..................................................................... ###
 
-  Path_Plots <- fs::path(model_dir, "Model_Prediction", "Plots_Current")
-  fs::dir_create(Path_Plots)
+  path_plots <- fs::path(model_dir, "model_prediction", "plots_current")
+  fs::dir_create(path_plots)
 
   # # ..................................................................... ###
   # # ..................................................................... ###
 
   # Helper functions ----
 
-  ## PrepPlots -----
+  ## prepare_plots -----
 
   # helper function for generating ggplot objects
-  # - Map: A SpatRaster object for plotting
-  # - Title: Title of the plot
-  # - Observed: Whether the plot is for observed data (default: FALSE)
-  # - LegendTitle: Title of the legend (default: NULL)
-  # - ShowLegend: Whether to display the legend (default: FALSE)
+  # - map: A SpatRaster object for plotting
+  # - plot_title: plot_title of the plot
+  # - observed: Whether the plot is for observed data (default: FALSE)
+  # - legend_title: plot_title of the legend (default: NULL)
+  # - show_legend: Whether to display the legend (default: FALSE)
   # - breaks, limits: Optional parameters for legend customization (default:
   # - NULL)
 
-  PrepPlots <- function(
-    Map, Title = NULL, Observed = FALSE, LegendTitle = NULL,
-    ShowLegend = FALSE, breaks = NULL, limits = NULL) {
+  prepare_plots <- function(
+    map, plot_title = NULL, observed = FALSE, legend_title = NULL,
+    show_legend = FALSE, breaks = NULL, limits = NULL) {
 
-    Xlim <- c(2600000, 6500000)
-    Ylim <- c(1450000, 5420000)
+    x_lim <- c(2600000, 6500000)
+    y_lim <- c(1450000, 5420000)
 
     # Convert to SpatRaster if character
-    if (inherits(Map, "character")) {
-      Map <- terra::rast(Map)
+    if (inherits(map, "character")) {
+      map <- terra::rast(map)
     }
 
     if (is.null(breaks)) {
-      LegendBreaks <- Legendlabels <- ggplot2::waiver()
+      legend_breaks <- legend_labels <- ggplot2::waiver()
     } else {
-      LegendBreaks <- Legendlabels <- breaks
+      legend_breaks <- legend_labels <- breaks
     }
 
     if (is.null(limits)) {
-      PlotLimits <- unlist(terra::global(Map, "range", na.rm = TRUE))
+      plot_limits <- unlist(terra::global(map, "range", na.rm = TRUE))
     } else {
-      PlotLimits <- limits
+      plot_limits <- limits
     }
 
-    Plot <- ggplot2::ggplot(environment = emptyenv()) +
+    plot <- ggplot2::ggplot(environment = emptyenv()) +
       tidyterra::geom_spatraster(
-        data = Map, maxcell = Inf, show.legend = ShowLegend)
-    rm(Map, envir = environment())
+        data = map, maxcell = Inf, show.legend = show_legend)
+    rm(map, envir = environment())
 
-    if (Observed) {
-      Plot <- Plot +
+    if (observed) {
+      plot <- plot +
         ggplot2::scale_fill_manual(
           breaks = c(0, 1, 3), values = c("grey80", "blue", "red"),
           labels = c("Not observed", "Present", "Excluded"),
           na.value = "transparent", name = NULL)
     } else {
-      Plot <- Plot +
+      plot <- plot +
         paletteer::scale_fill_paletteer_c(
           na.value = "transparent", palette = "viridis::plasma",
-          limits = PlotLimits, breaks = LegendBreaks, name = LegendTitle,
-          labels = Legendlabels)
+          limits = plot_limits, breaks = legend_breaks, name = legend_title,
+          labels = legend_labels)
     }
 
-    Plot <- Plot +
+    plot <- plot +
       ggplot2::scale_x_continuous(
-        expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim,
+        expand = ggplot2::expansion(mult = c(0, 0)), limits = x_lim,
         oob = scales::oob_keep) +
       ggplot2::scale_y_continuous(
-        expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
-      ggplot2::labs(title = Title) +
+        expand = ggplot2::expansion(mult = c(0, 0)), limits = y_lim) +
+      ggplot2::labs(title = plot_title) +
       ggplot2::theme_bw() +
       ggplot2::theme(
         plot.margin = ggplot2::margin(0, 0.05, 0, 0.05, "cm"),
@@ -273,7 +273,7 @@ plot_prediction <- function(
         strip.text = ggplot2::element_blank(),
         legend.key.size = grid::unit(0.4, "cm"),
         legend.key.width = grid::unit(0.35, "cm"),
-        legend.position = dplyr::if_else(ShowLegend, "inside", "none"),
+        legend.position = dplyr::if_else(show_legend, "inside", "none"),
         legend.position.inside = c(0.875, 0.775),
         legend.background = ggplot2::element_rect(fill = "transparent"),
         legend.text = ggplot2::element_text(size = 5),
@@ -293,77 +293,77 @@ plot_prediction <- function(
         panel.ontop = TRUE,
         panel.background = ggplot2::element_rect(fill = NA))
 
-    return(Plot)
+    return(plot)
   }
 
   # # ..................................................................... ###
 
-  ## PlotMaps ----
+  ## plot_maps ----
 
   # helper function for plotting and saving the maps
 
-  PlotMaps <- function(ID) {
+  plot_maps <- function(id) {
 
     # Set null device for `cairo`. This is to properly render the plots using
     # ggtext - https://github.com/wilkelab/cowplot/issues/73
     cowplot::set_null_device("cairo")
 
     # nolint start
-    SpID <- Map_summary$ias_id[[ID]]
-    SpName <- Map_summary$species_name[[ID]]
-    ClassName <- Map_summary$class[[ID]]
-    OrderName <- Map_summary$order[[ID]]
-    FamilyName <- Map_summary$family[[ID]]
-    Rank <- dplyr::if_else(SpID == "SR", "SR", "Species")
-    Species <- stringr::str_detect(SpID, "^Sp")
-    Date <- format(Sys.Date(), "%d %B %Y")
+    sp_id <- map_summary$ias_id[[id]]
+    sp_name <- map_summary$species_name[[id]]
+    class_name <- map_summary$class[[id]]
+    order_name <- map_summary$order[[id]]
+    family_name <- map_summary$family[[id]]
+    rank_name <- dplyr::if_else(sp_id == "sr", "sr", "species")
+    species <- stringr::str_detect(sp_id, "^sp")
+    current_date <- format(Sys.Date(), "%d %B %Y")
     # nolint end
 
     # prediction map - mean
-    R_mean_NoClamp <- terra::rast(Map_summary$tif_path_mean_no_clamp[[ID]])
-    R_mean_Clamp <- terra::rast(Map_summary$tif_path_mean_clamp[[ID]])
+    r_mean_no_clamp <- terra::rast(map_summary$tif_path_mean_no_clamp[[id]])
+    r_mean_clamp <- terra::rast(map_summary$tif_path_mean_clamp[[id]])
 
     # prediction map - sd
-    R_sd_NoClamp <- terra::rast(Map_summary$tif_path_sd_no_clamp[[ID]])
-    R_sd_Clamp <- terra::rast(Map_summary$tif_path_sd_clamp[[ID]])
+    r_sd_no_clamp <- terra::rast(map_summary$tif_path_sd_no_clamp[[id]])
+    r_sd_clamp <- terra::rast(map_summary$tif_path_sd_clamp[[id]])
 
     # prediction map - cov
-    R_cov_NoClamp <- Map_summary$tif_path_cov_no_clamp[[ID]] %>%
+    r_cov_no_clamp <- map_summary$tif_path_cov_no_clamp[[id]] %>%
       terra::rast() %>%
       "+"(0.001) %>%
       log10()
-    R_cov_Clamp <- Map_summary$tif_path_cov_clamp[[ID]] %>%
+    r_cov_clamp <- map_summary$tif_path_cov_clamp[[id]] %>%
       terra::rast() %>%
       "+"(0.001) %>%
       log10()
 
     # Plotting range and breaks
-    if (Species) {
-      Range_Mean <- c(R_mean_Clamp, R_mean_NoClamp) %>%
+    if (species) {
+      range_mean <- c(r_mean_clamp, r_mean_no_clamp) %>%
         terra::global("max", na.rm = TRUE) %>%
         dplyr::pull("max") %>%
         max() %>%
         c(0, .)
-      Breaks_Mean <- NULL
-      SpID2 <- stringr::str_remove(SpID, "^Sp_")
-      path_JPEG <- fs::path(
-        Path_Plots, paste0("Pred_Current_Sp", SpID2, "_", SpName, ".jpeg"))
-      SpID2 <- as.integer(SpID2)
+      breaks_mean <- NULL
+      sp_id_2 <- stringr::str_remove(sp_id, "^sp_")
+      path_jpeg <- fs::path(
+        path_plots, paste0("pred_current_sp", sp_id_2, "_", sp_name, ".jpeg"))
+      sp_id_2 <- as.integer(sp_id_2)
 
     } else {
-      path_JPEG <- fs::path(Path_Plots, "Pred_Current_SR.jpeg")
-      Range_Mean <- c(terra::unwrap(R_SR), R_mean_NoClamp) %>%
+      path_jpeg <- fs::path(path_plots, "pred_current_sr.jpeg")
+      range_mean <- c(terra::unwrap(r_sr), r_mean_no_clamp) %>%
         terra::global("max", na.rm = TRUE) %>%
         dplyr::pull("max") %>%
         max() %>%
         c(0, .)
-      Breaks_Mean <- NULL
+      breaks_mean <- NULL
     }
 
-    Range_sd <- c(R_sd_NoClamp, R_sd_Clamp) %>%
+    range_sd <- c(r_sd_no_clamp, r_sd_clamp) %>%
       terra::global(range, na.rm = TRUE) %>%
       range()
-    Range_cov <- c(R_cov_NoClamp, R_cov_Clamp) %>%
+    range_cov <- c(r_cov_no_clamp, r_cov_clamp) %>%
       terra::global(range, na.rm = TRUE) %>%
       range()
 
@@ -372,124 +372,125 @@ plot_prediction <- function(
     # ggplot objects
 
     ## mean_no_clamp
-    Plot_mean_no_clamp <- PrepPlots(
-      Map = R_mean_NoClamp, Title = "Mean", ShowLegend = TRUE,
-      breaks = Breaks_Mean, limits = Range_Mean)
+    plot_mean_no_clamp <- prepare_plots(
+      map = r_mean_no_clamp, plot_title = "Mean", show_legend = TRUE,
+      breaks = breaks_mean, limits = range_mean)
     ## mean_clamp
-    Plot_mean_clamp <- PrepPlots(
-      Map = R_mean_Clamp, breaks = Breaks_Mean, limits = Range_Mean)
+    plot_mean_clamp <- prepare_plots(
+      map = r_mean_clamp, breaks = breaks_mean, limits = range_mean)
 
     ## sd_no_clamp
-    Plot_sd_no_clamp <- PrepPlots(
-      Map = R_sd_NoClamp, Title = "Standard deviation", ShowLegend = TRUE,
-      breaks = NULL, limits = Range_sd)
+    plot_sd_no_clamp <- prepare_plots(
+      map = r_sd_no_clamp, plot_title = "Standard deviation",
+      show_legend = TRUE, breaks = NULL, limits = range_sd)
     ## sd_clamp
-    Plot_sd_clamp <- PrepPlots(
-      Map = R_sd_Clamp, breaks = NULL, limits = Range_sd)
-    rm(R_sd_NoClamp, R_sd_Clamp, envir = environment())
+    plot_sd_clamp <- prepare_plots(
+      map = r_sd_clamp, breaks = NULL, limits = range_sd)
+    rm(r_sd_no_clamp, r_sd_clamp, envir = environment())
 
     ## cov_no_clamp
-    Plot_cov_no_clamp <- PrepPlots(
-      Map = R_cov_NoClamp, Title = "Coefficient of variation",
-      ShowLegend = TRUE, breaks = NULL, limits = Range_cov,
-      LegendTitle = "log10")
+    plot_cov_no_clamp <- prepare_plots(
+      map = r_cov_no_clamp, plot_title = "Coefficient of variation",
+      show_legend = TRUE, breaks = NULL, limits = range_cov,
+      legend_title = "log10")
     ## cov_clamp
-    Plot_cov_clamp <- PrepPlots(
-      Map = R_cov_Clamp, breaks = NULL, limits = Range_cov,
-      LegendTitle = "log10")
-    rm(R_cov_NoClamp, R_cov_Clamp, envir = environment())
+    plot_cov_clamp <- prepare_plots(
+      map = r_cov_clamp, breaks = NULL, limits = range_cov,
+      legend_title = "log10")
+    rm(r_cov_no_clamp, r_cov_clamp, envir = environment())
 
     invisible(gc())
 
-    # Observed data
+    # observed data
 
-    if (Species) {
+    if (species) {
 
-      # Observed species presence
+      # observed species presence
 
       # Files containing observed data maps
-      Path_observed <- fs::path(Path_PA, "sp_pa_summary_df.RData")
-      if (!file.exists(Path_observed)) {
+      path_observed <- fs::path(path_pa, "sp_pa_summary_df.RData")
+      if (!file.exists(path_observed)) {
         ecokit::stop_ctx(
-          "Path_observed file does not exist", Path_observed = Path_observed,
+          "path_observed file does not exist", path_observed = path_observed,
           include_backtrace = TRUE)
       }
-      Path_observed <- ecokit::load_as(Path_observed) %>%
-        dplyr::filter(ias_id == SpID2) %>%
+      path_observed <- ecokit::load_as(path_observed) %>%
+        dplyr::filter(ias_id == sp_id_2) %>%
         dplyr::pull(species_file) %>%
         paste0(c("_masked.tif", "_all.tif")) %>%
-        fs::path(Path_PA, "PA_tif", .)
+        fs::path(path_pa, "pa_tif", .)
 
       # Check if observed data files exist
-      if (!all(file.exists(Path_observed))) {
+      if (!all(file.exists(path_observed))) {
         ecokit::stop_ctx(
-          paste0("Observed data for species: ", SpName, " not found"),
-          Path_observed = Path_observed, SpName = SpName,
+          paste0("Observed data for species: ", sp_name, " not found"),
+          path_observed = path_observed, sp_name = sp_name,
           include_backtrace = TRUE)
       }
 
-      Plot_observed <- terra::rast(Path_observed)
-      Plot_observed <- terra::ifel(
-        Plot_observed[[1]] == 0 & Plot_observed[[2]] == 1,
-        3, Plot_observed[[1]]) %>%
-        terra::mask(terra::unwrap(R_SR)) %>%
+      plot_observed <- terra::rast(path_observed)
+      plot_observed <- terra::ifel(
+        plot_observed[[1]] == 0 & plot_observed[[2]] == 1,
+        3, plot_observed[[1]]) %>%
+        terra::mask(terra::unwrap(r_sr)) %>%
         terra::as.factor() %>%
-        PrepPlots(
-          Title = "Species observations", Observed = TRUE, ShowLegend = TRUE) +
+        prepare_plots(
+          plot_title = "Species observations", observed = TRUE,
+          show_legend = TRUE) +
         ggplot2::theme(
           panel.border = ggplot2::element_rect(
             color = "black", linewidth = 0.25, fill = NA,
             linetype = "dashed"))
 
       # Percentage habitat coverage
-      Plot_Final <- PrepPlots(
-        Map = terra::unwrap(R_habitat), breaks = seq(0, 100, 20),
-        limits = c(0, 100), ShowLegend = TRUE, Title = "% Habitat cover",
-        LegendTitle = "%") +
+      plot_final <- prepare_plots(
+        map = terra::unwrap(r_habitat), breaks = seq(0, 100, 20),
+        limits = c(0, 100), show_legend = TRUE, plot_title = "% Habitat cover",
+        legend_title = "%") +
         ggplot2::theme(
           panel.border = ggplot2::element_rect(
             color = "black", linewidth = 0.25, fill = NA, linetype = "dashed"))
 
     } else {
 
-      # Observed species richness
-      Plot_observed <- terra::unwrap(R_SR) %>%
-        PrepPlots(
-          Title = "Observed species richness", Observed = FALSE,
-          ShowLegend = TRUE, breaks = Breaks_Mean, limits = Range_Mean) +
+      # observed species richness
+      plot_observed <- terra::unwrap(r_sr) %>%
+        prepare_plots(
+          plot_title = "Observed species richness", observed = FALSE,
+          show_legend = TRUE, breaks = breaks_mean, limits = range_mean) +
         ggplot2::theme(
           panel.border = ggplot2::element_rect(
             color = "black", linewidth = 0.25, fill = NA,
             linetype = "dashed"))
 
-      Range_q1 <- as.vector(stats::quantile(Range_Mean, 0.025))
-      Range_q2 <- as.vector(stats::quantile(Range_Mean, 0.7))
-      Plot_limit <- Range_Mean + c(-2, 2)
+      range_q1 <- as.vector(stats::quantile(range_mean, 0.025))
+      range_q2 <- as.vector(stats::quantile(range_mean, 0.7))
+      plot_limit <- range_mean + c(-2, 2)
 
-      # Observed vs predicted SR
-      Plot_Final <- c(terra::unwrap(R_SR), R_mean_Clamp, R_mean_NoClamp) %>%
+      # observed vs predicted sr
+      plot_final <- c(terra::unwrap(r_sr), r_mean_clamp, r_mean_no_clamp) %>%
         terra::as.data.frame(na.rm = TRUE) %>%
-        stats::setNames(c("Observed", "Clamp", "NoClamp")) %>%
+        stats::setNames(c("observed", "clamp", "no_clamp")) %>%
         ggplot2::ggplot(
-          mapping = ggplot2::aes(x = Observed), environment = emptyenv()) +
+          mapping = ggplot2::aes(x = observed), environment = emptyenv()) +
         ggplot2::geom_point(
-          ggplot2::aes(y = Clamp, colour = "with clamping"),
+          ggplot2::aes(y = clamp, colour = "with clamping"),
           shape = 17, size = 0.03, alpha = 0.2) +
         ggplot2::geom_point(
-          ggplot2::aes(y = NoClamp, colour = "without clamping"),
+          ggplot2::aes(y = no_clamp, colour = "without clamping"),
           shape = 16, size = 0.03, alpha = 0.2) +
         ggplot2::scale_colour_manual(
           name = NULL, drop = FALSE,
           values = c("with clamping" = "red", "without clamping" = "blue")) +
         ggplot2::geom_abline(intercept = 0, slope = 1, linetype = 2) +
         ggplot2::coord_equal(
-          xlim = Plot_limit, ylim = Plot_limit, expand = FALSE, clip = "off") +
+          xlim = plot_limit, ylim = plot_limit, expand = FALSE, clip = "off") +
         ggplot2::annotate(
-          "text", x = Range_q2, y = Range_q1,
+          "text", x = range_q2, y = range_q1,
           angle = 0, size = 3, color = "darkgrey",
           label = "Observed species richness", hjust = 0.5, vjust = 0.5) +
         ggplot2::annotate(
-          "text", x = Range_q1, y = Range_q2,
+          "text", x = range_q1, y = range_q2,
           angle = 90, size = 3, color = "darkgrey",
           label = "Predicted species richness", hjust = 0.5, vjust = 0.5) +
         ggplot2::labs(title = "Observed vs. predicted species richness") +
@@ -528,19 +529,19 @@ plot_prediction <- function(
     }
 
     plot_grid_main <- cowplot::plot_grid(
-      Plot_mean_no_clamp, Plot_mean_clamp, Plot_sd_no_clamp, Plot_sd_clamp,
-      Plot_cov_no_clamp, Plot_cov_clamp, Plot_observed, Plot_Final,
+      plot_mean_no_clamp, plot_mean_clamp, plot_sd_no_clamp, plot_sd_clamp,
+      plot_cov_no_clamp, plot_cov_clamp, plot_observed, plot_final,
       ncol = 4, nrow = 2, byrow = FALSE) +
       ggplot2::theme(
         plot.margin = grid::unit(c(0.05, 0.05, 0.05, 0.05), "cm"),
         panel.spacing = grid::unit(0.1, "lines"))
 
     rm(
-      Plot_mean_no_clamp, Plot_mean_clamp, Plot_sd_no_clamp, Plot_sd_clamp,
-      Plot_cov_no_clamp, Plot_cov_clamp, Plot_observed, Plot_Final,
+      plot_mean_no_clamp, plot_mean_clamp, plot_sd_no_clamp, plot_sd_clamp,
+      plot_cov_no_clamp, plot_cov_clamp, plot_observed, plot_final,
       envir = environment())
 
-    YLab <- cowplot::ggdraw() +
+    y_lab <- cowplot::ggdraw() +
       ggtext::geom_richtext(
         ggplot2::aes(
           x = 0.5, y = 0.725,
@@ -568,34 +569,34 @@ plot_prediction <- function(
         angle = 90, color = "black") +
       ggplot2::theme(plot.margin = ggplot2::margin(0, 0, 0, 0))
 
-    if (Species) {
-      PlotTitle1 <- stringr::str_glue(
+    if (species) {
+      plot_title_1 <- stringr::str_glue(
         '<SPAN STYLE="font-size:16pt">Predicted habitat suitability of \\
-          <b><i>{SpName}</i></b></SPAN>')
-      PlotTitle2 <- stringr::str_glue(
+          <b><i>{sp_name}</i></b></SPAN>')
+      plot_title_2 <- stringr::str_glue(
         '<SPAN STYLE="font-size:8pt; color: darkgrey"><b>class:</b> \\
-          {ClassName}; <b>Order:</b> {OrderName}; <b>Family:</b> \\
-          {FamilyName}; <b>ias_id:</b> {SpID2}</SPAN>')
+          {class_name}; <b>Order:</b> {order_name}; <b>Family:</b> \\
+          {family_name}; <b>ias_id:</b> {sp_id_2}</SPAN>')
     } else {
-      PlotTitle1 <- "Predicted level of invasion (mean species richness)"
-      PlotTitle2 <- ""
+      plot_title_1 <- "Predicted level of invasion (mean species richness)"
+      plot_title_2 <- ""
     }
 
-    Hab_Name0 <- stringr::str_remove(hab_name, " habitats")      # nolint: object_name_linter
-    MainTitle <- cowplot::ggdraw() +
+    hab_name_0 <- stringr::str_remove(hab_name, " habitats")      # nolint: object_name_linter
+    main_title <- cowplot::ggdraw() +
       ggtext::geom_richtext(
-        ggplot2::aes(x = 0.01, y = 0.6, label = PlotTitle1),
+        ggplot2::aes(x = 0.01, y = 0.6, label = plot_title_1),
         fill = NA, label.color = NA, hjust = 0, vjust = 0.5, size = 5,
         color = "black") +
       ggtext::geom_richtext(
-        ggplot2::aes(x = 0.01, y = 0.2, label = PlotTitle2),
+        ggplot2::aes(x = 0.01, y = 0.2, label = plot_title_2),
         fill = NA, label.color = NA, hjust = 0, vjust = 0.5, size = 5,
         color = "black") +
       ggtext::geom_richtext(
         ggplot2::aes(
           x = 1, y = 0.55,
           label = stringr::str_glue(
-            '<SPAN STYLE="font-size:12.5pt; color: red"><b>{Hab_Name0} \\
+            '<SPAN STYLE="font-size:12.5pt; color: red"><b>{hab_name_0} \\
               habitats </b></SPAN>&#8212;<SPAN STYLE="font-size:12.5pt; \\
               color: blue"><b> current climate</b></SPAN>')),
         fill = NA, label.color = NA, hjust = 1, vjust = 0.5) +
@@ -603,25 +604,26 @@ plot_prediction <- function(
         ggplot2::aes(
           x = 1, y = 0.25,
           label = stringr::str_glue(
-            '<span style="color: grey; font-size:6pt">Last update: {Date} \\
-              </span>')),
+            paste0(
+              '<span style="color: grey; font-size:6pt">Last',
+              "update: {current_date}</span>"))),
         fill = NA, label.color = NA, hjust = 1, vjust = 0.5) +
       ggplot2::theme_void() +
       ggplot2::theme(plot.margin = ggplot2::margin(0, 0, 0, 0))
 
     final_plot <- cowplot::plot_grid(
-      MainTitle,
+      main_title,
       cowplot::plot_grid(
-        YLab, plot_grid_main, ncol = 2, rel_widths = c(0.03, 1), align = "h"),
+        y_lab, plot_grid_main, ncol = 2, rel_widths = c(0.03, 1), align = "h"),
       ncol = 1, rel_heights = c(0.07, 1))
 
     ragg::agg_jpeg(
-      filename = path_JPEG, width = 30, height = 15.5, res = 600,
+      filename = path_jpeg, width = 30, height = 15.5, res = 600,
       quality = 100, units = "cm")
     print(final_plot)
     grDevices::dev.off()
 
-    return(invisible(NULL))
+    invisible(NULL)
   }
 
   # # ..................................................................... ###
@@ -636,19 +638,19 @@ plot_prediction <- function(
   ecokit::load_packages(package_list = "foreach")
   withr::defer(doParallel::stopImplicitCluster())
 
-  Plots <- foreach::foreach(
-    x = seq_len(nrow(Map_summary)),
+  plots <- foreach::foreach(
+    x = seq_len(nrow(map_summary)),
     .export = c(
-      "Map_summary", "PrepPlots", "R_SR", "Path_PA",
-      "R_habitat", "Path_Plots", "hab_name", "PlotMaps"),
+      "map_summary", "prepare_plots", "r_sr", "path_pa",
+      "r_habitat", "path_plots", "hab_name", "plot_maps"),
     .packages = c(
       "dplyr", "terra", "ggplot2", "stringr", "cowplot", "tidyterra",
       "purrr", "ggtext", "ragg", "paletteer", "grid", "scales", "ecokit",
       "magrittr")) %dopar% {
-        PlotMaps(x)
+        plot_maps(x)
       }
 
-  rm(Plots, envir = environment())
+  rm(plots, envir = environment())
   doParallel::stopImplicitCluster()
 
   ecokit::cat_diff(init_time = .start_time)

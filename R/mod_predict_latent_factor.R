@@ -12,38 +12,38 @@
 #'   predictions are to be made
 #' @param units_model a factor vector with random level units that are
 #'   conditioned on
-#' @param postEta Character. Path of `postEta`; a list containing samples of
+#' @param post_eta Character. Path of `post_eta`; a list containing samples of
 #'   random factors at conditioned units
 #' @param post_alpha a list containing samples of range (lengthscale) parameters
 #'   for latent factors
-#' @param LF_rL a HmscRandomLevel-class object that describes the random level
+#' @param lf_rl a HmscRandomLevel-class object that describes the random level
 #'   structure
-#' @param n_cores_LF Integer. Number of cores to use for parallel processing of
+#' @param n_cores_lf Integer. Number of cores to use for parallel processing of
 #'   latent factor prediction. Defaults to 8L.
 #' @param strategy Character. The parallel processing strategy to use. Valid
 #'   options are "sequential", "multisession" (default), "multicore", and
 #'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param temp_dir Character. Path for temporary storage of intermediate files.
-#' @param LF_temp_cleanup Logical. Whether to delete temporary files in the
+#' @param lf_temp_cleanup Logical. Whether to delete temporary files in the
 #'   `temp_dir` directory after finishing the LF predictions.
 #' @param model_name Character. Prefix for temporary file names. Defaults to
 #'   `NULL`, in which case no prefix is used.
-#' @param use_TF Logical. Whether to use `TensorFlow` for calculations. Defaults
+#' @param use_tf Logical. Whether to use `TensorFlow` for calculations. Defaults
 #'   to `TRUE`.
-#' @param TF_environ Character. Path to the Python environment. This argument is
-#'   required if `use_TF` is `TRUE` under Windows. Defaults to `NULL`.
-#' @param LF_commands_only Logical. If `TRUE`, returns the command to run the
+#' @param tf_environ Character. Path to the Python environment. This argument is
+#'   required if `use_tf` is `TRUE` under Windows. Defaults to `NULL`.
+#' @param lf_commands_only Logical. If `TRUE`, returns the command to run the
 #'   Python script. Default is `FALSE`.
-#' @param TF_use_single Logical. Whether to use single precision for the
+#' @param tf_use_single Logical. Whether to use single precision for the
 #'   `TensorFlow` calculations. Defaults to `FALSE`.
-#' @param LF_out_file Character. Path to save the outputs. If `NULL` (default),
+#' @param lf_out_file Character. Path to save the outputs. If `NULL` (default),
 #'   the predicted latent factors are not saved to a file. This should end with
 #'   either `*.qs2` or `*.RData`.
-#' @param LF_return Logical. Whether the output should be returned. Defaults to
-#'   `FALSE`. If `LF_out_file` is `NULL`, this parameter cannot be set to
+#' @param lf_return Logical. Whether the output should be returned. Defaults to
+#'   `FALSE`. If `lf_out_file` is `NULL`, this parameter cannot be set to
 #'   `FALSE` because the function needs to return the result if it is not saved
 #'   to a file.
-#' @param LF_check Logical. If `TRUE`, the function checks if the output files
+#' @param lf_check Logical. If `TRUE`, the function checks if the output files
 #'   are already created and valid. If `FALSE`, the function will only check if
 #'   the files exist without checking their integrity. Default is `FALSE`.
 #' @param verbose Logical. If `TRUE`, logs detailed information during
@@ -60,32 +60,32 @@
 #'   when working in parallel.
 #'
 #'   The main difference is that this function:
-#' - allow for parallel processing (`n_cores_LF` argument);
-#' - when `TensorFlow` is used (`use_TF = TRUE`), matrix
+#' - allow for parallel processing (`n_cores_lf` argument);
+#' - when `TensorFlow` is used (`use_tf = TRUE`), matrix
 #'   calculations are much faster, particularly when used on GPU. The following
 #'   Python modules are needed: `numpy`, `tensorflow`, `rdata`, `xarray`, and
-#'   `pandas`. To use `TensorFlow` under Windows, the argument `TF_environ`
+#'   `pandas`. To use `TensorFlow` under Windows, the argument `tf_environ`
 #'   should be set to the path of a Python environment with `TensorFlow`
 #'   installed;
-#' - if `use_TF` is set to `FALSE`, the function uses `R` (supported by
+#' - if `use_tf` is set to `FALSE`, the function uses `R` (supported by
 #'   relatively faster `CPP` functions) in the calculations;
-#' - `D11` and `D12` matrices are processed only once and saved to disk and
+#' - `d11` and `d12` matrices are processed only once and saved to disk and
 #'   called when needed.
 
 predict_latent_factor <- function(
-    units_pred, units_model, postEta, post_alpha, LF_rL, n_cores_LF = 8L,
-    strategy = "multisession", temp_dir = "TEMP_Pred",
-    LF_temp_cleanup = TRUE, model_name = NULL, use_TF = TRUE, TF_environ = NULL,
-    TF_use_single = FALSE, LF_out_file = NULL, LF_return = FALSE,
-    LF_check = FALSE, LF_commands_only = FALSE, solve_max_attempts = 5L,
+    units_pred, units_model, post_eta, post_alpha, lf_rl, n_cores_lf = 8L,
+    strategy = "multisession", temp_dir = "temp_pred",
+    lf_temp_cleanup = TRUE, model_name = NULL, use_tf = TRUE, tf_environ = NULL,
+    tf_use_single = FALSE, lf_out_file = NULL, lf_return = FALSE,
+    lf_check = FALSE, lf_commands_only = FALSE, solve_max_attempts = 5L,
     solve_chunk_size = 50L, verbose = TRUE) {
 
   # # ..................................................................... ###
 
   strategy <- .validate_strategy(strategy)
-  if (strategy == "sequential") n_cores <- n_cores_LF <- 1L
+  if (strategy == "sequential") n_cores <- n_cores_lf <- 1L
   n_cores <- .validate_n_cores(n_cores)
-  n_cores_LF <- .validate_n_cores(n_cores_LF)
+  n_cores_lf <- .validate_n_cores(n_cores_lf)
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -96,10 +96,10 @@ predict_latent_factor <- function(
 
   # Check inputs
 
-  if (is.null(LF_out_file) && isFALSE(LF_return)) {
+  if (is.null(lf_out_file) && isFALSE(lf_return)) {
     ecokit::stop_ctx(
-      "`LF_return` must be `TRUE` when `LF_out_file` is NULL.",
-      LF_return = LF_return, LF_out_file = LF_out_file,
+      "`lf_return` must be `TRUE` when `lf_out_file` is NULL.",
+      lf_return = lf_return, lf_out_file = lf_out_file,
       include_backtrace = TRUE)
   }
 
@@ -114,32 +114,32 @@ predict_latent_factor <- function(
 
   # # ..................................................................... ###
 
-  # Load postEta if it is a file path
+  # Load post_eta if it is a file path
 
-  if (inherits(postEta, "character")) {
-    ecokit::cat_time("Load postEta", level = 1L, verbose = verbose)
-    if (!file.exists(postEta)) {
+  if (inherits(post_eta, "character")) {
+    ecokit::cat_time("Load post_eta", level = 1L, verbose = verbose)
+    if (!file.exists(post_eta)) {
       ecokit::stop_ctx(
-        "The specified path for `postEta` does not exist. ", postEta = postEta,
-        include_backtrace = TRUE)
+        "The specified path for `post_eta` does not exist. ",
+        post_eta = post_eta, include_backtrace = TRUE)
     }
-    postEta <- ecokit::load_as(postEta)
+    post_eta <- ecokit::load_as(post_eta)
   }
 
   # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  SampleID <- LF <- LF_ID <- Sample_IDs <- Alpha_ID <- File_etaPred <-
-    NSamples <- ChunkID <- File_postEta <- File_etaPred_TF <- eta_DT <-
-    Path_Samp_LF <- NULL
+  sample_id <- lf <- lf_id <- sample_ids <- alpha_id <- file_eta_pred <-
+    n_samples <- chunk_id <- file_post_eta <- file_eta_pred_tf <- eta_data <-
+    path_samp_lf <- NULL
 
   # # ..................................................................... ###
 
   # indices of units_pred in units_model
-  indOld <- (units_pred %in% units_model)
+  ind_old <- (units_pred %in% units_model)
   # indices of new units_pred
-  indNew <- !(indOld)
+  ind_new <- !(ind_old)
 
   # In the original Hmsc::predictLatentFactor function, the function is used
   # irrespective if the provided locations are new or not, then values at new
@@ -149,8 +149,8 @@ predict_latent_factor <- function(
   # loaded at locations for model fitting. This distinction facilitate the
   # processing.
 
-  all_training <- sum(indNew) == 0
-  all_new <- sum(indOld) == 0
+  all_training <- sum(ind_new) == 0
+  all_new <- sum(ind_old) == 0
 
   # Either all_training or all_new should be TRUE
   if (sum(all_training, all_new) != 1) {
@@ -165,12 +165,12 @@ predict_latent_factor <- function(
     ecokit::cat_time(
       "All input sites are training sites", level = 1L, verbose = verbose)
 
-    postEtaPred <- purrr::map(
-      .x = postEta,
+    post_eta_pred <- purrr::map(
+      .x = post_eta,
       .f = ~ {
-        Out <- .x[match(units_pred[indOld], units_model), ]
-        rownames(Out) <- units_model
-        return(Out)
+        out <- .x[match(units_pred[ind_old], units_model), ]
+        rownames(out) <- units_model
+        return(out)
       })
 
   } else {
@@ -180,15 +180,15 @@ predict_latent_factor <- function(
 
     # Check `TensorFlow` settings
 
-    if (use_TF) {
+    if (use_tf) {
 
-      PythonScript <- system.file("crossprod_solve.py", package = "IASDT.R")
+      python_script <- system.file("crossprod_solve.py", package = "IASDT.R")
 
-      # Check if PythonScript exists
-      if (!file.exists(PythonScript)) {
+      # Check if python_script exists
+      if (!file.exists(python_script)) {
         ecokit::stop_ctx(
           "Necessary Python script does not exist",
-          PythonScript = PythonScript, include_backtrace = TRUE)
+          python_script = python_script, include_backtrace = TRUE)
       }
 
       # Suppress `TensorFlow` warnings and disable optimizations
@@ -216,31 +216,31 @@ predict_latent_factor <- function(
     model_name <- stringr::str_replace_all(model_name, "__$", "_")
 
     # Create a temporary directory to store intermediate results. This directory
-    # will be used to save s1/s2 or D11/D12, and intermediate postEta files,
+    # will be used to save s1/s2 or d11/d12, and intermediate post_eta files,
     # reducing memory usage.
-    Temp_Dir_LF <- fs::path(temp_dir, "LF_Prediction")
-    fs::dir_create(c(Temp_Dir_LF, temp_dir))
+    temp_dir_lf <- fs::path(temp_dir, "lf_prediction")
+    fs::dir_create(c(temp_dir_lf, temp_dir))
 
     # # .................................................................... ###
 
-    # Calculate D11 and D12 only once
+    # Calculate d11 and d12 only once
 
     ecokit::cat_time(
       "Calculate/save necessary matrices", level = 1L, verbose = verbose)
 
-    alphapw <- LF_rL$alphapw      # nolint: object_name_linter
+    alphapw <- lf_rl$alphapw      # nolint: object_name_linter
 
-    if (use_TF) {
+    if (use_tf) {
 
       # Save s1 and s2 for coordinates at training and testing sites as feather
       # files, if not already exist on disk
-      Path_s1 <- fs::path(temp_dir, paste0(model_name, "s1.feather"))
-      Path_s2 <- fs::path(temp_dir, paste0(model_name, "s2.feather"))
+      path_s1 <- fs::path(temp_dir, paste0(model_name, "s1.feather"))
+      path_s2 <- fs::path(temp_dir, paste0(model_name, "s2.feather"))
 
-      s1_s2_Okay <- ecokit::check_data(Path_s1, warning = FALSE) &&
-        ecokit::check_data(Path_s2, warning = FALSE)
+      s1_s2_okay <- ecokit::check_data(path_s1, warning = FALSE) &&
+        ecokit::check_data(path_s2, warning = FALSE)
 
-      if (s1_s2_Okay) {
+      if (s1_s2_okay) {
         ecokit::cat_time(
           "s1 and s2 matrices were already saved",
           level = 2L, verbose = verbose, cat_timestamp = FALSE)
@@ -250,50 +250,50 @@ predict_latent_factor <- function(
           "Saving s1 and s2 matrices", level = 2L, verbose = verbose)
 
         # s1
-        s1 <- as.data.frame(LF_rL$s[units_model, , drop = FALSE])
-        ecokit::save_as(object = s1, out_path = Path_s1)
+        s1 <- as.data.frame(lf_rl$s[units_model, , drop = FALSE])
+        ecokit::save_as(object = s1, out_path = path_s1)
 
         # s2
-        s2 <- as.data.frame(LF_rL$s[units_pred[indNew], , drop = FALSE])
-        ecokit::save_as(object = s2, out_path = Path_s2)
+        s2 <- as.data.frame(lf_rl$s[units_pred[ind_new], , drop = FALSE])
+        ecokit::save_as(object = s2, out_path = path_s2)
 
         rm(s1, s2, envir = environment())
       }
 
-      rm(LF_rL, envir = environment())
-      Path_D11 <- Path_D12 <- NULL
+      rm(lf_rl, envir = environment())
+      path_d11 <- path_d12 <- NULL
 
     } else {
 
-      # Save D11 and D12 as feather files, if not already exist on disk
-      Path_D11 <- fs::path(temp_dir, paste0(model_name, "D11.qs2"))
-      Path_D12 <- fs::path(temp_dir, paste0(model_name, "D12.qs2"))
+      # Save d11 and d12 as feather files, if not already exist on disk
+      path_d11 <- fs::path(temp_dir, paste0(model_name, "d11.qs2"))
+      path_d12 <- fs::path(temp_dir, paste0(model_name, "d12.qs2"))
 
-      if (file.exists(Path_D11) && file.exists(Path_D12)) {
+      if (file.exists(path_d11) && file.exists(path_d12)) {
 
         ecokit::cat_time(
-          "D11 and D12 distance matrices are already saved",
+          "d11 and d12 distance matrices are already saved",
           level = 2L, verbose = verbose)
 
       } else {
 
-        s1 <- LF_rL$s[units_model, , drop = FALSE]
-        s2 <- LF_rL$s[units_pred[indNew], , drop = FALSE]
+        s1 <- lf_rl$s[units_model, , drop = FALSE]
+        s2 <- lf_rl$s[units_pred[ind_new], , drop = FALSE]
 
-        # D11
-        D11 <- Rfast::Dist(s1)
-        ecokit::save_as(object = D11, out_path = Path_D11)
+        # d11
+        d11 <- Rfast::Dist(s1)
+        ecokit::save_as(object = d11, out_path = path_d11)
 
-        # D12
-        D12 <- Rfast::dista(s1, s2)
-        ecokit::save_as(object = D12, out_path = Path_D12)
+        # d12
+        d12 <- Rfast::dista(s1, s2)
+        ecokit::save_as(object = d12, out_path = path_d12)
 
         # Clean up
-        rm(LF_rL, s1, s2, D11, D12, envir = environment())
+        rm(lf_rl, s1, s2, d11, d12, envir = environment())
 
       }
 
-      Path_s1 <- Path_s2 <- NULL
+      path_s1 <- path_s2 <- NULL
 
     }
 
@@ -308,245 +308,246 @@ predict_latent_factor <- function(
       level = 1L, verbose = verbose)
 
     # Unique combination of LF / alphapw / sample IDs
-    LF_Data <- do.call(rbind, post_alpha) %>%
+    lf_data <- do.call(rbind, post_alpha) %>%
       as.data.frame() %>%
       tibble::tibble() %>%
-      stats::setNames(paste0("LF_", seq_len(ncol(.)))) %>%
+      stats::setNames(paste0("lf_", seq_len(ncol(.)))) %>%
       # ID column represents the original row number
-      dplyr::mutate(Sample_IDs = dplyr::row_number()) %>%
-      tidyr::nest(Sample_IDs = Sample_IDs) %>%
+      dplyr::mutate(sample_ids = dplyr::row_number()) %>%
+      tidyr::nest(sample_ids = sample_ids) %>%
       dplyr::mutate(
-        Sample_IDs = purrr::map(Sample_IDs, ~ as.vector(unlist(.x)))) %>%
+        sample_ids = purrr::map(sample_ids, ~ as.vector(unlist(.x)))) %>%
       tidyr::pivot_longer(
-        cols = -Sample_IDs, values_to = "Alpha_ID", names_to = "LF") %>%
+        cols = -sample_ids, values_to = "alpha_id", names_to = "lf") %>%
       dplyr::mutate(
-        LF_ID = as.integer(stringr::str_remove(LF, "LF_")),
-        Denom = purrr::map_dbl(Alpha_ID, ~ alphapw[.x, 1])) %>%
-      tidyr::nest(Sample_IDs = -c("Denom", "LF_ID", "Alpha_ID", "LF")) %>%
+        lf_id = as.integer(stringr::str_remove(lf, "lf_")),
+        denom = purrr::map_dbl(alpha_id, ~ alphapw[.x, 1])) %>%
+      tidyr::nest(sample_ids = -c("denom", "lf_id", "alpha_id", "lf")) %>%
       dplyr::mutate(
-        Sample_IDs = purrr::map(Sample_IDs, ~unname(sort(unlist(.x)))),
+        sample_ids = purrr::map(sample_ids, ~unname(sort(unlist(.x)))),
         # number of samples to be processed in each file
-        NSamples = purrr::map_int(Sample_IDs, length)) %>%
-      dplyr::arrange(dplyr::desc(NSamples)) %>%
+        n_samples = purrr::map_int(sample_ids, length)) %>%
+      dplyr::arrange(dplyr::desc(n_samples)) %>%
       dplyr::mutate(
-        ChunkID = dplyr::row_number(),
-        File_postEta = purrr::map_chr(
-          .x = ChunkID,
+        chunk_id = dplyr::row_number(),
+        file_post_eta = purrr::map_chr(
+          .x = chunk_id,
           .f = ~ {
-            ChunkID0 <- stringr::str_pad(
+            chunk_id0 <- stringr::str_pad(
               .x, width = nchar(dplyr::n()), pad = 0)
             fs::path(
               temp_dir,
-              paste0(model_name, "postEta_ch", ChunkID0, ".feather"))
+              paste0(model_name, "post_eta_ch", chunk_id0, ".feather"))
           }),
-        File_etaPred_TF = stringr::str_replace_all(
-          File_postEta, "_postEta_ch", "_etaPred_ch"),
-        File_etaPred = stringr::str_replace_all(
-          File_etaPred_TF, ".feather", ".qs2"),
+        file_eta_pred_tf = stringr::str_replace_all(
+          file_post_eta, "_post_eta_ch", "_eta_pred_ch"),
+        file_eta_pred = stringr::str_replace_all(
+          file_eta_pred_tf, ".feather", ".qs2"),
         Export = purrr::pmap(
-          .l = list(Sample_IDs, LF_ID, File_postEta),
-          .f = function(Sample_IDs, LF_ID, File_postEta) {
+          .l = list(sample_ids, lf_id, file_post_eta),
+          .f = function(sample_ids, lf_id, file_post_eta) {
 
             # do not export file if already exists
-            if (!file.exists(File_postEta)) {
-              Out <- postEta[Sample_IDs] %>%
-                purrr::map(~ .x[, LF_ID, drop = FALSE]) %>%
+            if (!file.exists(file_post_eta)) {
+              out <- post_eta[sample_ids] %>%
+                purrr::map(~ .x[, lf_id, drop = FALSE]) %>%
                 simplify2array() %>%
                 as.data.frame() %>%
-                stats::setNames(paste0("Eta_", Sample_IDs))
+                stats::setNames(paste0("Eta_", sample_ids))
 
-              ecokit::save_as(object = Out, out_path = File_postEta)
+              ecokit::save_as(object = out, out_path = file_post_eta)
             }
 
-            return(NULL)
+            NULL
 
           }),
         Export = NULL)
 
-    rm(postEta, post_alpha, envir = environment())
+    rm(post_eta, post_alpha, envir = environment())
     invisible(gc())
 
     # # .................................................................... ###
 
     # Internal functions to predict latent factors
 
-    etaPreds_F <- function(RowNum, units_pred, LF_check = FALSE) {
+    eta_preds_f <- function(row_num, units_pred, lf_check = FALSE) {
 
       # do not use scientific notation
       withr::local_options(scipen = 99)
 
       # Current denominator
-      Denom <- LF_Data$Denom[[RowNum]]
+      denom <- lf_data$denom[[row_num]]
       # ID for latent factor
-      LF_ID <- LF_Data$LF_ID[[RowNum]]
+      lf_id <- lf_data$lf_id[[row_num]]
       # ID for posterior sample
-      SampleID <- LF_Data$Sample_IDs[[RowNum]]
+      sample_id <- lf_data$sample_ids[[row_num]]
 
       # File path for current data
-      File_postEta <- LF_Data$File_postEta[[RowNum]]
-      File_etaPred <- LF_Data$File_etaPred[[RowNum]]
-      File_etaPred_TF <- LF_Data$File_etaPred_TF[[RowNum]]
+      file_post_eta <- lf_data$file_post_eta[[row_num]]
+      file_eta_pred <- lf_data$file_eta_pred[[row_num]]
+      file_eta_pred_tf <- lf_data$file_eta_pred_tf[[row_num]]
 
-      CalcPredLF <- !file.exists(File_etaPred)
+      calc_pred_lf <- !file.exists(file_eta_pred)
 
-      if (LF_check && isFALSE(CalcPredLF)) {
-        Eta_NCols <- ncol(ecokit::load_as(File_etaPred))
-        CalcPredLF <- (Eta_NCols != LF_Data$NSamples[[RowNum]])
+      if (lf_check && isFALSE(calc_pred_lf)) {
+        eta_n_cols <- ncol(ecokit::load_as(file_eta_pred))
+        calc_pred_lf <- (eta_n_cols != lf_data$n_samples[[row_num]])
       }
 
-      if (CalcPredLF) {
+      if (calc_pred_lf) {
 
         # If the denominator is positive, perform calculations; otherwise, set
         # `eta_indNew` to zero.
 
-        if (Denom > 0) {
+        if (denom > 0) {
 
-          if (use_TF) {
+          if (use_tf) {
 
             # Use `TensorFlow`
 
             # Suppress `TensorFlow` warnings and disable optimizations
             Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3", TF_ENABLE_ONEDNN_OPTS = "0") # nolint: undesirable_function_linter
 
-            if (file.exists(File_etaPred_TF)) {
-              eta_indNew0 <- File_etaPred_TF
+            if (file.exists(file_eta_pred_tf)) {
+              eta_ind_new_0 <- file_eta_pred_tf
             } else {
-              eta_indNew0 <- run_crossprod_solve(
-                TF_environ = TF_environ, s1 = Path_s1, s2 = Path_s2,
-                denom = Denom, postEta = File_postEta,
-                path_out = File_etaPred_TF,
-                TF_use_single = TF_use_single,
-                LF_commands_only = LF_commands_only,
+              eta_ind_new_0 <- run_crossprod_solve(
+                tf_environ = tf_environ, s1 = path_s1, s2 = path_s2,
+                denom = denom, post_eta = file_post_eta,
+                path_out = file_eta_pred_tf,
+                tf_use_single = tf_use_single,
+                lf_commands_only = lf_commands_only,
                 solve_max_attempts = solve_max_attempts,
                 solve_chunk_size = solve_chunk_size)
             }
 
-            if (LF_commands_only) {
-              return(eta_indNew0)
+            if (lf_commands_only) {
+              return(eta_ind_new_0)
             }
 
-            rm(eta_indNew0, envir = environment())
+            rm(eta_ind_new_0, envir = environment())
 
-            etaPred <- tibble::tibble(
-              SampleID = SampleID,
-              LF = LF_ID,
-              Path_Samp_LF = fs::path(
-                Temp_Dir_LF,
+            eta_pred <- tibble::tibble(
+              sample_id = sample_id,
+              lf = lf_id,
+              path_samp_lf = fs::path(
+                temp_dir_lf,
                 paste0(
                   model_name, "Samp_",
-                  stringr::str_pad(SampleID, width = 4, pad = "0"),
-                  "_LF", LF, ".qs2")),
-              etaPred = as.list(ecokit::load_as(File_etaPred_TF))) %>%
-              tidyr::nest(eta_DT = -Path_Samp_LF) %>%
+                  stringr::str_pad(sample_id, width = 4, pad = "0"),
+                  "_lf", lf, ".qs2")),
+              eta_pred = as.list(ecokit::load_as(file_eta_pred_tf))) %>%
+              tidyr::nest(eta_data = -path_samp_lf) %>%
               dplyr::mutate(
-                eta_DT = purrr::map(
-                  .x = eta_DT,
+                eta_data = purrr::map(
+                  .x = eta_data,
                   .f = ~ {
-                    tidyr::unnest_longer(.x, "etaPred") %>%
-                      dplyr::mutate(LF = NULL, units_pred = units_pred) %>%
+                    tidyr::unnest_longer(.x, "eta_pred") %>%
+                      dplyr::mutate(lf = NULL, units_pred = units_pred) %>%
                       stats::setNames(
-                        c("SampleID", paste0("LF_", LF_ID), "units_pred"))
+                        c("sample_id", paste0("lf_", lf_id), "units_pred"))
                   }),
-                File_etaPred = File_etaPred,
-                ChunkID = LF_Data$ChunkID[[RowNum]],
-                SampleID = SampleID,
+                file_eta_pred = file_eta_pred,
+                chunk_id = lf_data$chunk_id[[row_num]],
+                sample_id = sample_id,
                 Save = purrr::map2(
-                  .x = eta_DT, .y = Path_Samp_LF,
+                  .x = eta_data, .y = path_samp_lf,
                   .f = ~qs2::qs_save(.x, .y, nthreads = 5)),
-                LF = LF_ID, Save = NULL, eta_DT = NULL)
+                lf = lf_id, Save = NULL, eta_data = NULL)
 
-            ecokit::save_as(object = etaPred, out_path = File_etaPred)
+            ecokit::save_as(object = eta_pred, out_path = file_eta_pred)
 
           } else {
 
             # Use R / CPP
 
-            # Reading postEta from file
-            postEta0 <- ecokit::load_as(File_postEta)
+            # Reading post_eta from file
+            post_eta0 <- ecokit::load_as(file_post_eta)
 
-            # Read D11 and D12
-            D11 <- ecokit::load_as(Path_D11)
-            D12 <- ecokit::load_as(Path_D12)
+            # Read d11 and d12
+            d11 <- ecokit::load_as(path_d11)
+            d12 <- ecokit::load_as(path_d12)
 
-            K11 <- IASDT.R::exp_neg_div(D11, Denom)
-            K12 <- IASDT.R::exp_neg_div(D12, Denom)
+            k11 <- IASDT.R::exp_neg_div(d11, denom)
+            k12 <- IASDT.R::exp_neg_div(d12, denom)
 
-            etaPred <- purrr::map_chr(
-              .x = seq_along(SampleID),
-              .f = function(ID) {
+            eta_pred <- purrr::map_chr(
+              .x = seq_along(sample_id),
+              .f = function(id) {
 
-                Path_Samp_LF <- fs::path(
-                  Temp_Dir_LF,
+                path_samp_lf <- fs::path(
+                  temp_dir_lf,
                   paste0(
                     model_name, "Samp_",
-                    stringr::str_pad(ID, width = 4, pad = "0"),
-                    "_LF", LF_ID, ".qs2"))
+                    stringr::str_pad(id, width = 4, pad = "0"),
+                    "_lf", lf_id, ".qs2"))
 
-                DT <- as.matrix(postEta0[, ID]) %>%
-                  IASDT.R::solve2vect(K11, .) %>%
+                  data <- as.matrix(post_eta0[, id]) %>%
+                  IASDT.R::solve2vect(k11, .) %>%
                   as.vector() %>%
-                  Matrix::crossprod(K12, .) %>%
+                  Matrix::crossprod(k12, .) %>%
                   as.vector() %>%
                   tibble::tibble(
-                    SampleID = SampleID[ID],
-                    etaPred = ., units_pred = units_pred) %>%
+                    sample_id = sample_id[id],
+                    eta_pred = ., units_pred = units_pred) %>%
                   stats::setNames(
-                    c("SampleID", paste0("LF_", LF_ID), "units_pred"))
+                    c("sample_id", paste0("lf_", lf_id), "units_pred"))
 
-                qs2::qs_save(object = DT, file = Path_Samp_LF, nthreads = 5)
+                qs2::qs_save(object = data, file = path_samp_lf, nthreads = 5)
 
-                return(Path_Samp_LF)
+                path_samp_lf
+
               }) %>%
               tibble::tibble(
-                Path_Samp_LF = ., File_etaPred = File_etaPred,
-                ChunkID = LF_Data$ChunkID[[RowNum]], SampleID = SampleID,
-                LF = LF_ID)
+                path_samp_lf = ., file_eta_pred = file_eta_pred,
+                chunk_id = lf_data$chunk_id[[row_num]], sample_id = sample_id,
+                lf = lf_id)
 
-            ecokit::save_as(object = etaPred, out_path = File_etaPred)
+            ecokit::save_as(object = eta_pred, out_path = file_eta_pred)
           }
 
         } else {
 
-          # When Denom is zero, set `eta_indNew` to zero
+          # When denom is zero, set `eta_indNew` to zero
 
-          if (isFALSE(LF_commands_only)) {   # nolint: unneeded_nesting_linter
+          if (isFALSE(lf_commands_only)) {   # nolint: unneeded_nesting_linter
 
-            etaPred <- tibble::tibble(
+            eta_pred <- tibble::tibble(
 
-              Path_Samp_LF = fs::path(
-                Temp_Dir_LF,
+              path_samp_lf = fs::path(
+                temp_dir_lf,
                 paste0(
                   model_name, "Samp_",
-                  stringr::str_pad(SampleID, width = 4L, pad = "0"),
-                  "_LF", LF_ID, ".qs2")),
+                  stringr::str_pad(sample_id, width = 4L, pad = "0"),
+                  "_lf", lf_id, ".qs2")),
 
-              File_etaPred = File_etaPred,
-              ChunkID = LF_Data$ChunkID[[RowNum]],
-              SampleID = SampleID) %>%
+              file_eta_pred = file_eta_pred,
+              chunk_id = lf_data$chunk_id[[row_num]],
+              sample_id = sample_id) %>%
               dplyr::mutate(
                 Save = purrr::map2(
-                  .x = Path_Samp_LF, .y = SampleID,
+                  .x = path_samp_lf, .y = sample_id,
                   .f = ~ {
-                    DT <- tibble::tibble(
-                      SampleID = .y, LF = 0,
+                    data <- tibble::tibble(
+                      sample_id = .y, lf = 0,
                       units_pred = units_pred) %>%
                       stats::setNames(
-                        c("SampleID", paste0("LF_", LF_ID), "units_pred"))
-                    qs2::qs_save(object = DT, file = .x, nthreads = 5)
+                        c("sample_id", paste0("lf_", lf_id), "units_pred"))
+                    qs2::qs_save(object = data, file = .x, nthreads = 5)
                     return(NULL)
                   }),
-                Save = NULL, LF = LF_ID)
+                Save = NULL, lf = lf_id)
 
-            ecokit::save_as(object = etaPred, out_path = File_etaPred)
+            ecokit::save_as(object = eta_pred, out_path = file_eta_pred)
           }
         }
 
       } else {
-        etaPred <- ecokit::load_as(File_etaPred)
+        eta_pred <- ecokit::load_as(file_eta_pred)
       }
 
-      if (isFALSE(LF_commands_only)) {
-        return(etaPred)
+      if (isFALSE(lf_commands_only)) {
+        return(eta_pred)
       }
     }
 
@@ -557,14 +558,14 @@ predict_latent_factor <- function(
 
     # Predict latent factors
 
-    if (all(file.exists(LF_Data$File_etaPred))) {
+    if (all(file.exists(lf_data$file_eta_pred))) {
       ecokit::cat_time(
-        "All LF prediction files were already created",
+        "All lf prediction files were already created",
         level = 1L, verbose = verbose)
     } else {
-      if (n_cores_LF == 1 || LF_commands_only) {
+      if (n_cores_lf == 1 || lf_commands_only) {
 
-        if (LF_commands_only) {
+        if (lf_commands_only) {
           ecokit::cat_time(
             "Prepare commands for predicting latent factors",
             level = 1L, verbose = verbose)
@@ -576,27 +577,27 @@ predict_latent_factor <- function(
         }
 
         # Making predictions sequentially
-        etaPreds <- purrr::map(
-          .x = seq_len(nrow(LF_Data)),
+        eta_preds <- purrr::map(
+          .x = seq_len(nrow(lf_data)),
           .f = function(x) {
             result <- try(
-              expr = etaPreds_F(
-                RowNum = x, units_pred = units_pred, LF_check = LF_check),
+              expr = eta_preds_f(
+                row_num = x, units_pred = units_pred, lf_check = lf_check),
               silent = FALSE)
 
             if (inherits(result, "try-error")) {
-              return(NULL)
+              NULL
             } else {
-              return(result)
+              result
             }
 
           })
 
-        if (LF_commands_only) {
+        if (lf_commands_only) {
 
-          CommandFilePrefix <- dplyr::if_else(
-            startsWith(model_name, "RC_c_"),
-            "LF_RC_Commands_", "LF_NewSites_Commands_")
+          command_file_prefix <- dplyr::if_else(
+            startsWith(model_name, "rc_c_"),
+            "lf_rc_commands_", "lf_new_sites_commands_")
 
           # Function to save commands to files
           save_commands_to_file <- function(commands, max_lines = 210) {
@@ -614,7 +615,7 @@ predict_latent_factor <- function(
 
               # Define the filename
               file_name <- fs::path(
-                temp_dir, paste0(CommandFilePrefix, i, ".txt"))
+                temp_dir, paste0(command_file_prefix, i, ".txt"))
 
               # Write the chunk to a file with Linux line endings
               writeLines(chunk, file_name, useBytes = TRUE)
@@ -622,7 +623,7 @@ predict_latent_factor <- function(
           }
 
           # Call the function to save commands to file
-          save_commands_to_file(unlist(etaPreds))
+          save_commands_to_file(unlist(eta_preds))
 
           return(NULL)
         }
@@ -634,34 +635,34 @@ predict_latent_factor <- function(
           "Predicting Latent Factor in parallel", level = 1L, verbose = verbose)
 
         ecokit::set_parallel(
-          n_cores = min(n_cores_LF, nrow(LF_Data)), level = 2L,
+          n_cores = min(n_cores_lf, nrow(lf_data)), level = 2L,
           future_max_size = 800L, strategy = strategy, cat_timestamp = FALSE)
         withr::defer(future::plan("sequential", gc = TRUE))
 
         ecokit::cat_time(
           "Making predictions in parallel", level = 2L, verbose = verbose)
-        etaPreds <- future.apply::future_lapply(
-          X = seq_len(nrow(LF_Data)),
+        eta_preds <- future.apply::future_lapply(
+          X = seq_len(nrow(lf_data)),
           FUN = function(x) {
             result <- try(
-              etaPreds_F(
-                RowNum = x, units_pred = units_pred, LF_check = LF_check),
+              eta_preds_f(
+                row_num = x, units_pred = units_pred, lf_check = lf_check),
               silent = FALSE)
 
             invisible(gc())
             if (inherits(result, "try-error")) {
-              return(NULL)
+              NULL
             } else {
-              return(result)
+              result
             }
           },
           future.seed = TRUE, future.packages = pkg_to_export,
           future.globals = c(
-            "LF_Data", "Path_D11", "Path_D12", "Path_s1", "Path_s2", "indNew",
-            "units_pred", "indOld", "units_model", "TF_environ", "use_TF",
-            "TF_use_single", "etaPreds_F", "LF_check", "run_crossprod_solve",
-            "LF_commands_only", "solve_max_attempts", "solve_chunk_size",
-            "Temp_Dir_LF"))
+            "lf_data", "path_d11", "path_d12", "path_s1", "path_s2", "ind_new",
+            "units_pred", "ind_old", "units_model", "tf_environ", "use_tf",
+            "tf_use_single", "eta_preds_f", "lf_check", "run_crossprod_solve",
+            "lf_commands_only", "solve_max_attempts", "solve_chunk_size",
+            "temp_dir_lf"))
 
         # Stop the cluster
         ecokit::set_parallel(
@@ -671,14 +672,14 @@ predict_latent_factor <- function(
       # Check if all files are created
       ecokit::cat_time(
         "Check if all files are created", level = 1L, verbose = verbose)
-      AllEtaFiles <- LF_Data$File_etaPred
-      AllEtaFilesExist <- all(file.exists(AllEtaFiles))
+      all_eta_files <- lf_data$file_eta_pred
+      all_eta_files_exist <- all(file.exists(all_eta_files))
 
-      if (!AllEtaFilesExist) {
-        FailedFiles <- AllEtaFiles[!file.exists(AllEtaFiles)]
+      if (!all_eta_files_exist) {
+        failed_files <- all_eta_files[!file.exists(all_eta_files)]
         ecokit::stop_ctx(
-          paste0(length(FailedFiles), " files are missing"),
-          FailedFiles = basename(FailedFiles), include_backtrace = TRUE)
+          paste0(length(failed_files), " files are missing"),
+          failed_files = basename(failed_files), include_backtrace = TRUE)
       }
       ecokit::cat_time(
         "All files were created", level = 2L, verbose = verbose,
@@ -693,21 +694,21 @@ predict_latent_factor <- function(
     # Merge results
     ecokit::cat_time("Merge results in parallel", level = 1L, verbose = verbose)
 
-    postEtaPred_Samp <- etaPreds %>%
+    post_eta_pred_samp <- eta_preds %>%
       dplyr::bind_rows() %>%
-      dplyr::select(-LF, -ChunkID, -File_etaPred) %>%
-      dplyr::arrange(SampleID) %>%
+      dplyr::select(-lf, -chunk_id, -file_eta_pred) %>%
+      dplyr::arrange(sample_id) %>%
       dplyr::mutate(
-        Path_Sample = fs::path(
-          Temp_Dir_LF,
+        path_sample = fs::path(
+          temp_dir_lf,
           paste0(
             model_name, "Samp_",
-            stringr::str_pad(SampleID, width = 4, pad = "0"), ".qs2"))) %>%
-      tidyr::nest(data = -c("SampleID", "Path_Sample"))
+            stringr::str_pad(sample_id, width = 4, pad = "0"), ".qs2"))) %>%
+      tidyr::nest(data = -c("sample_id", "path_sample"))
 
 
     ecokit::set_parallel(
-      n_cores = n_cores_LF, level = 2L, future_max_size = 800L,
+      n_cores = n_cores_lf, level = 2L, future_max_size = 800L,
       strategy = strategy, cat_timestamp = FALSE)
     withr::defer(future::plan("sequential", gc = TRUE))
 
@@ -715,30 +716,31 @@ predict_latent_factor <- function(
       "Process results for MCMC samples in parallel",
       level = 2L, verbose = verbose)
 
-    postEtaPred <- future.apply::future_lapply(
-      X = seq_len(nrow(postEtaPred_Samp)),
+    post_eta_pred <- future.apply::future_lapply(
+      X = seq_len(nrow(post_eta_pred_samp)),
       FUN = function(x) {
 
-        Path_Sample <- postEtaPred_Samp$Path_Sample[[x]]
-        Path_LF <- postEtaPred_Samp$data[[x]]$Path_Samp_LF
+        path_sample <- post_eta_pred_samp$path_sample[[x]]
+        path_lf <- post_eta_pred_samp$data[[x]]$path_samp_lf
 
-        SampleDT0 <- lapply(sort(Path_LF), qs2::qs_read) %>%
+        sample_data_0 <- lapply(sort(path_lf), qs2::qs_read) %>%
           purrr::reduce(
-            .f = dplyr::left_join, by = c("SampleID", "units_pred")) %>%
+            .f = dplyr::left_join, by = c("sample_id", "units_pred")) %>%
           dplyr::arrange(units_pred) %>%
           dplyr::select(sort(tidyselect::peek_vars())) %>%
-          dplyr::select(-SampleID) %>%
+          dplyr::select(-sample_id) %>%
           magrittr::set_rownames(NULL) %>%
           tibble::column_to_rownames("units_pred") %>%
           unname() %>%
           as.matrix()
 
-        ecokit::save_as(SampleDT0, out_path = Path_Sample)
-        try(fs::file_delete(Path_LF), silent = TRUE)
-        return(SampleDT0)
+        ecokit::save_as(sample_data_0, out_path = path_sample)
+        try(fs::file_delete(path_lf), silent = TRUE)
+
+        sample_data_0
       },
       future.seed = TRUE, future.packages = pkg_to_export,
-      future.globals = c("postEtaPred_Samp", "LF_return"))
+      future.globals = c("post_eta_pred_samp", "lf_return"))
 
     # Stop the cluster
     ecokit::set_parallel(stop_cluster = TRUE, level = 2L, cat_timestamp = FALSE)
@@ -749,26 +751,27 @@ predict_latent_factor <- function(
 
   # # ..................................................................... ###
 
-  # Save postEtaPred
+  # Save post_eta_pred
 
-  if (!is.null(LF_out_file)) {
+  if (!is.null(lf_out_file)) {
     ecokit::cat_time(
-      "Saving postEtaPred to disk", level = 1L, verbose = verbose)
+      "Saving post_eta_pred to disk", level = 1L, verbose = verbose)
     ecokit::cat_time(
-      LF_out_file, cat_timestamp = FALSE, level = 2L, verbose = verbose)
-    fs::dir_create(fs::path_dir(LF_out_file))
+      lf_out_file, cat_timestamp = FALSE, level = 2L, verbose = verbose)
+    fs::dir_create(fs::path_dir(lf_out_file))
     ecokit::save_as(
-      object = postEtaPred, out_path = LF_out_file,
+      object = post_eta_pred, out_path = lf_out_file,
       n_threads = 5L, compress_level = 6L)
 
-    LF_OutFile_Samp <- stringr::str_replace(LF_out_file, ".qs2", "_Samp.qs2")
-    ecokit::save_as(object = postEtaPred_Samp, out_path = LF_OutFile_Samp)
+    ecokit::save_as(
+      object = post_eta_pred_samp,
+      out_path = stringr::str_replace(lf_out_file, ".qs2", "_Samp.qs2"))
   }
 
   # # ..................................................................... ###
 
   # Clean up temporary files after finishing calculations
-  if (LF_temp_cleanup) {
+  if (lf_temp_cleanup) {
 
     ecokit::cat_time(
       "Cleaning up temporary files", level = 1L, verbose = verbose)
@@ -776,32 +779,32 @@ predict_latent_factor <- function(
     try(
       expr = {
 
-        Pattern <- paste0(
+        file_pattern <- paste0(
           "^", model_name,
-          "(postEta|r[0-9]|etaPred|s1|s2|post).+(feather|qs2|log)$")
+          "(post_eta|r[0-9]|eta_pred|s1|s2|post).+(feather|qs2|log)$")
         file_paths <- list.files(
           path = ecokit::normalize_path(temp_dir),
-          pattern = Pattern, full.names = TRUE)
+          pattern = file_pattern, full.names = TRUE)
         if (length(file_paths) > 0) {
           try(fs::file_delete(file_paths), silent = TRUE)
         }
 
-        file_paths2 <- list.files(
+        file_paths_2 <- list.files(
           path = ecokit::normalize_path(temp_dir),
-          pattern = "(LF_.+_Test|RC_c)_Samp_.+.qs2",
+          pattern = "(lf_.+_test|rc_c)_Samp_.+.qs2",
           full.names = TRUE, recursive = TRUE)
-        if (length(file_paths2) > 0) {
-          try(fs::file_delete(file_paths2), silent = TRUE)
+        if (length(file_paths_2) > 0) {
+          try(fs::file_delete(file_paths_2), silent = TRUE)
         }
 
         # delete temp files for cross-validated models
-        file_paths3 <- list.files(
-          path = ecokit::normalize_path(Temp_Dir_LF),
+        file_paths_3 <- list.files(
+          path = ecokit::normalize_path(temp_dir_lf),
           pattern = paste0("^", model_name, "Samp_.+.qs2"),
           full.names = TRUE, recursive = TRUE)
 
-        if (length(file_paths3) > 0) {
-          try(fs::file_delete(file_paths3), silent = TRUE)
+        if (length(file_paths_3) > 0) {
+          try(fs::file_delete(file_paths_3), silent = TRUE)
         }
 
       },
@@ -817,14 +820,13 @@ predict_latent_factor <- function(
 
   # # ..................................................................... ###
 
-  if (LF_return) {
-    return(postEtaPred)
+  if (lf_return) {
+    return(post_eta_pred)
   } else {
-    return(LF_out_file)
+    return(lf_out_file)
   }
 
 }
-
 
 # # ========================================================================== #
 # # ========================================================================== #
@@ -842,7 +844,7 @@ predict_latent_factor <- function(
 #'
 #' @param s1 Character. Path to the input file containing s1 coordinates.
 #' @param s2 Character Path to the input file containing s2 coordinates.
-#' @param postEta Character. Path to the file containing the `postEta` matrix
+#' @param post_eta Character. Path to the file containing the `post_eta` matrix
 #'   data.
 #' @param path_out Character. Path to rds file where the output results will be
 #'   saved.
@@ -865,10 +867,10 @@ predict_latent_factor <- function(
 #' @inheritParams predict_latent_factor
 
 run_crossprod_solve <- function(
-    TF_environ, s1, s2, postEta, path_out, denom,
-    chunk_size = 1000L, threshold_mb = 2000L, TF_use_single = TRUE,
+    tf_environ, s1, s2, post_eta, path_out, denom,
+    chunk_size = 1000L, threshold_mb = 2000L, tf_use_single = TRUE,
     verbose = TRUE, solve_chunk_size = 50L, solve_max_attempts = 5L,
-    LF_commands_only = FALSE) {
+    lf_commands_only = FALSE) {
 
   Sys.setenv(TF_CPP_MIN_LOG_LEVEL = "3")     # nolint: undesirable_function_linter
 
@@ -883,8 +885,8 @@ run_crossprod_solve <- function(
   }
 
   # Ensure the paths are valid
-  paths <- list(script_path, s1, s2, postEta)
-  names(paths) <- c("Python Script", "s1", "s2", "postEta")
+  paths <- list(script_path, s1, s2, post_eta)
+  names(paths) <- c("Python Script", "s1", "s2", "post_eta")
   purrr::walk(
     .x = names(paths),
     .f = function(p) {
@@ -899,26 +901,26 @@ run_crossprod_solve <- function(
 
   # On Windows, the TF calculations has to be done through a valid virtual
   # environment; the path to the virtual environment must be specified in
-  # `TF_environ`. On LUMI, this is not needed as the compatible Python
+  # `tf_environ`. On LUMI, this is not needed as the compatible Python
   # installation is loaded automatically when loading `tensorflow` module. When
   # using another HPC system, the function needs to be adapted accordingly.
 
   if (.Platform$OS.type == "windows") {
 
-    if (is.null(TF_environ)) {
+    if (is.null(tf_environ)) {
       ecokit::stop_ctx(
-        "When running on Windows, `TF_environ` must be specified",
-        TF_environ = TF_environ, include_backtrace = TRUE)
+        "When running on Windows, `tf_environ` must be specified",
+        tf_environ = tf_environ, include_backtrace = TRUE)
     }
-    if (!dir.exists(TF_environ)) {
+    if (!dir.exists(tf_environ)) {
       ecokit::stop_ctx(
-        "The specified `TF_environ` directory does not exist",
-        TF_environ = ecokit::normalize_path(TF_environ),
+        "The specified `tf_environ` directory does not exist",
+        tf_environ = ecokit::normalize_path(tf_environ),
         include_backtrace = TRUE)
     }
 
     python_executable <- ecokit::normalize_path(
-      fs::path(TF_environ, "Scripts", "python.exe"), must_work = TRUE)
+      fs::path(tf_environ, "Scripts", "python.exe"), must_work = TRUE)
 
     if (!file.exists(python_executable)) {
       ecokit::stop_ctx(
@@ -933,12 +935,12 @@ run_crossprod_solve <- function(
   }
 
   # Construct the command to run the Python script
-  LF_Args <- c(
+  lf_args <- c(
     python_executable,
     script_path,
     "--s1", ecokit::normalize_path(s1, must_work = TRUE),
     "--s2", ecokit::normalize_path(s2, must_work = TRUE),
-    "--post_eta", ecokit::normalize_path(postEta, must_work = TRUE),
+    "--post_eta", ecokit::normalize_path(post_eta, must_work = TRUE),
     "--path_out", ecokit::normalize_path(path_out),
     "--denom", as.character(denom),
     "--chunk_size", as.character(chunk_size),
@@ -946,32 +948,32 @@ run_crossprod_solve <- function(
     "--solve_chunk_size", as.character(solve_chunk_size))
 
   # Add boolean flags conditionally
-  if (TF_use_single) {
-    LF_Args <- c(LF_Args, "--use_single")
+  if (tf_use_single) {
+    lf_args <- c(lf_args, "--use_single")
   }
 
   if (verbose) {
-    LF_Args <- c(LF_Args, "--verbose")
+    lf_args <- c(lf_args, "--verbose")
   }
 
   if (.Platform$OS.type != "windows") {
     path_log <- stringr::str_replace(
       fs::path(getwd(), path_out), ".feather", ".log")
     # Redirect results of time to log file
-    LF_Args <- c(LF_Args, paste0(" >> ", path_log, " 2>&1"))
+    lf_args <- c(lf_args, paste0(" >> ", path_log, " 2>&1"))
   }
 
-  LF_Args <- paste(LF_Args, collapse = " ")
+  lf_args <- paste(lf_args, collapse = " ")
 
-  if (LF_commands_only) {
-    return(LF_Args)
+  if (lf_commands_only) {
+    return(lf_args)
   } else {
 
     path_log <- stringr::str_replace(path_out, ".feather", ".log")
     f <- file(path_log, open = "a")
     on.exit(invisible(try(close(f), silent = TRUE)), add = TRUE)
     cat(
-      "Running command:\n", paste(LF_Args, "\n\n"),
+      "Running command:\n", paste(lf_args, "\n\n"),
       sep = "\n", file = f, append = TRUE)
 
     # Initialise retry logic
@@ -985,7 +987,7 @@ run_crossprod_solve <- function(
         file = f, append = TRUE)
 
       # Run the command and capture stdout/stderr to a log file
-      result <- system(LF_Args, intern = TRUE)
+      result <- system(lf_args, intern = TRUE)
 
       # Check for errors
       if (!inherits(result, "error") || length(result) != 0 ||
@@ -1065,28 +1067,28 @@ plot_latent_factor <- function(path_model = NULL, env_file = ".env") {
       include_backtrace = TRUE)
   }
 
-  Model <- ecokit::load_as(path_model)
-  Model_Coords <- Model$ranLevels$sample$s
-  postEta <- Hmsc::getPostEstimate(Model, parName = "Eta")
-  N_LF <- ncol(postEta$mean)
-  Eta_Mean <- as.data.frame(postEta$mean) %>%
-    stats::setNames(paste("LF", seq_len(N_LF), sep = "_")) %>%
-    cbind.data.frame(Model_Coords, .) %>%
+  model_obj <- ecokit::load_as(path_model)
+  model_coords <- model_obj$ranLevels$sample$s
+  post_eta <- Hmsc::getPostEstimate(model_obj, parName = "Eta")
+  n_lf <- ncol(post_eta$mean)
+  eta_mean <- as.data.frame(post_eta$mean) %>%
+    stats::setNames(paste("lf", seq_len(n_lf), sep = "_")) %>%
+    cbind.data.frame(model_coords, .) %>%
     sf::st_as_sf(coords = c("x", "y"), crs = 3035)
-  Eta_Mean_R <- terra::rasterize(
-    Eta_Mean, grid_10, field = names(Eta_Mean)[-ncol(Eta_Mean)],
+  eta_mean_r <- terra::rasterize(
+    eta_mean, grid_10, field = names(eta_mean)[-ncol(eta_mean)],
     fun = "mean") %>%
     stats::setNames(stringr::str_remove(names(.), "_mean")) %>%
-    stats::setNames(stringr::str_replace(names(.), "LF_", "Latent factor "))
-  rm(Model, Model_Coords, Eta_Mean, envir = environment())
+    stats::setNames(stringr::str_replace(names(.), "lf_", "Latent factor "))
+  rm(model_obj, model_coords, eta_mean, envir = environment())
   invisible(gc())
 
   # # ..................................................................... ###
 
-  Xlim <- c(2600000, 6700000)
-  Ylim <- c(1450000, 5420000)
+  x_lim <- c(2600000, 6700000)
+  y_lim <- c(1450000, 5420000)
 
-  n_layers <- terra::nlyr(Eta_Mean_R)
+  n_layers <- terra::nlyr(eta_mean_r)
   if (n_layers > 6) {
     ncols <- 4
   } else if (n_layers > 4) {
@@ -1095,16 +1097,16 @@ plot_latent_factor <- function(path_model = NULL, env_file = ".env") {
     ncols <- 2
   }
 
-  LF_Plot <- ggplot2::ggplot(environment = emptyenv()) +
-    tidyterra::geom_spatraster(data = Eta_Mean_R, maxcell = Inf) +
+  lf_plot <- ggplot2::ggplot(environment = emptyenv()) +
+    tidyterra::geom_spatraster(data = eta_mean_r, maxcell = Inf) +
     ggplot2::facet_wrap(~lyr, ncol = ncols, nrow = 2) +
     paletteer::scale_fill_paletteer_c(
       na.value = "transparent", "viridis::plasma",
       breaks = ecokit::integer_breaks(), name = NULL) +
     ggplot2::scale_x_continuous(
-      expand = ggplot2::expansion(mult = c(0, 0)), limits = Xlim) +
+      expand = ggplot2::expansion(mult = c(0, 0)), limits = x_lim) +
     ggplot2::scale_y_continuous(
-      expand = ggplot2::expansion(mult = c(0, 0)), limits = Ylim) +
+      expand = ggplot2::expansion(mult = c(0, 0)), limits = y_lim) +
     ggplot2::theme_bw() +
     ggplot2::theme(
       plot.margin = ggplot2::margin(0, 0, 0, 0.05, "cm"),
@@ -1142,10 +1144,10 @@ plot_latent_factor <- function(path_model = NULL, env_file = ".env") {
 
   ragg::agg_jpeg(
     filename = fs::path(
-      dirname(dirname(path_model)), "Model_Prediction", "LF_Plot.jpeg"),
+      dirname(dirname(path_model)), "model_prediction", "lf_plot.jpeg"),
     width = plot_width, height = plot_height, res = 600L,
     quality = 100L, units = "cm")
-  print(LF_Plot)
+  print(lf_plot)
   grDevices::dev.off()
 
   return(invisible(NULL))

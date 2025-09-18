@@ -1,25 +1,25 @@
 ## |------------------------------------------------------------------------| #
-# resp_curv_prepare_data ----
+# rc_prepare_data ----
 ## |------------------------------------------------------------------------| #
 
 #' Prepare and plot response curve data for Hmsc models
 #'
-#' The `RespCurv_*()` functions process and visualise response curves for Hmsc
+#' The `rc_*()` functions process and visualise response curves for Hmsc
 #' models. They support parallel computation and optionally return processed
 #' data. There are four functions in this group:
-#' - `resp_curv_prepare_data()`: Prepares response curve data for analysis
-#' - `resp_curv_plot_species()`: Generates response curve plots for
+#' - `rc_prepare_data()`: Prepares response curve data for analysis
+#' - `rc_plot_species()`: Generates response curve plots for
 #' individual species
-#' - `resp_curv_plot_species_all()`: Generates response curves for all
+#' - `rc_plot_species_all()`: Generates response curves for all
 #' species together in a single plot
-#' - `resp_curv_plot_SR()`: Plots response curves for species richness.
+#' - `rc_plot_sr()`: Plots response curves for species richness.
 #' @param path_model Character. Path to the file containing the fitted Hmsc
 #'   model.
 #' @param n_grid Integer. Number of points along the gradient for continuous
 #'   focal variables. Higher values result in smoother curves. Default: 50. See
 #'   [Hmsc::constructGradient] for details.
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
-#'   Defaults to 8L for all functions, except for `resp_curv_plot_species`, in
+#'   Defaults to 8L for all functions, except for `rc_plot_species`, in
 #'   which it defaults to 20L.
 #' @param strategy Character. The parallel processing strategy to use. Valid
 #'   options are "sequential", "multisession" (default), "multicore", and
@@ -30,8 +30,8 @@
 #'   predictions. Default: `c(0.025, 0.5, 0.975)`. See [stats::quantile] for
 #'   details.
 #' @param model_dir Character. Path to the root directory containing fitted
-#'   models. The function reads data from the `RespCurv_DT` subdirectory, which
-#'   is created by `resp_curv_prepare_data`.
+#'   models. The function reads data from the `response_curves_data`
+#'   subdirectory, which is created by `rc_prepare_data`.
 #' @param env_file Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @param plotting_alpha Numeric. Opacity level for response curve lines (0 =
@@ -44,12 +44,12 @@
 #' @order 1
 #' @author Ahmed El-Gabbas
 
-resp_curv_prepare_data <- function(
+rc_prepare_data <- function(
     path_model = NULL, n_grid = 50L, n_cores = 8L, strategy = "multisession",
-    return_data = FALSE, probabilities = c(0.025, 0.5, 0.975), use_TF = TRUE,
-    TF_environ = NULL, TF_use_single = FALSE, n_cores_LF = n_cores,
-    LF_check = FALSE, LF_temp_cleanup = TRUE, LF_commands_only = FALSE,
-    temp_dir = "TEMP_Pred", temp_cleanup = TRUE, verbose = TRUE) {
+    return_data = FALSE, probabilities = c(0.025, 0.5, 0.975), use_tf = TRUE,
+    tf_environ = NULL, tf_use_single = FALSE, n_cores_lf = n_cores,
+    lf_check = FALSE, lf_temp_cleanup = TRUE, lf_commands_only = FALSE,
+    temp_dir = "temp_pred", temp_cleanup = TRUE, verbose = TRUE) {
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -66,22 +66,22 @@ resp_curv_prepare_data <- function(
     args_type = "numeric", arg_length = c(1L, 3L))
   ecokit::check_args(
     args_to_check = c(
-      "LF_check", "use_TF", "verbose", "LF_temp_cleanup",
-      "LF_commands_only", "temp_cleanup"),
+      "lf_check", "use_tf", "verbose", "lf_temp_cleanup",
+      "lf_commands_only", "temp_cleanup"),
     args_type = "logical")
 
   strategy <- .validate_strategy(strategy)
-  if (strategy == "sequential") n_cores <- n_cores_LF <- 1L
+  if (strategy == "sequential") n_cores <- n_cores_lf <- 1L
   n_cores <- .validate_n_cores(n_cores)
-  n_cores_LF <- .validate_n_cores(n_cores_LF)
+  n_cores_lf <- .validate_n_cores(n_cores_lf)
 
   # # ..................................................................... ###
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  ResCurvDT <- Variable <- RC_DT_Name <- SampleID <- Species <- SR <- MM <-
-    NFV <- RC_DT_Path_Orig <- VarName <- RC_DT_Path_Prob <-
-    RC_DT_Path_SR <- Coords <- NULL
+  rc_data <- variable <- rc_data_name <- sample_id <- species <- sr <- mm <-
+    nfv <- path_rc_data_orig <- var_name <- path_rc_data_prob <-
+    path_rc_data_sr <- coords <- NULL
 
   if (any(probabilities > 1) || any(probabilities < 0)) {
     ecokit::stop_ctx(
@@ -104,11 +104,11 @@ resp_curv_prepare_data <- function(
 
   ecokit::cat_time("Loading model object", verbose = verbose)
   if (file.exists(path_model)) {
-    Model <- ecokit::load_as(path_model)
-    if (!inherits(Model, "Hmsc")) {
+    model_obj <- ecokit::load_as(path_model)
+    if (!inherits(model_obj, "Hmsc")) {
       ecokit::stop_ctx(
-        "Model object is not of class 'hmsc'", class_model = class(Model),
-        include_backtrace = TRUE)
+        "Model object is not of class 'hmsc'",
+        class_model = class(model_obj), include_backtrace = TRUE)
     }
   } else {
     ecokit::stop_ctx(
@@ -118,267 +118,271 @@ resp_curv_prepare_data <- function(
 
   # # ..................................................................... ###
 
-  # PrepRCData -------
+  # prep_rc_data -------
 
-  PrepRCData <- function(ID, File_LF) {
+  prep_rc_data <- function(id, file_lf) {
 
-    Variable <- ResCurvDT$VarName[[ID]]
-    RC_DT_Name <- ResCurvDT$RC_DT_Name[[ID]]
-    Coords <- ResCurvDT$Coords[[ID]]
-    NFV <- ResCurvDT$NFV[[ID]]
+    variable <- rc_data$var_name[[id]]
+    rc_data_name <- rc_data$rc_data_name[[id]]
+    coords <- rc_data$coords[[id]]
+    nfv <- rc_data$nfv[[id]]
 
     # Path for original prediction values
-    RC_DT_Path_Orig <- ResCurvDT$RC_DT_Path_Orig[[ID]]
+    path_rc_data_orig <- rc_data$path_rc_data_orig[[id]]
     # Path for plotting data: probability of occurrence
-    RC_DT_Path_Prob <- ResCurvDT$RC_DT_Path_Prob[[ID]]
-    RC_DT_Path_Prob_Samples <- stringr::str_replace(
-      RC_DT_Path_Prob, ".qs2$", "_Samples.qs2")
+    path_rc_data_prob <- rc_data$path_rc_data_prob[[id]]
+    path_rc_data_prob_samples <- stringr::str_replace(
+      path_rc_data_prob, ".qs2$", "_samples.qs2")
 
-    # Path for plotting data: Species richness
-    RC_DT_Path_SR <- ResCurvDT$RC_DT_Path_SR[[ID]]
-    RC_DT_Path_SR_Samples <- stringr::str_replace(
-      RC_DT_Path_SR, ".qs2$", "_Samples.qs2")
+    # Path for plotting data: species richness
+    path_rc_data_sr <- rc_data$path_rc_data_sr[[id]]
+    path_rc_data_sr_samples <- stringr::str_replace(
+      path_rc_data_sr, ".qs2$", "_samples.qs2")
 
-    OutputTibble <- tibble::tibble(
-      Variable = Variable, NFV = NFV, Coords = Coords,
-      RC_Path_Orig = RC_DT_Path_Orig,
-      RC_Path_Prob = RC_DT_Path_Prob,
-      RC_DT_Path_Prob_Samples = RC_DT_Path_Prob_Samples,
-      RC_Path_SR = RC_DT_Path_SR,
-      RC_DT_Path_SR_Samples = RC_DT_Path_SR_Samples)
+    output_tibble <- tibble::tibble(
+      variable = variable, nfv = nfv, coords = coords,
+      path_rc_orig = path_rc_data_orig,
+      path_rc_prob = path_rc_data_prob,
+      path_rc_data_prob_samples = path_rc_data_prob_samples,
+      rc_path_sr = path_rc_data_sr,
+      path_rc_data_sr_samples = path_rc_data_sr_samples)
 
-    OutFilesExists <- c(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR) %>%
+    out_files_exists <- c(
+      path_rc_data_orig, path_rc_data_prob, path_rc_data_sr) %>%
       file.exists() %>%
       all()
 
-    if (isFALSE(OutFilesExists)) {
+    if (isFALSE(out_files_exists)) {
 
-      if (file.exists(RC_DT_Path_Orig)) {
+      if (file.exists(path_rc_data_orig)) {
 
-        RC_Data_Orig <- ecokit::load_as(RC_DT_Path_Orig)
-        gradient <- RC_Data_Orig$gradient
-        XVals <- gradient$XDataNew[, Variable]
-        Preds <- RC_Data_Orig$Preds
-        Pred_SR <- RC_Data_Orig$Pred_SR
+        rc_data_orig <- ecokit::load_as(path_rc_data_orig)
+        gradient <- rc_data_orig$gradient
+        x_vals <- gradient$XDataNew[, variable]
+        preds <- rc_data_orig$preds
+        pred_sr <- rc_data_orig$pred_sr
 
       } else {
 
-        Model <- ecokit::load_as(path_model)
+        model_obj <- ecokit::load_as(path_model)
 
         # constructGradient
         gradient <- Hmsc::constructGradient(
-          hM = Model, focalVariable = Variable, non.focalVariables = NFV,
-          ngrid = n_grid, coordinates = list(sample = Coords))
+          hM = model_obj, focalVariable = variable, non.focalVariables = nfv,
+          ngrid = n_grid, coordinates = list(sample = coords))
 
         # Values of the current predictor
-        XVals <- gradient$XDataNew[, Variable]
+        x_vals <- gradient$XDataNew[, variable]
 
-        rm(Model, envir = environment())
+        rm(model_obj, envir = environment())
 
         # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
         # Predicting probability of occurrence
-        Preds <- IASDT.R::predict_hmsc(
+        preds <- IASDT.R::predict_hmsc(
           path_model = path_model, gradient = gradient, expected = TRUE,
-          n_cores = 1, strategy = strategy, model_name = paste0("RC_", Coords),
-          prediction_type = Coords, use_TF = use_TF, TF_environ = TF_environ,
-          LF_inputFile = File_LF, n_cores_LF = 1, LF_check = LF_check,
-          LF_temp_cleanup = LF_temp_cleanup, LF_commands_only = FALSE,
-          TF_use_single = TF_use_single, temp_dir = temp_dir,
+          n_cores = 1, strategy = strategy, model_name = paste0("rc_", coords),
+          prediction_type = coords, use_tf = use_tf, tf_environ = tf_environ,
+          lf_input_file = file_lf, n_cores_lf = 1, lf_check = lf_check,
+          lf_temp_cleanup = lf_temp_cleanup, lf_commands_only = FALSE,
+          tf_use_single = tf_use_single, temp_dir = temp_dir,
           temp_cleanup = temp_cleanup, verbose = FALSE)
 
-        # Species richness
-        Pred_SR <- abind::abind(lapply(Preds, rowSums), along = 2)
+        # species richness
+        pred_sr <- abind::abind(lapply(preds, rowSums), along = 2)
 
         # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
         # Save gradient and original prediction values
         # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-        RC_Data_Orig <- list(
-          Variable = Variable, NFV = ResCurvDT$NFV[[ID]],
-          gradient = gradient, Preds = Preds, Pred_SR = Pred_SR)
+        rc_data_orig <- list(
+          variable = variable, nfv = rc_data$nfv[[id]],
+          gradient = gradient, preds = preds, pred_sr = pred_sr)
 
         ecokit::save_as(
-          object = RC_Data_Orig, object_name = paste0(RC_DT_Name, "_Orig"),
-          out_path = RC_DT_Path_Orig)
+          object = rc_data_orig, object_name = paste0(rc_data_name, "_orig"),
+          out_path = path_rc_data_orig)
       }
 
-      rm(RC_Data_Orig, envir = environment())
+      rm(rc_data_orig, envir = environment())
       invisible(gc())
 
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
       # Prepare plotting data: probability of occurrence
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-      Model <- ecokit::load_as(path_model)
+      model_obj <- ecokit::load_as(path_model)
 
-      RC_Data_Prob <- purrr::map_dfr(
-        .x = seq_len(length(Preds)),
-        .f = function(Sample) {
-          tibble::as_tibble(Preds[[Sample]]) %>%
-            dplyr::mutate(XVals = XVals, SampleID = Sample)
+      rc_data_prob <- purrr::map_dfr(
+        .x = seq_len(length(preds)),
+        .f = function(sample) {
+          tibble::as_tibble(preds[[sample]]) %>%
+            dplyr::mutate(x_vals = x_vals, sample_id = sample)
         }) %>%
         tidyr::pivot_longer(
-          cols = c(-XVals, -SampleID),
-          names_to = "Species", values_to = "Pred") %>%
-        dplyr::arrange(Species, XVals, SampleID) %>%
-        tidyr::nest(SamplesData = -Species) %>%
+          cols = c(-x_vals, -sample_id),
+          names_to = "species", values_to = "pred") %>%
+        dplyr::arrange(species, x_vals, sample_id) %>%
+        tidyr::nest(samples_data = -species) %>%
         dplyr::mutate(
-          PlotData_Quant = purrr::map(
-            .x = SamplesData,
+          plot_data_quant = purrr::map(
+            .x = samples_data,
             .f = ~ {
               dplyr::reframe(
-                .x, Pred = stats::quantile(Pred, probabilities),
-                Quantile = probabilities, .by = XVals)
+                .x, pred = stats::quantile(pred, probabilities),
+                quantile = probabilities, .by = x_vals)
             }),
 
           # Values at observed presence and absences
-          Observed_PA = purrr::map(
-            .x = Species,
+          observed_pa = purrr::map(
+            .x = species,
             .f = ~ tibble::tibble(
-              XVals = Model$XData[, Variable], Pred = Model$Y[, .x])),
+              x_vals = model_obj$XData[, variable], pred = model_obj$Y[, .x])),
 
           # Positive trend probability
-          PositiveTrendProb = purrr::map_dbl(
-            .x = SamplesData,
+          positive_trend_prob = purrr::map_dbl(
+            .x = samples_data,
             .f = ~ {
-              dplyr::group_by(.x, SampleID) %>%
-                dplyr::reframe(MM = dplyr::last(Pred) > dplyr::first(Pred)) %>%
-                dplyr::pull(MM) %>%
+              dplyr::group_by(.x, sample_id) %>%
+                dplyr::reframe(mm = dplyr::last(pred) > dplyr::first(pred)) %>%
+                dplyr::pull(mm) %>%
                 mean()
             }),
-          Variable = Variable, NFV = ResCurvDT$NFV[[ID]], .before = 1)
+          variable = variable, nfv = rc_data$nfv[[id]], .before = 1)
 
       # Save data
-      RC_Data_Prob_Samples <- RC_Data_Prob
+      rc_data_prob_samples <- rc_data_prob
       ecokit::save_as(
-        object = RC_Data_Prob_Samples,
-        object_name = paste0(RC_DT_Name, "_Prob_Samples"),
-        out_path = RC_DT_Path_Prob_Samples)
+        object = rc_data_prob_samples,
+        object_name = paste0(rc_data_name, "_prob_samples"),
+        out_path = path_rc_data_prob_samples)
 
-      RC_Data_Prob <- dplyr::select(RC_Data_Prob, -SamplesData)
+      rc_data_prob <- dplyr::select(rc_data_prob, -samples_data)
       ecokit::save_as(
-        object = RC_Data_Prob, object_name = paste0(RC_DT_Name, "_Prob"),
-        out_path = RC_DT_Path_Prob)
+        object = rc_data_prob, object_name = paste0(rc_data_name, "_prob"),
+        out_path = path_rc_data_prob)
 
 
-      rm(Preds, RC_Data_Prob, RC_Data_Prob_Samples, envir = environment())
+      rm(preds, rc_data_prob, rc_data_prob_samples, envir = environment())
 
       # CHECK
-      # rm(SamplesData, envir = environment())
+      # rm(samples_data, envir = environment())
 
 
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-      # Prepare plotting data: Species richness
+      # Prepare plotting data: species richness
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
       # predicted species richness
-      SamplesData <- purrr::map_dfr(
-        .x = seq_len(ncol(Pred_SR)),
+      samples_data <- purrr::map_dfr(
+        .x = seq_len(ncol(pred_sr)),
         .f = ~ tibble::tibble(
-          XVals = XVals, SampleID = .x, SR = Pred_SR[, .x])) %>%
-        dplyr::arrange(XVals, SampleID)
+          x_vals = x_vals, sample_id = .x, sr = pred_sr[, .x])) %>%
+        dplyr::arrange(x_vals, sample_id)
 
       # Quantiles of species richness
-      RC_Data_SR_Quant <- dplyr::reframe(
-        SamplesData,
-        SR = stats::quantile(SR, probabilities),
-        Quantile = probabilities, .by = XVals)
+      rc_data_sr_quant <- dplyr::reframe(
+        samples_data,
+        sr = stats::quantile(sr, probabilities),
+        quantile = probabilities, .by = x_vals)
 
       # Trend of the species richness
-      SR_PositiveTrendProb <- SamplesData %>%
-        dplyr::group_by(SampleID) %>%
-        dplyr::reframe(MM = dplyr::last(SR) > dplyr::first(SR)) %>%
-        dplyr::pull(MM) %>%
+      sr_positive_trend_prob <- samples_data %>%
+        dplyr::group_by(sample_id) %>%
+        dplyr::reframe(mm = dplyr::last(sr) > dplyr::first(sr)) %>%
+        dplyr::pull(mm) %>%
         mean()
 
       # Values at observed species richness
-      Observed_SR <- tibble::tibble(
-        XVals = Model$XData[, Variable], Pred = rowSums(Model$Y, na.rm = TRUE))
+      observed_sr <- tibble::tibble(
+        x_vals = model_obj$XData[, variable],
+        pred = rowSums(model_obj$Y, na.rm = TRUE))
 
       # Save species richness data
-      RC_Data_SR <- list(
-        Variable = Variable, NFV = ResCurvDT$NFV[[ID]],
-        RC_Data_SR_Quant = RC_Data_SR_Quant, Observed_SR = Observed_SR,
-        SR_PositiveTrendProb = SR_PositiveTrendProb)
+      rc_data_sr <- list(
+        variable = variable, nfv = rc_data$nfv[[id]],
+        rc_data_sr_quant = rc_data_sr_quant, observed_sr = observed_sr,
+        sr_positive_trend_prob = sr_positive_trend_prob)
 
       ecokit::save_as(
-        object = RC_Data_SR, object_name = paste0(RC_DT_Name, "_SR"),
-        out_path = RC_DT_Path_SR)
+        object = rc_data_sr, object_name = paste0(rc_data_name, "_sr"),
+        out_path = path_rc_data_sr)
 
-      RC_Data_SR_Samples <- list(
-        Variable = Variable, NFV = ResCurvDT$NFV[[ID]],
-        RC_Data_SR = RC_Data_SR,
-        RC_Data_SR_Quant = RC_Data_SR_Quant, Observed_SR = Observed_SR,
-        SR_PositiveTrendProb = SR_PositiveTrendProb)
+      rc_data_sr_samples <- list(
+        variable = variable, nfv = rc_data$nfv[[id]],
+        rc_data_sr = rc_data_sr,
+        rc_data_sr_quant = rc_data_sr_quant, observed_sr = observed_sr,
+        sr_positive_trend_prob = sr_positive_trend_prob)
 
       ecokit::save_as(
-        object = RC_Data_SR_Samples,
-        object_name = paste0(RC_DT_Name, "_SR_Samples"),
-        out_path = RC_DT_Path_SR_Samples)
+        object = rc_data_sr_samples,
+        object_name = paste0(rc_data_name, "_sr_samples"),
+        out_path = path_rc_data_sr_samples)
 
 
       rm(
-        RC_Data_SR, RC_Data_SR_Quant, Observed_SR,
-        RC_Data_SR_Samples, SR_PositiveTrendProb, envir = environment())
+        rc_data_sr, rc_data_sr_quant, observed_sr,
+        rc_data_sr_samples, sr_positive_trend_prob, envir = environment())
 
       # CHECK
-      # rm(Pred_SR, envir = environment())
+      # rm(pred_sr, envir = environment())
       invisible(gc())
     }
 
     invisible(gc())
 
-    return(OutputTibble)
+    output_tibble
   }
 
   # # ..................................................................... ###
 
   # Prepare response curve data -------
 
-  Path_RC <- fs::path(dirname(dirname(path_model)), "Model_Postprocessing")
-  Path_RC_DT <- fs::path(Path_RC, "RespCurv_DT")
-  fs::dir_create(Path_RC_DT)
+  path_rc <- fs::path(dirname(dirname(path_model)), "model_postprocessing")
+  path_rc_data <- fs::path(path_rc, "response_curves_data")
+  fs::dir_create(path_rc_data)
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Extract names of the variables
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   ecokit::cat_time("Extract names of the variables", verbose = verbose)
-  ModelVars <- stringr::str_split(
-    as.character(Model$XFormula)[2], "\\+", simplify = TRUE) %>%
+  model_vars <- stringr::str_split(
+    as.character(model_obj$XFormula)[2], "\\+", simplify = TRUE) %>%
     stringr::str_trim()
 
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
   # Prediction variants
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  # `Coords`: Value of the `coordinates` argument of the `constructGradient`
+  # `coords`: Value of the `coordinates` argument of the `constructGradient`
   # function. `coordinates = "c"` for mean of coordinates (default);
   # `coordinates = "i"` for infinite coordinates without effect of spatial
   # dependence.
   #
-  # NFV: Value of the `non.focalVariables` argument of `constructGradient`.
+  # nfv: Value of the `non.focalVariables` argument of `constructGradient`.
   # non.focalVariables = 1 sets the values of the non-focal variable to the most
   # likely value (defined as expected value for covariates, mode for factors).
   # non.focalVariables = 2 sets the values of the non-focal variable to most
   # likely value, given the value of focal variable, based on a linear
   # relationship. non.focalVariables = 3 fixes to the value given
 
-  ResCurvDT <- tidyr::expand_grid(
-    Variable = ModelVars, Coords = c("c", "i"), NFV = c(1, 2)) %>%
+  rc_data <- tidyr::expand_grid(
+    variable = model_vars, coords = c("c", "i"), nfv = c(1, 2)) %>%
     dplyr::mutate(
-      VarName = purrr::map_chr(
-        .x = Variable, .f = stringr::str_remove_all,
+      var_name = purrr::map_chr(
+        .x = variable, .f = stringr::str_remove_all,
         pattern = "stats::poly\\(|, degree = 2, raw = TRUE\\)"),
-      RC_DT_Name = paste0("RC_", VarName, "_coord_", Coords, "_NFV", NFV),
-      RC_DT_Path_Orig = fs::path(Path_RC_DT, paste0(RC_DT_Name, "_Orig.qs2")),
-      RC_DT_Path_Prob = fs::path(Path_RC_DT, paste0(RC_DT_Name, "_Prob.qs2")),
-      RC_DT_Path_SR = fs::path(Path_RC_DT, paste0(RC_DT_Name, "_SR.qs2")),
+      rc_data_name = paste0("rc_", var_name, "_coord_", coords, "_nfv", nfv),
+      path_rc_data_orig = fs::path(
+        path_rc_data, paste0(rc_data_name, "_orig.qs2")),
+      path_rc_data_prob = fs::path(
+        path_rc_data, paste0(rc_data_name, "_prob.qs2")),
+      path_rc_data_sr = fs::path(path_rc_data, paste0(rc_data_name, "_sr.qs2")),
       FileExists = purrr::pmap_lgl(
-        .l = list(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR),
-        .f = function(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR) {
-          c(RC_DT_Path_Orig, RC_DT_Path_Prob, RC_DT_Path_SR) %>%
+        .l = list(path_rc_data_orig, path_rc_data_prob, path_rc_data_sr),
+        .f = function(path_rc_data_orig, path_rc_data_prob, path_rc_data_sr) {
+          c(path_rc_data_orig, path_rc_data_prob, path_rc_data_sr) %>%
             file.exists() %>%
             all()
         }))
@@ -387,29 +391,29 @@ resp_curv_prepare_data <- function(
   # Checking file existence
   # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  MissingRows <- sum(!ResCurvDT$FileExists)
-  File_LF <- fs::path(Path_RC_DT, "ResCurv_LF.qs2")
+  missing_rows <- sum(!rc_data$FileExists)
+  file_lf <- fs::path(path_rc_data, "ResCurv_lf.qs2")
 
-  if (MissingRows == 0) {
+  if (missing_rows == 0) {
 
     ecokit::cat_time(
       "All response curve data files were already available on disk",
       level = 1L, verbose = verbose, cat_timestamp = FALSE)
-    ResCurvDT <- purrr::map_dfr(
-      .x = seq_len(nrow(ResCurvDT)), .f = PrepRCData, File_LF = File_LF)
+    rc_data <- purrr::map_dfr(
+      .x = seq_len(nrow(rc_data)), .f = prep_rc_data, file_lf = file_lf)
 
   } else {
 
-    if (any(ResCurvDT$FileExists)) {
+    if (any(rc_data$FileExists)) {
       ecokit::cat_time(
         paste0(
-          "Some response curve data files (", MissingRows, " of ",
-          length(ResCurvDT$FileExists), ") were missing"),
+          "Some response curve data files (", missing_rows, " of ",
+          length(rc_data$FileExists), ") were missing"),
         level = 1L, verbose = verbose)
     } else {
       ecokit::cat_time(
         paste0(
-          "All response curve data (", MissingRows, ") need to be prepared"),
+          "All response curve data (", missing_rows, ") need to be prepared"),
         level = 1L, verbose = verbose, cat_timestamp = FALSE)
     }
 
@@ -417,7 +421,7 @@ resp_curv_prepare_data <- function(
     # Get LF prediction for the model
     # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-    if (isFALSE(ecokit::check_data(File_LF, warning = FALSE))) {
+    if (isFALSE(ecokit::check_data(file_lf, warning = FALSE))) {
 
       ecokit::info_chunk(
         message = "Get LF prediction at mean coordinates", cat_date = FALSE,
@@ -425,39 +429,39 @@ resp_curv_prepare_data <- function(
         verbose = verbose)
 
       ecokit::cat_time("Create gradient", verbose = verbose)
-      Gradient_c <- Hmsc::constructGradient(
-        hM = Model, focalVariable = ResCurvDT$Variable[1],
+      gradient_c <- Hmsc::constructGradient(
+        hM = model_obj, focalVariable = rc_data$variable[1],
         non.focalVariables = 1, ngrid = 20, coordinates = list(sample = "c"))
 
-      # The `Model` object is distributed twice to cores when available on the
-      # function environment. Here, I delete the Model object and it will be
-      # loaded later after when using `predict_hmsc` function.
-      rm(Model, envir = environment())
+      # The `model_obj` object is distributed twice to cores when available on
+      # the function environment. Here, I delete the model_obj object and it
+      # will be loaded later after when using `predict_hmsc` function.
+      rm(model_obj, envir = environment())
       invisible(gc())
 
       ecokit::cat_time("Predicting LF", verbose = verbose)
-      Model_LF <- IASDT.R::predict_hmsc(
-        path_model = path_model, gradient = Gradient_c, expected = TRUE,
+      model_lf <- IASDT.R::predict_hmsc(
+        path_model = path_model, gradient = gradient_c, expected = TRUE,
         n_cores = n_cores, strategy = strategy, temp_dir = temp_dir,
-        temp_cleanup = temp_cleanup, model_name = "RC_c",
-        prediction_type = "c", use_TF = use_TF, TF_environ = TF_environ,
-        LF_out_file = File_LF, n_cores_LF = n_cores_LF, LF_check = LF_check,
-        LF_return = FALSE, LF_only = TRUE, LF_temp_cleanup = LF_temp_cleanup,
-        LF_commands_only = LF_commands_only, TF_use_single = TF_use_single,
+        temp_cleanup = temp_cleanup, model_name = "rc_c",
+        prediction_type = "c", use_tf = use_tf, tf_environ = tf_environ,
+        lf_out_file = file_lf, n_cores_lf = n_cores_lf, lf_check = lf_check,
+        lf_return = FALSE, lf_only = TRUE, lf_temp_cleanup = lf_temp_cleanup,
+        lf_commands_only = lf_commands_only, tf_use_single = tf_use_single,
         verbose = verbose, pred_directory = temp_dir)
 
-      if (LF_commands_only) {
+      if (lf_commands_only) {
         return(invisible(NULL))
       }
 
-      rm(Model_LF, Gradient_c, envir = environment())
+      rm(model_lf, gradient_c, envir = environment())
       invisible(gc())
 
     } else {
       ecokit::cat_time(
         paste0(
           "LF prediction will be loaded from available file: \n   >>>  ",
-          File_LF),
+          file_lf),
         verbose = verbose)
     }
 
@@ -470,7 +474,7 @@ resp_curv_prepare_data <- function(
       message = "Prepare response curve data", cat_date = FALSE,
       cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE, verbose = verbose)
 
-    n_cores <- max(min(n_cores, MissingRows), 1)
+    n_cores <- max(min(n_cores, missing_rows), 1)
 
     if (n_cores == 1) {
       future::plan("sequential", gc = TRUE)
@@ -488,14 +492,14 @@ resp_curv_prepare_data <- function(
     ecokit::cat_time(
       "Prepare response curve data in parallel", verbose = verbose)
 
-    ResCurvDT <- future.apply::future_lapply(
-      X = seq_len(nrow(ResCurvDT)),
-      FUN = PrepRCData, File_LF = File_LF, future.seed = TRUE,
+    rc_data <- future.apply::future_lapply(
+      X = seq_len(nrow(rc_data)),
+      FUN = prep_rc_data, file_lf = file_lf, future.seed = TRUE,
       future.packages = pkg_to_export,
       future.globals = c(
-        "ResCurvDT", "path_model", "PrepRCData", "n_grid", "probabilities",
-        "File_LF", "use_TF", "TF_environ", "temp_dir", "LF_check",
-        "LF_commands_only")) %>%
+        "rc_data", "path_model", "prep_rc_data", "n_grid", "probabilities",
+        "file_lf", "use_tf", "tf_environ", "temp_dir", "lf_check",
+        "lf_commands_only")) %>%
       dplyr::bind_rows()
 
     if (n_cores > 1) {
@@ -509,7 +513,7 @@ resp_curv_prepare_data <- function(
   # # ..................................................................... ###
 
   ecokit::cat_time("Saving data to desk", verbose = verbose)
-  save(ResCurvDT, file = fs::path(Path_RC_DT, "ResCurvDT.RData"))
+  save(rc_data, file = fs::path(path_rc_data, "rc_data.RData"))
 
   # # ..................................................................... ###
 
@@ -518,7 +522,7 @@ resp_curv_prepare_data <- function(
     verbose = verbose)
 
   if (return_data) {
-    return(ResCurvDT)
+    return(rc_data)
   } else {
     return(invisible(NULL))
   }

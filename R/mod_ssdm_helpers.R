@@ -378,9 +378,9 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
 #' data, environmental predictors, and prediction datasets.
 #' @param model_dir Character. Path to the directory containing model data and
 #'   where outputs and results will be saved. Model data are prepared using the
-#'   [mod_prepare_HPC()] and [mod_prepare_data()] functions.
-#' @param cv_type Character. Cross-validation type. One of `CV_Dist` (default)
-#'   or `CV_Large`. See [mod_CV_fit()] for more details.
+#'   [mod_prepare_hpc()] and [mod_prepare_data()] functions.
+#' @param cv_type Character. Cross-validation type. One of `cv_dist` (default)
+#'   or `cv_large`. See [mod_cv_fit()] for more details.
 #' @param selected_species Character vector or NULL. Names of species to include
 #'   in modelling; must match names in model data. Default is `NULL` (all
 #'   species).
@@ -391,7 +391,7 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
 #'   definitions for spatial datasets. Default is `".env"`.
 #' @param hab_abb Character. Abbreviation for a single SynHab habitat type.
 #'   Valid values: "0", "1", "2", "3", "4a", "4b", "10", "12a", "12b". See
-#'   [mod_prepare_HPC()] for more details.
+#'   [mod_prepare_hpc()] for more details.
 #' @param clamp_pred Logical. Should clamping be applied to sampling efforts and
 #'   river length predictors for prediction? Default is `TRUE`.
 #' @param fix_efforts Character or numeric (length 1). Method or fixed value for
@@ -426,8 +426,8 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
 #' - Handles selection and exclusion of species for modelling.
 #' - Prepares modelling data, including extraction of linear and quadratic
 #'   predictors.
-#' - Processes and clamps spatial predictors ("EffortsLog", "RiversLog",
-#'   "HabLog", "RoadRailLog") as needed.
+#' - Processes and clamps spatial predictors ("efforts_log", "rivers_log",
+#'   "habitat_log", "road_rail_log") as needed.
 #' - Loads and filters CHELSA climate data for current and future prediction
 #'   options.
 #' - Merges all predictors and prepares prediction datasets for each climate
@@ -452,7 +452,7 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
 #' @keywords internal
 
 prepare_input_data <- function(
-    model_dir = NULL, cv_type = "CV_Dist", selected_species = NULL,
+    model_dir = NULL, cv_type = "cv_dist", selected_species = NULL,
     excluded_species = NULL, env_file = ".env", hab_abb = NULL,
     clamp_pred = TRUE, fix_efforts = "q90", fix_rivers = "q90",
     climate_models = "all", climate_scenarios = "all",
@@ -469,11 +469,11 @@ prepare_input_data <- function(
 
   # # ..................................................................... ###
 
-  Name <- TimePeriod <- ClimateScenario <- ClimateModel <- pred_df <- cv <-
-    CellCode <- FilePath <- path_rail <- path_road <- path_clc <- 
-    path_efforts <- path_rivers <- path_chelsa <- pred_data <- 
-    quadratic <- CellNum <- variable <- climate_name <- species_name <- 
-    valid_species <- data_path <- path_wetness <- path_soil <- 
+  climate_name <- time_period <- climate_scenario <- climate_model <- pred_df <-
+    cv <- CellCode <- file_path <- path_rail <- path_road <- path_clc <-
+    path_efforts <- path_rivers <- path_chelsa <- pred_data <-
+    quadratic <- cell_num <- variable <- climate_name <- species_name <-
+    valid_species <- data_path <- path_wetness <- path_soil <-
     method_type <- NULL
 
   # |||||||||||||||||||||||||||||||||||||||||||
@@ -515,8 +515,8 @@ prepare_input_data <- function(
     }
   }
 
-  ## CV type ------
-  valid_cv <- c("CV_Dist", "CV_Large")
+  ## cv type ------
+  valid_cv <- c("cv_dist", "cv_large")
   if (!cv_type %in% valid_cv) {
     ecokit::stop_ctx("Invalid CV type", cv_type = cv_type, valid_cv = valid_cv)
   }
@@ -567,7 +567,7 @@ prepare_input_data <- function(
   env_vars_to_read <- tibble::tribble(
     ~var_name, ~value, ~check_dir, ~check_file,
     "path_rail", "DP_R_railway_processed", TRUE, FALSE,
-    "path_road", "DP_R_road_processed", TRUE, FALSE,
+    "path_road", "DP_R_roads_processed", TRUE, FALSE,
     "path_clc", "DP_R_clc_processed", TRUE, FALSE,
     "path_efforts", "DP_R_efforts_processed", TRUE, FALSE,
     "path_rivers", "DP_R_rivers_processed", TRUE, FALSE,
@@ -586,7 +586,7 @@ prepare_input_data <- function(
     # Check if the `fix_efforts` value is valid
     if (is.null(fix_efforts)) {
       ecokit::stop_ctx(
-        "`fix_efforts` can not be `NULL` when Clamping is implemented",
+        "`fix_efforts` can not be `NULL` when clamping is implemented",
         fix_efforts = fix_efforts, include_backtrace = TRUE)
     }
     if (length(fix_efforts) != 1L) {
@@ -598,7 +598,7 @@ prepare_input_data <- function(
     # Check if the `fix_rivers` value is valid
     if (is.null(fix_rivers)) {
       ecokit::stop_ctx(
-        "`fix_rivers` can not be `NULL` when Clamping is implemented",
+        "`fix_rivers` can not be `NULL` when clamping is implemented",
         fix_rivers = fix_rivers, include_backtrace = TRUE)
     }
     if (length(fix_rivers) != 1L) {
@@ -613,11 +613,11 @@ prepare_input_data <- function(
 
   # Loading model data ----
 
-  modelling_data <- fs::path(model_dir, "ModDT.RData")
-  data_CV <- fs::path(model_dir, "CV_data.RData")
-  data_subset <- fs::path(model_dir, "ModDT_subset.RData")
-  data_training <- fs::path(model_dir, "ModDT_training.RData")
-  data_testing <- fs::path(model_dir, "ModDT_testing.RData")
+  modelling_data <- fs::path(model_dir, "model_data.RData")
+  data_cv <- fs::path(model_dir, "cv_data.RData")
+  data_subset <- fs::path(model_dir, "model_data_subset.RData")
+  data_training <- fs::path(model_dir, "model_data_training.RData")
+  data_testing <- fs::path(model_dir, "model_data_testing.RData")
 
   if (!ecokit::check_data(modelling_data, warning = FALSE)) {
     ecokit::stop_ctx(
@@ -629,35 +629,36 @@ prepare_input_data <- function(
       "Model data at the subset extent file does not exist or is invalid",
       data_subset = data_subset, include_backtrace = TRUE)
   }
-  if (!ecokit::check_data(data_CV, warning = FALSE)) {
+  if (!ecokit::check_data(data_cv, warning = FALSE)) {
     ecokit::stop_ctx(
       "Cross-validation file does not exist or is invalid",
-      data_CV = data_CV, include_backtrace = TRUE)
+      data_cv = data_cv, include_backtrace = TRUE)
   }
 
   data_subset <- ecokit::load_as(data_subset)
-  predictor_names <- names(data_subset$DT_x)
-  model_form <- data_subset$Form_x
+  predictor_names <- names(data_subset$data_x)
+  model_form <- data_subset$form_x
   train_test_exist <- ecokit::check_data(data_training, warning = FALSE) &&
     ecokit::check_data(data_testing, warning = FALSE)
 
   if (train_test_exist) {
     train_test_data <- dplyr::bind_rows(
       ecokit::load_as(data_training), ecokit::load_as(data_testing))
-    model_cell_numbers <- dplyr::pull(train_test_data, "CellNum")
+    model_cell_numbers <- dplyr::pull(train_test_data, "cell_num")
     model_cv_folds <- dplyr::select(
-      train_test_data, CellNum, CellCode, cv_fold = tidyselect::all_of(cv_type))
+      train_test_data, cell_num, CellCode,
+      cv_fold = tidyselect::all_of(cv_type))
     rm(train_test_data, envir = environment())
   } else {
-    model_cell_numbers <- dplyr::pull(data_subset$DT_All, "CellNum")
+    model_cell_numbers <- dplyr::pull(data_subset$data_all, "cell_num")
     model_cv_folds <- dplyr::select(
-      data_subset$DT_CV,
-      CellNum, CellCode, cv_fold = tidyselect::all_of(cv_type))
+      data_subset$data_cv,
+      cell_num, CellCode, cv_fold = tidyselect::all_of(cv_type))
   }
 
   modelling_data <- ecokit::load_as(modelling_data) %>%
-    dplyr::filter(CellNum %in% model_cell_numbers) %>%
-    dplyr::left_join(model_cv_folds, by = c("CellNum", "CellCode"))
+    dplyr::filter(cell_num %in% model_cell_numbers) %>%
+    dplyr::left_join(model_cv_folds, by = c("cell_num", "CellCode"))
 
   n_cv_folds <- length(unique(modelling_data$cv_fold))
   if (n_cv_folds < 2L) {
@@ -665,17 +666,19 @@ prepare_input_data <- function(
       "Not enough CV folds found in model data", length_cv_folds = n_cv_folds)
   }
 
-  # `clamp_pred` can not be TRUE when `EffortsLog` is not used as predictor
-  if (clamp_pred && !("EffortsLog" %in% predictor_names)) {
+  # `clamp_pred` can not be TRUE when `efforts_log` is not used as predictor
+  if (clamp_pred && !("efforts_log" %in% predictor_names)) {
     ecokit::stop_ctx(
-      "`clamp_pred` can not be used when `EffortsLog` is not used as predictor",
+      paste0(
+        "`clamp_pred` can not be used when `efforts_log` is not used",
+        "as predictor"),
       clamp_pred = clamp_pred, names_data = predictor_names,
       include_backtrace = TRUE)
   }
 
-  species_names <- names(data_subset$DT_y)
+  species_names <- names(data_subset$data_y)
   chelsa_pattern <- paste0(
-    "^", IASDT.R::CHELSA_variables$Variable, collapse = "|")
+    "^", IASDT.R::chelsa_variables$variable, collapse = "|")
   other_variables <- stringr::str_subset(
     predictor_names, chelsa_pattern, negate = TRUE)
   bio_variables <- stringr::str_subset(
@@ -965,7 +968,7 @@ prepare_input_data <- function(
 
   ## CHELSA data -----
 
-  path_chelsa <- fs::path(path_chelsa, "CHELSA_Processed_DT.RData")
+  path_chelsa <- fs::path(path_chelsa, "chelsa_processed_data.RData")
   if (!fs::file_exists(path_chelsa)) {
     ecokit::stop_ctx(
       "Processed CHLESA data can not be found", path_chelsa = path_chelsa,
@@ -973,15 +976,17 @@ prepare_input_data <- function(
   }
 
   prediction_options <- ecokit::load_as(path_chelsa) %>%
-    dplyr::select(-"File_List") %>%
+    dplyr::select(-"file_list") %>%
     dplyr::filter(
-      ClimateModel %in% c("Current", climate_models),
-      ClimateScenario %in% c("Current", climate_scenarios),
-      TimePeriod  %in% c("1981-2010", climate_periods)) %>%
+      climate_model %in% c("current", climate_models),
+      climate_scenario %in% c("current", climate_scenarios),
+      time_period  %in% c("1981-2010", climate_periods)) %>%
     dplyr::mutate(
-      Name = paste0(TimePeriod, "_", ClimateScenario, "_", ClimateModel),
-      Name = stringr::str_replace(Name, "1981-2010_Current_Current", "Current"),
-      Name = stringr::str_replace_all(Name, "-", "_"),
+      climate_name = paste0(
+        time_period, "_", climate_scenario, "_", climate_model),
+      climate_name = stringr::str_replace(
+        climate_name, "1981-2010_current_current", "current"),
+      climate_name = stringr::str_replace_all(climate_name, "-", "_"),
       clamp = clamp_pred)
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
@@ -990,7 +995,7 @@ prepare_input_data <- function(
 
   static_predictors <- list()
 
-  if ("RoadRailLog" %in% other_variables) {
+  if ("road_rail_log" %in% other_variables) {
 
     r_railway <- fs::path(path_rail, "railway_length.RData")
     if (!fs::file_exists(r_railway)) {
@@ -1016,7 +1021,7 @@ prepare_input_data <- function(
     r_road_rail <- (r_roads + r_railway) %>%
       magrittr::add(1) %>%
       log10() %>%
-      stats::setNames("RoadRailLog")
+      stats::setNames("road_rail_log")
 
     static_predictors <- c(static_predictors, r_road_rail)
     rm(r_road_rail, r_roads, r_railway, envir = environment())
@@ -1027,7 +1032,7 @@ prepare_input_data <- function(
   ## Habitat information ----
 
   # Check if habitat information is used as predictor
-  hab_predictor <- "HabLog" %in% other_variables
+  hab_predictor <- "habitat_log" %in% other_variables
 
   if (hab_predictor) {
 
@@ -1047,7 +1052,7 @@ prepare_input_data <- function(
     r_hab_mask <- terra::classify(r_hab, cbind(0L, NA), others = 1L)
 
     r_hab <- log10(r_hab + 0.1) %>%
-      stats::setNames("HabLog")
+      stats::setNames("habitat_log")
 
     static_predictors <- c(static_predictors, r_hab)
     rm(r_hab, envir = environment())
@@ -1057,7 +1062,7 @@ prepare_input_data <- function(
 
   ## Sampling efforts -----
 
-  if ("EffortsLog" %in% other_variables) {
+  if ("efforts_log" %in% other_variables) {
 
     r_efforts <- fs::path(path_efforts, "efforts_summary_r.RData")
     if (!fs::file_exists(r_efforts)) {
@@ -1069,10 +1074,10 @@ prepare_input_data <- function(
     # add 1 (older versions 0.1) to get log for 0 values
     # [only for rivers/roads/efforts, not hab/rivers]
     r_efforts <- ecokit::load_as(r_efforts, unwrap_r = TRUE) %>%
-      magrittr::extract2("NObs") %>%
+      magrittr::extract2("n_obs") %>%
       magrittr::add(1) %>%
       log10() %>%
-      stats::setNames("EffortsLog")
+      stats::setNames("efforts_log")
 
 
     if (clamp_pred) {
@@ -1153,13 +1158,13 @@ prepare_input_data <- function(
       }
 
       if (is.na(efforts_val)) {
-        r_efforts_clamp <- stats::setNames(r_efforts, "EffortsLog_clamp")
+        r_efforts_clamp <- stats::setNames(r_efforts, "efforts_log_clamp")
       } else {
         # Set a minimum value for efforts variable to `efforts_val`. Using
         # upper = Inf keeps efforts values > efforts_val as they are.
         r_efforts_clamp <- terra::clamp(
           x = r_efforts, lower = efforts_val, upper = Inf) %>%
-          stats::setNames("EffortsLog_clamp")
+          stats::setNames("efforts_log_clamp")
       }
 
       static_predictors <- c(static_predictors, r_efforts, r_efforts_clamp)
@@ -1178,7 +1183,7 @@ prepare_input_data <- function(
 
   ## River length ----
 
-  if ("RiversLog" %in% other_variables) {
+  if ("rivers_log" %in% other_variables) {
 
     r_rivers <- fs::path(path_rivers, "river_lengths.RData")
     if (!fs::file_exists(r_rivers)) {
@@ -1191,7 +1196,7 @@ prepare_input_data <- function(
       magrittr::extract2("STRAHLER_5") %>%
       magrittr::add(0.1) %>%
       log10() %>%
-      stats::setNames("RiversLog")
+      stats::setNames("rivers_log")
 
     if (clamp_pred) {
 
@@ -1268,13 +1273,13 @@ prepare_input_data <- function(
       }
 
       if (is.na(rivers_value)) {
-        r_rivers_clamp <- stats::setNames(r_rivers, "RiversLog_clamp")
+        r_rivers_clamp <- stats::setNames(r_rivers, "rivers_log_clamp")
       } else {
         # Set a minimum value for river length variable to `rivers_value`. Using
         # upper = Inf keeps  river length values > rivers_value as they are.
         r_rivers_clamp <- terra::clamp(
           x = r_rivers, lower = rivers_value, upper = Inf) %>%
-          stats::setNames("RiversLog_clamp")
+          stats::setNames("rivers_log_clamp")
       }
 
       static_predictors <- c(static_predictors, r_rivers, r_rivers_clamp)
@@ -1341,27 +1346,28 @@ prepare_input_data <- function(
 
   if (clamp_pred) {
 
-    if ("EffortsLog" %in% names(static_predictors)) {
+    if ("efforts_log" %in% names(static_predictors)) {
       # use clamped Effort values
-      static_predictors$EffortsLog <- static_predictors$EffortsLog_clamp
-      static_predictors$EffortsLog_clamp <- NULL
+      static_predictors$efforts_log <- static_predictors$efforts_log_clamp
+      static_predictors$efforts_log_clamp <- NULL
     }
-    if (all(c("RiversLog", "RiversLog_clamp") %in% names(static_predictors))) {
+    if (all(c("rivers_log", "rivers_log_clamp") %in%
+            names(static_predictors))) {
       # use clamped rivers values
-      static_predictors$RiversLog <- static_predictors$RiversLog_clamp
-      static_predictors$RiversLog_clamp <- NULL
+      static_predictors$rivers_log <- static_predictors$rivers_log_clamp
+      static_predictors$rivers_log_clamp <- NULL
     }
 
   } else {
 
     # Remove clamped layers
-    if ("EffortsLog_clamp" %in% names(static_predictors)) {
+    if ("efforts_log_clamp" %in% names(static_predictors)) {
       static_predictors <- terra::subset(
-        x = static_predictors, subset = "EffortsLog_clamp", negate = TRUE)
+        x = static_predictors, subset = "efforts_log_clamp", negate = TRUE)
     }
-    if ("RiversLog_clamp" %in% names(static_predictors)) {
+    if ("rivers_log_clamp" %in% names(static_predictors)) {
       static_predictors <- terra::subset(
-        x = static_predictors, subset = "RiversLog_clamp", negate = TRUE)
+        x = static_predictors, subset = "rivers_log_clamp", negate = TRUE)
     }
   }
 
@@ -1371,7 +1377,7 @@ prepare_input_data <- function(
   prediction_data <- prediction_options %>%
     dplyr::mutate(
       pred_df = purrr::map(
-        FilePath,
+        file_path,
         ~ {
           pred_df0 <- ecokit::load_as(.x, unwrap_r = TRUE) %>%
             terra::subset(bio_variables) %>%
@@ -1388,12 +1394,9 @@ prepare_input_data <- function(
           }
           pred_df0
         })) %>%
-    dplyr::select(-FilePath) %>%
+    dplyr::select(-file_path) %>%
     tidyr::unnest(pred_df) %>%
-    dplyr::select(-tidyselect::any_of(c("clamp", "Processed_Name"))) %>%
-    dplyr::rename(
-      time_period = TimePeriod, climate_model = ClimateModel,
-      climate_scenario = ClimateScenario, climate_name = Name) %>%
+    dplyr::select(-tidyselect::any_of(c("clamp", "processed_name"))) %>%
     tidyr::nest(
       pred_data = -c(
         "time_period", "climate_model",
@@ -1606,19 +1609,19 @@ fit_predict_internal <- function(
   species_name <- model_data$species_name[[line_id]]
   cv_fold <- model_data$cv[[line_id]]
 
-  model_DT <- ecokit::load_as(model_data$data_path[[line_id]]) %>%
+  model_data <- ecokit::load_as(model_data$data_path[[line_id]]) %>%
     dplyr::filter(cv == cv_fold)
   if (sdm_method == "glm") {
-    model_DT <- dplyr::filter(model_DT, method_type == "glm")
+    model_data <- dplyr::filter(model_data, method_type == "glm")
   } else if (sdm_method == "maxent") {
-    model_DT <- dplyr::filter(model_DT, method_type == "maxent")
+    model_data <- dplyr::filter(model_data, method_type == "maxent")
   } else {
-    model_DT <- dplyr::filter(model_DT, method_type == "others")
+    model_data <- dplyr::filter(model_data, method_type == "others")
   }
 
   base_model_name <- paste0(sdm_method, "_", species_name, "_cv", cv_fold)
 
-  if (nrow(model_DT) != 1) {
+  if (nrow(model_data) != 1) {
     ecokit::stop_ctx("Modelling data should be only one row")
   }
 
@@ -1641,7 +1644,7 @@ fit_predict_internal <- function(
 
   fitted_model <- ecokit::quietly(
     sdm::sdm(
-      formula = model_DT$model_formula[[1]], data = model_DT$sdm_data[[1]],
+      formula = model_data$model_formula[[1]], data = model_data$sdm_data[[1]],
       methods = sdm_method, modelSettings = model_settings))
 
 
@@ -2403,5 +2406,6 @@ copy_svm2 <- function() {
   # Write to file, preserving formatting
   writeLines(method_text, target_file)
   # message("svm2.R written to sdm package methods/sdm directory.")
-  return(invisible(NULL))
+
+  invisible(NULL)
 }

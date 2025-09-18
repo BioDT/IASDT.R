@@ -94,7 +94,7 @@
       cv_name = cv_name, class_cv_name = class(cv_name))
   }
 
-  valid_cv_names <- c("CV_Dist", "CV_Large", "CV_SAC")
+  valid_cv_names <- c("cv_dist", "cv_large", "cv_sac")
   if (!cv_name %in% valid_cv_names) {
     ecokit::stop_ctx(
       "Invalid cv_name", cv_name = cv_name, valid_cv_names = valid_cv_names)
@@ -196,5 +196,5 @@
       "Invalid SLURM RAM request: ", ram = ram, include_backtrace = TRUE)
   }
 
-  return(ram)
+  ram
 }

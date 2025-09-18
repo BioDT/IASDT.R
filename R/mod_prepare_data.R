@@ -33,9 +33,9 @@ mod_prepare_data <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  species_id <- species_file <- PA <- path_river <- cell <- path_PA <-
+  species_id <- species_file <- pa <- path_river <- cell <- path_pa <-
     path_grid <- path_grid_ref <- path_clc <- path_roads <- path_railway <-
-    path_efforts <- path_chelsa <- path_model <- EU_boundaries <- sp_PA <-
+    path_efforts <- path_chelsa <- path_model <- eu_boundaries <- sp_pa <-
     n_pres <- grid_r <- ias_id <- path_soil <- path_wetness <- NULL
 
   # # ..................................................................... ###
@@ -55,17 +55,17 @@ mod_prepare_data <- function(
     ~var_name, ~value, ~check_dir, ~check_file,
     "path_grid", "DP_R_grid_processed", FALSE, FALSE,
     "path_grid_ref", "DP_R_grid_raw", TRUE, FALSE,
-    "path_PA", "DP_R_PA", TRUE, FALSE,
+    "path_pa", "DP_R_pa", TRUE, FALSE,
     "path_clc", "DP_R_clc_processed", TRUE, FALSE,
     "path_chelsa", "DP_R_chelsa_processed", TRUE, FALSE,
-    "path_roads", "DP_R_road_processed", TRUE, FALSE,
+    "path_roads", "DP_R_roads_processed", TRUE, FALSE,
     "path_railway", "DP_R_railway_processed", TRUE, FALSE,
     "path_efforts", "DP_R_efforts_processed", TRUE, FALSE,
     "path_river", "DP_R_river_processed", FALSE, TRUE,
     "path_wetness", "DP_R_wetness_processed", FALSE, TRUE,
     "path_soil", "DP_R_soil_density", FALSE, TRUE,
     "path_model", "DP_R_model_root_path", TRUE, FALSE,
-    "EU_boundaries", "DP_R_country_boundaries", FALSE, TRUE)
+    "eu_boundaries", "DP_R_country_boundaries", FALSE, TRUE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
     env_file = env_file, env_variables_data = env_vars_to_read)
@@ -87,16 +87,16 @@ mod_prepare_data <- function(
 
   ## Sampling efforts ----
   ecokit::cat_time("Sampling efforts", level = 1L, verbose = verbose_progress)
-  R_Bias <- fs::path(path_efforts, "efforts_summary_r.RData")
-  if (!fs::file_exists(R_Bias)) {
+  r_bias <- fs::path(path_efforts, "efforts_summary_r.RData")
+  if (!fs::file_exists(r_bias)) {
     ecokit::stop_ctx(
-      "R_Bias file does not exist", R_Bias = R_Bias, include_backtrace = TRUE)
+      "r_bias file does not exist", r_bias = r_bias, include_backtrace = TRUE)
   }
 
   # This mask layer represents grid cells with minimum accepted efforts
   # (`min_efforts_n_species`). All subsequent maps will be masked to this layer
-  efforts_mask <- ecokit::load_as(R_Bias, unwrap_r = TRUE) %>%
-    magrittr::extract2("NSp") %>%
+  efforts_mask <- ecokit::load_as(r_bias, unwrap_r = TRUE) %>%
+    magrittr::extract2("n_sp") %>%
     terra::classify(
       rcl = matrix(
         c(0, min_efforts_n_species, NA, min_efforts_n_species, Inf, 1),
@@ -120,7 +120,7 @@ mod_prepare_data <- function(
   if (hab_abb == "0") {
     # Use dummy habitat values
     r_habitat <- stats::setNames(grid_r, "Hab")
-    r_habitat_log <- stats::setNames(grid_r, "HabLog")
+    r_habitat_log <- stats::setNames(grid_r, "habitat_log")
   } else {
     # Load habitat coverage data and mask by the efforts mask
     r_habitat <- ecokit::load_as(path_habitat, unwrap_r = TRUE) %>%
@@ -140,7 +140,7 @@ mod_prepare_data <- function(
     }
 
     # Log of habitat coverage
-    r_habitat_log <- stats::setNames(log10(r_habitat + 0.1), "HabLog")
+    r_habitat_log <- stats::setNames(log10(r_habitat + 0.1), "habitat_log")
   }
 
   # # ..................................................................... ###
@@ -150,25 +150,27 @@ mod_prepare_data <- function(
     "Species data summary", level = 1L, verbose = verbose_progress)
 
   # Extract the list of species for the current habitat type
-  DT_Sp <- fs::path(path_PA, "sp_pa_summary_df.RData")
-  if (!fs::file_exists(DT_Sp)) {
+  data_sp <- fs::path(path_pa, "sp_pa_summary_df.RData")
+  if (!fs::file_exists(data_sp)) {
     ecokit::stop_ctx(
-      "DT_Sp file does not exist", DT_Sp = DT_Sp, include_backtrace = TRUE)
+      "data_sp file does not exist", data_sp = data_sp,
+      include_backtrace = TRUE)
   }
-  DT_Sp <- ecokit::load_as(DT_Sp) %>%
+  data_sp <- ecokit::load_as(data_sp) %>%
     dplyr::arrange(ias_id)
 
   if (hab_abb == "0") {
-    Hab_column <- NULL
+    hab_column <- NULL
   } else {
-    Hab_column <- c(
-      "Hab_1_Forests", "Hab_2_Open_forests", "Hab_3_Scrub",
-      "Hab_4a_Natural_grasslands", "Hab_4b_Human_maintained_grasslands",
-      "Hab_10_Wetland", "Hab_12a_Ruderal_habitats",
-      "Hab_12b_Agricultural_habitats") %>%
+    hab_column <- c(
+      "hab_1_forests", "hab_2_open_forests", "hab_3_scrub", "hab_4_grasslands",
+      "hab_4a_natural_grasslands", "hab_4b_human_maintained_grasslands",
+      "hab_5_sandy", "hab_6_rocky", "hab_7_dryland", "hab_8_saline",
+      "hab_9_riparian", "hab_10_wetland", "hab_11_aquatic", "hab_12_man_made",
+      "hab_12a_ruderal_habitats", "hab_12b_agricultural_habitats") %>%
       stringr::str_subset(paste0("_", hab_abb, "_"))
 
-    DT_Sp <- dplyr::filter(DT_Sp, !!as.symbol(Hab_column))
+    data_sp <- dplyr::filter(data_sp, !!as.symbol(hab_column))
   }
 
   # # ..................................................................... ###
@@ -181,7 +183,7 @@ mod_prepare_data <- function(
   n_cells_col <- dplyr::if_else(
     exclude_cultivated, "n_cells_naturalized", "n_cells_all")
 
-  R_Sp <- DT_Sp %>%
+  r_sp <- data_sp %>%
     # Exclude species with too few presence grid cells. There will be further
     # exclusion of species with few grid cells in this pipeline, but excluding
     # this first may help to reduce processing time
@@ -190,30 +192,30 @@ mod_prepare_data <- function(
       tidyselect::all_of(c("species_id", "species_name", "species_file"))) %>%
     # Mask each species map with the filtered grid cells
     dplyr::mutate(
-      PA = purrr::map2(
+      pa = purrr::map2(
         .x = species_file, .y = species_id,
         .f = ~{
 
-          PA_Layer <- dplyr::if_else(exclude_cultivated, "PA_masked", "PA")
+          pa_layer <- dplyr::if_else(exclude_cultivated, "pa_masked", "pa")
 
           # Masked raster map
-          sp_PA <- fs::path(
-            path_PA, "PA_rdata", stringr::str_c(.x, "_PA.RData")) %>%
+          sp_pa <- fs::path(
+            path_pa, "pa_rdata", stringr::str_c(.x, "_pa.RData")) %>%
             ecokit::load_as(unwrap_r = TRUE) %>%
-            magrittr::extract2(PA_Layer) %>%
+            magrittr::extract2(pa_layer) %>%
             terra::mask(efforts_mask) %>%
-            stats::setNames(paste0("Sp_", .y))
+            stats::setNames(paste0("sp_", .y))
 
           # Number of presence grid cells after masking
-          n_pres <- as.integer(terra::global(sp_PA, "sum", na.rm = TRUE))
+          n_pres <- as.integer(terra::global(sp_pa, "sum", na.rm = TRUE))
 
-          return(tibble::tibble(sp_PA = list(sp_PA), n_pres = n_pres))
+          return(tibble::tibble(sp_pa = list(sp_pa), n_pres = n_pres))
         })) %>%
-    tidyr::unnest_wider(PA) %>%
-    dplyr::mutate(sp_PA = unlist(sp_PA)) %>%
+    tidyr::unnest_wider(pa) %>%
+    dplyr::mutate(sp_pa = unlist(sp_pa)) %>%
     # filter species with too few observations (after masking)
     dplyr::filter(n_pres >= n_pres_per_species) %>%
-    dplyr::pull(sp_PA) %>%
+    dplyr::pull(sp_pa) %>%
     terra::rast()
 
   # # ................................... ###
@@ -224,57 +226,57 @@ mod_prepare_data <- function(
   # is no need to further exclude grid cells with no species as this could be
   # for an ecological reason
   #
-  # zero_sp_grids <- (sum(R_Sp, na.rm = TRUE) == 0)
+  # zero_sp_grids <- (sum(r_sp, na.rm = TRUE) == 0)
   # efforts_mask[zero_sp_grids] <- NA
-  # R_Sp[zero_sp_grids] <- NA
+  # r_sp[zero_sp_grids] <- NA
 
   # # ................................... ###
 
-  ### Plotting number of IAS per grid cell -----
+  ### Plotting number of NAPS per grid cell -----
   ecokit::cat_time(
-    "Plotting number of IAS per grid cell",
+    "Plotting number of NAPS per grid cell",
     level = 2L, verbose = verbose_progress)
 
-  EU_boundaries <- ecokit::load_as(EU_boundaries) %>%
+  eu_boundaries <- ecokit::load_as(eu_boundaries) %>%
     magrittr::extract2("Bound_sf_Eur") %>%
     magrittr::extract2("L_03")
-  R_Sp_sum <- sum(R_Sp, na.rm = TRUE)
+  r_n_sp <- sum(r_sp, na.rm = TRUE)
 
-  NGridsWzSpecies <- terra::global(R_Sp_sum, fun = "notNA") %>%      # nolint: object_name_linter
+  n_grids_with_sp <- terra::global(r_n_sp, fun = "notNA") %>%      # nolint: object_name_linter
     as.integer() %>%
     format(big.mark = ",")
 
-  Xlim <- c(2600000, 6550000)
-  Ylim <- c(1450000, 5420000)
+  x_lim <- c(2600000, 6550000)
+  y_lim <- c(1450000, 5420000)
 
   plot_caption <- stringr::str_glue(
     "<span style='color:red; font-size:18px;'>\\
-    **{NGridsWzSpecies} grid cells --- {terra::nlyr(R_Sp)} IAS**</span><br/>\\
+    **{n_grids_with_sp} grid cells --- {terra::nlyr(r_sp)} NAPS**</span><br/>\\
     - Excluding grid cells with < {min_efforts_n_species} vascular plant \\
     species in GBIF",
     dplyr::if_else(
       exclude_0_habitat,
       " or with 0% habitat coverage<br/>", "<br/>"),
     paste0(
-      "- Considering only IAS with &#8805; {n_pres_per_species}",
+      "- Considering only NAPS with &#8805; {n_pres_per_species}",
       " presence grid cells"))
 
   n_sp_per_grid_gg <- ggplot2::ggplot(environment = emptyenv()) +
     ggplot2::geom_sf(
-      data = EU_boundaries, fill = "gray95",
+      data = eu_boundaries, fill = "gray95",
       colour = "black", linewidth = 0.15) +
-    tidyterra::geom_spatraster(data = R_Sp_sum) +
+    tidyterra::geom_spatraster(data = r_n_sp) +
     tidyterra::scale_fill_whitebox_c(
       na.value = "transparent", palette = "bl_yl_rd", name = NULL) +
     ggplot2::labs(
       title = paste0(
         '<span style="color:blue; font-size:20px;"><b>',
-        "Number of IAS per grid cell to be used in the model</b></span>",
+        "Number of NAPS per grid cell to be used in the model</b></span>",
         '<span style="color:black; font-size:16px;"> (',
-        stringr::str_remove(Hab_column, "Hab_"), ")</span>"),
+        stringr::str_remove(hab_column, "hab_"), ")</span>"),
       caption = plot_caption) +
-    ggplot2::scale_y_continuous(expand = c(0, 0), limits = Ylim) +
-    ggplot2::scale_x_continuous(expand = c(0, 0), limits = Xlim) +
+    ggplot2::scale_y_continuous(expand = c(0, 0), limits = y_lim) +
+    ggplot2::scale_x_continuous(expand = c(0, 0), limits = x_lim) +
     ggplot2::theme_minimal() +
     ggplot2::theme(
       plot.margin = ggplot2::margin(0.25, 0, 0.125, 0, "cm"),
@@ -292,19 +294,19 @@ mod_prepare_data <- function(
       panel.border = ggplot2::element_blank())
 
   ragg::agg_jpeg(
-    filename = fs::path(path_model, "NSpPerGrid.jpeg"),
+    filename = fs::path(path_model, "n_sp_per_grid.jpeg"),
     width = 25.5, height = 28, res = 600, quality = 100, units = "cm")
   print(n_sp_per_grid_gg)
   grDevices::dev.off()
 
-  rm(n_sp_per_grid_gg, R_Sp_sum, EU_boundaries, envir = environment())
+  rm(n_sp_per_grid_gg, r_n_sp, eu_boundaries, envir = environment())
 
   # # ..................................................................... ###
 
   ## CHELSA -----
 
   ecokit::cat_time("CHELSA", level = 1L, verbose = verbose_progress)
-  r_chelsa <- fs::path(path_chelsa, "Processed", "R_Current.RData")
+  r_chelsa <- fs::path(path_chelsa, "projected_rdata", "r_current.RData")
   if (!fs::file_exists(r_chelsa)) {
     ecokit::stop_ctx(
       "r_chelsa file does not exist", r_chelsa = r_chelsa,
@@ -365,13 +367,13 @@ mod_prepare_data <- function(
   }
   r_road_int <- ecokit::load_as(r_road_int, unwrap_r = TRUE) %>%
     magrittr::extract2("All") %>%
-    stats::setNames("RoadInt") %>%
+    stats::setNames("road_int") %>%
     terra::mask(efforts_mask)
 
   # Log of road intensity
   # add 1 (older versions 0.1) to get log for 0 values
   # [only for rivers/roads/efforts, not hab/rivers]
-  r_road_int_log <- stats::setNames(log10(r_road_int + 1), "RoadIntLog")
+  r_road_int_log <- stats::setNames(log10(r_road_int + 1), "road_int_log")
 
   # # ||||||||||||||||||||||||||||||||||||||||||
 
@@ -388,35 +390,35 @@ mod_prepare_data <- function(
   r_rail_int <- ecokit::load_as(r_rail_int, unwrap_r = TRUE) %>%
     magrittr::extract2("rail") %>%
     terra::mask(efforts_mask) %>%
-    stats::setNames("RailInt")
+    stats::setNames("rail_int")
 
   # Log of railway intensity
   # add 1 (older versions 0.1) to get log for 0 values
   # [only for rivers/roads/efforts, not hab/rivers]
-  r_rail_int_log <- stats::setNames(log10(r_rail_int + 1), "RailIntLog")
+  r_rail_int_log <- stats::setNames(log10(r_rail_int + 1), "rail_int_log")
 
   # # ||||||||||||||||||||||||||||||||||||||||||
 
   ### Merging Road + rail ----
   ecokit::cat_time(
     "Merging Railway + road intensity", level = 2L, verbose = verbose_progress)
-  r_road_rail <- stats::setNames((r_road_int + r_rail_int), "RoadRail")
+  r_road_rail <- stats::setNames((r_road_int + r_rail_int), "road_rail")
   # add 1 (older versions 0.1) to get log for 0 values
   # [only for rivers/roads/efforts, not hab/rivers]
-  r_road_rail_log <- stats::setNames(log10(r_road_rail + 1), "RoadRailLog")
+  r_road_rail_log <- stats::setNames(log10(r_road_rail + 1), "road_rail_log")
 
   # # ..................................................................... ###
 
   ## Sampling effort ----
   ecokit::cat_time("Sampling effort", level = 1L, verbose = verbose_progress)
 
-  r_efforts <- ecokit::load_as(R_Bias, unwrap_r = TRUE) %>%
-    magrittr::extract2("NObs") %>%
+  r_efforts <- ecokit::load_as(r_bias, unwrap_r = TRUE) %>%
+    magrittr::extract2("n_obs") %>%
     terra::mask(efforts_mask) %>%
-    stats::setNames("Efforts")
+    stats::setNames("efforts")
   # add 1 (older versions 0.1) to get log for 0 values
   # [only for rivers/roads/efforts, not hab/rivers]
-  r_efforts_log <- stats::setNames(log10(r_efforts + 1), "EffortsLog")
+  r_efforts_log <- stats::setNames(log10(r_efforts + 1), "efforts_log")
 
   # # ..................................................................... ###
 
@@ -432,8 +434,8 @@ mod_prepare_data <- function(
   r_rivers <- ecokit::load_as(r_rivers, unwrap_r = TRUE) %>%
     magrittr::extract2("STRAHLER_5") %>%
     terra::mask(efforts_mask) %>%
-    stats::setNames("Rivers")
-  r_rivers_log <- stats::setNames(log10(r_rivers + 0.1), "RiversLog")
+    stats::setNames("rivers")
+  r_rivers_log <- stats::setNames(log10(r_rivers + 0.1), "rivers_log")
 
   # # ..................................................................... ###
 
@@ -472,17 +474,17 @@ mod_prepare_data <- function(
   ## Merging data together -----
   ecokit::cat_time("Merging data together", verbose = verbose_progress)
 
-  columns_first <- c("CellNum", "CellCode", "country", "country_nearest")
+  columns_first <- c("cell_num", "CellCode", "country", "country_nearest")
   data_all <- c(
     r_chelsa, r_habitat, r_habitat_log, r_road_int, r_road_int_log,
     r_rail_int, r_rail_int_log, r_road_rail, r_road_rail_log,
     r_efforts, r_efforts_log, r_rivers, r_rivers_log,
-    r_soil, r_wetness, R_Sp) %>%
+    r_soil, r_wetness, r_sp) %>%
     as.data.frame(na.rm = TRUE, xy = TRUE, cells = TRUE) %>%
     tibble::tibble() %>%
     # Add country name
     dplyr::left_join(grid_country, by = c("x", "y")) %>%
-    dplyr::rename(country_nearest = "Nearest", CellNum = cell) %>%
+    dplyr::rename(country_nearest = "Nearest", cell_num = cell) %>%
     dplyr::select(tidyselect::all_of(columns_first), tidyselect::everything())
 
   if (hab_abb == "0") {
@@ -495,8 +497,8 @@ mod_prepare_data <- function(
 
   ecokit::cat_time("Save model data to disk", verbose = verbose_progress)
   ecokit::save_as(
-    object = data_all, object_name = "ModDT",
-    out_path = fs::path(path_model, "ModDT.RData"))
+    object = data_all, object_name = "model_data",
+    out_path = fs::path(path_model, "model_data.RData"))
 
   # # ..................................................................... ###
 

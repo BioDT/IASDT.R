@@ -190,7 +190,7 @@ gbif_read_chunk <- function(
     chunk_data <- sf::st_coordinates(chunk_data) %>%
       # extract matching CLC class
       terra::extract(x = corine_r, y = .) %>%
-      dplyr::pull(value) %>%
+      dplyr::pull(Value) %>%
       # convert to tibble (integer)
       dplyr::tibble(value = .) %>%
       dplyr::mutate(

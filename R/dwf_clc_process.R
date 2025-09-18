@@ -60,8 +60,8 @@ clc_process <- function(
   }
 
   strategy <- .validate_strategy(strategy)
-  if (strategy == "sequential") n_cores <- 1L
-  n_cores <- .validate_n_cores(n_cores)
+  if (strategy == "sequential") n_cores_plot <- 1L
+  n_cores_plot <- .validate_n_cores(n_cores_plot)
 
   # # ..................................................................... ###
 

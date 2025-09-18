@@ -483,7 +483,7 @@ gbif_process <- function(
     ggplot2::theme(
       plot.margin = ggplot2::margin(0, 0.1, 0, 0.1, "cm"),
       plot.title = ggplot2::element_text(
-        size = 12, color = "blue", face = "bold", hjust = 0.5,
+        size = 12, color = "blue", face = "bold",
         hjust = 0, margin = ggplot2::margin(0, 0, 0, 0)),
       strip.text = ggplot2::element_text(size = 6, face = "bold"),
       legend.key.size = grid::unit(0.8, "cm"),

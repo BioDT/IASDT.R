@@ -80,7 +80,7 @@ chelsa_prepare <- function(
 
   chelsa_metadata <- list.files(
     path = path_dwnload_links, recursive = TRUE, full.names = TRUE,
-    pattern = "dwnload_links_Climatologies_.+txt$") %>%
+    pattern = "dwnload_links_climatologies_.+txt$") %>%
     dplyr::tibble(url_file = .) %>%
     # Add download links
     dplyr::mutate(
@@ -97,7 +97,7 @@ chelsa_prepare <- function(
       # Extract time period
       time_period = purrr::map_chr(
         url_file, stringr::str_remove_all,
-        pattern = "dwnload_links_Climatologies_|.txt"),
+        pattern = "dwnload_links_climatologies_|.txt"),
 
       # File extension
       extension = purrr::map_chr(url, tools::file_ext),

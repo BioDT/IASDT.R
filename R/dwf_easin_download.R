@@ -97,10 +97,10 @@ easin_download <- function(
       }
 
       # nolint start
-      Skip <- (chunk_n - 1) * n_search
+      skip <- (chunk_n - 1) * n_search
       # `exclude/dps/1` excludes GBIF observations
       url <- stringr::str_glue(
-        "{easin_url}/{species_key}/exclude/dps/1/{Skip}/{n_search}")
+        "{easin_url}/{species_key}/exclude/dps/1/{skip}/{n_search}")
       # nolint end
 
       download_try <- 0

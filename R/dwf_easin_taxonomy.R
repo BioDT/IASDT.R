@@ -60,7 +60,7 @@ easin_taxonomy <- function(
     # The API has been changed in April 2023; the main change: using
     # 'apixg/catxg' instead of 'api/cat'
     url <- stringr::str_glue(
-      "{easin_url}/kingdom/{kingdom}/skip/{Skip}/take/{n_search}")
+      "{easin_url}/kingdom/{kingdom}/skip/{skip}/take/{n_search}")
 
     # Extract species data as tibble
     taxa_data <- try(RCurl::getURL(url, .mapUnicode = FALSE), silent = TRUE)

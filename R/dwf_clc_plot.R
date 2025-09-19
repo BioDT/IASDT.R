@@ -341,8 +341,8 @@ clc_plot <- function(clc_name, clc_map, eu_map, crosswalk, path_jpeg) {
     })
 
   rm(
-    maps, path_jpeg_2_free, plot_theme, plot_theme_2, prefix,
-    out_path, x_lim, y_lim, last_update, envir = environment())
+    path_jpeg_2_free, plot_theme, plot_theme_2, x_lim, y_lim,
+    envir = environment())
 
   # Multiple panels per file
   common_legend <- cowplot::get_legend(
@@ -404,7 +404,7 @@ clc_plot <- function(clc_name, clc_map, eu_map, crosswalk, path_jpeg) {
       grDevices::dev.off()
     })
 
-  rm(common_legend, env = environment())
+  rm(maps, common_legend, prefix, out_path, last_update, env = environment())
 
   invisible(NULL)
 }

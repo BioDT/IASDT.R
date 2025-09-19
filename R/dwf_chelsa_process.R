@@ -329,21 +329,20 @@ chelsa_process <- function(
           attempt <- attempt + 1
           try_n <- try(
             expr = {
+              
+              # Suppress GDAL warnings
+              Sys.setenv("CPL_LOG" = "ERROR")
+
               # suppress known warning
+              # Using ecokit::quietly did not help to avoid these warnings
               # https://github.com/rspatial/terra/issues/1212
               # https://github.com/rspatial/terra/issues/1832
               # https://stackoverflow.com/questions/78098166
 
-              ecokit::quietly(
-                expr = {
-                  IASDT.R::chelsa_project(
-                    metadata = dplyr::slice(chelsa_to_process, x),
-                    env_file = env_file, compression_level = compression_level)
-                },
-                "is not a Time or Vertical dimension",
-                "driver GTiff does not support open option so",
-                "is not a Longitude/X dimension")
-
+              IASDT.R::chelsa_project(
+                metadata = dplyr::slice(chelsa_to_process, x),
+                env_file = env_file, compression_level = compression_level)
+              
               "Okay"
             },
             silent = TRUE)

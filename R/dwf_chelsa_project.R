@@ -114,7 +114,6 @@ chelsa_project <- function(
     "extdata", "LandMask.nc", package = "IASDT.R", mustWork = TRUE) %>%
     terra::rast() %>%
     terra::crop(crop_extent) %>%
-    suppressWarnings() %>% # suppress warning on LUMI while cropping
     terra::classify(cbind(0, NA))
 
   # # ..................................................................... ###
@@ -201,12 +200,17 @@ chelsa_project <- function(
     paste0("explanation=", metadata$explanation))
 
   # save as *.nc file
-  terra::writeCDF(
-    r_map,
-    filename = metadata$path_out_netcdf, varname = var_name_for_nc,
-    unit = metadata$unit, zname = metadata$time_period,
-    atts = attributes, overwrite = TRUE, compression = compression_level)
 
+  ecokit::quietly({
+    terra::writeCDF(
+      r_map,
+      filename = metadata$path_out_netcdf, varname = var_name_for_nc,
+      unit = metadata$unit, zname = metadata$time_period,
+      atts = attributes, overwrite = TRUE, compression = compression_level)
+
+  },
+  "is not a Latitude/Y dimension.",
+  "is not a Longitude/X dimension.")
   # # ..................................................................... ###
 
   return(invisible(NULL))

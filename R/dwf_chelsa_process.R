@@ -264,10 +264,8 @@ chelsa_process <- function(
           return(TRUE)
         }
 
-        netcdf_okay <- suppressWarnings(
-          ecokit::check_tiff(file_nc, warning = FALSE))
-        tif_okay <- suppressWarnings(
-          ecokit::check_tiff(file_tif, warning = FALSE))
+        netcdf_okay <- ecokit::check_tiff(file_nc, warning = FALSE)
+        tif_okay <- ecokit::check_tiff(file_tif, warning = FALSE)
         need_processing <- isFALSE(netcdf_okay && tif_okay)
 
         if (need_processing) {
@@ -316,9 +314,6 @@ chelsa_process <- function(
           return(FALSE)
         }
 
-        if (file.exists(file_nc)) fs::file_delete(file_nc)
-        if (file.exists(file_tif)) fs::file_delete(file_tif)
-
         # Set `GTIFF_SRS_SOURCE` configuration option to EPSG to use
         # official parameters (overriding the ones from GeoTIFF keys)
         # see: https://stackoverflow.com/questions/78007307
@@ -363,8 +358,6 @@ chelsa_process <- function(
               command = chelsa_to_process$download_command[[x]],
               ignore.stdout = TRUE, ignore.stderr = TRUE)
           }
-          if (file.exists(file_nc)) fs::file_delete(file_nc)
-          if (file.exists(file_tif)) fs::file_delete(file_tif)
         }
 
         if (inherits(try_n, "try-error")) {

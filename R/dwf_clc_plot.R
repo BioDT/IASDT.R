@@ -404,7 +404,7 @@ clc_plot <- function(clc_name, clc_map, eu_map, crosswalk, path_jpeg) {
       grDevices::dev.off()
     })
 
-  rm(maps, common_legend, prefix, out_path, last_update, env = environment())
+  rm(maps, common_legend, prefix, out_path, last_update, envir = environment())
 
   invisible(NULL)
 }

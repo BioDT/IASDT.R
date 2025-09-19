@@ -179,7 +179,7 @@ clc_plot <- function(clc_name, clc_map, eu_map, crosswalk, path_jpeg) {
 
           tile_path <- paste0(
             "perc_cover_", file_prefix, "_", level_text, "_",
-            labels$label[YY], ".jpeg") %>%
+            stringr::str_sub(labels$label[YY], 1, 70), ".jpeg") %>%
             stringr::str_replace_all("/", "_") %>%
             stringr::str_replace_all(" ", "_") %>%
             stringr::str_to_lower() %>%
@@ -263,11 +263,10 @@ clc_plot <- function(clc_name, clc_map, eu_map, crosswalk, path_jpeg) {
 
           tile_path_free <- paste0(
             "perc_cover_", file_prefix, "_", level_text, "_",
-            labels$label[YY], ".jpeg") %>%
+            stringr::str_sub(labels$label[YY], 1, 70), ".jpeg") %>%
             stringr::str_replace_all("/", "_") %>%
             stringr::str_replace_all(" ", "_") %>%
             stringr::str_to_lower() %>%
-            stringr::str_sub(1, 35) %>%
             fs::path(path_jpeg_2_free, .)
           tile_path_free_nozero <- stringr::str_replace(
             tile_path_free, ".jpeg$", "_nozero.jpeg")

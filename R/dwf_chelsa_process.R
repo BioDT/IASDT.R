@@ -164,7 +164,7 @@ chelsa_process <- function(
     } else {
       ecokit::cat_time("Check input CHELSA files in parallel")
       ecokit::set_parallel(
-        n_cores = n_cores, level = 1L, future_max_size = 800L,
+        n_cores = n_cores, level = 1L, future_max_size = 1500L,
         strategy = strategy)
       withr::defer(future::plan("sequential", gc = TRUE))
     }

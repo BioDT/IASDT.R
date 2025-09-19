@@ -382,9 +382,8 @@ clc_plot <- function(clc_name, clc_map, eu_map, crosswalk, path_jpeg) {
       plot <- cowplot::plot_grid(plotlist = plot, ncol = 4, nrow = 2) %>%
         cowplot::plot_grid(common_legend, rel_widths = c(4, 0.2)) %>%
         cowplot::plot_grid(main_title, ., ncol = 1, rel_heights = c(0.05, 1))
-      path_jpeg_file <- out_path[.x]
       ragg::agg_jpeg(
-        filename = path_jpeg_file, width = 28, height = 15, res = 600,
+        filename = out_path[.x], width = 28, height = 15, res = 600,
         quality = 100, units = "cm")
       print(plot)
       grDevices::dev.off()
@@ -395,11 +394,9 @@ clc_plot <- function(clc_name, clc_map, eu_map, crosswalk, path_jpeg) {
         plotlist = plot_nozero, ncol = 4, nrow = 2) %>%
         cowplot::plot_grid(common_legend, rel_widths = c(4, 0.2)) %>%
         cowplot::plot_grid(main_title, ., ncol = 1, rel_heights = c(0.05, 1))
-      path_jpeg_file <- stringr::str_replace(
-        out_path[.x], "summary_jpeg", "summary_jpeg_nozero")
       ragg::agg_jpeg(
-        filename = path_jpeg_file, width = 28, height = 15, res = 600,
-        quality = 100, units = "cm")
+        filename = stringr::str_replace(out_path[.x], ".jpeg$", "_nozero.jpeg"),
+        width = 28, height = 15, res = 600, quality = 100, units = "cm")
       print(plot_nozero)
       grDevices::dev.off()
     })

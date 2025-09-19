@@ -174,7 +174,7 @@ efforts_request <- function(
       erase_after = download_details$eraseAfter,
       download_link = download_details$downloadLink,
       size = download_details$size,
-      total_records = download_details$total_records,
+      total_records = download_details$totalRecords,
       n_datasets = download_details$numberDatasets,
       status = download_details$status,
       # size of data in megabytes
@@ -192,7 +192,7 @@ efforts_request <- function(
     dplyr::mutate(citation = purrr::map_chr(request, attr, "citation"))
 
   ecokit::cat_time("Requesting efforts data was finished", level = 2L)
-
+  
   # # ..................................................................... ###
 
   # Save efforts request data ------

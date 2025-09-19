@@ -37,7 +37,7 @@ chelsa_project <- function(
   # Check metadata columns
   needed_columns <- c(
     "scale", "offset", "path_out_tif", "climate_model", "climate_scenario",
-    "variable", "url", "path_down", "long_name", "explanation",
+    "variable", "url", "path_download", "long_name", "explanation",
     "path_out_netcdf", "unit", "time_period")
   missing_columns <- setdiff(needed_columns, names(metadata))
   if (length(missing_columns) > 0) {
@@ -54,9 +54,9 @@ chelsa_project <- function(
 
   # # ..................................................................... ###
 
-  if (!file.exists(metadata$path_down)) {
+  if (!file.exists(metadata$path_download)) {
     ecokit::stop_ctx(
-      "Input file does not exist", path = metadata$path_down,
+      "Input file does not exist", path = metadata$path_download,
       include_backtrace = TRUE)
   }
 
@@ -126,8 +126,8 @@ chelsa_project <- function(
   # later consider the scale and offset information manually. This is more safe
   # as I found that some of the future projections do not include such
   # information in the tiff files.
-  r_map <- terra::rast(metadata$path_down, raw = TRUE) %>%
-    stats::setNames(basename(metadata$path_down)) %>%
+  r_map <- terra::rast(metadata$path_download, raw = TRUE) %>%
+    stats::setNames(basename(metadata$path_download)) %>%
     # crop to European boundaries although it is not necessary to crop the input
     # maps into the European boundaries, we will crop the data prior to
     # projection. Cropping will make the values of the raster read from memory
@@ -191,7 +191,7 @@ chelsa_project <- function(
   # global attributes to be added to the *.nc file
   attributes <- c(
     paste0("url=", metadata$url),
-    paste0("original_file=", metadata$path_down),
+    paste0("original_file=", metadata$path_download),
     paste0("variable=", metadata$variable),
     paste0("time_period=", metadata$time_period),
     paste0("climate_model=", metadata$climate_model),

@@ -33,7 +33,7 @@ chelsa_prepare <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  variable <- path_down <- time_period <- extension <- climate_scenario <-
+  variable <- path_download <- time_period <- extension <- climate_scenario <-
     path_chelsa_in <- path_file <- path_out_tif <- path_out_netcdf <-
     path_chelsa_out <- path_dwnload_links <- url <- path_dir <- url_file <-
     climate_model <- exclude <- chelsa_base_url <- NULL
@@ -158,7 +158,7 @@ chelsa_prepare <- function(
     dplyr::filter(stringr::str_detect(variable, selected_vars)) %>%
     dplyr::mutate(
 
-      path_down = purrr::map_chr(
+      path_download = purrr::map_chr(
         .x = path_file, .f = ~ fs::path(path_chelsa_in, .x)),
 
       path_out_tif = purrr::map_chr(
@@ -172,7 +172,7 @@ chelsa_prepare <- function(
         .x = path_out_netcdf, .f = stringr::str_replace_all,
         pattern = ".tif$", replacement = ".nc"),
       down_command = purrr::map2_chr(
-        .x = url, .y = path_down,
+        .x = url, .y = path_download,
         .f = ~ stringr::str_glue(
           'curl -k -L --connect-timeout 240 --max-time 1200 --retry 5 \\
           "{.x}" -o "{.y}" --silent')),
@@ -219,7 +219,7 @@ chelsa_prepare <- function(
       data_to_down <- chelsa_metadata %>%
         dplyr::mutate(
           exclude = furrr::future_map_lgl(
-            .x = path_down,
+            .x = path_download,
             .f = ~ {
 
               if (file.exists(.x)) {
@@ -259,7 +259,7 @@ chelsa_prepare <- function(
         X = seq_len(nrow(data_to_down)),
         FUN = function(x) {
 
-          path_out <- data_to_down$path_down[x]
+          path_out <- data_to_down$path_download[x]
           try_n <- 0
 
           repeat {

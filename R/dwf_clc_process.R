@@ -590,7 +590,8 @@ clc_process <- function(
       future::plan("sequential", gc = TRUE)
     } else {
       ecokit::set_parallel(
-        n_cores = n_cores_plot, level = 1L, strategy = strategy)
+        n_cores = n_cores_plot, level = 1L, strategy = strategy,
+        future_max_size = 1000L)
       withr::defer(future::plan("sequential", gc = TRUE))
     }
 

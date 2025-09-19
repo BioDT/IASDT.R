@@ -310,8 +310,7 @@ chelsa_process <- function(
 
         tiffs_okay <- all(
           ecokit::check_tiff(file_tif, warning = FALSE),
-          ecokit::check_tiff(file_nc, warning = FALSE)) %>%
-          suppressWarnings()
+          ecokit::check_tiff(file_nc, warning = FALSE))
 
         if (tiffs_okay) {
           return(FALSE)
@@ -330,14 +329,21 @@ chelsa_process <- function(
           attempt <- attempt + 1
           try_n <- try(
             expr = {
-              IASDT.R::chelsa_project(
-                metadata = dplyr::slice(chelsa_to_process, x),
-                env_file = env_file, compression_level = compression_level) %>%
-                # suppress known warning
-                # https://github.com/rspatial/terra/issues/1212
-                # https://github.com/rspatial/terra/issues/1832
-                # https://stackoverflow.com/questions/78098166
-                suppressWarnings()
+              # suppress known warning
+              # https://github.com/rspatial/terra/issues/1212
+              # https://github.com/rspatial/terra/issues/1832
+              # https://stackoverflow.com/questions/78098166
+
+              ecokit::quietly(
+                expr = {
+                  IASDT.R::chelsa_project(
+                    metadata = dplyr::slice(chelsa_to_process, x),
+                    env_file = env_file, compression_level = compression_level)
+                },
+                "is not a Time or Vertical dimension",
+                "driver GTiff does not support open option so",
+                "is not a Longitude/X dimension")
+
               "Okay"
             },
             silent = TRUE)
@@ -346,16 +352,14 @@ chelsa_process <- function(
 
           tiffs_okay <- all(
             ecokit::check_tiff(file_tif, warning = FALSE),
-            ecokit::check_tiff(file_nc, warning = FALSE)) %>%
-            suppressWarnings()
+            ecokit::check_tiff(file_nc, warning = FALSE))
 
-          if ((!inherits(try_n, "try-error") && tiffs_okay) || attempt >= 5) {
+          if ((!inherits(try_n, "try-error") && tiffs_okay) || attempt >= 10) {
             break
           }
 
           if (inherits(try_n, "try-error") &&
-              isFALSE(
-                ecokit::check_tiff(path_download, warning = FALSE))) {
+              isFALSE(ecokit::check_tiff(path_download, warning = FALSE))) {
             # re-download the file if it fails to be processed and downloaded
             # file is not valid
             system(
@@ -390,7 +394,7 @@ chelsa_process <- function(
       ecokit::stop_ctx(
         paste0(
           "\n >> ", nrow(chelsa_to_process), " files failed to process.\n",
-          " >> Check `FailedProcessing.txt` for more details"),
+          " >> Check `failed_processing.txt` for more details"),
         chelsa_to_process = chelsa_to_process, include_backtrace = TRUE)
     }
 

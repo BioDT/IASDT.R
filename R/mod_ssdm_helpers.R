@@ -1013,7 +1013,7 @@ prepare_input_data <- function(
         include_backtrace = TRUE)
     }
     r_roads <- ecokit::load_as(r_roads, unwrap_r = TRUE) %>%
-      magrittr::extract2("all")
+      magrittr::extract2("All")
 
     # Calculating the sum of road and railway intensity
     # add 1 (older versions 0.1) to get log for 0 values

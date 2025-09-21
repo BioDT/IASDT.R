@@ -367,7 +367,7 @@ mod_prepare_data <- function(
       include_backtrace = TRUE)
   }
   r_road_int <- ecokit::load_as(r_road_int, unwrap_r = TRUE) %>%
-    magrittr::extract2("all") %>%
+    magrittr::extract2("All") %>%
     stats::setNames("road_int") %>%
     terra::mask(efforts_mask)
 

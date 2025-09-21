@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=PP_LF
+#SBATCH --job-name=PP_lf
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --account=project_465001588
@@ -15,11 +15,11 @@
 OutputDir="datasets/processed/model_fitting/TF_BatchFiles"
 
 # Find all the split files and sort them explicitly
-SplitFiles=($(find "$OutputDir" -type f -name "TF_Chunk_*.txt" | sort -V))
+SplitFiles=($(find "$OutputDir" -type f -name "tf_chunk_*.txt" | sort -V))
 
 # Check if files were found
 if [ ${#SplitFiles[@]} -eq 0 ]; then
-    echo "Error: No files matching TF_Chunk_*.txt found in $OutputDir"
+    echo "Error: No files matching tf_chunk_*.txt found in $OutputDir"
     exit 1
 fi
 

@@ -171,8 +171,8 @@ DT %>%
 #| eval = TRUE,
 #| echo = FALSE
 collapsible_script_section(
-  "Example_lf_RC_Commands.txt", 
-  "&#187;&#187; Example lf_RC_Commands.txt file", 
+  "Example_lf_rc_commands.txt", 
+  "&#187;&#187; Example lf_rc_commands.txt file", 
   "scriptContentNS1")
 ```
 

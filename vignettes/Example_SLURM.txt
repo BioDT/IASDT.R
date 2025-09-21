@@ -5,8 +5,8 @@
 # -----------------------------------------------------------
 #SBATCH --job-name=Hab1
 #SBATCH --ntasks=1
-#SBATCH --output=datasets/processed/model_fitting/Mod_Riv_Hab1/Model_Fitting_HPC/JobsLog/%x-%A-%a.out
-#SBATCH --error=datasets/processed/model_fitting/Mod_Riv_Hab1/Model_Fitting_HPC/JobsLog/%x-%A-%a.out
+#SBATCH --output=datasets/processed/model_fitting/Mod_Riv_Hab1/model_fitting_hpc/JobsLog/%x-%A-%a.out
+#SBATCH --error=datasets/processed/model_fitting/Mod_Riv_Hab1/model_fitting_hpc/JobsLog/%x-%A-%a.out
 #SBATCH --account=project_465001588
 #SBATCH --cpus-per-task=1
 #SBATCH --gpus-per-node=1

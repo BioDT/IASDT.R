@@ -360,7 +360,7 @@ mod_prepare_data <- function(
   ecokit::cat_time("Road intensity", level = 2L, verbose = verbose_progress)
 
   # road intensity of any road type
-  r_road_int <- fs::path(path_roads, "poad_length.RData")
+  r_road_int <- fs::path(path_roads, "road_length.RData")
   if (!fs::file_exists(r_road_int)) {
     ecokit::stop_ctx(
       "r_road_int file does not exist", r_road_int = r_road_int,

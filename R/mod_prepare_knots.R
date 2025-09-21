@@ -203,7 +203,7 @@ prepare_knots <- function(
     sData = coordinates, knotDist = min_distance,
     minKnotDist = min_distance) %>%
     tibble::as_tibble() %>%
-    dplyr::rename(var_1 = Var1, var_2 = Var2)
+    dplyr::rename(var_1 = Var1, var_2 = Var2) %>%
     # Hmsc::constructKnots may return duplicated points; discard them
     dplyr::distinct() %>%
     dplyr::mutate(

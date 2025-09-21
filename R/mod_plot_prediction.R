@@ -186,7 +186,7 @@ plot_prediction <- function(
   }
   r_habitat <- ecokit::load_as(path_hab, unwrap_r = TRUE) %>%
     terra::classify(rcl = cbind(0, NA)) %>%
-    terra::subset(paste0("SynHab_", hab_abb)) %>%
+    terra::subset(paste0("synhab_", hab_abb)) %>%
     terra::wrap()
 
   invisible(gc())

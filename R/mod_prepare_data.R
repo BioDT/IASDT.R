@@ -61,7 +61,7 @@ mod_prepare_data <- function(
     "path_roads", "DP_R_roads_processed", TRUE, FALSE,
     "path_railway", "DP_R_railway_processed", TRUE, FALSE,
     "path_efforts", "DP_R_efforts_processed", TRUE, FALSE,
-    "path_river", "DP_R_river_processed", FALSE, TRUE,
+    "path_river", "DP_R_rivers_processed", FALSE, TRUE,
     "path_wetness", "DP_R_wetness_processed", FALSE, TRUE,
     "path_soil", "DP_R_soil_density", FALSE, TRUE,
     "path_model", "DP_R_model_root_path", TRUE, FALSE,
@@ -119,14 +119,14 @@ mod_prepare_data <- function(
 
   if (hab_abb == "0") {
     # Use dummy habitat values
-    r_habitat <- stats::setNames(grid_r, "Hab")
+    r_habitat <- stats::setNames(grid_r, "hab")
     r_habitat_log <- stats::setNames(grid_r, "habitat_log")
   } else {
     # Load habitat coverage data and mask by the efforts mask
     r_habitat <- ecokit::load_as(path_habitat, unwrap_r = TRUE) %>%
-      magrittr::extract2(paste0("SynHab_", hab_abb)) %>%
+      magrittr::extract2(paste0("synhab_", hab_abb)) %>%
       terra::mask(efforts_mask) %>%
-      stats::setNames("Hab")
+      stats::setNames("hab")
 
     # Exclude grid cells with zero habitat coverage
     if (exclude_0_habitat) {
@@ -488,7 +488,7 @@ mod_prepare_data <- function(
     dplyr::select(tidyselect::all_of(columns_first), tidyselect::everything())
 
   if (hab_abb == "0") {
-    data_all$Hab <- NA_real_
+    data_all$hab <- NA_real_
   }
 
   # # ..................................................................... ###

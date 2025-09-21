@@ -413,7 +413,7 @@ predict_maps <- function(
     }
 
     r_hab <- ecokit::load_as(r_hab, unwrap_r = TRUE) %>%
-      magrittr::extract2(paste0("SynHab_", hab_abb))
+      magrittr::extract2(paste0("synhab_", hab_abb))
 
     # Models are trained and predictions are made only at grid cells with > 0 %
     # coverage. Mask layer to exclude grid cells with zero % coverage from

@@ -381,12 +381,12 @@ extract_sdm_info <- function(model = NULL, cv_fold = NULL) {
 #'   [mod_prepare_hpc()] and [mod_prepare_data()] functions.
 #' @param cv_type Character. Cross-validation type. One of `cv_dist` (default)
 #'   or `cv_large`. See [mod_cv_fit()] for more details.
-#' @param selected_species Character vector or NULL. Names of species to include
-#'   in modelling; must match names in model data. Default is `NULL` (all
-#'   species).
-#' @param excluded_species Character vector or NULL. Names of species to exclude
-#'   from modelling; must match names in model data. Default is `NULL` (none
-#'   excluded).
+#' @param selected_species Character vector or `NULL`. Names of species to
+#'   include in modelling; must match names in model data. Default is `NULL`
+#'   (all species).
+#' @param excluded_species Character vector or `NULL`. Names of species to
+#'   exclude from modelling; must match names in model data. Default is `NULL`
+#'   (none excluded).
 #' @param env_file Character. Path to a file with environment variable
 #'   definitions for spatial datasets. Default is `".env"`.
 #' @param hab_abb Character. Abbreviation for a single SynHab habitat type.
@@ -1044,7 +1044,7 @@ prepare_input_data <- function(
     }
 
     r_hab <- ecokit::load_as(r_hab, unwrap_r = TRUE) %>%
-      magrittr::extract2(paste0("SynHab_", hab_abb))
+      magrittr::extract2(paste0("synhab_", hab_abb))
 
     # Models are trained and predictions are made only at grid cells with > 0 %
     # coverage. Mask layer to exclude grid cells with zero % coverage from

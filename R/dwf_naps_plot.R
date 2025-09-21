@@ -101,7 +101,7 @@ naps_plot <- function(species = NULL, env_file = ".env") {
     magrittr::extract2("L_10")
   last_update <- paste0("Last update: ", format(Sys.Date(), "%d %B %Y"))
 
-  grid_100_sf <- fs::path(path_grid_ref, "grid_100_sf.RData") %>%
+  grid_100_sf <- fs::path(path_grid_ref, "Grid_100_sf.RData") %>%
     ecokit::load_as() %>%
     magrittr::extract2("Grid_100_sf_s")
 

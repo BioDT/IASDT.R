@@ -282,8 +282,7 @@ naps_process <- function(
         # Run the distribution function
         species_data <- tryCatch(
           expr = {
-            # IASDT.R::
-            naps_distribution(
+            IASDT.R::naps_distribution(
               species = sp_name, env_file = env_file, verbose = FALSE)
           },
           error = function(e) {
@@ -340,8 +339,7 @@ naps_process <- function(
     future.scheduling = Inf, future.seed = TRUE,
     future.packages = pkg_to_export,
     future.globals = c(
-      "env_file", "paths_all", "species_taxa", "update_citizen",
-      "naps_distribution"))
+      "env_file", "paths_all", "species_taxa", "update_citizen"))
 
   invisible(gc())
 
@@ -778,8 +776,7 @@ naps_process <- function(
         sort(unique(species_pa_data$n_cells_all)),
         ~ tibble::tibble(
           hab = hab, threshold = .x,
-          n_sp = sum(curr_data$n_cells_all >= .x, na.rm = TRUE)))
-    }) %>%
+          n_sp = sum(curr_data$n_cells_all >= .x, na.rm = TRUE)))}) %>%
     dplyr::mutate(
       hab = stringr::str_remove(hab, "^hab_"),
       hab = stringr::str_replace(hab, "_", " - "),
@@ -941,7 +938,7 @@ naps_process <- function(
     },
     future.scheduling = Inf, future.seed = TRUE,
     future.packages = pkg_to_export,
-    future.globals = c("env_file", "paths_all", "species_taxa"))
+    future.globals = c("env_file", "species_taxa"))
 
 
   # validate that all plots were created

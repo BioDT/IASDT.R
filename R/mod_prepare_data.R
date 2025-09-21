@@ -33,10 +33,10 @@ mod_prepare_data <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  species_id <- species_file <- pa <- path_river <- cell <- path_pa <-
+  ias_id <- species_file <- pa <- path_river <- cell <- path_pa <-
     path_grid <- path_grid_ref <- path_clc <- path_roads <- path_railway <-
     path_efforts <- path_chelsa <- path_model <- eu_boundaries <- sp_pa <-
-    n_pres <- grid_r <- ias_id <- path_soil <- path_wetness <- NULL
+    n_pres <- grid_r <- path_soil <- path_wetness <- NULL
 
   # # ..................................................................... ###
 
@@ -189,11 +189,11 @@ mod_prepare_data <- function(
     # this first may help to reduce processing time
     dplyr::filter(.data[[n_cells_col]] >= n_pres_per_species) %>%
     dplyr::select(
-      tidyselect::all_of(c("species_id", "species_name", "species_file"))) %>%
+      tidyselect::all_of(c("ias_id", "species_name", "species_file"))) %>%
     # Mask each species map with the filtered grid cells
     dplyr::mutate(
       pa = purrr::map2(
-        .x = species_file, .y = species_id,
+        .x = species_file, .y = ias_id,
         .f = ~{
 
           pa_layer <- dplyr::if_else(exclude_cultivated, "pa_masked", "pa")

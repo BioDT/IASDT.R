@@ -37,7 +37,7 @@ predict_hmsc(
   pred_xy = NULL,
   evaluate = FALSE,
   evaluation_name = NULL,
-  evaluation_directory = "Evaluation",
+  evaluation_directory = "evaluation",
   verbose = TRUE,
   spatial_model = TRUE
 )
@@ -149,10 +149,10 @@ argument is used only when \code{evaluate} is \code{TRUE}.}
 to \code{FALSE}.}
 
 \item{evaluation_name}{Character. Name of the evaluation results. If \code{NULL},
-the default name is used (\verb{Eval_[model_name].qs2}).}
+the default name is used (\verb{eval_[model_name].qs2}).}
 
 \item{evaluation_directory}{Character. Directory where the evaluation results
-will be saved. Defaults to \code{Evaluation}.}
+will be saved. Defaults to \code{evaluation}.}
 
 \item{verbose}{Logical. Whether to print a message upon successful saving of
 files. Defaults to \code{FALSE}.}

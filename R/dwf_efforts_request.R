@@ -192,7 +192,7 @@ efforts_request <- function(
     dplyr::mutate(citation = purrr::map_chr(request, attr, "citation"))
 
   ecokit::cat_time("Requesting efforts data was finished", level = 2L)
-  
+
   # # ..................................................................... ###
 
   # Save efforts request data ------

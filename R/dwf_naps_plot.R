@@ -22,8 +22,7 @@ naps_plot <- function(species = NULL, env_file = ".env") {
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
   path_grid_ref <- path_grid <- path_taxa_info_rdata <- path_pa <- NAME_ENGL <-
-    path_taxa_info <- eu_boundaries <- species_name2 <- CellCode <- x <-
-    y <- NULL
+    path_taxa_info <- eu_boundaries <- species_name2 <- CellCode <- NULL
 
   # # ..................................................................... ###
 
@@ -73,22 +72,19 @@ naps_plot <- function(species = NULL, env_file = ".env") {
   # Check / create directories
   path_summary <- fs::path(path_pa, "pa_summary")
   path_jpeg <- fs::path(path_pa, "distribution_jpeg")
-  if (!fs::dir_exists(path_jpeg)) {
-    fs::dir_create(path_jpeg)
-  }
   out_path <- fs::path(path_jpeg, paste0(species_info$species_file[1], ".jpeg"))
 
   # Loading species data
   selected_columns <- c(
     "n_cells_all", "gbif_grid100", "easin_grid100", "elter_grid100",
-    "species_id", "pa_map", "countries_to_exclude",
+    "ias_id", "pa_map", "countries_to_exclude", "pa_masked_map",
     "gbif", "gbif_unique", "easin", "easin_unique", "elter", "elter_unique",
     "n_cells_naturalized", "gbif_masked", "gbif_masked_unique",
-    "easin_masked", "easin_masked_unique", "elter_masked",
-    "elter_masked_unique")
+    "easin_masked", "easin_masked_unique", "elter_masked", "n_cells_cz_excl",
+    "pa_cz_excluded", "elter_masked_unique")
 
   species_data <- fs::path(
-    path_summary, paste0(species_info$species_file[1], ".qs2"))
+    path_summary, paste0(species_info$species_file[1], "_summary.RData"))
   if (!file.exists(species_data)) {
     return(invisible(NULL))
   }
@@ -96,7 +92,7 @@ naps_plot <- function(species = NULL, env_file = ".env") {
     dplyr::select(tidyselect::all_of(selected_columns))
   invisible(gc())
 
-  if (species_data$n_cells_all == 0) {
+  if ((species_data$n_cells_all + species_data$n_cells_cz_excl) == 0) {
     return(invisible(NULL))
   }
 
@@ -105,10 +101,9 @@ naps_plot <- function(species = NULL, env_file = ".env") {
     magrittr::extract2("L_10")
   last_update <- paste0("Last update: ", format(Sys.Date(), "%d %B %Y"))
 
-
   grid_100_sf <- fs::path(path_grid_ref, "grid_100_sf.RData") %>%
     ecokit::load_as() %>%
-    magrittr::extract2("grid_100_sf_s")
+    magrittr::extract2("Grid_100_sf_s")
 
   # Location of legend
   legend_gbif <- dplyr::filter(grid_100_sf, CellCode == "100kmE27N45")
@@ -135,7 +130,7 @@ naps_plot <- function(species = NULL, env_file = ".env") {
 
   # Figure title ----
 
-  ias_id <- unique(species_data$species_id)
+  ias_id <- unique(species_data$ias_id)
   map_title <- readr::read_tsv(
     file = path_taxa_info, show_col_types = FALSE, progress = FALSE) %>%
     dplyr::filter(species_name2 == species2) %>%
@@ -179,9 +174,22 @@ naps_plot <- function(species = NULL, env_file = ".env") {
   # map to be plotted ----
   sp_pa <- terra::unwrap(species_data$pa_map[[1]]) %>%
     terra::classify(cbind(0, NA)) %>%
-    terra::as.factor() %>%
-    as.data.frame(xy = TRUE) %>%
-    stats::setNames(c("x", "y", "species"))
+    terra::as.polygons() %>%
+    sf::st_as_sf()
+  sp_pa_masked <- terra::unwrap(species_data$pa_masked_map[[1]]) %>%
+    terra::classify(cbind(0, NA)) %>%
+    terra::as.polygons() %>%
+    sf::st_as_sf()
+  # sp_pa <- terra::unwrap(species_data$pa_map[[1]]) %>%
+  #   terra::classify(cbind(0, NA)) %>%
+  #   terra::as.factor() %>%
+  #   as.data.frame(xy = TRUE) %>%
+  #   stats::setNames(c("x", "y", "species"))
+  # sp_pa_masked <- terra::unwrap(species_data$pa_masked_map[[1]]) %>%
+  #   terra::classify(cbind(0, NA)) %>%
+  #   terra::as.factor() %>%
+  #   as.data.frame(xy = TRUE) %>%
+  #   stats::setNames(c("x", "y", "species"))
   species_data$pa_map <- NULL
 
   exclude_boundary <- ecokit::load_as(eu_boundaries) %>%
@@ -208,7 +216,7 @@ naps_plot <- function(species = NULL, env_file = ".env") {
     scales::label_comma()(species_data$elter), " / ",
     scales::label_comma()(species_data$elter_unique), ")<br>",
     "<span style='font-size: 12pt; color:red;'><b>Final data: </span>",
-    scales::label_comma()(species_data$n_cells_Naturalized),
+    scales::label_comma()(species_data$n_cells_naturalized),
     " presence grid cells</b> \u2014 <b>GBIF</b> (",
     scales::label_comma()(species_data$gbif_masked), " / ",
     scales::label_comma()(species_data$gbif_masked_unique),
@@ -251,10 +259,12 @@ naps_plot <- function(species = NULL, env_file = ".env") {
 
   # PA grid at 10 km resolution
   plot <- plot +
-    ggplot2::geom_tile(
-      data = sp_pa, mapping = ggplot2::aes(x = x, y = y, fill = species)) +
-    ggplot2::scale_fill_manual(
-      values = c("blue", "transparent"), na.value = "transparent")
+    ggplot2::geom_sf(
+      sp_pa, mapping = ggplot2::aes(), color = "transparent",
+      fill = "red", linewidth = 0) +
+    ggplot2::geom_sf(
+      sp_pa_masked, mapping = ggplot2::aes(), color = "transparent",
+      fill = "blue", linewidth = 0)
 
   if (nrow(easin_grid100) > 0) {
     plot <- plot +
@@ -267,6 +277,18 @@ naps_plot <- function(species = NULL, env_file = ".env") {
       ggplot2::geom_sf(
         elter_grid100, mapping = ggplot2::aes(), color = "darkgreen",
         fill = "transparent", linewidth = 0.65, linetype = "dotdash")
+  }
+
+  if (species_data$n_cells_cz_excl > 0) {
+
+    cz_excl <- terra::unwrap(species_data$pa_cz_excluded[[1]]) %>%
+      terra::classify(cbind(0, NA)) %>%
+      terra::as.polygons() %>%
+      sf::st_as_sf()
+    plot <- plot +
+      ggplot2::geom_sf(
+        cz_excl, mapping = ggplot2::aes(), color = "black",
+        fill = "black", linewidth = 0.25)
   }
 
   plot <- plot +

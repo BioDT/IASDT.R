@@ -49,10 +49,10 @@ respectively.
 The functions exports three types of visualisations (see
 \link[Hmsc:plotBeta]{Hmsc::plotBeta}):
 \itemize{
-\item \code{Mean}: posterior mean estimate,
+\item \code{mean}: posterior mean estimate,
 \item \code{support}: statistical support level, measured by the posterior
 probability for a positive or negative response,
-\item \code{Sign}: indicates whether the response is positive, negative, or neither
+\item \code{sign}: indicates whether the response is positive, negative, or neither
 of these based on the chosen \code{support_level}.
 }
 

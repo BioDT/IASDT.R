@@ -57,11 +57,11 @@ naps_process <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  path_pa <- path_taxa_info_r <- taxon_name <- path_taxa_stand <- img_valid <-
+  path_pa <- path_taxa_info_r <- taxon_name <- img_valid <- pa_cz_excluded <-
     path_hab_affinity <- species <- pa_map <- species_name <- n_cells_all <-
     synhab_name <- ias_id <- count <- hab <- eu_boundaries <- threshold <-
     n_sp <- pa_masked_map <- n_cells_naturalized <- species_file <-
-    taxon_id_ <- reason_to_exclude <- synhab_code <- NULL
+    synhab_code <- pa_cz_excluded_masked <- NULL
 
   # # ..................................................................... ###
 
@@ -80,7 +80,6 @@ naps_process <- function(
     "eu_boundaries", "DP_R_country_boundaries", FALSE, TRUE,
     "path_pa", "DP_R_pa", FALSE, FALSE,
     "path_hab_affinity", "DP_R_hab_affinity", FALSE, TRUE,
-    "path_taxa_stand", "DP_R_taxa_stand", FALSE, TRUE,
     "path_taxa_info_r", "DP_R_taxa_info_rdata", FALSE, TRUE)
   # Assign environment variables and check file and paths
   ecokit::assign_env_vars(
@@ -120,12 +119,6 @@ naps_process <- function(
   # last update info
   last_update <- stringr::str_glue(
     'Last update: {format(Sys.Date(), "%d %B %Y")}')
-
-  ## Standardized taxonomy -----
-  ecokit::cat_time("Standardized taxonomy", level = 1L)
-  # list of original taxonomy (including dummy ID column `taxon_id_`)
-  taxa_list_original <- readRDS(path_taxa_stand) %>%
-    dplyr::distinct(taxon_id_, taxon_name, reason_to_exclude)
 
   # # .................................... ###
 
@@ -168,19 +161,53 @@ naps_process <- function(
     tidyr::pivot_wider(
       names_from = c("synhab_code", "synhab_name"),
       names_prefix = "hab_", values_from = count) %>%
-    # add taxon_name column
-    dplyr::left_join(taxa_list_original, by = "taxon_id_") %>%
     # add ias_id column
-    dplyr::left_join(taxa_list_distinct, by = "taxon_name") %>%
-    dplyr::select(-tidyselect::all_of(c("taxon_id_", "taxon_name"))) %>%
+    dplyr::full_join(taxa_list_distinct, by = "taxon_name") %>%
     dplyr::select(
-      ias_id, species_name, reason_to_exclude,
+      ias_id, species_name, taxon_name,
       gtools::mixedsort(tidyselect::peek_vars())) %>%
-    dplyr::filter(is.na(reason_to_exclude)) %>%
+    dplyr::mutate(
+      dplyr::across(
+        tidyselect::starts_with("hab"), ~tidyr::replace_na(.x, FALSE))) %>%
     dplyr::distinct() %>%
     dplyr::arrange(ias_id)
 
-  rm(taxa_list_original, taxa_list_distinct, envir = environment())
+  species_synhab_new <- dplyr::filter(species_synhab, is.na(ias_id))
+  if (nrow(species_synhab_new) > 0) {
+    species_synhab_new_f <- fs::path(path_pa, "species_synhab_new.txt")
+    ecokit::cat_time(
+      paste0(
+        nrow(species_synhab_new),
+        " species do not exist in taxa standardization data"),
+      level = 2L, cat_timestamp = FALSE)
+    ecokit::cat_time(
+      paste0("see `", species_synhab_new_f, "` for more details"),
+      level = 2L, cat_timestamp = FALSE)
+    cat(
+      sort(species_synhab_new$taxon_name),
+      file = species_synhab_new_f, sep = "\n")
+  }
+
+  species_synhab_missing <- dplyr::filter(
+    species_synhab, dplyr::if_all(dplyr::starts_with("hab"), isFALSE))
+  if (nrow(species_synhab_missing) > 0) {
+    species_synhab_missing_f <- fs::path(path_pa, "species_synhab_missing.txt")
+    ecokit::cat_time(
+      paste0(
+        nrow(species_synhab_missing),
+        " species do not exist in taxa standardization data"),
+      level = 2L, cat_timestamp = FALSE)
+    ecokit::cat_time(
+      paste0("see `", species_synhab_missing_f, "`` for more details"),
+      level = 2L, cat_timestamp = FALSE)
+    cat(
+      sort(species_synhab_missing$taxon_name),
+      file = species_synhab_missing_f, sep = "\n")
+  }
+
+  rm(
+    taxa_list_distinct, species_synhab_new, species_synhab_missing,
+    envir = environment())
   invisible(gc())
 
   species_taxa <- dplyr::arrange(taxa_list, ias_id) %>%
@@ -200,7 +227,7 @@ naps_process <- function(
     future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
-      n_cores = n_cores, level = 1L, future_max_size = 800L,
+      n_cores = n_cores, level = 1L, future_max_size = 1000L,
       strategy = strategy)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
@@ -229,7 +256,8 @@ naps_process <- function(
       }
 
       # output paths
-      file_summary <- fs::path(paths_all$summary, paste0(sp_file, ".RData"))
+      file_summary <- fs::path(
+        paths_all$summary, paste0(sp_file, "_summary.RData"))
       file_pa <- fs::path(paths_all$pa_rdata, paste0(sp_file, "_pa.RData"))
       file_tif_all <- fs::path(paths_all$pa_tif, paste0(sp_file, "_all.tif"))
       file_tif_masked <- fs::path(
@@ -254,7 +282,8 @@ naps_process <- function(
         # Run the distribution function
         species_data <- tryCatch(
           expr = {
-            IASDT.R::naps_distribution(
+            # IASDT.R::
+            naps_distribution(
               species = sp_name, env_file = env_file, verbose = FALSE)
           },
           error = function(e) {
@@ -337,6 +366,7 @@ naps_process <- function(
     ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
     future::plan("sequential", gc = TRUE)
   }
+  invisible(gc())
 
   # # .................................... ###
 
@@ -344,7 +374,7 @@ naps_process <- function(
 
   # Species with no data
   sp_no_data <- setdiff(
-    taxa_list$ias_id, as.integer(species_pa_data$species_id))
+    taxa_list$ias_id, as.integer(species_pa_data$ias_id))
   sp_no_data <- dplyr::filter(taxa_list, ias_id %in% sp_no_data)
 
   if (nrow(sp_no_data) > 0) {
@@ -353,11 +383,13 @@ naps_process <- function(
       col_names = TRUE)
     ecokit::cat_time(
       paste0(
-        length(
-          unique(species_pa_data$species_id)),  " species were processed; ",
+        length(unique(species_pa_data$ias_id)),  " species were processed"),
+      level = 2L, cat_timestamp = FALSE)
+    ecokit::cat_time(
+      paste0(
         nrow(sp_no_data), " species have no data. ",
         "See `species_no_data.csv` for details"),
-      level = 2L)
+      level = 2L, cat_timestamp = FALSE)
   } else {
     ecokit::cat_time(
       paste0("All ", length(taxa_list$species_name), " species were processed"),
@@ -379,37 +411,21 @@ naps_process <- function(
   # Merge species summary info -----
   ecokit::cat_time("Merge species summary info")
 
-  keep_columns <- c(
-    "ias_id", "taxon_name", "species_name",
-    "species_name2", "species_file")
+  unnest_columns <- c(
+    "bioreg_data", "bioreg_data_mask", "species_country",
+    "species_country_masked")
+
   species_pa_data <- species_pa_data %>%
-    # Split number of grid cell per country / biogeographical region as separate
-    # column
-    tidyr::unnest_wider(
-      c("bioreg_data", "bioreg_data_mask", "species_country")) %>%
+    # Split # grid cell per country / biogeographical region as separate column
+    tidyr::unnest_wider(tidyselect::all_of(unnest_columns)) %>%
     dplyr::mutate(
       # replace NA for biogeographical regions and country analysis with 0
       dplyr::across(
         tidyselect::matches("^cnt_|^bioreg_"),
         ~ dplyr::if_else(is.na(.x), 0L, .x))) %>%
-    # change column order
-    dplyr::select(
-      species:n_cells_naturalized, pa_map, pa_masked_map,
-      tidyselect::matches("^gbif"),
-      tidyselect::matches("^easin"),
-      tidyselect::matches("^elter"),
-      tidyselect::matches("^bioreg_"),
-      tidyselect::matches("^bioreg_mask_"),
-      tidyselect::matches("^cnt_"),
-      tidyselect::everything()) %>%
     dplyr::rename(species_name = species) %>%
-    dplyr::full_join(
-      y = dplyr::distinct(
-        dplyr::select(taxa_list, -tidyselect::all_of("speciesKey"))),
-      by = "species_name") %>%
-    dplyr::select(
-      tidyselect::all_of(keep_columns), tidyselect::everything()) %>%
-    dplyr::left_join(species_synhab, by = "ias_id")
+    dplyr::left_join(
+      species_synhab, by = c("ias_id", "species_name", "taxon_name"))
 
   rm(taxa_list, envir = environment())
 
@@ -432,10 +448,13 @@ naps_process <- function(
   save(sp_pa_summary_df, file = fs::path(path_pa, "sp_pa_summary_df.RData"))
 
   # only keep selected columns for summary plots
+  selected_cols <- c(
+    "ias_id", "species_name", "n_cells_all", "n_cells_naturalized",
+    "n_cells_cz_excl", "n_cells_cz_excl_masked", "pa_map", "pa_masked_map",
+    "mask_keep", "pa_cz_excluded", "pa_cz_excluded_masked")
   species_pa_data <- species_pa_data %>%
     dplyr::select(
-      species_name, n_cells_all, n_cells_naturalized,
-      pa_map, pa_masked_map, tidyselect::starts_with("hab_"))
+      tidyselect::all_of(selected_cols), tidyselect::starts_with("hab_"))
 
   rm(sp_pa_summary_df, envir = environment())
   invisible(gc())
@@ -454,7 +473,6 @@ naps_process <- function(
     terra::rast() %>%
     sum(na.rm = TRUE) %>%
     stats::setNames("naps_n_sp") %>%
-    # Ensure that values are read from memory
     terra::toMemory()
 
   species_pa_data <- dplyr::select(species_pa_data, -pa_map)
@@ -481,7 +499,6 @@ naps_process <- function(
     terra::rast() %>%
     sum(na.rm = TRUE) %>%
     stats::setNames("naps_n_sp_masked") %>%
-    # Ensure that values are read from memory
     terra::toMemory()
 
   species_pa_data <- dplyr::select(species_pa_data, -pa_masked_map)
@@ -496,6 +513,43 @@ naps_process <- function(
   raster::writeRaster(
     x = naps_n_sp_masked, overwrite = TRUE,
     filename = fs::path(path_pa, "naps_n_sp_masked.tif"))
+
+  # # .................................... ###
+
+  ## Number of excluded citizen science grid cells -----
+
+  naps_n_sp_cz <- species_pa_data %>%
+    dplyr::pull(pa_cz_excluded) %>%
+    purrr::map(terra::unwrap) %>%
+    terra::rast() %>%
+    sum(na.rm = TRUE) %>%
+    stats::setNames("naps_n_sp_cz") %>%
+    terra::toMemory()
+  ecokit::save_as(
+    object = terra::wrap(naps_n_sp_cz), object_name = "naps_n_sp_cz",
+    out_path = fs::path(path_pa, "naps_n_sp_cz.RData"))
+  raster::writeRaster(
+    x = naps_n_sp_cz, overwrite = TRUE,
+    filename = fs::path(path_pa, "naps_n_sp_cz.tif"))
+
+  naps_n_sp_cz_masked <- species_pa_data %>%
+    dplyr::pull(pa_cz_excluded_masked) %>%
+    purrr::map(terra::unwrap) %>%
+    terra::rast() %>%
+    sum(na.rm = TRUE) %>%
+    stats::setNames("naps_n_sp_cz_masked") %>%
+    terra::toMemory()
+  ecokit::save_as(
+    object = terra::wrap(naps_n_sp_cz_masked),
+    object_name = "naps_n_sp_cz_masked",
+    out_path = fs::path(path_pa, "naps_n_sp_cz_masked.RData"))
+  raster::writeRaster(
+    x = naps_n_sp_cz_masked, overwrite = TRUE,
+    filename = fs::path(path_pa, "naps_n_sp_cz_masked.tif"))
+
+  species_pa_data <- dplyr::select(
+    species_pa_data, -pa_cz_excluded, -pa_cz_excluded_masked)
+  invisible(gc())
 
   # # .................................... ###
 
@@ -544,132 +598,116 @@ naps_process <- function(
 
   # # +++++++++++++++++++++++++++++++++ ###
 
-  plot_n_sp <- ggplot2::ggplot() +
-    ggplot2::geom_sf(
-      eu_bound, mapping = ggplot2::aes(), color = "grey30",
-      linewidth = 0.1, fill = "grey95", inherit.aes = TRUE) +
-    tidyterra::geom_spatraster(
-      data = terra::classify(naps_n_sp, cbind(0, NA)), maxcell = Inf) +
-    paletteer::scale_fill_paletteer_c(
-      na.value = "transparent", "viridis::plasma",
-      breaks = ecokit::integer_breaks()) +
-    ggplot2::geom_sf(
-      eu_bound, mapping = ggplot2::aes(), color = "grey40",
-      linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
-    ggplot2::scale_x_continuous(
-      expand = ggplot2::expansion(mult = c(0, 0)), limits = limit_x) +
-    ggplot2::scale_y_continuous(
-      expand = ggplot2::expansion(mult = c(0, 0)), limits = limit_y) +
-    ggplot2::labs(
-      title = "Number of NAPS per 10\u00D710 km grid",
-      subtitle = "All data (including cultivated or casual observations)",
-      fill = "# NAPS") +
-    plot_theme
+  # Function to create all NAPS plots using the `create_naps_plot` function
 
-  plot_n_sp_log <- ggplot2::ggplot() +
-    ggplot2::geom_sf(
-      eu_bound, mapping = ggplot2::aes(), color = "grey30",
-      linewidth = 0.1, fill = "grey95", inherit.aes = TRUE) +
-    tidyterra::geom_spatraster(
-      data = log10(terra::classify(naps_n_sp, cbind(0, NA))), maxcell = Inf) +
-    paletteer::scale_fill_paletteer_c(
-      na.value = "transparent", "viridis::plasma",
-      breaks = ecokit::integer_breaks()) +
-    ggplot2::geom_sf(
-      eu_bound, mapping = ggplot2::aes(), color = "grey40",
-      linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
-    ggplot2::scale_x_continuous(
-      expand = ggplot2::expansion(mult = c(0, 0)), limits = limit_x) +
-    ggplot2::scale_y_continuous(
-      expand = ggplot2::expansion(mult = c(0, 0)), limits = limit_y) +
-    ggplot2::labs(
-      title = "Number of NAPS per 10\u00D710 km grid (log10 scale)",
-      subtitle = "All data (including cultivated or casual observations)",
-      fill = "# NAPS\n(log10)") +
-    plot_theme
+  create_naps_plot <- function(
+    rast, filename, p_title, p_subtitle,
+    p_title_log, p_subtitle_log) {
 
-  plot <- cowplot::plot_grid(plot_n_sp, plot_n_sp_log, ncol = 2, nrow = 1) +
-    cowplot::draw_label(
-      label = last_update, color = "grey", x = 0.99, y = 0.98,
-      size = 7, hjust = 1)
+    plot_n_sp <- ggplot2::ggplot() +
+      ggplot2::geom_sf(
+        eu_bound, mapping = ggplot2::aes(), color = "grey30",
+        linewidth = 0.1, fill = "grey95", inherit.aes = TRUE) +
+      tidyterra::geom_spatraster(
+        data = terra::classify(rast, cbind(0, NA)), maxcell = Inf) +
+      paletteer::scale_fill_paletteer_c(
+        na.value = "transparent", "viridis::plasma",
+        breaks = ecokit::integer_breaks()) +
+      ggplot2::geom_sf(
+        eu_bound, mapping = ggplot2::aes(), color = "grey40",
+        linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
+      ggplot2::scale_x_continuous(
+        expand = ggplot2::expansion(mult = c(0, 0)), limits = limit_x) +
+      ggplot2::scale_y_continuous(
+        expand = ggplot2::expansion(mult = c(0, 0)), limits = limit_y) +
+      ggplot2::labs(
+        title = p_title, subtitle = p_subtitle, fill = "# NAPS") +
+      plot_theme
 
-  # Using ggplot2::ggsave directly does not show non-ascii characters
-  # correctly
-  ragg::agg_jpeg(
-    filename = fs::path(path_pa, "naps_n_sp.jpeg"),
-    width = 30, height = 15.5, res = 600, quality = 100, units = "cm")
-  print(plot)
-  grDevices::dev.off()
+    plot_n_sp_log <- ggplot2::ggplot() +
+      ggplot2::geom_sf(
+        eu_bound, mapping = ggplot2::aes(), color = "grey30",
+        linewidth = 0.1, fill = "grey95", inherit.aes = TRUE) +
+      tidyterra::geom_spatraster(
+        data = log10(terra::classify(rast, cbind(0, NA))), maxcell = Inf) +
+      paletteer::scale_fill_paletteer_c(
+        na.value = "transparent", "viridis::plasma",
+        breaks = ecokit::integer_breaks()) +
+      ggplot2::geom_sf(
+        eu_bound, mapping = ggplot2::aes(), color = "grey40",
+        linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
+      ggplot2::scale_x_continuous(
+        expand = ggplot2::expansion(mult = c(0, 0)), limits = limit_x) +
+      ggplot2::scale_y_continuous(
+        expand = ggplot2::expansion(mult = c(0, 0)), limits = limit_y) +
+      ggplot2::labs(
+        title = p_title_log, subtitle = p_subtitle_log,
+        fill = "# NAPS\n(log10)") +
+      plot_theme
 
-  rm(naps_n_sp, plot, envir = environment())
-  invisible(gc())
+    plot <- cowplot::plot_grid(
+      plot_n_sp, plot_n_sp_log, ncol = 2, nrow = 1) +
+      cowplot::draw_label(
+        label = last_update, color = "grey", x = 0.99, y = 0.98,
+        size = 7, hjust = 1)
 
-  # # +++++++++++++++++++++++++++++++++ ###
+    ragg::agg_jpeg(
+      filename = fs::path(path_pa, filename),
+      width = 30, height = 15.5, res = 600, quality = 100, units = "cm")
+    print(plot)
+    grDevices::dev.off()
 
-  plot_n_sp_masked <- ggplot2::ggplot() +
-    ggplot2::geom_sf(
-      eu_bound, mapping = ggplot2::aes(), color = "grey30",
-      linewidth = 0.1, fill = "grey95", inherit.aes = TRUE) +
-    tidyterra::geom_spatraster(
-      data = terra::classify(naps_n_sp_masked, cbind(0, NA)), maxcell = Inf) +
-    paletteer::scale_fill_paletteer_c(
-      na.value = "transparent", "viridis::plasma",
-      breaks = ecokit::integer_breaks()) +
-    ggplot2::geom_sf(
-      eu_bound, mapping = ggplot2::aes(), color = "grey40",
-      linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
-    ggplot2::scale_x_continuous(
-      expand = ggplot2::expansion(mult = c(0, 0)), limits = limit_x) +
-    ggplot2::scale_y_continuous(
-      expand = ggplot2::expansion(mult = c(0, 0)), limits = limit_y) +
-    ggplot2::labs(
-      title = "Number of NAPS per 10\u00D710 km grid",
-      subtitle = "Excluding cultivated or casual observations",
-      fill = "# NAPS") +
-    plot_theme
+    rm(rast, plot, envir = environment())
+    invisible(gc())
+  }
 
-  plot_n_sp_masked_log <- ggplot2::ggplot() +
-    ggplot2::geom_sf(
-      eu_bound, mapping = ggplot2::aes(), color = "grey30",
-      linewidth = 0.1, fill = "grey95", inherit.aes = TRUE) +
-    tidyterra::geom_spatraster(
-      data = log10(terra::classify(naps_n_sp_masked, cbind(0, NA))),
-      maxcell = Inf) +
-    paletteer::scale_fill_paletteer_c(
-      na.value = "transparent", "viridis::plasma",
-      breaks = ecokit::integer_breaks()) +
-    ggplot2::geom_sf(
-      eu_bound, mapping = ggplot2::aes(), color = "grey40",
-      linewidth = 0.075, fill = "transparent", inherit.aes = TRUE) +
-    ggplot2::scale_x_continuous(
-      expand = ggplot2::expansion(mult = c(0, 0)), limits = limit_x) +
-    ggplot2::scale_y_continuous(
-      expand = ggplot2::expansion(mult = c(0, 0)), limits = limit_y) +
-    ggplot2::labs(
-      title = "Number of NAPS per 10\u00D710 km grid (log10 scale)",
-      subtitle = "Excluding cultivated or casual observations",
-      fill = "# NAPS\n(log10)") +
-    plot_theme
+  create_naps_plot(
+    rast = naps_n_sp,
+    filename = "naps_n_sp.jpeg",
+    p_title = "Number of NAPS per 10\u00D710 km grid",
+    p_subtitle = "All data (including cultivated or casual observations)",
+    p_title_log = "Number of NAPS per 10\u00D710 km grid (log10 scale)",
+    p_subtitle_log = "All data (including cultivated or casual observations)")
 
-  plot <- cowplot::plot_grid(
-    plot_n_sp_masked, plot_n_sp_masked_log, ncol = 2, nrow = 1) +
-    cowplot::draw_label(
-      label = last_update, color = "grey", x = 0.99, y = 0.98,
-      size = 7, hjust = 1)
+  # Masked plots (excluding cultivated or casual observations)
+  create_naps_plot(
+    rast = naps_n_sp_masked,
+    filename = "naps_n_sp_masked.jpeg",
+    p_title = "Number of NAPS per 10\u00D710 km grid",
+    p_subtitle = "Excluding cultivated or casual observations",
+    p_title_log = "Number of NAPS per 10\u00D710 km grid (log10 scale)",
+    p_subtitle_log = "Excluding cultivated or casual observations")
 
-  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
-  ragg::agg_jpeg(
-    filename = fs::path(path_pa, "naps_n_sp_masked.jpeg"),
-    width = 30, height = 15.5, res = 600, quality = 100, units = "cm")
-  print(plot)
-  grDevices::dev.off()
+  # Excluded NAPS (citizen science data) plots
+  create_naps_plot(
+    rast = naps_n_sp_cz,
+    filename = "naps_n_sp_cz.jpeg",
+    p_title =
+      "Number of excluded NAPS (citizen science data) per 10\u00D710 km grid",
+    p_subtitle = "All data (including cultivated or casual observations)",
+    p_title_log = paste0(
+      "Number of excluded NAPS (citizen science data) per 10\u00D710 km",
+      "grid (log10 scale)"),
+    p_subtitle_log = "All data (including cultivated or casual observations)")
+
+  # Excluded NAPS masked (citizen science data, excluding cultivated/casual)
+  # plots
+  create_naps_plot(
+    rast = naps_n_sp_cz_masked,
+    filename = "naps_n_sp_cz_masked.jpeg",
+    p_title =
+      "Number of excluded NAPS (citizen science data) per 10\u00D710 km grid",
+    p_subtitle = "Excluding cultivated or casual observations",
+    p_title_log = paste0(
+      "Number of excluded NAPS (citizen science data) per 10\u00D710 km",
+      "grid (log10 scale)"),
+    p_subtitle_log = "Excluding cultivated or casual observations")
 
   # # +++++++++++++++++++++++++++++++++ ###
 
   rm(
-    plot_n_sp, plot_n_sp_log, plot_theme, eu_bound, limit_x,
-    limit_y, plot_n_sp_masked_log, plot_n_sp_masked, naps_n_sp_masked, plot,
-    envir = environment())
+    eu_bound, limit_x, limit_y, naps_n_sp,  naps_n_sp_masked, naps_n_sp_cz,
+    naps_n_sp_cz_masked, envir = environment())
   invisible(gc())
 
   # # .................................... ###
@@ -722,8 +760,14 @@ naps_process <- function(
 
   # # +++++++++++++++++++++++++++++++++ ###
 
+  selected_hab <- c(
+    "hab_1_forests", "hab_2_open_forests", "hab_3_scrub",
+    "hab_4a_natural_grasslands", "hab_4b_human_maintained_grasslands",
+    "hab_10_wetland", "hab_12a_ruderal_habitats",
+    "hab_12b_agricultural_habitats")
+
   n_sp_hab_data <- purrr::map_dfr(
-    .x = synhab_list$synhab_name_full,
+    .x = selected_hab,
     .f = function(hab) {
 
       # nolint start
@@ -767,7 +811,7 @@ naps_process <- function(
         override.aes = list(linewidth = 1.5)))
 
   n_sp_hab_masked_data <- purrr::map_dfr(
-    .x = synhab_list$synhab_name_full,
+    .x = selected_hab,
     .f = function(hab) {
 
       # nolint start
@@ -823,7 +867,6 @@ naps_process <- function(
     plot_legend,
     ncol = 1, rel_heights = c(0.05, 1, 0.05))
 
-  # Using ggplot2::ggsave directly does not show non-ascii characters correctly
   ragg::agg_jpeg(
     filename = fs::path(path_pa, "naps_n_sp_threshold_hab.jpeg.jpeg"),
     width = 30, height = 17, res = 600, quality = 100, units = "cm")

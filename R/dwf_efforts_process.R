@@ -110,7 +110,7 @@ efforts_process <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  path_efforts <- path_raw <- path_interim <- path_grid <- NULL
+  path_efforts <- path_raw <- path_interim <- NULL
 
   # # ..................................................................... ###
 
@@ -151,7 +151,7 @@ efforts_process <- function(
     c(
       path_efforts, path_raw, path_interim, path_efforts_cleaned,
       path_efforts_requests))
-  
+
   # # ..................................................................... ###
 
   # request efforts data ------

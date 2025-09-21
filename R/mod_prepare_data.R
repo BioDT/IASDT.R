@@ -159,8 +159,7 @@ mod_prepare_data <- function(
   data_sp <- ecokit::load_as(data_sp) %>%
     dplyr::arrange(ias_id) %>%
     dplyr::mutate(
-      ias_id = stringr::str_pad(ias_id, pad = "0", width = 4),
-      ias_id = paste0("sp_", ias_id))
+      ias_id = stringr::str_pad(ias_id, pad = "0", width = 4))
 
   if (hab_abb == "0") {
     hab_column <- NULL

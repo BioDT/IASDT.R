@@ -564,6 +564,39 @@ mod_prepare_hpc <- function(
       fs::path(path_model, "model_data.RData"), overwrite = TRUE)
 
   }
+  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+  # # |||||||||||||||||||||||||||||||||||
+  # # Exclude grid cells with low number of presences -----
+  # # |||||||||||||||||||||||||||||||||||
+
+  ecokit::cat_time(
+    "Exclude grid cells with low number of presences",
+    verbose = verbose_progress)
+
+  if (n_species_per_grid == 0) {
+    ecokit::cat_time(
+      paste0(
+        "All grid cells, irrespective of number of species ",
+        "presence, will be considered"),
+      level = 1L, cat_timestamp = FALSE, verbose = verbose_progress)
+  } else {
+    empty_grids_id <- dplyr::select(
+      data_all, tidyselect::starts_with("sp_")) %>%
+      rowSums() %>%
+      magrittr::is_less_than(as.integer(n_species_per_grid)) %>%
+      which() %>%
+      magrittr::multiply_by(-1)
+
+    if (length(empty_grids_id) > 0) {
+      ecokit::cat_time(
+        paste0(
+          "Excluding grid cells with < ", n_species_per_grid,
+          " species presence"),
+        level = 1L, verbose = verbose_progress)
+      data_all <- dplyr::slice(data_all, empty_grids_id)
+    }
+  }
 
   # # ..................................................................... ###
 
@@ -705,40 +738,6 @@ mod_prepare_hpc <- function(
     ecokit::cat_time(
       "No data subsetting was implemented", level = 1L,
       verbose = verbose_progress)
-  }
-
-  ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-  # # |||||||||||||||||||||||||||||||||||
-  # # Exclude grid cells with low number of presences -----
-  # # |||||||||||||||||||||||||||||||||||
-
-  ecokit::cat_time(
-    "Exclude grid cells with low number of presences",
-    verbose = verbose_progress)
-
-  if (n_species_per_grid == 0) {
-    ecokit::cat_time(
-      paste0(
-        "All grid cells, irrespective of number of species ",
-        "presence, will be considered"),
-      level = 1L, cat_timestamp = FALSE, verbose = verbose_progress)
-  } else {
-    empty_grids_id <- dplyr::select(
-      data_all, tidyselect::starts_with("sp_")) %>%
-      rowSums() %>%
-      magrittr::is_less_than(as.integer(n_species_per_grid)) %>%
-      which() %>%
-      magrittr::multiply_by(-1)
-
-    if (length(empty_grids_id) > 0) {
-      ecokit::cat_time(
-        paste0(
-          "Excluding grid cells with < ", n_species_per_grid,
-          " species presence"),
-        level = 1L, verbose = verbose_progress)
-      data_all <- dplyr::slice(data_all, empty_grids_id)
-    }
   }
 
   ## # ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

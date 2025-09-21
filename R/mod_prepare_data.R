@@ -200,7 +200,8 @@ mod_prepare_data <- function(
 
           # Masked raster map
           sp_pa <- fs::path(
-            path_pa, "pa_rdata", stringr::str_c(.x, "_pa.RData")) %>%
+            path_pa, "pa_raster",
+            stringr::str_c(.x, "_pa.RData")) %>%
             ecokit::load_as(unwrap_r = TRUE) %>%
             magrittr::extract2(pa_layer) %>%
             terra::mask(efforts_mask) %>%

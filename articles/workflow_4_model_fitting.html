@@ -363,7 +363,7 @@ sampling point
 </tr>
 <tr>
 <td style="text-align:left;padding-left: 2em;white-space: nowrap;" indentlevel="1">
-<cc>GPP_plot</cc><tab0></tab0>
+<cc>gpp_plot</cc><tab0></tab0>
 </td>
 <td style="text-align:left;">
 whether to plot the coordinates of sampling units and knots
@@ -607,8 +607,8 @@ to a single chain.</li>
 »» Example model fitting commands
 </button>
 <div id="scriptContentNS1" class="ShortBlock" style="display: none;">
-<pre><code class="bash">python3 -m hmsc.run_gibbs_sampler --input datasets/processed/model_fitting/Mod_Riv_Hab1/InitMod4HPC/InitMod_GPP120_Tree_samp1000_th200.rds --output datasets/processed/model_fitting/Mod_Riv_Hab1/Model_Fitting_HPC/GPP120_Tree_samp1000_th200_Chain1_post.rds --samples 1000 --transient 100000 --thin 200 --verbose 200 --chain 0 --fp 64 &gt;&amp; datasets/processed/model_fitting/Mod_Riv_Hab1/Model_Fitting_HPC/GPP120_Tree_samp1000_th200_Chain1_Progress.txt
-python3 -m hmsc.run_gibbs_sampler --input datasets/processed/model_fitting/Mod_Riv_Hab1/InitMod4HPC/InitMod_GPP120_Tree_samp1000_th200.rds --output datasets/processed/model_fitting/Mod_Riv_Hab1/Model_Fitting_HPC/GPP120_Tree_samp1000_th200_Chain2_post.rds --samples 1000 --transient 100000 --thin 200 --verbose 200 --chain 1 --fp 64 &gt;&amp; datasets/processed/model_fitting/Mod_Riv_Hab1/Model_Fitting_HPC/GPP120_Tree_samp1000_th200_Chain2_Progress.txt</code></pre>
+<pre><code class="bash">python3 -m hmsc.run_gibbs_sampler --input datasets/processed/model_fitting/Mod_Riv_Hab1/InitMod4HPC/InitMod_GPP120_Tree_samp1000_th200.rds --output datasets/processed/model_fitting/Mod_Riv_Hab1/model_fitting_hpc/GPP120_Tree_samp1000_th200_Chain1_post.rds --samples 1000 --transient 100000 --thin 200 --verbose 200 --chain 0 --fp 64 &gt;&amp; datasets/processed/model_fitting/Mod_Riv_Hab1/model_fitting_hpc/GPP120_Tree_samp1000_th200_Chain1_Progress.txt
+python3 -m hmsc.run_gibbs_sampler --input datasets/processed/model_fitting/Mod_Riv_Hab1/InitMod4HPC/InitMod_GPP120_Tree_samp1000_th200.rds --output datasets/processed/model_fitting/Mod_Riv_Hab1/model_fitting_hpc/GPP120_Tree_samp1000_th200_Chain2_post.rds --samples 1000 --transient 100000 --thin 200 --verbose 200 --chain 1 --fp 64 &gt;&amp; datasets/processed/model_fitting/Mod_Riv_Hab1/model_fitting_hpc/GPP120_Tree_samp1000_th200_Chain2_Progress.txt</code></pre>
 </div>
 <p><br></p>
 <ul>
@@ -628,8 +628,8 @@ batch jobs on a high-performance computing (HPC) system.</li>
 # -----------------------------------------------------------
 #SBATCH --job-name=Hab1
 #SBATCH --ntasks=1
-#SBATCH --output=datasets/processed/model_fitting/Mod_Riv_Hab1/Model_Fitting_HPC/JobsLog/%x-%A-%a.out
-#SBATCH --error=datasets/processed/model_fitting/Mod_Riv_Hab1/Model_Fitting_HPC/JobsLog/%x-%A-%a.out
+#SBATCH --output=datasets/processed/model_fitting/Mod_Riv_Hab1/model_fitting_hpc/JobsLog/%x-%A-%a.out
+#SBATCH --error=datasets/processed/model_fitting/Mod_Riv_Hab1/model_fitting_hpc/JobsLog/%x-%A-%a.out
 #SBATCH --account=project_465001588
 #SBATCH --cpus-per-task=1
 #SBATCH --gpus-per-node=1

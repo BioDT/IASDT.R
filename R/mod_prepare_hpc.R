@@ -452,7 +452,7 @@ mod_prepare_hpc <- function(
 
   # Loading country boundary data
   eu_boundaries <- ecokit::load_as(eu_boundaries) %>%
-    magrittr::extract2("Bound_sf_Eur_s") %>%
+    magrittr::extract2("Bound_sf_Eur") %>%
     magrittr::extract2("L_03") %>%
     suppressWarnings()
 
@@ -637,7 +637,8 @@ mod_prepare_hpc <- function(
     }
 
     eu_boundaries_sub <- dplyr::filter(
-      eu_boundaries, NAME_ENGL %in% model_country)
+      eu_boundaries, NAME_ENGL %in% model_country) %>%
+      dplyr::select(tidyselect::all_of("CNTR_NAME"))
 
     plot_limits <- as.vector(terra::ext(n_sp_subset))
     # Relative JPEG height
@@ -838,7 +839,8 @@ mod_prepare_hpc <- function(
 
     n_species_plot <- ggplot2::ggplot(environment = emptyenv()) +
       ggplot2::geom_sf(
-        data = eu_boundaries, fill = "gray98", colour = "black", linewidth = 0.15) +
+        data = eu_boundaries, fill = "gray98", colour = "black",
+        linewidth = 0.15) +
       tidyterra::geom_spatraster(data = n_species_all) +
       ggplot2::facet_wrap(~lyr) +
       ggplot2::geom_sf(

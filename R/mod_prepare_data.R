@@ -307,7 +307,7 @@ mod_prepare_data <- function(
   ## CHELSA -----
 
   ecokit::cat_time("CHELSA", level = 1L, verbose = verbose_progress)
-  r_chelsa <- fs::path(path_chelsa, "projected_rdata", "r_current.RData")
+  r_chelsa <- fs::path(path_chelsa, "projected_rdata", "R_current.RData")
   if (!fs::file_exists(r_chelsa)) {
     ecokit::stop_ctx(
       "r_chelsa file does not exist", r_chelsa = r_chelsa,

@@ -432,7 +432,7 @@ predict_hmsc <- function(
       predPostEta[[r]] <- IASDT.R::predict_latent_factor(
         units_pred = levels(dfPiNew[, r]),
         units_model = levels(mod_dfPi[, r]),
-        postEta = postEta_file, post_alpha = post_alpha, lf_rl = rL[[r]],
+        post_eta = postEta_file, post_alpha = post_alpha, lf_rl = rL[[r]],
         n_cores_lf = n_cores_lf, strategy = strategy,
         lf_temp_cleanup = lf_temp_cleanup, lf_out_file = lf_out_file,
         lf_return = lf_return, lf_check = lf_check,

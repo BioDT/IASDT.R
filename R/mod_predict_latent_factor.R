@@ -83,8 +83,7 @@ predict_latent_factor <- function(
   # # ..................................................................... ###
 
   strategy <- .validate_strategy(strategy)
-  if (strategy == "sequential") n_cores <- n_cores_lf <- 1L
-  n_cores <- .validate_n_cores(n_cores)
+  if (strategy == "sequential") n_cores_lf <- 1L
   n_cores_lf <- .validate_n_cores(n_cores_lf)
 
   .start_time <- lubridate::now(tzone = "CET")

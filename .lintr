@@ -101,7 +101,7 @@ exclusions: list(
 	"R/dwf_river_length.R" = list(line_length_linter = Inf),
 	"R/mod_prepare_knots.R" = list(unnecessary_nesting_linter = 70:80),
 	"R/mod_prepare_hpc.R" = list(line_length_linter = Inf),
-	"R/mod_potprocess.R" = list(line_length_linter = 1020:1025),
+	"R/mod_potprocess.R" = list(line_length_linter = 1011:1062),
 	"R/dwf_wetness_index.R" = list(line_length_linter = Inf),
 	"R/dwf_soil.R" = list(line_length_linter = Inf)
 	)

@@ -783,7 +783,7 @@ predict_maps <- function(
 
     predict_data_test <- prediction_options %>%
       dplyr::filter(climate_model == "current") %>%
-      dplyr::pull("FilePath") %>%
+      dplyr::pull("file_path") %>%
       # If clamp_pred`=`TRUE`, there are two options for current climate data
       # (with and without clamping). Two sets of predictions under current
       # climates will be produced. Predictions without clamping is used for
@@ -871,7 +871,7 @@ predict_maps <- function(
     do_clamp <- prediction_options$clamp[[id]]
 
     # Name of the current option
-    option_name <- prediction_options$name[[id]]
+    option_name <- prediction_options$climate_name[[id]]
 
     # Name of the current model
     model_name <- paste0(
@@ -964,7 +964,7 @@ predict_maps <- function(
 
         # Extracting data at training and new sites ------
         ecokit::cat_time("Extracting data at training and new sites")
-        predict_data <- prediction_options$FilePath[[id]] %>%
+        predict_data <- prediction_options$file_path[[id]] %>%
           ecokit::load_as(unwrap_r = TRUE) %>%
           terra::subset(bio_variables) %>%
           c(static_preds) %>%
@@ -1256,7 +1256,7 @@ predict_maps <- function(
   prediction_summary <- purrr::map_dfr(
     .x = seq_len(nrow(prediction_options)), .f = predict_internal) %>%
     dplyr::full_join(prediction_options, ., by = c("name", "clamp")) %>%
-    dplyr::select(-"FilePath")
+    dplyr::select(-"file_path")
 
   rm(predict_internal, grid_10, model_coords, envir = environment())
   invisible(gc())

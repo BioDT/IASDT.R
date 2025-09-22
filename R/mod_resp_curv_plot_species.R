@@ -246,7 +246,7 @@ rc_plot_species <- function(
 
           quant_data <- data0$plot_data_quant[[.x]] %>%
             tidyr::pivot_wider(
-              id_cols = XVals, names_from = Quantile, values_from = pred) %>%
+              id_cols = XVals, names_from = quantile, values_from = pred) %>%
             stats::setNames(c("XVals", "q_25", "q_50", "q_975"))
 
           rug_0 <- dplyr::filter(data0$observed_pa[[.x]], pred == 0)

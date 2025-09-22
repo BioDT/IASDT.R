@@ -182,7 +182,7 @@ rc_plot_species_all <- function(
             dplyr::filter(quantile == 0.5)
           plot <- plot %>%
             ggplot2::ggplot(
-              mapping = ggplot2::aes(x = XVals, y = pred, group = species),
+              mapping = ggplot2::aes(x = x_vals, y = pred, group = species),
               environment = emptyenv()) +
             ggplot2::geom_line(
               linetype = 1, linewidth = 0.3,

@@ -246,8 +246,8 @@ rc_plot_species <- function(
 
           quant_data <- data0$plot_data_quant[[.x]] %>%
             tidyr::pivot_wider(
-              id_cols = XVals, names_from = quantile, values_from = pred) %>%
-            stats::setNames(c("XVals", "q_25", "q_50", "q_975"))
+              id_cols = x_vals, names_from = quantile, values_from = pred) %>%
+            stats::setNames(c("x_vals", "q_25", "q_50", "q_975"))
 
           rug_0 <- dplyr::filter(data0$observed_pa[[.x]], pred == 0)
           rug_1 <- dplyr::filter(data0$observed_pa[[.x]], pred == 1)
@@ -269,7 +269,7 @@ rc_plot_species <- function(
 
           # Fixed y-axis
           plot_fixed <- ggplot2::ggplot(
-            data = quant_data, mapping = ggplot2::aes(x = XVals),
+            data = quant_data, mapping = ggplot2::aes(x = x_vals),
             environment = emptyenv()) +
             ggplot2::geom_line(
               ggplot2::aes(y = q_975), data = quant_data,
@@ -284,11 +284,11 @@ rc_plot_species <- function(
               mapping = ggplot2::aes(y = q_50), data = quant_data,
               linetype = 1, linewidth = 0.6, colour = "blue") +
             ggplot2::geom_rug(
-              sides = "t", data = rug_1, ggplot2::aes(x = XVals),
+              sides = "t", data = rug_1, ggplot2::aes(x = x_vals),
               color = "blue", linewidth = 0.025, alpha = 0.25,
               length = grid::unit(0.03, "npc")) +
             ggplot2::geom_rug(
-              sides = "b", data = rug_0, ggplot2::aes(x = XVals),
+              sides = "b", data = rug_0, ggplot2::aes(x = x_vals),
               color = "red", linewidth = 0.025, alpha = 0.25,
               length = grid::unit(0.03, "npc")) +
             ggplot2::geom_text(
@@ -305,7 +305,7 @@ rc_plot_species <- function(
 
           # Free y-axis
           plot_free <- ggplot2::ggplot(
-            data = quant_data, mapping = ggplot2::aes(x = XVals),
+            data = quant_data, mapping = ggplot2::aes(x = x_vals),
             environment = emptyenv()) +
             ggplot2::geom_line(
               ggplot2::aes(y = q_975), data = quant_data,
@@ -320,11 +320,11 @@ rc_plot_species <- function(
               mapping = ggplot2::aes(y = q_50), data = quant_data,
               linetype = 1, linewidth = 0.6, colour = "blue") +
             ggplot2::geom_rug(
-              sides = "t", data = rug_1, ggplot2::aes(x = XVals),
+              sides = "t", data = rug_1, ggplot2::aes(x = x_vals),
               color = "blue", linewidth = 0.025, alpha = 0.25,
               length = grid::unit(0.03, "npc")) +
             ggplot2::geom_rug(
-              sides = "b", data = rug_0, ggplot2::aes(x = XVals),
+              sides = "b", data = rug_0, ggplot2::aes(x = x_vals),
               color = "red", linewidth = 0.025, alpha = 0.25,
               length = grid::unit(0.03, "npc")) +
             ggplot2::geom_text(

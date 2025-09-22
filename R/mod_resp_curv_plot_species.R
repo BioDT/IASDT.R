@@ -72,8 +72,7 @@ rc_plot_species <- function(
       include_backtrace = TRUE)
   }
 
-  sp_summary <- readr::read_csv(
-    file = sp_summary, show_col_types = FALSE, progress = FALSE) %>%
+  sp_summary <- ecokit::load_as(sp_summary) %>%
     dplyr::select(tidyselect::all_of(c("ias_id", "n_cells_naturalized"))) %>%
     dplyr::rename(n_cells = n_cells_naturalized)
 

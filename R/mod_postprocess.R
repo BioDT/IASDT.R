@@ -637,7 +637,7 @@ mod_postprocess_1_cpu <- function(
     path_model = path_model, n_cores = n_cores_vp, use_tf = use_tf,
     tf_environ = tf_environ, tf_use_single = tf_use_single,
     temp_cleanup = temp_cleanup, chunk_size = 50L, verbose = TRUE,
-    vp_file = "VarPar", vp_commands_only = TRUE)
+    vp_file = "varpar", vp_commands_only = TRUE)
 
   # ****************************************************************
 
@@ -1434,7 +1434,7 @@ mod_postprocess_2_cpu <- function(
       path_model = path_model, n_cores = n_cores, use_tf = use_tf,
       tf_environ = tf_environ, tf_use_single = tf_use_single,
       temp_cleanup = temp_cleanup, chunk_size = 50L, verbose = TRUE,
-      vp_file = "VarPar", vp_commands_only = FALSE)
+      vp_file = "varpar", vp_commands_only = FALSE)
   }
 
   # ****************************************************************
@@ -1448,7 +1448,7 @@ mod_postprocess_2_cpu <- function(
       cat_timestamp = FALSE)
 
     IASDT.R::variance_partitioning_plot(
-      path_model = path_model, env_file = env_file, vp_file = "VarPar",
+      path_model = path_model, env_file = env_file, vp_file = "varpar",
       use_tf = use_tf, tf_environ = tf_environ, n_cores = n_cores, width = 30,
       height = 15, spatial_model = spatial_model, is_cv_model = is_cv_model)
 

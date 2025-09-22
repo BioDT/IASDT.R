@@ -325,7 +325,7 @@ predict_maps <- function(
 
   ecokit::cat_time("CHELSA data", level = 1L)
 
-  path_chelsa <- fs::path(path_chelsa, "chelsa_processed_dataRData")
+  path_chelsa <- fs::path(path_chelsa, "chelsa_processed_data.RData")
   if (!fs::file_exists(path_chelsa)) {
     ecokit::stop_ctx(
       "Processed CHELSA data can not be found", path_chelsa = path_chelsa,

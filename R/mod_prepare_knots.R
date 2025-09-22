@@ -45,7 +45,7 @@ prepare_knots <- function(
 
   # Avoid "no visible binding for global variable" message
   # https://www.r-bloggers.com/2019/08/no-visible-binding-for-global-variable/
-  var_1 <- var_2 <- identical <- geometry <- NULL
+  var_1 <- var_2 <- Var1 <- Var2 <- identical <- geometry <- NULL
 
   # # ..................................................................... ###
 

@@ -85,7 +85,7 @@ variance_partitioning_compute <- function(
   fs::dir_create(path_var_par)
 
   file_var_par <- fs::path(path_var_par, paste0(vp_file, ".RData"))
-  if (ecokit::check_data(file_var_par)) {
+  if (ecokit::check_data(file_var_par, warning = FALSE)) {
     return(ecokit::load_as(file_var_par))
   }
 

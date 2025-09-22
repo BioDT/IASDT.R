@@ -90,7 +90,7 @@ mod_heatmap_beta <- function(
   # plot phylogenetic tree -----
   ecokit::cat_time("phylogenetic tree plot")
 
-  tree <- model_obj$phylotree
+  tree <- model_obj$phyloTree
   # remove prefix "sp_" from tip labels
   tree$tip.label <- stringr::str_remove(tree$tip.label, "^sp_")
   if (length(tree$edge.length) == 2 * nrow(tree$edge)) {
@@ -451,7 +451,7 @@ mod_heatmap_omega <- function(
   # plot phylogenetic tree -----
   ecokit::cat_time("Phylogenetic tree plot")
 
-  tree <- model_obj$phylotree
+  tree <- model_obj$phyloTree
   # Remove the 'sp_' prefix from tip labels
   tree$tip.label <- stringr::str_remove(tree$tip.label, "^sp_")
   if (length(tree$edge.length) == 2 * nrow(tree$edge)) {

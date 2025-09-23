@@ -526,11 +526,11 @@ predict_hmsc <- function(
   ecokit::cat_time(
     "Save ppEta / post as small chunks", level = 1L, verbose = verbose)
   chunk_size <- 25
-  chunkIDs <- ceiling(seq_along(post) / chunk_size)
+  chunk_ids <- ceiling(seq_along(post) / chunk_size)
   chunks <- purrr::map_chr(
-    .x = seq_len(max(chunkIDs)),
+    .x = seq_len(max(chunk_ids)),
     .f = ~ {
-      IDs <- which(chunkIDs == .x)
+      IDs <- which(chunk_ids == .x)
       Ch <- list(ppEta = ppEta[IDs], post = post[IDs])
       chunk_file <- fs::path(
         temp_dir, paste0(model_name, "_preds_ch", .x, ".qs2"))
@@ -538,7 +538,7 @@ predict_hmsc <- function(
       return(chunk_file)
     })
 
-  rm(chunkIDs, post, ppEta, envir = environment())
+  rm(chunk_ids, post, ppEta, envir = environment())
   invisible(gc())
 
   seeds <- sample.int(.Machine$integer.max, predN)
@@ -865,7 +865,6 @@ get1prediction <- function(
     nyNew, expected, mcmcStep, seed = NULL) {
 
   updateZ <- updateEta <- NULL
-
 
   if (!is.null(seed)) {
     set.seed(seed)

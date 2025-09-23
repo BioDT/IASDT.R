@@ -120,7 +120,7 @@ predict_maps_cv <- function(
     path_prediction, paste0("prediction_", model_name, ".qs2"))
   path_eval_file <- fs::path(path_eval, paste0("eval_", model_name, ".qs2"))
   path_preds_r <- fs::path(
-    path_prediction, paste0("prediction_", model_name, "_R.qs2"))
+    path_prediction, paste0("prediction_", model_name, "_r.qs2"))
   path_preds_summary <- fs::path(
     path_prediction, paste0("prediction_", model_name, "_summary.RData"))
 

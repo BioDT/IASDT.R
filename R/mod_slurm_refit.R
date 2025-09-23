@@ -40,7 +40,7 @@ mod_slurm_refit <- function(
   # # ..................................................................... ###
 
   if (is.null(job_name)) {
-    job_name <- paste0(basename(model_dir), "_RF")
+    job_name <- paste0(basename(model_dir), "_refit")
   }
 
   # # ..................................................................... ###

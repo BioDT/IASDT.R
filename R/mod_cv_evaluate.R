@@ -64,7 +64,7 @@ mod_cv_evaluate <- function(model_dir = NULL, cv_type = "cv_dist") {
 
   # Model predictions -----
   model_predictions <- fs::path(
-    model_dir, "model_prediction", "no_clamp", "prediction_current_R.qs2")
+    model_dir, "model_prediction", "no_clamp", "prediction_current_r.qs2")
   if (!ecokit::check_data(model_predictions)) {
     ecokit::stop_ctx(
       "Model prediction file does not exist",

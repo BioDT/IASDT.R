@@ -259,7 +259,6 @@ predict_maps <- function(
   ## Species information -----
 
   species_info <- IASDT.R::get_species_name(env_file = env_file) %>%
-    janitor::clean_names() %>%
     dplyr::select(ias_id, taxon_name, species_name, class, order, family)
 
   # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
@@ -418,7 +417,9 @@ predict_maps <- function(
     # Models are trained and predictions are made only at grid cells with > 0 %
     # coverage. Mask layer to exclude grid cells with zero % coverage from
     # predictions.
-    r_hab_mask <- terra::classify(r_hab, cbind(0, NA), others = 1)
+    # r_hab_mask <- terra::classify(r_hab, cbind(0, NA), others = 1)
+    # Update 2025_09: make predictions at the full study area, and if needed
+    # predictions at 0% coverage could be masked
 
     r_hab <- stats::setNames(log10(r_hab + 0.1), "habitat_log")
 
@@ -759,13 +760,8 @@ predict_maps <- function(
   ## Merge static predictors -----
   ecokit::cat_time("Merge static predictors", level = 1L)
 
-  static_predictors <- terra::rast(static_predictors)
-
-  # If Habitat predictor is used, grid cells with zero % coverage are
-  # excluded from predictions
-  if (hab_predictor) {
-    static_predictors <- terra::mask(static_predictors, r_hab_mask)
-  }
+  static_predictors <- terra::rast(static_predictors) %>%
+    terra::mask(ecokit::load_as(path_grid_r, unwrap_r = TRUE))
 
   # # ..................................................................... ###
   # # ..................................................................... ###
@@ -871,7 +867,7 @@ predict_maps <- function(
     do_clamp <- prediction_options$clamp[[id]]
 
     # Name of the current option
-    option_name <- prediction_options$climate_name[[id]]
+    option_name <- prediction_options$name[[id]]
 
     # Name of the current model
     model_name <- paste0(
@@ -929,7 +925,7 @@ predict_maps <- function(
     path_prediction_sf <- fs::path(
       path_prediction, paste0("prediction_", option_name, "_sf.qs2"))
     path_prediction_r <- fs::path(
-      path_prediction, paste0("prediction_", option_name, "_R.qs2"))
+      path_prediction, paste0("prediction_", option_name, "_r.qs2"))
     path_prediction_summary <- fs::path(
       path_prediction, paste0("prediction_", option_name, "_summary.RData"))
 
@@ -1140,7 +1136,7 @@ predict_maps <- function(
           # use relevant folder containing the current predictions. This is
           # determined by `path_prediction`, which is not the same whether
           # clamping is used or not
-          path = path_prediction, pattern = "prediction_current.*_R.qs2",
+          path = path_prediction, pattern = "prediction_current.*_r.qs2",
           full.names = TRUE) %>%
           ecokit::load_as(unwrap_r = TRUE) %>%
           terra::subset(mean_names)
@@ -1326,7 +1322,7 @@ predict_maps <- function(
     current_mean <- list.files(
       path = dplyr::if_else(
         clamp_pred, path_prediction_clamp, path_prediction_no_clamp),
-      pattern = "prediction_current.*_R.qs2", full.names = TRUE)
+      pattern = "prediction_current.*_r.qs2", full.names = TRUE)
 
     # --------------------------------------------------------- #
 
@@ -1429,7 +1425,7 @@ predict_maps <- function(
             clamp_pred, path_prediction_clamp, path_prediction_no_clamp),
           paste0(
             "prediction_", stringr::str_replace(time_period, "-", "_"), "_",
-            climate_scenario, "_ensemble_R.qs2"))) %>%
+            climate_scenario, "_ensemble_r.qs2"))) %>%
       dplyr::select(tidyselect::all_of(vars_to_select)) %>%
       tidyr::nest(data = -ensemble_file)
 
@@ -1525,7 +1521,7 @@ predict_maps <- function(
           climate_scenario, "_ensemble"),
         file_pred_sf = NA_character_,
         file_pred_r = stringr::str_replace(
-          file_pred_summary, "_summary.RData", "_R.qs2")) %>%
+          file_pred_summary, "_summary.RData", "_r.qs2")) %>%
       dplyr::distinct()
   }
   # # ..................................................................... ###

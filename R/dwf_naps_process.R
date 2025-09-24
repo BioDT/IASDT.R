@@ -2,9 +2,8 @@
 #'
 #' Processes and visualises Naturalized Alien Plant Species (NAPS) distribution
 #' data from GBIF, EASIN, and eLTER for the Invasive Alien Species Digital Twin
-#' (`IASDT`).
-#' Merges pre-processed data, creates presence-absence rasters, summarises
-#' distributions, and generates maps using helper functions.
+#' (`IASDT`). Merges pre-processed data, creates presence-absence rasters,
+#' summarises distributions, and generates maps using helper functions.
 #' @param env_file Character. Path to the environment file containing paths to
 #'   data sources. Defaults to `.env`.
 #' @param n_cores Integer. Number of CPU cores to use for parallel processing.
@@ -16,7 +15,8 @@
 #' @param verbose Logical. If `TRUE`, prints progress messages. Default:
 #'   `FALSE`.
 #' @param dist_citizen Numeric. Distance in km for spatial filtering of citizen
-#'   science data in GBIF. Default is 100 km.
+#'   science data in GBIF or grid cells in countries at which species has not
+#'   yet recognized as "naturalized". Default is `100L` km.
 #'
 #' @section Functions details:
 #' - **`naps_process()`**: Merges pre-processed GBIF ([gbif_process]), EASIN

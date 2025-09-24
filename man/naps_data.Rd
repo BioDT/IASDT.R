@@ -36,14 +36,14 @@ options are "sequential", "multisession" (default), "multicore", and
 \code{FALSE}.}
 
 \item{dist_citizen}{Numeric. Distance in km for spatial filtering of citizen
-science data in GBIF. Default is 100 km.}
+science data in GBIF or grid cells in countries at which species has not
+yet recognized as "naturalized". Default is \code{100L} km.}
 }
 \description{
 Processes and visualises Naturalized Alien Plant Species (NAPS) distribution
 data from GBIF, EASIN, and eLTER for the Invasive Alien Species Digital Twin
-(\code{IASDT}).
-Merges pre-processed data, creates presence-absence rasters, summarises
-distributions, and generates maps using helper functions.
+(\code{IASDT}). Merges pre-processed data, creates presence-absence rasters,
+summarises distributions, and generates maps using helper functions.
 }
 \section{Functions details}{
 

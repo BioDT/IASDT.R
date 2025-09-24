@@ -227,7 +227,7 @@ naps_distribution <- function(
     path = path_taxa_country, sheet = 1) %>%
     dplyr::rename(status_decision = `status-decision`) %>%
     # filter data on the current species and only keep countries with
-    # `naturalized` status
+    # `naturalised` status
     dplyr::filter(
       taxon_name == taxon_name2, status_decision != "naturalized") %>%
     # rename countries to match country names of the countries boundaries
@@ -419,10 +419,13 @@ naps_distribution <- function(
     ecokit::raster_to_pres_abs() %>%
     stats::setNames("pa") %>%
     terra::mask(reference_grid) %>%
-    update_citizen(
-      ecokit::raster_to_pres_abs(gbif_r$gbif_cz), dist_km = dist_citizen)
+    update_within_dist(
+      r_to_add = ecokit::raster_to_pres_abs(gbif_r$gbif_cz),
+      dist_km = dist_citizen)
 
-  species_pa$pa_masked <- (species_pa$pa * mask_keep)
+  species_pa$pa_masked <- update_within_dist(
+    r_sp = (species_pa$pa * mask_keep),
+    r_to_add = species_pa$pa, dist_km = dist_citizen)
 
   species_pa <- c(gbif_r, easin_r, elter_r, species_pa, mask_keep) %>%
     # Ensure that values are read from memory
@@ -430,9 +433,7 @@ naps_distribution <- function(
 
   # citizen science grid cells that are excluded from the data
   species_pa$pa_cz_excluded <- all(species_pa$gbif_all == 1, species_pa$pa == 0)
-
-  species_pa$pa_cz_excluded_masked <-
-    (species_pa$pa_cz_excluded * species_pa$mask_keep)
+  species_pa$pa_cz_excluded_masked <- (species_pa$pa_cz_excluded * mask_keep)
 
   maps_order <- c(
     "gbif_all", "gbif_cz", "gbif_others", "easin", "elter", "pa",
@@ -841,52 +842,55 @@ naps_distribution <- function(
 }
 
 # # |------------------------------------------------------------------------| #
-# update_citizen ----
+# update_within_dist ----
 ## |------------------------------------------------------------------------| #
 
-#' Update species distribution raster with citizen science data within a
+#' Update species distribution raster with data from another data within a
 #' distance threshold
 #'
-#' Adds presence grid cells from a citizen science raster (`r_cz`) to an
-#' existing species distribution raster (`r_sp`) only if the citizen science
-#' cell is within `dist_km` kilometers of any existing cell in `r_sp`, but not
-#' within 500 meters of any existing cell in `r_sp`. This avoids including
-#' isolated citizen science presences that are too far from known presences.
-#'
-#' @param r_sp SpatRaster. Binary raster (0, 1, NA) representing merged/primary
-#'   species distribution.
-#' @param r_cz SpatRaster. Binary raster (0, 1, NA) representing citizen science
-#'   presences.
-#' @param dist_km numeric. Maximum distance (in kilometers) to allow new citizen
-#'   science presences to be added to `r_sp`.
-#' @return SpatRaster. Updated raster with citizen science presences added under
-#'   the specified constraints.
+#' Adds presence grid cells from a raster map (`r_to_add`) to an existing
+#' species distribution raster (`r_sp`), only if presence grid cell in the
+#' `r_to_add` map is  within `dist_km` kilometers of any presence cell in
+#' `r_sp`. This function is intended to be used to update species distribution
+#' maps (combined from GBIF, EASIN, and eLTER) after excluding presence grid
+#' cells from countries with status other than "naturalized" or only represented
+#' by citizen-science data. This avoids including isolated presences that are
+#' too far from known naturalised range of the species.
+#' @param r_sp SpatRaster. Binary raster (0, 1, NA) representing merged and
+#'   cleaned species distribution.
+#' @param r_to_add SpatRaster. Binary raster (0, 1, NA) representing additional
+#'   data (e.g., data for citizen science or for countries at which species has
+#'   not been naturalised yet).
+#' @param dist_km numeric. Maximum distance (in kilometers) to allow new
+#'   presences to be added to `r_sp`. Defaults to 100 Km
+#' @return SpatRaster. Updated raster with additional presences added under the
+#'   specified constraints.
 #' @keywords internal
 #' @noRd
 
-update_citizen <- function(r_sp, r_cz, dist_km = 100) {
+update_within_dist <- function(r_sp, r_to_add, dist_km = 100L) {
 
-  if (!inherits(r_sp, "SpatRaster") || !inherits(r_cz, "SpatRaster")) {
+  if (!inherits(r_sp, "SpatRaster") || !inherits(r_to_add, "SpatRaster")) {
     ecokit::stop_ctx(
-      "r_sp and r_cz must be SpatRaster objects", include_backtrace = TRUE,
-      class_r_sp = class(r_sp), class_r_cz = class(r_cz))
+      "r_sp and r_to_add must be SpatRaster objects", include_backtrace = TRUE,
+      class_r_sp = class(r_sp), class_r_to_add = class(r_to_add))
   }
-  if (terra::nlyr(r_sp) != 1 || terra::nlyr(r_cz) != 1) {
+  if (terra::nlyr(r_sp) != 1 || terra::nlyr(r_to_add) != 1) {
     ecokit::stop_ctx(
-      "r_sp and r_cz must be single layer SpatRaster objects",
-      include_backtrace = TRUE,
-      nlyr_r_sp = terra::nlyr(r_sp), nlyr_r_cz = terra::nlyr(r_cz))
+      "r_sp and r_to_add must be single layer SpatRaster objects",
+      nlyr_r_sp = terra::nlyr(r_sp), nlyr_r_to_add = terra::nlyr(r_to_add),
+      include_backtrace = TRUE)
   }
-  if (!all(terra::ext(r_sp) == terra::ext(r_cz))) {
+  if (!all(terra::ext(r_sp) == terra::ext(r_to_add))) {
     ecokit::stop_ctx(
-      "r_sp and r_cz must have the same extent",
-      include_backtrace = TRUE,
+      "r_sp and r_to_add must have the same extent",
       ext_r_sp = as.character(terra::ext(r_sp)),
-      ext_r_cz = as.character(terra::ext(r_cz)))
+      ext_r_to_add = as.character(terra::ext(r_to_add)),
+      include_backtrace = TRUE)
   }
-  if (!all(terra::res(r_sp) == terra::res(r_cz))) {
+  if (!all(terra::res(r_sp) == terra::res(r_to_add))) {
     ecokit::stop_ctx(
-      "r_sp and r_cz must have the same resolution",
+      "r_sp and r_to_add must have the same resolution",
       include_backtrace = TRUE)
   }
   if (!all(unique(terra::values(r_sp)) %in% c(NaN, NA, 0, 1))) {
@@ -894,13 +898,13 @@ update_citizen <- function(r_sp, r_cz, dist_km = 100) {
       "r_sp must be a binary raster with values of 0, 1, or NA",
       include_backtrace = TRUE)
   }
-  if (!all(unique(terra::values(r_cz)) %in% c(NaN, NA, 0, 1))) {
+  if (!all(unique(terra::values(r_to_add)) %in% c(NaN, NA, 0, 1))) {
     ecokit::stop_ctx(
-      "r_cz must be a binary raster with values of 0, 1, or NA",
+      "r_to_add must be a binary raster with values of 0, 1, or NA",
       include_backtrace = TRUE)
   }
 
-  # Convert r_sp and r_cz to sf points
+  # Convert r_sp and r_to_add to sf points
   r_sp_sf <- terra::classify(r_sp == 1, cbind(0, NA)) %>%
     stats::setNames("r_sp") %>%
     as.data.frame(xy = TRUE) %>%
@@ -909,20 +913,20 @@ update_citizen <- function(r_sp, r_cz, dist_km = 100) {
     return(r_sp)
   }
   r_sp_sf <- sf::st_as_sf(r_sp_sf, coords = c("x", "y"), crs = 3035L)
-  r_cz_sf <- terra::classify(r_cz == 1, cbind(0, NA)) %>%
-    stats::setNames("r_cz") %>%
+  r_to_add_sf <- terra::classify(r_to_add == 1, cbind(0, NA)) %>%
+    stats::setNames("r_to_add") %>%
     as.data.frame(xy = TRUE) %>%
-    dplyr::filter(r_cz == 1)
-  if (nrow(r_cz_sf) == 0) {
+    dplyr::filter(r_to_add == 1)
+  if (nrow(r_to_add_sf) == 0) {
     return(r_sp)
   }
 
-  r_cz_sf <- sf::st_as_sf(r_cz_sf, coords = c("x", "y"), crs = 3035L)
+  r_to_add_sf <- sf::st_as_sf(r_to_add_sf, coords = c("x", "y"), crs = 3035L)
 
-  # Identify points in r_cz_sf within dist_km of any point in r_sp_sf, but not
-  # within 500 m of any point in r_sp_sf
+  # Identify points in r_to_add_sf within dist_km of any point in r_sp_sf, but
+  # not within 500 m of any point in r_sp_sf
   points_to_add <- sf::st_filter(
-    x = r_cz_sf, y = r_sp_sf,
+    x = r_to_add_sf, y = r_sp_sf,
     .predicate = sf::st_is_within_distance, dist = dist_km * 1000L)
 
   if (nrow(points_to_add) == 0) {

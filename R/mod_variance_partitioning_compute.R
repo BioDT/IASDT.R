@@ -282,7 +282,7 @@ variance_partitioning_compute <- function(
       string = seq_len(poolN), pad = "0", width = 4)
 
     # List of feather files resulted from `geta` function
-    Files_la <- fs::path(path_temp, paste0("vp_A_", file_suffix, ".feather"))
+    Files_la <- fs::path(path_temp, paste0("vp_a_", file_suffix, ".feather"))
     files_la_exist <- all(fs::file_exists(Files_la))
 
     if (files_la_exist) {

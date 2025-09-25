@@ -260,7 +260,7 @@ variance_partitioning_compute <- function(
     model = model_obj, names_to_remove = Items2Delete)
   invisible(gc())
 
-  poolN <- length(postList)
+  pool_n <- length(postList)
   ngroups <- max(group)
 
   # # .................................................................... ###
@@ -279,7 +279,7 @@ variance_partitioning_compute <- function(
     path_vp_input_files <- fs::path(path_temp, "vp_input_files.txt")
 
     file_suffix <- stringr::str_pad(
-      string = seq_len(poolN), pad = "0", width = 4)
+      string = seq_len(pool_n), pad = "0", width = 4)
 
     # List of feather files resulted from `geta` function
     Files_la <- fs::path(path_temp, paste0("vp_a_", file_suffix, ".feather"))
@@ -295,7 +295,7 @@ variance_partitioning_compute <- function(
     }
     if (files_la_exist) {
       ecokit::cat_time(
-        "All `vp_A*.feather` files are available",
+        "All `vp_a*.feather` files are available",
         verbose = verbose, level = 1L)
     }
 
@@ -380,11 +380,11 @@ variance_partitioning_compute <- function(
         ecokit::cat_time("Gamma", level = 2L, verbose = verbose)
         path_gamma <- fs::path(path_temp, "vp_gamma.feather")
         if (!file.exists(path_gamma)) {
-          Gamma_data <- postList %>%
+          gamma_data <- postList %>%
             purrr::map(~as.vector(.x[["Gamma"]])) %>%
             as.data.frame() %>%
             stats::setNames(paste0("Sample_", seq_len(ncol(.))))
-          arrow::write_feather(Gamma_data, path_gamma)
+          arrow::write_feather(gamma_data, path_gamma)
         }
       }
 
@@ -411,7 +411,7 @@ variance_partitioning_compute <- function(
           ecokit::cat_time(
             "Processing beta in parallel", level = 3L, verbose = verbose)
 
-          Beta0 <- foreach::foreach(
+          beta_0 <- foreach::foreach(
             x = seq_along(postList), .combine = c, .multicombine = TRUE,
             .packages = c("ecokit", "fs", "purrr", "arrow", "magrittr"),
             .export = c("beta_files", "postList")) %dopar% { # nolint: object_usage_linter
@@ -450,7 +450,7 @@ variance_partitioning_compute <- function(
               }
               return(NULL)
             }
-          rm(Beta0, envir = environment())
+          rm(beta_0, envir = environment())
         }
       }
 
@@ -835,7 +835,7 @@ variance_partitioning_compute <- function(
         res1 <- sum((Matrix::rowSums((a * f)) / (ns - 1))^2)
         res2 <- sum((Matrix::rowSums((a * a)) / (ns - 1)) *
                       (rowSums((f * f)) / (ns - 1)))
-        R2T.Y <- res1 / res2
+        r2t_y <- res1 / res2
 
         for (j in seq_len(ns)) {
           switch(
@@ -894,7 +894,7 @@ variance_partitioning_compute <- function(
         return(
           list(
             fixed = fixed, random = random, fixedsplit = fixedsplit,
-            R2T.Y = R2T.Y, r2t_beta = r2t_beta))
+            r2t_y = r2t_y, r2t_beta = r2t_beta))
       }
 
     # Check if foreach returned a flattened list
@@ -908,19 +908,19 @@ variance_partitioning_compute <- function(
             fixed = Res[[start_idx]],
             random = Res[[start_idx + 1]],
             fixedsplit = Res[[start_idx + 2]],
-            R2T.Y = Res[[start_idx + 3]],
-            R2T.Beta = Res[[start_idx + 4]]
+            r2t_y = Res[[start_idx + 3]],
+            r2t_beta = Res[[start_idx + 4]]
           )
         })
     }
 
     # Summarise the results
     ecokit::cat_time("Summarise the results", level = 1L, verbose = verbose)
-    fixed <- Reduce("+", purrr::map(Res, ~ .x$fixed)) / poolN
-    random <- Reduce("+", purrr::map(Res, ~ .x$random)) / poolN
-    fixedsplit <- Reduce("+", purrr::map(Res, ~ .x$fixedsplit)) / poolN
-    R2T.Y <- Reduce("+", purrr::map(Res, ~ .x$R2T.Y)) / poolN
-    R2T.Beta <- Reduce("+", purrr::map(Res, ~ .x$R2T.Beta)) / poolN
+    fixed <- Reduce("+", purrr::map(Res, ~ .x$fixed)) / pool_n
+    random <- Reduce("+", purrr::map(Res, ~ .x$random)) / pool_n
+    fixedsplit <- Reduce("+", purrr::map(Res, ~ .x$fixedsplit)) / pool_n
+    r2t_y <- Reduce("+", purrr::map(Res, ~ .x$r2t_y)) / pool_n
+    r2t_beta <- Reduce("+", purrr::map(Res, ~ .x$r2t_beta)) / pool_n
 
     rm(Res, model_x, envir = environment())
     invisible(gc())
@@ -935,14 +935,14 @@ variance_partitioning_compute <- function(
     fixed <- matrix(0, nrow = ns, ncol = 1)
     fixedsplit <- matrix(0, nrow = ns, ncol = ngroups)
     random <- matrix(0, nrow = ns, ncol = nr)
-    R2T.Y <- 0
-    R2T.Beta <- rep(0, nc)
+    r2t_y <- 0
+    r2t_beta <- rep(0, nc)
 
-    for (i in seq_len(poolN)) {
+    for (i in seq_len(pool_n)) {
 
       if (i %% 200 == 0) {
         ecokit::cat_time(
-          sprintf("Processing iteration %d of %d", i, poolN), verbose = verbose)
+          sprintf("Processing iteration %d of %d", i, pool_n), verbose = verbose)
       }
 
       data_la <- la[[i]]
@@ -953,7 +953,7 @@ variance_partitioning_compute <- function(
       # cor(Beta[k, ], lmu[k, ]) : the standard deviation is zero
       suppressWarnings({
         for (k in seq_len(nc)) {
-          R2T.Beta[k] <- R2T.Beta[k] +
+          r2t_beta[k] <- r2t_beta[k] +
             stats::cor(lbeta[[i]][k, ], data_lmu[k, ])^2
         }
       })
@@ -970,7 +970,7 @@ variance_partitioning_compute <- function(
       res1 <- sum((rowSums((a * f)) / (ns - 1))^2)
       res2 <- sum((rowSums((a * a)) / (ns - 1)) *
                     (rowSums((f * f)) / (ns - 1)))
-      R2T.Y <- R2T.Y + res1 / res2
+      r2t_y <- r2t_y + res1 / res2
 
       for (j in seq_len(ns)) {
         switch(
@@ -1018,11 +1018,11 @@ variance_partitioning_compute <- function(
       }
     }
 
-    fixed <- fixed / poolN
-    random <- random / poolN
-    fixedsplit <- fixedsplit / poolN
-    R2T.Y <- R2T.Y / poolN
-    R2T.Beta <- R2T.Beta / poolN
+    fixed <- fixed / pool_n
+    random <- random / pool_n
+    fixedsplit <- fixedsplit / pool_n
+    r2t_y <- r2t_y / pool_n
+    r2t_beta <- r2t_beta / pool_n
   }
 
   # # .................................................................... ###
@@ -1049,7 +1049,7 @@ variance_partitioning_compute <- function(
   vp <- list(
     vals = vals,
     species_names = model_obj$spNames,
-    R2T = list(Beta = r2t_beta, Y = R2T.Y),
+    R2T = list(Beta = r2t_beta, Y = r2t_y),
     group = group,
     groupnames = group_names)
 

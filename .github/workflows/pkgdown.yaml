@@ -41,11 +41,19 @@ jobs:
         with:
           use-public-rspm: true
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgdal-dev libproj-dev libgeos-dev libudunits2-dev
+
       - name: Install dependencies
-        uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          extra-packages: any::pkgdown, local::.
-          needs: website
+        run: |
+          install.packages(c("remotes", "pkgdown"))
+          remotes::install_version("ggplot2", version = "3.5.2")
+          remotes::install_github("elgabbas/ecokit")
+          remotes::install_github("hmsc-r/HMSC")
+          remotes::install_local(".", dependencies = TRUE, upgrade = "never", Ncpus = parallel::detectCores())
+        shell: Rscript {0}
 
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)

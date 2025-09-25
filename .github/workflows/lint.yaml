@@ -41,18 +41,8 @@ jobs:
           remotes::install_version("ggplot2", version = "3.5.2")
           remotes::install_github("elgabbas/ecokit")
           remotes::install_github("hmsc-r/HMSC")
-          remotes::install_local(".", dependencies = TRUE, upgrade = "never")
+          remotes::install_local(".", dependencies = TRUE, upgrade = "never", Ncpus = parallel::detectCores())
         shell: Rscript {0}
-  
-      # - name: Install dependencies
-      #   uses: r-lib/actions/setup-r-dependencies@v2
-      #   with:
-      #     extra-packages: |
-      #       any::lintr
-      #       github::elgabbas/ecokit
-      #       github::hmsc-r/HMSC
-      #       local::.
-      #     needs: lint
 
       - name: Lint
         run: lintr::lint_package()

@@ -47,22 +47,28 @@ jobs:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
-      
+
+      - name: Install system dependencies for Ubuntu
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgdal-dev libgeos-dev libproj-dev libudunits2-dev
+        shell: bash
+
       - name: Install GEOS on macOS
         if: matrix.config.os == 'macos-latest'
         run: brew install geos
         shell: bash
 
       - name: Install dependencies
-        uses: r-lib/actions/setup-r-dependencies@v2
-        with:
-          extra-packages: |
-            any::lintr
-            github::elgabbas/ecokit
-            github::hmsc-r/HMSC
-            local::.
-          needs: check
-      
+        run: |
+          install.packages(c("remotes", "rcmdcheck"))
+          remotes::install_version("ggplot2", version = "3.5.2")
+          remotes::install_github("elgabbas/ecokit")
+          remotes::install_github("hmsc-r/HMSC")
+          remotes::install_local(".", dependencies = TRUE, upgrade = "never", Ncpus = parallel::detectCores())
+        shell: Rscript {0}
+
       - name: Check package
         uses: r-lib/actions/check-r-package@v2
         with:

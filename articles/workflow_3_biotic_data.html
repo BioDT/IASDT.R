@@ -213,10 +213,10 @@ scientific integrity and reproducibility.</p>
 species of non-European origin was retrieved from
 <a href="https://floraveg.eu/" target="_blank" class="external-link ll">FloraVeg.EU</a>.
 This checklist was standardized against the GBIF taxonomic backbone to
-ensure taxonomic consistency, resulting in a total of 1,338 species. The
-table below summarises the species count by taxonomic class and order.
-Occurrence data for these species were compiled from available sources
-detailed in subsequent sections.</p>
+ensure taxonomic consistency, resulting in a total of 1,319 species
+(September, 2025). The table below summarises the species count by
+taxonomic class and order. Occurrence data for these species were
+compiled from available sources detailed in subsequent sections.</p>
 <table class="table table table-condensed table-hover" style="font-size: 16px; margin-left: auto; margin-right: auto;">
 <thead><tr>
 <th style="text-align:left;">
@@ -267,7 +267,7 @@ Liliopsida
 Alismatales
 </td>
 <td style="text-align:left;min-width: 1.2in; ">
-9
+8
 </td>
 <td style="text-align:left;min-width: 1.4in; ">
 Magnoliopsida
@@ -307,7 +307,7 @@ Liliopsida
 Asparagales
 </td>
 <td style="text-align:left;min-width: 1.2in; ">
-75
+74
 </td>
 <td style="text-align:left;min-width: 1.4in; ">
 Magnoliopsida
@@ -316,7 +316,7 @@ Magnoliopsida
 Lamiales
 </td>
 <td style="text-align:left;min-width: 1.2in; ">
-65
+63
 </td>
 </tr>
 <tr>
@@ -367,7 +367,7 @@ Liliopsida
 Poales
 </td>
 <td style="text-align:left;min-width: 1.2in; ">
-168
+163
 </td>
 <td style="text-align:left;min-width: 1.4in; ">
 Magnoliopsida
@@ -376,7 +376,7 @@ Magnoliopsida
 Malpighiales
 </td>
 <td style="text-align:left;min-width: 1.2in; ">
-42
+41
 </td>
 </tr>
 <tr>
@@ -416,7 +416,7 @@ Magnoliopsida
 Myrtales
 </td>
 <td style="text-align:left;min-width: 1.2in; ">
-75
+74
 </td>
 </tr>
 <tr>
@@ -447,7 +447,7 @@ Magnoliopsida
 Asterales
 </td>
 <td style="text-align:left;min-width: 1.2in; ">
-150
+148
 </td>
 <td style="text-align:left;min-width: 1.4in; ">
 Magnoliopsida
@@ -487,7 +487,7 @@ Magnoliopsida
 Brassicales
 </td>
 <td style="text-align:left;min-width: 1.2in; ">
-14
+13
 </td>
 <td style="text-align:left;min-width: 1.4in; ">
 Magnoliopsida
@@ -507,7 +507,7 @@ Magnoliopsida
 Caryophyllales
 </td>
 <td style="text-align:left;min-width: 1.2in; ">
-144
+141
 </td>
 <td style="text-align:left;min-width: 1.4in; ">
 Magnoliopsida
@@ -516,7 +516,7 @@ Magnoliopsida
 Rosales
 </td>
 <td style="text-align:left;min-width: 1.2in; ">
-124
+125
 </td>
 </tr>
 <tr>
@@ -536,7 +536,7 @@ Magnoliopsida
 Sapindales
 </td>
 <td style="text-align:left;min-width: 1.2in; ">
-24
+23
 </td>
 </tr>
 <tr>
@@ -576,7 +576,7 @@ Magnoliopsida
 Solanales
 </td>
 <td style="text-align:left;min-width: 1.2in; ">
-52
+51
 </td>
 </tr>
 <tr>
@@ -676,7 +676,7 @@ Polypodiopsida
 Polypodiales
 </td>
 <td style="text-align:left;min-width: 1.2in; ">
-13
+12
 </td>
 </tr>
 <tr>
@@ -711,7 +711,7 @@ processing, and visualisation of the most current occurrence data for
 invasive alien species (IAS) from the Global Biodiversity Information
 Facility
 (<a href="https://www.gbif.org/" target="_blank" class="external-link ll">GBIF</a>),
-totalling approximately 9.4 million occurrences as of March 2025.
+totalling approximately 10.4 million occurrences as of September 2025.
 Occurrences deemed doubtful or exhibiting high spatial uncertainty are
 excluded to ensure data quality. Additionally, the function calculates
 the number of observations and occupied grid cells per species. Its
@@ -733,8 +733,8 @@ backbone. Occurrence data for taxa corresponding to the IAS checklist
 were subsequently downloaded through the API. Of the 34 partner
 organizations contributing to EASIN (including GBIF), only non-GBIF data
 are incorporated into the models to avoid redundancy. Following
-processing and spatial filtering, the dataset includes over 420,000
-observations for 466 IAS as of March 2025. Consistent with the GBIF
+processing and spatial filtering, the dataset includes over 427K
+observations for 465 IAS as of September 2025. Consistent with the GBIF
 output, the function generates gridded distribution maps for each
 species.</p>
 <p><br><br></p>
@@ -746,11 +746,10 @@ species.</p>
 Socio-Ecological Research Infrastructure
 (<a href="https://elter-ri.eu/" target="_blank" class="external-link ll">eLTER</a>)
 comprises a network of sites dedicated to collecting ecological data for
-long-term research across the European Union. Data from 137 eLTER sites,
-encompassing 5,265 observations for 110 invasive alien species (IAS),
-were processed (<code>eLTER_process()</code>) and standardized to ensure
-consistency with other biotic datasets in the <code>IASDT</code>
-workflow.</p>
+long-term research across the European Union. Cleaned standardised data
+encompassed 4K observations for 109 IAS (September 2025). The
+<code><a href="../reference/eLTER_Process.html">elter_process()</a></code> function processed standardised eLTER data
+in a format ready to be used in the models.</p>
 <p><br><br></p>
 </div>
 <div class="section level2">

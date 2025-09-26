@@ -48,7 +48,7 @@ summarises distributions, and generates maps using helper functions."></head><bo
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Process and map Naturalized Alien Plant Species (NAPS) data for the <code>IASDT</code></h1>
-      <small class="dont-index">Source: <a href="https://github.com/BioDT/IASDT.R/blob/main/R/dwf_naps_process.R" class="external-link"><code>R/dwf_naps_process.R</code></a>, <a href="https://github.com/BioDT/IASDT.R/blob/main/R/dwf_naps_distribution.R" class="external-link"><code>R/dwf_naps_distribution.R</code></a>, <a href="https://github.com/BioDT/IASDT.R/blob/main/R/dwf_naps_plot.R" class="external-link"><code>R/dwf_naps_plot.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/BioDT/IASDT.R/blob/main/R/dwf_naps_process.R" class="external-link"><code>R/dwf_naps_process.R</code></a>, <a href="https://github.com/BioDT/IASDT.R/blob/main/R/dwf_naps_distribution.R" class="external-link"><code>R/dwf_naps_distribution.R</code></a>, <a href="https://github.com/BioDT/IASDT.R/blob/main/R/dwf_naps_plot.R" class="external-link"><code>R/dwf_naps_plot.R</code></a>, and 1 more</small>
       <div class="d-none name"><code>naps_data.Rd</code></div>
     </div>
 
@@ -70,7 +70,9 @@ summarises distributions, and generates maps using helper functions.</p>
 <span>  dist_citizen <span class="op">=</span> <span class="fl">100L</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">naps_plot</span><span class="op">(</span>species <span class="op">=</span> <span class="cn">NULL</span>, env_file <span class="op">=</span> <span class="st">".env"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">naps_plot</span><span class="op">(</span>species <span class="op">=</span> <span class="cn">NULL</span>, env_file <span class="op">=</span> <span class="st">".env"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">naps_standardisation</span><span class="op">(</span>env_file <span class="op">=</span> <span class="st">".env"</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -112,7 +114,16 @@ yet recognized as "naturalized". Default is <code>100L</code> km.</p></dd>
     <h2 id="functions-details">Functions details<a class="anchor" aria-label="anchor" href="#functions-details"></a></h2>
 
 
-<ul><li><p><strong><code>naps_process()</code></strong>: Merges pre-processed GBIF (<a href="GBIF_data.html">gbif_process</a>), EASIN
+<ul><li><p><strong><code>naps_standardisation()</code></strong>: Load pre-prepared standardisation
+information for NAPS verbatim names and prepare a unique <code>ias_id</code> for each
+standardised NAPS. This function should be called <strong>only once</strong> per
+workflow version. The <code>ias_id</code> is determined based on sorting the
+standardised species names alphabetically within their taxonomic hierarchy
+(in the order of: class, order, family, and taxon_name). If a new
+standardisation file is used, new <code>ias_id</code> values will be generated, which
+will break reproducibility and prevent consistent data linkage across
+analyses.</p></li>
+<li><p><strong><code>naps_process()</code></strong>: Merges pre-processed GBIF (<a href="GBIF_data.html">gbif_process</a>), EASIN
 (<a href="EASIN_data.html">easin_process</a>), and eLTER (<a href="eLTER_Process.html">elter_process</a>) data (run these first).
 Outputs <code>SpatRaster</code> distribution rasters, summary tables, and JPEG maps
 using <code>naps_distribution()</code> and <code>naps_plot()</code>.</p></li>

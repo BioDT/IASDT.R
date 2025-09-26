@@ -200,9 +200,9 @@ br {
 <div class="section level2">
 <h2 id="overview">Overview<a class="anchor" aria-label="anchor" href="#overview"></a>
 </h2>
-<p>This document delineates the workflow — currently under development —
-for modelling the distribution and level of invasion (species richness)
-of invasive alien plant species (IAS) across Europe. The IAS Digital
+<p>This document delineates the workflow for modelling the distribution
+and level of invasion (species richness) of naturalised alien plant
+species (NAPS) across Europe. The invasive alien species (IAS) Digital
 Twin (<code>IASDT</code>) is a component of the European
 <a href="https://www.biodt.eu/" target="_blank" class="external-link ll">BioDT</a>
 project, which seeks to establish a Digital Twin framework for
@@ -213,16 +213,18 @@ The complete <code>IASDT</code> workflow is documented at
 <a href="https://doi.org/10.5281/zenodo.14756907" target="_blank" class="external-link ll">Zenodo</a>.</p>
 <p>The <code>IASDT</code> leverages the
 <a href="https://doi.org/10.5281/zenodo.14834384" target="_blank" class="external-link ll"><code>IASDT.R</code></a>
-R package to execute a comprehensive workflow encompassing model
-fitting, post-processing, and data preparation for the
-<a href="https://app.biodt.eu/app/biodtshiny" target="_blank" class="external-link ll">Shiny
-application</a>. This package facilitates the preparation of abiotic
-data (e.g., climate and land cover) and biotic data (i.e., species
-distribution). Model outputs from the <code>IASDT</code> are made
-publicly available to end-users and stakeholders through an
+and
+<a href="https://doi.org/10.5281/zenodo.15477683" target="_blank" class="external-link ll"><code>ecokit</code></a>
+R packages to execute a comprehensive workflow encompassing data
+processing, model fitting, post-processing, and preparation maps for the
+IASDT
+<a href="https://app.biodt.eu/app/biodtshiny" target="_blank" class="external-link ll">Shiny</a>
+dashboard. The <code>IASDT.R</code> package facilitates the preparation
+of abiotic data (e.g., climate and land cover) and biotic data (i.e.,
+species distribution). Model outputs from the <code>IASDT</code> are
+made publicly available to end-users and stakeholders through an
 <a href="http://opendap.biodt.eu/ias-pdt/" target="_blank" class="external-link ll">OPeNDAP
-cloud server</a>, with prediction maps retrievable directly in R via the
-<code>IASDT.R</code> package (<em>currently in development</em>).</p>
+cloud server</a>.</p>
 <hr class="hr1">
 </div>
 <div class="section level2">
@@ -490,7 +492,7 @@ level 3 and their corresponding values for <em>EUNIS</em> and
 <em>SynHab</em> habitat types
 </td>
 <td style="text-align:left;">
-<i>references/CrossWalk.txt</i>
+<i>references/clc_crosswalk.txt</i>
 </td>
 </tr>
 <tr>
@@ -523,7 +525,7 @@ Path to the input CLC tif file
 LUMI project number for CPU computations
 </td>
 <td style="text-align:left;">
-<i>project_465001857</i>
+<i>project_XXXXXXXXX</i>
 </td>
 </tr>
 <tr>
@@ -534,7 +536,7 @@ LUMI project number for CPU computations
 LUMI project number for GPU computations
 </td>
 <td style="text-align:left;">
-<i>project_465001857</i>
+<i>project_XXXXXXXXX</i>
 </td>
 </tr>
 <tr>
@@ -546,7 +548,7 @@ File path to a python script for reporting if the GPU was used in the
 running SLURM job
 </td>
 <td style="text-align:left;">
-<i>references/LUMI_Check_GPU.py</i>
+<i>references/lumi_check_gpu.py</i>
 </td>
 </tr>
 <tr>
@@ -590,7 +592,7 @@ Directory path for model fitting
 Directory path to interim railways data
 </td>
 <td style="text-align:left;">
-<i>datasets/interim/railway</i>
+<i>datasets/interim/railways</i>
 </td>
 </tr>
 <tr>
@@ -601,7 +603,7 @@ Directory path to interim railways data
 Directory path to processed railways data
 </td>
 <td style="text-align:left;">
-<i>datasets/processed/railway</i>
+<i>datasets/processed/railways</i>
 </td>
 </tr>
 <tr>
@@ -612,7 +614,7 @@ Directory path to processed railways data
 Directory path to raw railways data
 </td>
 <td style="text-align:left;">
-<i>datasets/raw/railway</i>
+<i>datasets/raw/railways</i>
 </td>
 </tr>
 <tr>
@@ -777,7 +779,7 @@ Directory path to raw sampling efforts data
 Directory path to EASIN data
 </td>
 <td style="text-align:left;">
-<i>datasets/interim/EASIN</i>
+<i>datasets/interim/easin</i>
 </td>
 </tr>
 <tr>
@@ -788,7 +790,7 @@ Directory path to EASIN data
 Directory path to processed EASIN data
 </td>
 <td style="text-align:left;">
-<i>datasets/processed/EASIN</i>
+<i>datasets/processed/easin</i>
 </td>
 </tr>
 <tr>
@@ -799,7 +801,7 @@ Directory path to processed EASIN data
 Directory path to summary of processed EASIN data
 </td>
 <td style="text-align:left;">
-<i>datasets/processed/EASIN/Summary</i>
+<i>datasets/processed/easin/Summary</i>
 </td>
 </tr>
 <tr>
@@ -845,7 +847,7 @@ Path to <code>rds</code> file containing processed and standardized
 eLTER data
 </td>
 <td style="text-align:left;">
-<i>references/elter_data_gbif_2024-02-07.rds</i>
+<i>references/elter_data_gbif_202X-XX-XX7.rds</i>
 </td>
 </tr>
 <tr>
@@ -856,7 +858,7 @@ eLTER data
 Directory path to interim GBIF data
 </td>
 <td style="text-align:left;">
-<i>datasets/interim/GBIF</i>
+<i>datasets/interim/gbif</i>
 </td>
 </tr>
 <tr>
@@ -867,7 +869,7 @@ Directory path to interim GBIF data
 Directory path to processed GBIF data
 </td>
 <td style="text-align:left;">
-<i>datasets/processed/GBIF</i>
+<i>datasets/processed/gbif</i>
 </td>
 </tr>
 <tr>
@@ -901,7 +903,7 @@ Path to <code>rds</code> file containing species affinity to habitat
 types
 </td>
 <td style="text-align:left;">
-<i>references/taxon-habitat-combined_2024-02-07.rds</i>
+<i>references/taxon-habitat-combined_202X-XX-XX.rds</i>
 </td>
 </tr>
 <tr>
@@ -913,7 +915,7 @@ Path to excel file containing the number of grid cells per species and
 country
 </td>
 <td style="text-align:left;">
-<i>references/cell_count_per_species_and_country_2024-01-30-IA-VK-MG.xlsx</i>
+<i>references/2_taxon-status_202X-XX-XX.xlsx</i>
 </td>
 </tr>
 <tr>
@@ -924,7 +926,7 @@ country
 Path to <code>rds</code> file containing EASIN standardized taxonomy
 </td>
 <td style="text-align:left;">
-<i>references/easin_taxon-list-gbif_2024-02-07.rds</i>
+<i>references/easin_taxon-list-gbif_202X-XX-XX.rds</i>
 </td>
 </tr>
 <tr>

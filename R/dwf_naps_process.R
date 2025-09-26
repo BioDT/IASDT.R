@@ -19,6 +19,15 @@
 #'   yet recognized as "naturalized". Default is `100L` km.
 #'
 #' @section Functions details:
+#' - **`naps_standardisation()`**: Load pre-prepared standardisation
+#'   information for NAPS verbatim names and prepare a unique `ias_id` for each
+#'   standardised NAPS. This function should be called **only once** per
+#'   workflow version. The `ias_id` is determined based on sorting the
+#'   standardised species names alphabetically within their taxonomic hierarchy
+#'   (in the order of: class, order, family, and taxon_name). If a new
+#'   standardisation file is used, new `ias_id` values will be generated, which
+#'   will break reproducibility and prevent consistent data linkage across
+#'   analyses.
 #' - **`naps_process()`**: Merges pre-processed GBIF ([gbif_process]), EASIN
 #'   ([easin_process]), and eLTER ([elter_process]) data (run these first).
 #'   Outputs `SpatRaster` distribution rasters, summary tables, and JPEG maps

@@ -64,7 +64,7 @@ The `clc_process()` function manages the processing of Corine Land Cover (<a hre
 
 - **model grid selection**: Grid cells with at least 15% land cover (default threshold) are retained for modelling.
 - **habitat-specific modelling**: The percentage coverage of `SynHab` habitat types informs model fitting by:
-  1. excluding grid cells with zero coverage of the relevant habitat type during model fitting.
+  1. optionally excluding grid cells with zero coverage of the relevant habitat type during model fitting.
   2. serving as a potential predictor variable in the models.
 
 <br/><br/>
@@ -137,13 +137,13 @@ The `railway_intensity()` and `road_intensity()` functions retrieve and process 
 
 ## River length
 
-The `river_length()` function processes data from the <a href="https://land.copernicus.eu/en/products/eu-hydro/eu-hydro-river-network-database" target="_blank" class="ll">EU-Hydro River Network Database</a> to compute river lengths categorized by Strahler order for each grid cell. The Strahler order, a hierarchical classification of river networks, assigns higher numbers to larger, more significant river segments. For each grid cell, the function calculates the cumulative length of rivers at or above a given Strahler order (e.g., for Strahler 5, it includes rivers with Strahler values of 5 or greater). The total river length per grid cell for Strahler order 5 and above, transformed to a logarithmic scale (log<sub>10</sub>), serves as a potential predictor variable in the species distribution models.
+The `river_length()` function processes data from the <a href="https://land.copernicus.eu/en/products/eu-hydro/eu-hydro-river-network-database" target="_blank" class="ll">EU-Hydro River Network Database</a> to compute river lengths categorized by Strahler order for each grid cell. The [Strahler order](https://en.wikipedia.org/wiki/Strahler_number), a hierarchical classification of river networks, assigns higher numbers to larger, more significant river segments. For each grid cell, the function calculates the cumulative length of rivers at or above a given Strahler order (e.g., for Strahler 5, it includes rivers with Strahler values of 5 or greater). The total river length per grid cell for Strahler order 5 and above, transformed to a logarithmic scale (log<sub>10</sub>), serves as a potential predictor variable in the species distribution models.
 
 <br/><br/>
 
 ## Sampling efforts
 
-To address the opportunistic bias inherent in the presence-only data, the total number of vascular plant observations per grid cell from the Global Biodiversity Information Facility (<a href="https://www.gbif.org/" target="_blank" class="ll">GBIF</a>) is employed as a proxy for sampling effort. The `efforts_process()` function manages the request, retrieval, and processing of this sampling effort data, encompassing over 260 million occurrences as of March 2025. Beyond total observations, the function also determines the number of vascular plant species per grid cell. The processed data support two primary applications:
+To address the opportunistic bias inherent in the presence-only data, the total number of vascular plant observations per grid cell from the Global Biodiversity Information Facility (<a href="https://www.gbif.org/" target="_blank" class="ll">GBIF</a>) is employed as a proxy for sampling effort. The `efforts_process()` function manages the request, retrieval, and processing of this sampling effort data, encompassing over 275 million occurrences as of September 2025. Beyond total observations, the function also determines the number of vascular plant species per grid cell. The processed data support two primary applications:
 
 - **grid cell filtering**: The number of species per grid cell enables optional filtering to exclude areas with insufficient sampling effort (e.g., grid cells with fewer than 100 observed vascular plant species are excluded).
 - **sampling bias correction**: The total number of observations per grid cell, on a logarithmic scale (log<sub>10</sub>), is incorporated as a predictor variable in the models to account for sampling bias. To mitigate this bias during predictions, this predictor is fixed at a constant value representing optimal sampling effort across the study area, as detailed in Warton *et al.* (<a href="https://doi.org/10.1371/journal.pone.0079168" target="_blank" class="ll">2013</a>).

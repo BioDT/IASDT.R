@@ -12,19 +12,20 @@
 species (IAS) Digital Twin (`IASDT`), as part of the EU-funded
 <a href="https://biodt.eu/" target="_blank">BioDT</a> project. This R
 package provides functions for processing input data (biotic and
-abiotic) and modelling the distribution of invasive alien plant species
-across Europe using joint species distribution models. By the end of the
-project, it is planned that the package will enable end users to access
-model outputs (e.g., prediction maps) directly from R.
+abiotic) and modelling the distribution of naturalised alien plant
+species (NAPS) across Europe using joint species distribution models.
 
-- More information on the BioDT project can be found at this
+- More information on the `BioDT` project can be found at this
   <a href="https://biodt.eu/" target="_blank">link</a>.
-- For an overview on the IASDT, see Khan, El-Gabbas, et
+- For an overview on the `IASDT`, see Khan, El-Gabbas, et
   al. <a href="https://doi.org/10.3897/rio.10.e124579" target="_blank"><img src="https://img.shields.io/badge/DOI:-10.3897/rio.10.e124579-blue" alt="DOI: 10.3897/rio.10.e124579"/></a>.
 - Documentation of the package functions can be found
   <a href="https://biodt.github.io/IASDT.R/reference/index.html" target="_blank">here</a>.
 - Click <a href="https://github.com/BioDT/uc-ias-workflows">here</a> for
   the workflow of the `IASDT`.
+- The package also depends on
+  <a href="https://elgabbas.github.io/ecokit/">ecokit</a> for general
+  ecological data analysis and visualisation.
 
 <center>
 
@@ -35,9 +36,8 @@ model outputs (e.g., prediction maps) directly from R.
 
 ## Installing the package
 
-The `IASDT.R` package is currently under development. To install the
-most-recent development version of the package, use the following
-command:
+To install the most-recent development version of the package, use the
+following command:
 
 ``` r
 remotes::install_github(repo = "BioDT/IASDT.R", dependencies = TRUE)
@@ -64,7 +64,7 @@ changes on a new branch and submit a pull request or make an issue
 [here](https://github.com/BioDT/IASDT.R/issues).
 
 > For questions, please get in touch with
-> [me](https://elgabbas.netlify.app/) at `ahmed.el-gabbas[at]ufz[dot]de`
+> [me](https://elgabbas.netlify.app/) at `elgabbas[at]outlook[dot]com`
 
 <hr>
 
@@ -81,4 +81,4 @@ If you use the `IASDT.R` package, please cite it as:
 > <a href="https://biodt.eu" target="_blank">https://biodt.eu</a>.
 
 <span style="     color: grey !important;">Last update:
-2025-09-24</span>
+2025-09-26</span>

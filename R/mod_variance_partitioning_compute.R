@@ -942,7 +942,9 @@ variance_partitioning_compute <- function(
 
       if (i %% 200 == 0) {
         ecokit::cat_time(
-          sprintf("Processing iteration %d of %d", i, pool_n), verbose = verbose)
+          sprintf(
+            "Processing iteration %d of %d", i, pool_n),
+          verbose = verbose)
       }
 
       data_la <- la[[i]]

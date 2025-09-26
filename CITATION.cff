@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 title: "IASDT.R: Modelling the distribution of invasive alien plant species in Europe"
-abstract: "IASDT.R supports the invasive alien species (IAS) Digital Twin (IASDT), as part of the EU-funded BioDT project. This package provides functions for processing input data (biotic and abiotic) and modelling the distribution of invasive alien plant species across Europe using joint species distribution models."
+abstract: "IASDT.R supports the invasive alien species (IAS) Digital Twin (IASDT), as part of the EU-funded BioDT project. This package provides functions for processing input data (biotic and abiotic) and modelling the distribution of naturalised alien plant species (NAPS) across Europe using joint species distribution models."
 authors:
   - family-names: El-Gabbas
     given-names: Ahmed

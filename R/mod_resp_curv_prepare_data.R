@@ -480,8 +480,7 @@ rc_prepare_data <- function(
       future::plan("sequential", gc = TRUE)
     } else {
       ecokit::set_parallel(
-        n_cores = n_cores, future_max_size = 800L, strategy = strategy,
-        cat_timestamp = FALSE)
+        n_cores = n_cores, future_max_size = 800L, strategy = strategy)
       withr::defer(future::plan("sequential", gc = TRUE))
     }
 
@@ -503,7 +502,7 @@ rc_prepare_data <- function(
       dplyr::bind_rows()
 
     if (n_cores > 1) {
-      ecokit::set_parallel(stop_cluster = TRUE, cat_timestamp = FALSE)
+      ecokit::set_parallel(stop_cluster = TRUE)
       future::plan("sequential", gc = TRUE)
     }
 

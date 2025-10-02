@@ -335,7 +335,7 @@ fit_sdm_models <- function(
     } else {
       ecokit::set_parallel(
         n_cores = min(n_cores, nrow(model_data)),
-        future_max_size = future_max_size, level = 1L, cat_timestamp = FALSE)
+        future_max_size = future_max_size, level = 1L)
       withr::defer(future::plan("sequential", gc = TRUE))
     }
 
@@ -364,7 +364,7 @@ fit_sdm_models <- function(
         future.scheduling = Inf, future.seed = TRUE,
         future.packages = pkgs_to_load, future.globals = future_globals))
 
-    ecokit::set_parallel(level = 1L, stop_cluster = TRUE, cat_timestamp = FALSE)
+    ecokit::set_parallel(level = 1L, stop_cluster = TRUE)
     future::plan("sequential", gc = TRUE)
     invisible(gc())
 
@@ -519,7 +519,7 @@ fit_sdm_models <- function(
     } else {
       ecokit::set_parallel(
         n_cores = min(n_cores, nrow(model_pred_results)),
-        future_max_size = future_max_size, level = 1L, cat_timestamp = FALSE)
+        future_max_size = future_max_size, level = 1L)
       withr::defer(future::plan("sequential", gc = TRUE))
     }
 
@@ -541,7 +541,7 @@ fit_sdm_models <- function(
         future.globals = c(
           "model_pred_results", "summarize_predictions", "output_directory")))
 
-    ecokit::set_parallel(level = 1L, stop_cluster = TRUE, cat_timestamp = FALSE)
+    ecokit::set_parallel(level = 1L, stop_cluster = TRUE)
     future::plan("sequential", gc = TRUE)
 
     # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

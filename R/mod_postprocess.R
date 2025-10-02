@@ -537,7 +537,7 @@ mod_postprocess_1_cpu <- function(
       } else {
         ecokit::set_parallel(
           n_cores = min(n_cores, nrow(response_curve_data)), level = 2L,
-          strategy = strategy, cat_timestamp = FALSE, future_max_size = 1500L)
+          strategy = strategy, future_max_size = 1500L)
         withr::defer(future::plan("sequential", gc = TRUE))
       }
 
@@ -613,8 +613,7 @@ mod_postprocess_1_cpu <- function(
           "tidyr", "ecokit", "tidyselect"))
 
       if (n_cores > 1) {
-        ecokit::set_parallel(
-          stop_cluster = TRUE, level = 2L, cat_timestamp = FALSE)
+        ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
         future::plan("sequential", gc = TRUE)
       }
 

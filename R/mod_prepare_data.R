@@ -118,6 +118,15 @@ mod_prepare_data <- function(
   }
 
   if (hab_abb == "0") {
+
+    grid_r <- fs::path(path_grid, "grid_10_land_crop.RData")
+    if (!file.exists(grid_r)) {
+      ecokit::stop_ctx(
+        "Path for the reference grid does not exist", grid_r = grid_r,
+        include_backtrace = TRUE)
+    }
+    grid_r <- ecokit::load_as(grid_r, unwrap_r = TRUE)
+
     # Use dummy habitat values
     r_habitat <- stats::setNames(grid_r, "hab")
     r_habitat_log <- stats::setNames(grid_r, "habitat_log")

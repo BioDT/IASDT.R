@@ -635,7 +635,7 @@ predict_latent_factor <- function(
 
         ecokit::set_parallel(
           n_cores = min(n_cores_lf, nrow(lf_data)), level = 2L,
-          future_max_size = 800L, strategy = strategy, cat_timestamp = FALSE)
+          future_max_size = 800L, strategy = strategy)
         withr::defer(future::plan("sequential", gc = TRUE))
 
         ecokit::cat_time(
@@ -664,8 +664,7 @@ predict_latent_factor <- function(
             "temp_dir_lf"))
 
         # Stop the cluster
-        ecokit::set_parallel(
-          stop_cluster = TRUE, level = 2L, cat_timestamp = FALSE)
+        ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
       }
 
       # Check if all files are created
@@ -708,7 +707,7 @@ predict_latent_factor <- function(
 
     ecokit::set_parallel(
       n_cores = n_cores_lf, level = 2L, future_max_size = 800L,
-      strategy = strategy, cat_timestamp = FALSE)
+      strategy = strategy)
     withr::defer(future::plan("sequential", gc = TRUE))
 
     ecokit::cat_time(
@@ -742,7 +741,7 @@ predict_latent_factor <- function(
       future.globals = c("post_eta_pred_samp", "lf_return"))
 
     # Stop the cluster
-    ecokit::set_parallel(stop_cluster = TRUE, level = 2L, cat_timestamp = FALSE)
+    ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
 
     invisible(gc())
 

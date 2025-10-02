@@ -857,7 +857,7 @@ convergence_plot <- function(
     future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
-      n_cores = n_cores, level = 2L, strategy = strategy, cat_timestamp = FALSE,
+      n_cores = n_cores, level = 2L, strategy = strategy,
       future_max_size = future_max_size)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
@@ -976,7 +976,7 @@ convergence_plot <- function(
 
   # Stopping cluster
   if (n_cores > 1) {
-    ecokit::set_parallel(stop_cluster = TRUE, level = 2L, cat_timestamp = FALSE)
+    ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
     future::plan("sequential", gc = TRUE)
   }
 
@@ -999,7 +999,7 @@ convergence_plot <- function(
     future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
-      n_cores = n_cores, level = 2L, strategy = strategy, cat_timestamp = FALSE,
+      n_cores = n_cores, level = 2L, strategy = strategy,
       future_max_size = future_max_size)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
@@ -1094,7 +1094,7 @@ convergence_plot <- function(
 
   # Stopping cluster
   if (n_cores > 1) {
-    ecokit::set_parallel(stop_cluster = TRUE, level = 2L, cat_timestamp = FALSE)
+    ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
     future::plan("sequential", gc = TRUE)
   }
 

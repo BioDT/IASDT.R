@@ -307,8 +307,7 @@ convergence_plot_all <- function(
       out_path = path_data)
 
     if (n_cores > 1) {
-      ecokit::set_parallel(
-        stop_cluster = TRUE, level = 2L, cat_timestamp = FALSE)
+      ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
       future::plan("sequential", gc = TRUE)
     }
   }

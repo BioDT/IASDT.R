@@ -59,7 +59,7 @@ rc_plot_sr <- function(
   } else {
     ecokit::set_parallel(
       n_cores = n_cores, level = 1L, future_max_size = 800L,
-      strategy = strategy, cat_timestamp = FALSE)
+      strategy = strategy)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
 
@@ -106,8 +106,7 @@ rc_plot_sr <- function(
     dplyr::select(-data)
 
   if (n_cores > 1) {
-    ecokit::set_parallel(
-      stop_cluster = TRUE, level = 1L, cat_timestamp = FALSE)
+    ecokit::set_parallel(stop_cluster = TRUE, level = 1L)
     future::plan("sequential", gc = TRUE)
   }
 

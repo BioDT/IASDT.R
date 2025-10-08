@@ -3,6 +3,7 @@
 \name{mod_postprocessing}
 \alias{mod_postprocessing}
 \alias{mod_postprocess_1_cpu}
+\alias{mod_postprocessingS}
 \alias{mod_prepare_tf}
 \alias{mod_postprocess_2_cpu}
 \alias{mod_postprocess_cv_1_cpu}
@@ -69,6 +70,7 @@ mod_postprocess_2_cpu(
   model_dir = NULL,
   hab_abb = NULL,
   strategy = "multisession",
+  future_max_size = 1500L,
   n_cores = 8L,
   n_cores_pred = n_cores,
   n_cores_lf = n_cores,

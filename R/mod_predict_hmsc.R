@@ -29,6 +29,9 @@
 #' @param strategy Character. The parallel processing strategy to use. Valid
 #'   options are "sequential", "multisession" (default), "multicore", and
 #'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
+#' @param future_max_size	Numeric. Maximum allowed total size (in megabytes) of
+#'   global variables identified. See `future.globals.maxSize` argument of
+#'   [future::future.options] for more details.
 #' @param temp_cleanup Logical. Whether to clean up temporary files. Defaults to
 #'   `TRUE`.
 #' @param pred_directory Character. Directory path indicating where the
@@ -70,14 +73,14 @@
 predict_hmsc <- function(
     path_model, Loff = NULL, x_data = NULL, X = NULL, XRRRData = NULL,
     XRRR = NULL, gradient = NULL, Yc = NULL, mcmcStep = 1L, expected = TRUE,
-    n_cores = 8L, strategy = "multisession", model_name = "train",
-    temp_dir = "temp_pred", temp_cleanup = TRUE, prediction_type = NULL,
-    use_tf = TRUE, tf_environ = NULL, tf_use_single = FALSE, lf_out_file = NULL,
-    lf_return = FALSE, lf_input_file = NULL, lf_only = FALSE,
-    n_cores_lf = n_cores, lf_check = FALSE, lf_temp_cleanup = TRUE,
-    lf_commands_only = FALSE, pred_directory = NULL, pred_pa = NULL,
-    pred_xy = NULL, evaluate = FALSE, evaluation_name = NULL,
-    evaluation_directory = "evaluation", verbose = TRUE,
+    n_cores = 8L, strategy = "multisession", future_max_size = 1000L,
+    model_name = "train", temp_dir = "temp_pred", temp_cleanup = TRUE,
+    prediction_type = NULL, use_tf = TRUE, tf_environ = NULL,
+    tf_use_single = FALSE, lf_out_file = NULL, lf_return = FALSE,
+    lf_input_file = NULL, lf_only = FALSE, n_cores_lf = n_cores,
+    lf_check = FALSE, lf_temp_cleanup = TRUE, lf_commands_only = FALSE,
+    pred_directory = NULL, pred_pa = NULL, pred_xy = NULL, evaluate = FALSE,
+    evaluation_name = NULL, evaluation_directory = "evaluation", verbose = TRUE,
     spatial_model = TRUE) {
 
   # # ..................................................................... ###
@@ -434,8 +437,8 @@ predict_hmsc <- function(
         units_model = levels(mod_dfPi[, r]),
         post_eta = postEta_file, post_alpha = post_alpha, lf_rl = rL[[r]],
         n_cores_lf = n_cores_lf, strategy = strategy,
-        lf_temp_cleanup = lf_temp_cleanup, lf_out_file = lf_out_file,
-        lf_return = lf_return, lf_check = lf_check,
+        future_max_size = future_max_size, lf_temp_cleanup = lf_temp_cleanup,
+        lf_out_file = lf_out_file, lf_return = lf_return, lf_check = lf_check,
         lf_commands_only = lf_commands_only, temp_dir = temp_dir,
         model_name = model_name, use_tf = use_tf, tf_environ = tf_environ,
         tf_use_single = tf_use_single)
@@ -548,7 +551,7 @@ predict_hmsc <- function(
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, length(chunks)), level = 1L,
-      future_max_size = 800L, strategy = strategy)
+      future_max_size = future_max_size, strategy = strategy)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
 

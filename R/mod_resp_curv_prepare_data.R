@@ -24,6 +24,9 @@
 #' @param strategy Character. The parallel processing strategy to use. Valid
 #'   options are "sequential", "multisession" (default), "multicore", and
 #'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
+#' @param future_max_size	Numeric. Maximum allowed total size (in megabytes) of
+#'   global variables identified. See `future.globals.maxSize` argument of
+#'   [future::future.options] for more details.
 #' @param return_data Logical. If `TRUE`, the function returns processed data as
 #'   an R object. Default: `FALSE`.
 #' @param probabilities Numeric vector. Quantiles to calculate in response curve
@@ -46,7 +49,8 @@
 
 rc_prepare_data <- function(
     path_model = NULL, n_grid = 50L, n_cores = 8L, strategy = "multisession",
-    return_data = FALSE, probabilities = c(0.025, 0.5, 0.975), use_tf = TRUE,
+    future_max_size = 1500L, return_data = FALSE,
+    probabilities = c(0.025, 0.5, 0.975), use_tf = TRUE,
     tf_environ = NULL, tf_use_single = FALSE, n_cores_lf = n_cores,
     lf_check = FALSE, lf_temp_cleanup = TRUE, lf_commands_only = FALSE,
     temp_dir = "temp_pred", temp_cleanup = TRUE, verbose = TRUE) {
@@ -181,9 +185,10 @@ rc_prepare_data <- function(
         # Predicting probability of occurrence
         preds <- IASDT.R::predict_hmsc(
           path_model = path_model, gradient = gradient, expected = TRUE,
-          n_cores = 1, strategy = strategy, model_name = paste0("rc_", coords),
-          prediction_type = coords, use_tf = use_tf, tf_environ = tf_environ,
-          lf_input_file = file_lf, n_cores_lf = 1, lf_check = lf_check,
+          n_cores = 1, strategy = strategy, future_max_size = future_max_size,
+          model_name = paste0("rc_", coords), prediction_type = coords,
+          use_tf = use_tf, tf_environ = tf_environ, lf_input_file = file_lf,
+          n_cores_lf = 1, lf_check = lf_check,
           lf_temp_cleanup = lf_temp_cleanup, lf_commands_only = FALSE,
           tf_use_single = tf_use_single, temp_dir = temp_dir,
           temp_cleanup = temp_cleanup, verbose = FALSE)
@@ -442,7 +447,8 @@ rc_prepare_data <- function(
       ecokit::cat_time("Predicting LF", verbose = verbose)
       model_lf <- IASDT.R::predict_hmsc(
         path_model = path_model, gradient = gradient_c, expected = TRUE,
-        n_cores = n_cores, strategy = strategy, temp_dir = temp_dir,
+        n_cores = n_cores, strategy = strategy,
+        future_max_size = future_max_size, temp_dir = temp_dir,
         temp_cleanup = temp_cleanup, model_name = "rc_c",
         prediction_type = "c", use_tf = use_tf, tf_environ = tf_environ,
         lf_out_file = file_lf, n_cores_lf = n_cores_lf, lf_check = lf_check,
@@ -480,7 +486,8 @@ rc_prepare_data <- function(
       future::plan("sequential", gc = TRUE)
     } else {
       ecokit::set_parallel(
-        n_cores = n_cores, future_max_size = 800L, strategy = strategy)
+        n_cores = n_cores, future_max_size = future_max_size,
+        strategy = strategy)
       withr::defer(future::plan("sequential", gc = TRUE))
     }
 

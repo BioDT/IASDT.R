@@ -89,6 +89,9 @@
 #' @param strategy Character. The parallel processing strategy to use. Valid
 #'   options are "sequential", "multisession" (default), "multicore", and
 #'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
+#' @param future_max_size	Numeric. Maximum allowed total size (in megabytes) of
+#'   global variables identified. See `future.globals.maxSize` argument of
+#'   [future::future.options] for more details.
 #' @param mcmc_n_chains Integer. Number of model chains. Default: 4L.
 #' @param mcmc_thin Integer vector. Thinning value(s) in MCMC sampling. If more
 #'   than one value is provided, a separate model will be fitted at each value
@@ -189,13 +192,13 @@ mod_prepare_hpc <- function(
     cv_n_rows = 2L, cv_n_columns = 2L, cv_sac = FALSE,
     cv_fit = list(cv_type = NULL, cv_fold = NULL, inherit_dir = NULL),
     use_phylo_tree = TRUE, no_phylo_tree = FALSE, overwrite_rds = TRUE,
-    n_cores = 8L, strategy = "multisession", mcmc_n_chains = 4L,
-    mcmc_thin = NULL, mcmc_samples = 1000L, mcmc_transient_factor = 500L,
-    mcmc_verbose = 200L, skip_fitted = TRUE, n_array_jobs = 210L,
-    model_country = NULL, verbose_progress = TRUE, slurm_prepare = TRUE,
-    memory_per_cpu = "64G", job_runtime = NULL, job_name = NULL,
-    path_hmsc = NULL, check_python = FALSE, to_json = FALSE, precision = 64L,
-    ...) {
+    n_cores = 8L, strategy = "multisession", future_max_size = 1000L,
+    mcmc_n_chains = 4L, mcmc_thin = NULL, mcmc_samples = 1000L,
+    mcmc_transient_factor = 500L, mcmc_verbose = 200L, skip_fitted = TRUE,
+    n_array_jobs = 210L, model_country = NULL, verbose_progress = TRUE,
+    slurm_prepare = TRUE, memory_per_cpu = "64G", job_runtime = NULL,
+    job_name = NULL, path_hmsc = NULL, check_python = FALSE, to_json = FALSE,
+    precision = 64L, ...) {
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -1039,7 +1042,7 @@ mod_prepare_hpc <- function(
     if (n_cores_gpp > 1) {
 
       ecokit::set_parallel(
-        n_cores = n_cores, level = 2L, future_max_size = 800L,
+        n_cores = n_cores, level = 2L, future_max_size = future_max_size,
         strategy = strategy)
       withr::defer(future::plan("sequential", gc = TRUE))
 
@@ -1349,7 +1352,7 @@ mod_prepare_hpc <- function(
 
     ecokit::set_parallel(
       n_cores = min(n_cores, nrow(model_info)), level = 1L,
-      future_max_size = 800L, strategy = strategy)
+      future_max_size = future_max_size, strategy = strategy)
     withr::defer(future::plan("sequential", gc = TRUE))
 
     model_process <- future.apply::future_lapply(

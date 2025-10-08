@@ -11,6 +11,7 @@ convergence_plot_all(
   spatial_model = TRUE,
   n_cores = NULL,
   strategy = "multisession",
+  future_max_size = 1000L,
   n_rc_alpha = c(2L, 3L)
 )
 }
@@ -34,6 +35,10 @@ plot. Valid options are "histogram" (default) or "density".}
 \item{strategy}{Character. The parallel processing strategy to use. Valid
 options are "sequential", "multisession" (default), "multicore", and
 "cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
+
+\item{future_max_size}{Numeric. Maximum allowed total size (in megabytes) of
+global variables identified. See \code{future.globals.maxSize} argument of
+\link[future:zzz-future.options]{future::future.options} for more details.}
 
 \item{n_rc_alpha}{Numeric vector of length 2. Number of rows and columns for
 the convergence plots of the \code{alpha} parameter. Default: \code{c(2L, 3L)}.}

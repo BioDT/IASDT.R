@@ -20,6 +20,9 @@
 #' @param strategy Character. The parallel processing strategy to use. Valid
 #'   options are "sequential", "multisession" (default), "multicore", and
 #'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
+#' @param future_max_size	Numeric. Maximum allowed total size (in megabytes) of
+#'   global variables identified. See `future.globals.maxSize` argument of
+#'   [future::future.options] for more details.
 #' @param model_info_name Character. Name of the file (without extension) where
 #'   updated model information is saved. If `NULL`, overwrites the existing
 #'   `model_info.RData` file in `model_dir` directory. If specified, creates a
@@ -63,8 +66,8 @@
 
 mod_merge_chains <- function(
     model_dir = NULL, n_cores = 8L, strategy = "multisession",
-    model_info_name = NULL, print_incomplete = TRUE, from_json = FALSE,
-    out_extension = "qs2") {
+    future_max_size = 1000L, model_info_name = NULL, print_incomplete = TRUE,
+    from_json = FALSE, out_extension = "qs2") {
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -165,7 +168,7 @@ mod_merge_chains <- function(
   } else {
     ecokit::set_parallel(
       n_cores = min(n_cores, nrow(model_info_2)),
-      future_max_size = 800L, strategy = strategy)
+      future_max_size = future_max_size, strategy = strategy)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
 
@@ -475,8 +478,8 @@ mod_merge_chains <- function(
 
 mod_merge_chains_cv <- function(
     model_dir = NULL, n_cores = 8L, strategy = "multisession",
-    cv_names = c("cv_dist", "cv_large"), from_json = FALSE,
-    out_extension = "qs2") {
+    future_max_size = 1000L, cv_names = c("cv_dist", "cv_large"),
+    from_json = FALSE, out_extension = "qs2") {
 
   ecokit::cat_time("Merge chains for cross-validated models")
   .start_time <- lubridate::now(tzone = "CET")
@@ -564,7 +567,7 @@ mod_merge_chains_cv <- function(
     future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
-      n_cores = min(n_cores, nrow(cv_data)), future_max_size = 800L,
+      n_cores = min(n_cores, nrow(cv_data)), future_max_size = future_max_size,
       strategy = strategy)
     withr::defer(future::plan("sequential", gc = TRUE))
   }

@@ -9,6 +9,7 @@ mod_merge_chains(
   model_dir = NULL,
   n_cores = 8L,
   strategy = "multisession",
+  future_max_size = 1000L,
   model_info_name = NULL,
   print_incomplete = TRUE,
   from_json = FALSE,
@@ -19,6 +20,7 @@ mod_merge_chains_cv(
   model_dir = NULL,
   n_cores = 8L,
   strategy = "multisession",
+  future_max_size = 1000L,
   cv_names = c("cv_dist", "cv_large"),
   from_json = FALSE,
   out_extension = "qs2"
@@ -37,6 +39,10 @@ Defaults to 8L.}
 \item{strategy}{Character. The parallel processing strategy to use. Valid
 options are "sequential", "multisession" (default), "multicore", and
 "cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
+
+\item{future_max_size}{Numeric. Maximum allowed total size (in megabytes) of
+global variables identified. See \code{future.globals.maxSize} argument of
+\link[future:zzz-future.options]{future::future.options} for more details.}
 
 \item{model_info_name}{Character. Name of the file (without extension) where
 updated model information is saved. If \code{NULL}, overwrites the existing

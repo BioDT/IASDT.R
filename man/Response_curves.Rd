@@ -15,6 +15,7 @@ rc_prepare_data(
   n_grid = 50L,
   n_cores = 8L,
   strategy = "multisession",
+  future_max_size = 1500L,
   return_data = FALSE,
   probabilities = c(0.025, 0.5, 0.975),
   use_tf = TRUE,
@@ -43,7 +44,13 @@ rc_plot_species_all(
   plotting_alpha = 0.3
 )
 
-rc_plot_sr(model_dir, verbose = TRUE, n_cores = 8L, strategy = "multisession")
+rc_plot_sr(
+  model_dir,
+  verbose = TRUE,
+  n_cores = 8L,
+  future_max_size = 1000L,
+  strategy = "multisession"
+)
 }
 \arguments{
 \item{path_model}{Character. Path to the file containing the fitted Hmsc
@@ -60,6 +67,10 @@ which it defaults to 20L.}
 \item{strategy}{Character. The parallel processing strategy to use. Valid
 options are "sequential", "multisession" (default), "multicore", and
 "cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
+
+\item{future_max_size}{Numeric. Maximum allowed total size (in megabytes) of
+global variables identified. See \code{future.globals.maxSize} argument of
+\link[future:zzz-future.options]{future::future.options} for more details.}
 
 \item{return_data}{Logical. If \code{TRUE}, the function returns processed data as
 an R object. Default: \code{FALSE}.}

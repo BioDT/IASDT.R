@@ -50,6 +50,7 @@ mod_prepare_hpc(
   overwrite_rds = TRUE,
   n_cores = 8L,
   strategy = "multisession",
+  future_max_size = 1000L,
   mcmc_n_chains = 4L,
   mcmc_thin = NULL,
   mcmc_samples = 1000L,
@@ -214,6 +215,10 @@ Default: 8.}
 \item{strategy}{Character. The parallel processing strategy to use. Valid
 options are "sequential", "multisession" (default), "multicore", and
 "cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
+
+\item{future_max_size}{Numeric. Maximum allowed total size (in megabytes) of
+global variables identified. See \code{future.globals.maxSize} argument of
+\link[future:zzz-future.options]{future::future.options} for more details.}
 
 \item{mcmc_n_chains}{Integer. Number of model chains. Default: 4L.}
 

@@ -23,6 +23,9 @@
 #' @param strategy Character. The parallel processing strategy to use. Valid
 #'   options are "sequential", "multisession" (default), "multicore", and
 #'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
+#' @param future_max_size	Numeric. Maximum allowed total size (in megabytes) of
+#'   global variables identified. See `future.globals.maxSize` argument of
+#'   [future::future.options] for more details.
 #' @param clamp_pred Logical indicating whether to clamp the sampling efforts at
 #'   a single value. If `TRUE` (default), the `fix_efforts` argument must be
 #'   provided.
@@ -86,12 +89,13 @@
 
 predict_maps <- function(
     path_model = NULL, hab_abb = NULL, env_file = ".env", n_cores = 8L,
-    strategy = "multisession", clamp_pred = TRUE, fix_efforts = "q90",
-    fix_rivers = "q90", pred_new_sites = TRUE, use_tf = TRUE, tf_environ = NULL,
-    tf_use_single = FALSE, n_cores_lf = n_cores, lf_check = FALSE,
-    lf_temp_cleanup = TRUE, lf_only = FALSE, lf_commands_only = FALSE,
-    temp_dir = "temp_pred", temp_cleanup = TRUE, tar_predictions = TRUE,
-    spatial_model = TRUE, n_cores_pred = n_cores,
+    strategy = "multisession", future_max_size = 1000L, clamp_pred = TRUE,
+    fix_efforts = "q90", fix_rivers = "q90", pred_new_sites = TRUE,
+    use_tf = TRUE, tf_environ = NULL, tf_use_single = FALSE,
+    n_cores_lf = n_cores, lf_check = FALSE, lf_temp_cleanup = TRUE,
+    lf_only = FALSE, lf_commands_only = FALSE, temp_dir = "temp_pred",
+    temp_cleanup = TRUE, tar_predictions = TRUE, spatial_model = TRUE,
+    n_cores_pred = n_cores,
     climate_models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
@@ -818,7 +822,7 @@ predict_maps <- function(
     # Predicting latent factor only
     predictions_lf <- IASDT.R::predict_hmsc(
       path_model = path_model, gradient = predict_gradient, expected = TRUE,
-      n_cores = n_cores, strategy = strategy,
+      n_cores = n_cores, strategy = strategy, future_max_size = future_max_size,
       model_name = paste0("lf_", hab_abb, "_test"), temp_dir = temp_dir,
       temp_cleanup = temp_cleanup, use_tf = use_tf, tf_environ = tf_environ,
       lf_out_file = path_test_lf, tf_use_single = tf_use_single,
@@ -1027,8 +1031,8 @@ predict_maps <- function(
             preds_fit_sites <- IASDT.R::predict_hmsc(
               path_model = path_model, X = train_x, gradient = NULL,
               expected = TRUE, n_cores = n_cores_pred, strategy = strategy,
-              model_name = model_name_train, temp_dir = temp_dir,
-              temp_cleanup = temp_cleanup, use_tf = use_tf,
+              future_max_size = future_max_size, model_name = model_name_train,
+              temp_dir = temp_dir, temp_cleanup = temp_cleanup, use_tf = use_tf,
               tf_environ = tf_environ, tf_use_single = tf_use_single,
               lf_return = TRUE, n_cores_lf = n_cores_lf, lf_check = lf_check,
               lf_temp_cleanup = lf_temp_cleanup, lf_commands_only = FALSE,
@@ -1068,8 +1072,8 @@ predict_maps <- function(
             preds_new_sites <- IASDT.R::predict_hmsc(
               path_model = path_model, gradient = predict_gradient,
               expected = TRUE, n_cores = n_cores_pred, strategy = strategy,
-              model_name = model_name_test, temp_dir = temp_dir,
-              temp_cleanup = temp_cleanup, use_tf = use_tf,
+              future_max_size = future_max_size, model_name = model_name_test,
+              temp_dir = temp_dir, temp_cleanup = temp_cleanup, use_tf = use_tf,
               tf_environ = tf_environ, tf_use_single = tf_use_single,
               lf_return = TRUE, lf_input_file = path_test_lf,
               n_cores_lf = n_cores_lf, lf_check = lf_check,

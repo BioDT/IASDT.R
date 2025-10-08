@@ -23,6 +23,9 @@
 #' @param strategy Character. The parallel processing strategy to use. Valid
 #'   options are "sequential", "multisession" (default), "multicore", and
 #'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
+#' @param future_max_size	Numeric. Maximum allowed total size (in megabytes) of
+#'   global variables identified. See `future.globals.maxSize` argument of
+#'   [future::future.options] for more details.
 #' @param temp_dir Character. Path for temporary storage of intermediate files.
 #' @param lf_temp_cleanup Logical. Whether to delete temporary files in the
 #'   `temp_dir` directory after finishing the LF predictions.
@@ -74,7 +77,7 @@
 
 predict_latent_factor <- function(
     units_pred, units_model, post_eta, post_alpha, lf_rl, n_cores_lf = 8L,
-    strategy = "multisession", temp_dir = "temp_pred",
+    strategy = "multisession", future_max_size = 1000L, temp_dir = "temp_pred",
     lf_temp_cleanup = TRUE, model_name = NULL, use_tf = TRUE, tf_environ = NULL,
     tf_use_single = FALSE, lf_out_file = NULL, lf_return = FALSE,
     lf_check = FALSE, lf_commands_only = FALSE, solve_max_attempts = 5L,
@@ -635,7 +638,7 @@ predict_latent_factor <- function(
 
         ecokit::set_parallel(
           n_cores = min(n_cores_lf, nrow(lf_data)), level = 2L,
-          future_max_size = 800L, strategy = strategy)
+          future_max_size = future_max_size, strategy = strategy)
         withr::defer(future::plan("sequential", gc = TRUE))
 
         ecokit::cat_time(
@@ -706,7 +709,7 @@ predict_latent_factor <- function(
 
 
     ecokit::set_parallel(
-      n_cores = n_cores_lf, level = 2L, future_max_size = 800L,
+      n_cores = n_cores_lf, level = 2L, future_max_size = future_max_size,
       strategy = strategy)
     withr::defer(future::plan("sequential", gc = TRUE))
 

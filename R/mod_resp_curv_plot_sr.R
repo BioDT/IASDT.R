@@ -9,7 +9,8 @@
 #' @author Ahmed El-Gabbas
 
 rc_plot_sr <- function(
-    model_dir, verbose = TRUE, n_cores = 8L, strategy = "multisession") {
+    model_dir, verbose = TRUE, n_cores = 8L, future_max_size = 1000L,
+    strategy = "multisession") {
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -58,7 +59,7 @@ rc_plot_sr <- function(
     future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
-      n_cores = n_cores, level = 1L, future_max_size = 800L,
+      n_cores = n_cores, level = 1L, future_max_size = future_max_size,
       strategy = strategy)
     withr::defer(future::plan("sequential", gc = TRUE))
   }

@@ -325,7 +325,7 @@ mod_postprocess_1_cpu <- function(
 
   IASDT.R::mod_merge_chains(
     model_dir = model_dir, n_cores = n_cores, strategy = strategy,
-    from_json = from_json)
+    future_max_size = future_max_size, from_json = from_json)
 
   invisible(gc())
 
@@ -336,9 +336,9 @@ mod_postprocess_1_cpu <- function(
     line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
   IASDT.R::convergence_plot_all(
-    model_dir = model_dir, n_omega = n_omega, n_cores = n_cores,
-    strategy = strategy, margin_type = "histogram",
-    spatial_model = spatial_model)
+    model_dir = model_dir, n_omega = n_omega, margin_type = "histogram",
+    spatial_model = spatial_model, n_cores = n_cores,
+    strategy = strategy, future_max_size = future_max_size)
 
   invisible(gc())
 
@@ -483,11 +483,11 @@ mod_postprocess_1_cpu <- function(
 
     IASDT.R::rc_prepare_data(
       path_model = path_model, n_grid = n_grid, n_cores = n_cores,
-      strategy = strategy, use_tf = use_tf, tf_environ = tf_environ,
-      tf_use_single = tf_use_single, n_cores_lf = n_cores_lf,
-      lf_temp_cleanup = lf_temp_cleanup, lf_check = lf_check,
-      temp_dir = temp_dir, temp_cleanup = temp_cleanup, verbose = TRUE,
-      lf_commands_only = TRUE)
+      strategy = strategy, future_max_size = future_max_size, use_tf = use_tf,
+      tf_environ = tf_environ, tf_use_single = tf_use_single,
+      n_cores_lf = n_cores_lf, lf_temp_cleanup = lf_temp_cleanup,
+      lf_check = lf_check, temp_dir = temp_dir, temp_cleanup = temp_cleanup,
+      verbose = TRUE, lf_commands_only = TRUE)
 
     invisible(gc())
 
@@ -537,7 +537,7 @@ mod_postprocess_1_cpu <- function(
       } else {
         ecokit::set_parallel(
           n_cores = min(n_cores, nrow(response_curve_data)), level = 2L,
-          strategy = strategy, future_max_size = 1500L)
+          strategy = strategy, future_max_size = future_max_size)
         withr::defer(future::plan("sequential", gc = TRUE))
       }
 
@@ -657,6 +657,7 @@ mod_postprocess_1_cpu <- function(
   IASDT.R::predict_maps(
     path_model = path_model, hab_abb = hab_abb, env_file = env_file,
     n_cores = n_cores, n_cores_pred = n_cores_pred, strategy = strategy,
+    future_max_size = future_max_size,
     # Do not clamp predictions for predicting latent factors
     clamp_pred = dplyr::if_else(spatial_model, FALSE, clamp_pred),
     fix_efforts = fix_efforts, fix_rivers = fix_rivers,
@@ -711,7 +712,7 @@ mod_postprocess_1_cpu <- function(
 
 #' @export
 #' @rdname mod_postprocessing
-#' @name mod_postprocessing
+#' @name mod_postprocessingS
 #' @order 2
 #' @author Ahmed El-Gabbas
 
@@ -792,10 +793,23 @@ mod_prepare_tf <- function(
       level = 1L, cat_timestamp = FALSE)
 
     # Find list of files matching the pattern
-    vp_in_files <- fs::dir_ls(
-      path = path_model, recurse = TRUE, type = "file",
-      regexp = paste0(model_prefix, ".+/temp_vp/vp_.+command.txt")) %>%
-      purrr::map(readr::read_lines, progress = FALSE) %>%
+
+    # fs::dir_ls gives `Segmentation fault (core dumped)` error when too many
+    # files exist in the path_model directory
+    # vp_in_files <- fs::dir_ls(
+    #   path = path_model, recurse = TRUE, type = "file",
+    #   regexp = paste0(model_prefix, ".+/temp_vp/vp_.+command.txt")) %>%
+    #   purrr::map(readr::read_lines, progress = FALSE) %>%
+    #   unlist() %>%
+    #   gtools::mixedsort() %>%
+    #   unique() %>%
+    #   unname()
+
+    vp_in_files <- list.dirs(path = path_model, recursive = FALSE) %>%
+      stringr::str_subset(pattern = model_prefix) %>%
+      purrr::map(
+        .f = list.files, recursive = TRUE, full.names = TRUE,
+        pattern = "vp_.+command.txt") %>%
       unlist() %>%
       gtools::mixedsort() %>%
       unique() %>%
@@ -916,9 +930,22 @@ mod_prepare_tf <- function(
     # Find list of files matching the pattern
     # Regex pattern to match input files
     lf_pattern <- "(lf_new_sites_commands_.+.txt|lf_rc_commands_.+txt)"
-    lf_in_files <- fs::dir_ls(
-      path = path_model, recurse = TRUE, type = "file",
-      regexp = paste0(model_prefix, ".+/temp_pred/", lf_pattern))
+
+    # fs::dir_ls gives `Segmentation fault (core dumped)` error when too many
+    # files exist in the path_model directory
+    # lf_in_files <- fs::dir_ls(
+    #   path = path_model, recurse = TRUE, type = "file",
+    #   regexp = paste0(model_prefix, ".+/temp_pred/", lf_pattern))
+
+    lf_in_files <- list.dirs(path = path_model, recursive = FALSE) %>%
+      stringr::str_subset(pattern = model_prefix) %>%
+      purrr::map(
+        .f = list.files, recursive = TRUE, full.names = TRUE,
+        pattern = lf_pattern) %>%
+      unlist() %>%
+      gtools::mixedsort() %>%
+      unique() %>%
+      unname()
 
     if (length(lf_in_files) == 0) {
       ecokit::stop_ctx(
@@ -1103,12 +1130,12 @@ mod_prepare_tf <- function(
 #' @author Ahmed El-Gabbas
 
 mod_postprocess_2_cpu <- function(
-    model_dir = NULL, hab_abb = NULL, strategy = "multisession", n_cores = 8L,
-    n_cores_pred = n_cores, n_cores_lf = n_cores, n_cores_rc = n_cores,
-    env_file = ".env", gpp_dist = NULL, use_trees = "tree",
-    mcmc_n_samples = 1000L, mcmc_thin = NULL, use_tf = TRUE, tf_environ = NULL,
-    tf_use_single = FALSE, lf_check = FALSE, lf_temp_cleanup = TRUE,
-    temp_cleanup = TRUE, n_grid = 50L,
+    model_dir = NULL, hab_abb = NULL, strategy = "multisession",
+    future_max_size = 1500L, n_cores = 8L, n_cores_pred = n_cores,
+    n_cores_lf = n_cores, n_cores_rc = n_cores, env_file = ".env",
+    gpp_dist = NULL, use_trees = "tree", mcmc_n_samples = 1000L,
+    mcmc_thin = NULL, use_tf = TRUE, tf_environ = NULL, tf_use_single = FALSE,
+    lf_check = FALSE, lf_temp_cleanup = TRUE, temp_cleanup = TRUE, n_grid = 50L,
     climate_models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
@@ -1136,7 +1163,8 @@ mod_postprocess_2_cpu <- function(
       "spatial_model", "is_cv_model",  "lf_temp_cleanup", "pred_new_sites"),
     args_type = "logical")
   ecokit::check_args(
-    args_to_check = c("gpp_dist", "mcmc_n_samples", "mcmc_thin", "n_grid"),
+    args_to_check = c(
+      "gpp_dist", "mcmc_n_samples", "mcmc_thin", "n_grid", "future_max_size"),
     args_type = "numeric")
 
   hab_abb <- .validate_hab_abb(as.character(hab_abb))
@@ -1287,7 +1315,8 @@ mod_postprocess_2_cpu <- function(
 
       IASDT.R::rc_prepare_data(
         path_model = path_model, n_grid = n_grid, n_cores = n_cores_rc,
-        strategy = strategy, use_tf = use_tf, tf_environ = tf_environ,
+        strategy = strategy, future_max_size = future_max_size,
+        use_tf = use_tf, tf_environ = tf_environ,
         tf_use_single = tf_use_single, n_cores_lf = n_cores_lf,
         lf_temp_cleanup = lf_temp_cleanup, lf_check = lf_check,
         temp_dir = temp_dir, temp_cleanup = temp_cleanup, verbose = TRUE,
@@ -1311,7 +1340,7 @@ mod_postprocess_2_cpu <- function(
 
       IASDT.R::rc_plot_sr(
         model_dir = model_dir, verbose = TRUE, n_cores = n_cores_rc,
-        strategy = strategy)
+        strategy = strategy, future_max_size = future_max_size)
 
       invisible(gc())
 
@@ -1356,9 +1385,10 @@ mod_postprocess_2_cpu <- function(
       IASDT.R::predict_maps(
         path_model = path_model, hab_abb = hab_abb, env_file = env_file,
         n_cores = n_cores, n_cores_pred = n_cores_pred, strategy = strategy,
-        clamp_pred = clamp_pred, fix_efforts = fix_efforts,
-        fix_rivers = fix_rivers, pred_new_sites = pred_new_sites,
-        use_tf = use_tf, tf_environ = tf_environ, tf_use_single = tf_use_single,
+        future_max_size = future_max_size, clamp_pred = clamp_pred,
+        fix_efforts = fix_efforts, fix_rivers = fix_rivers,
+        pred_new_sites = pred_new_sites, use_tf = use_tf,
+        tf_environ = tf_environ, tf_use_single = tf_use_single,
         n_cores_lf = n_cores_lf, lf_check = lf_check,
         lf_temp_cleanup = lf_temp_cleanup, lf_only = FALSE,
         lf_commands_only = FALSE, temp_dir = temp_dir,

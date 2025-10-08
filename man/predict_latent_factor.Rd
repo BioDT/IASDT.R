@@ -12,6 +12,7 @@ predict_latent_factor(
   lf_rl,
   n_cores_lf = 8L,
   strategy = "multisession",
+  future_max_size = 1000L,
   temp_dir = "temp_pred",
   lf_temp_cleanup = TRUE,
   model_name = NULL,
@@ -49,6 +50,10 @@ latent factor prediction. Defaults to 8L.}
 \item{strategy}{Character. The parallel processing strategy to use. Valid
 options are "sequential", "multisession" (default), "multicore", and
 "cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
+
+\item{future_max_size}{Numeric. Maximum allowed total size (in megabytes) of
+global variables identified. See \code{future.globals.maxSize} argument of
+\link[future:zzz-future.options]{future::future.options} for more details.}
 
 \item{temp_dir}{Character. Path for temporary storage of intermediate files.}
 

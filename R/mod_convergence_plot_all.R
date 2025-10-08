@@ -16,6 +16,9 @@
 #' @param strategy Character. The parallel processing strategy to use. Valid
 #'   options are "sequential", "multisession" (default), "multicore", and
 #'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
+#' @param future_max_size	Numeric. Maximum allowed total size (in megabytes) of
+#'   global variables identified. See `future.globals.maxSize` argument of
+#'   [future::future.options] for more details.
 #' @param spatial_model Logical. Whether the model is a spatial model. If `TRUE`
 #'   (default), the function will generate additional plots for the model's
 #'   `Alpha` parameter.
@@ -29,7 +32,7 @@
 convergence_plot_all <- function(
     model_dir = NULL, n_omega = 1000L, margin_type = "histogram",
     spatial_model = TRUE, n_cores = NULL, strategy = "multisession",
-    n_rc_alpha = c(2L, 3L)) {
+    future_max_size = 1000L, n_rc_alpha = c(2L, 3L)) {
 
   # # ..................................................................... ###
 
@@ -41,8 +44,8 @@ convergence_plot_all <- function(
   ecokit::check_args(
     args_to_check = c("model_dir", "margin_type"), args_type = "character")
   ecokit::check_args(
-    args_to_check = c("n_omega", "n_rc_alpha"),
-    args_type = "numeric", arg_length = c(1L, 2L))
+    args_to_check = c("n_omega", "n_rc_alpha", "future_max_size"),
+    args_type = "numeric", arg_length = c(1L, 2L, 1L))
   ecokit::check_args(args_to_check = "spatial_model", args_type = "logical")
 
   if (!margin_type %in% c("histogram", "density")) {
@@ -278,7 +281,7 @@ convergence_plot_all <- function(
     } else {
       ecokit::set_parallel(
         n_cores = n_cores, level = 2L,
-        future_max_size = 800L, strategy = strategy)
+        future_max_size = future_max_size, strategy = strategy)
       withr::defer(future::plan("sequential", gc = TRUE))
     }
 

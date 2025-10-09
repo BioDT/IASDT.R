@@ -1132,10 +1132,11 @@ mod_prepare_tf <- function(
 mod_postprocess_2_cpu <- function(
     model_dir = NULL, hab_abb = NULL, strategy = "multisession",
     future_max_size = 1500L, n_cores = 8L, n_cores_pred = n_cores,
-    n_cores_lf = n_cores, n_cores_rc = n_cores, env_file = ".env",
-    gpp_dist = NULL, use_trees = "tree", mcmc_n_samples = 1000L,
-    mcmc_thin = NULL, use_tf = TRUE, tf_environ = NULL, tf_use_single = FALSE,
-    lf_check = FALSE, lf_temp_cleanup = TRUE, temp_cleanup = TRUE, n_grid = 50L,
+    n_cores_lf = n_cores, n_cores_rc = n_cores, n_cores_vp = n_cores,
+    env_file = ".env", gpp_dist = NULL, use_trees = "tree",
+    mcmc_n_samples = 1000L, mcmc_thin = NULL, use_tf = TRUE, tf_environ = NULL,
+    tf_use_single = FALSE, lf_check = FALSE, lf_temp_cleanup = TRUE,
+    temp_cleanup = TRUE, n_grid = 50L,
     climate_models = c(
       "GFDL-ESM4", "IPSL-CM6A-LR", "MPI-ESM1-2-HR",
       "MRI-ESM2-0", "UKESM1-0-LL"),
@@ -1460,7 +1461,7 @@ mod_postprocess_2_cpu <- function(
       cat_timestamp = FALSE)
 
     IASDT.R::variance_partitioning_compute(
-      path_model = path_model, n_cores = n_cores, use_tf = use_tf,
+      path_model = path_model, n_cores = n_cores_vp, use_tf = use_tf,
       tf_environ = tf_environ, tf_use_single = tf_use_single,
       temp_cleanup = temp_cleanup, chunk_size = 50L, verbose = TRUE,
       vp_file = "varpar", vp_commands_only = FALSE)
@@ -1478,8 +1479,9 @@ mod_postprocess_2_cpu <- function(
 
     IASDT.R::variance_partitioning_plot(
       path_model = path_model, env_file = env_file, vp_file = "varpar",
-      use_tf = use_tf, tf_environ = tf_environ, n_cores = n_cores, width = 30,
-      height = 15, spatial_model = spatial_model, is_cv_model = is_cv_model)
+      use_tf = use_tf, tf_environ = tf_environ, n_cores = n_cores_vp,
+      width = 30, height = 15, spatial_model = spatial_model,
+      is_cv_model = is_cv_model)
 
   }
 

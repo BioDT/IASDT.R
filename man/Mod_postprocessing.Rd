@@ -75,6 +75,7 @@ mod_postprocess_2_cpu(
   n_cores_pred = n_cores,
   n_cores_lf = n_cores,
   n_cores_rc = n_cores,
+  n_cores_vp = n_cores,
   env_file = ".env",
   gpp_dist = NULL,
   use_trees = "tree",

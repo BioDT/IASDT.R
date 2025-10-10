@@ -46,6 +46,9 @@
 #'   (`TRUE`) or fitted with the full dataset (`FALSE`; default). If `TRUE`, the
 #'   explanatory and predictive power of the model will be used to estimate the
 #'   raw variance partitioning.
+#' @param temp_dir Character. Path to a temporary directory to store
+#'   intermediate files. Default: `NULL`, which creates a temporary directory in
+#'   the same parent directory as the model file.
 #' @param axis_text Numeric. Size of the axis text. Default: `4`.
 #' @author Ahmed El-Gabbas
 #' @importFrom foreach %dopar%
@@ -60,7 +63,7 @@ variance_partitioning_compute <- function(
     path_model, group = NULL, group_names = NULL, start = 1L, na.ignore = FALSE,
     n_cores = 8L, use_tf = TRUE, tf_environ = NULL, tf_use_single = FALSE,
     temp_cleanup = TRUE, chunk_size = 50L, verbose = TRUE, vp_file = "varpar",
-    vp_commands_only = FALSE) {
+    vp_commands_only = FALSE, temp_dir = NULL) {
 
   x <- NULL
 
@@ -274,15 +277,17 @@ variance_partitioning_compute <- function(
       "Prepare/check VP files for `TensorFlow`", verbose = verbose)
 
     # Create the temporary directory
-    path_temp <- fs::path(dirname(dirname(path_model)), "temp_vp")
-    fs::dir_create(path_temp)
-    path_vp_input_files <- fs::path(path_temp, "vp_input_files.txt")
+    if (is.null(temp_dir)) {
+      temp_dir <- fs::path(dirname(dirname(path_model)), "temp_vp")
+    }
+    fs::dir_create(temp_dir)
+    path_vp_input_files <- fs::path(temp_dir, "vp_input_files.txt")
 
     file_suffix <- stringr::str_pad(
       string = seq_len(pool_n), pad = "0", width = 4)
 
     # List of feather files resulted from `geta` function
-    Files_la <- fs::path(path_temp, paste0("vp_a_", file_suffix, ".feather"))
+    Files_la <- fs::path(temp_dir, paste0("vp_a_", file_suffix, ".feather"))
     files_la_exist <- all(fs::file_exists(Files_la))
 
     if (files_la_exist) {
@@ -300,7 +305,7 @@ variance_partitioning_compute <- function(
     }
 
     # List of feather files resulted from `getf` function
-    Files_lf <- fs::path(path_temp, paste0("vp_f_", file_suffix, ".feather"))
+    Files_lf <- fs::path(temp_dir, paste0("vp_f_", file_suffix, ".feather"))
     files_lf_exist <- all(fs::file_exists(Files_lf))
     if (files_lf_exist) {
       files_lf_exist <- foreach::foreach(
@@ -317,7 +322,7 @@ variance_partitioning_compute <- function(
     }
 
     # List of feather files resulted from `gemu` function
-    Files_lmu <- fs::path(path_temp, paste0("vp_mu_", file_suffix, ".feather"))
+    Files_lmu <- fs::path(temp_dir, paste0("vp_mu_", file_suffix, ".feather"))
     files_lmu_exist <- all(fs::file_exists(Files_lmu))
     if (files_lmu_exist) {
       files_lmu_exist <- foreach::foreach(
@@ -334,7 +339,7 @@ variance_partitioning_compute <- function(
     }
 
     beta_files <- fs::path(
-      path_temp, paste0("vp_beta_", file_suffix, ".feather"))
+      temp_dir, paste0("vp_beta_", file_suffix, ".feather"))
 
     if (all(c(files_la_exist, files_lf_exist, files_lmu_exist))) {
 
@@ -361,7 +366,7 @@ variance_partitioning_compute <- function(
       # needed only to calculate `geta` and `getf` functions
       if (!all(c(files_la_exist, files_lf_exist))) {
         ecokit::cat_time("X", level = 2L, verbose = verbose)
-        path_x <- fs::path(path_temp, "vp_x.feather")
+        path_x <- fs::path(temp_dir, "vp_x.feather")
         if (!file.exists(path_x)) {
           arrow::write_feather(as.data.frame(model_obj$X), path_x)
         }
@@ -371,14 +376,14 @@ variance_partitioning_compute <- function(
       # needed only to calculate `geta` and `gemu` functions
       if (!all(c(files_la_exist, files_lmu_exist))) {
         ecokit::cat_time("Tr", level = 2L, verbose = verbose)
-        path_tr <- fs::path(path_temp, "vp_tr.feather")
+        path_tr <- fs::path(temp_dir, "vp_tr.feather")
         if (!file.exists(path_tr)) {
           arrow::write_feather(as.data.frame(model_obj$Tr), path_tr)
         }
 
         # Gamma - convert each list item into a column in a data frame
         ecokit::cat_time("Gamma", level = 2L, verbose = verbose)
-        path_gamma <- fs::path(path_temp, "vp_gamma.feather")
+        path_gamma <- fs::path(temp_dir, "vp_gamma.feather")
         if (!file.exists(path_gamma)) {
           gamma_data <- postList %>%
             purrr::map(~as.vector(.x[["Gamma"]])) %>%
@@ -470,7 +475,7 @@ variance_partitioning_compute <- function(
 
         ecokit::cat_time(
           "Processing `geta` function", level = 1L, verbose = verbose)
-        path_out_a <- fs::path(path_temp, "vp_a.feather") %>%
+        path_out_a <- fs::path(temp_dir, "vp_a.feather") %>%
           ecokit::normalize_path()
 
         cmd_a <- paste(
@@ -493,7 +498,7 @@ variance_partitioning_compute <- function(
           cmd_a <- paste0(cmd_a, paste0(" >> ", path_log_a, " 2>&1"))
           readr::write_lines(
             x = cmd_a,
-            file = fs::path(path_temp, "vp_a_command.txt"), append = FALSE)
+            file = fs::path(temp_dir, "vp_a_command.txt"), append = FALSE)
 
         } else {
 
@@ -529,13 +534,13 @@ variance_partitioning_compute <- function(
 
         ecokit::cat_time(
           "Processing `getf` function", level = 1L, verbose = verbose)
-        path_out_f <- fs::path(path_temp, "vp_f.feather") %>%
+        path_out_f <- fs::path(temp_dir, "vp_f.feather") %>%
           ecokit::normalize_path()
 
         cmd_f <- paste(
           python_executable, script_getf,
           "--x", ecokit::normalize_path(path_x, must_work = TRUE),
-          "--beta_dir", ecokit::normalize_path(path_temp, must_work = TRUE),
+          "--beta_dir", ecokit::normalize_path(temp_dir, must_work = TRUE),
           "--output", path_out_f,
           "--ncores", 1)
 
@@ -551,7 +556,7 @@ variance_partitioning_compute <- function(
           cmd_f <- paste0(cmd_f, paste0(" >> ", path_log_f, " 2>&1"))
           readr::write_lines(
             x = cmd_f,
-            file = fs::path(path_temp, "vp_f_command.txt"),
+            file = fs::path(temp_dir, "vp_f_command.txt"),
             append = FALSE)
 
         } else {
@@ -588,7 +593,7 @@ variance_partitioning_compute <- function(
 
         ecokit::cat_time(
           "Processing `gemu` function", level = 1L, verbose = verbose)
-        path_out_mu <- fs::path(path_temp, "vp_mu.feather") %>%
+        path_out_mu <- fs::path(temp_dir, "vp_mu.feather") %>%
           ecokit::normalize_path()
 
         cmd_mu <- paste(
@@ -611,7 +616,7 @@ variance_partitioning_compute <- function(
           cmd_mu <- paste0(cmd_mu, paste0(" >> ", path_log_mu, " 2>&1"))
           readr::write_lines(
             x = cmd_mu,
-            file = fs::path(path_temp, "vp_mu_command.txt"),
+            file = fs::path(temp_dir, "vp_mu_command.txt"),
             append = FALSE)
 
         } else {
@@ -741,7 +746,7 @@ variance_partitioning_compute <- function(
 
     ecokit::cat_time(
       "Split `lbeta` list into small qs2 files", level = 1L, verbose = verbose)
-    path_lbeta <- fs::path(path_temp, "lbeta")
+    path_lbeta <- fs::path(temp_dir, "lbeta")
     purrr::walk(
       .x = seq_along(lbeta),
       .f = ~ {
@@ -756,7 +761,7 @@ variance_partitioning_compute <- function(
     ecokit::cat_time(
       "Split `postList` list into small qs2 files",
       level = 1L, verbose = verbose)
-    path_postList <- fs::path(path_temp, "postList")
+    path_postList <- fs::path(temp_dir, "postList")
     purrr::walk(
       .x = seq_along(postList),
       .f = ~{
@@ -1089,21 +1094,21 @@ variance_partitioning_compute <- function(
       }
     }
 
-    path_temp <- ecokit::normalize_path(path_temp)
+    temp_dir <- ecokit::normalize_path(temp_dir)
     try(
       expr = {
         file_paths <- list.files(
-          path = path_temp,
+          path = temp_dir,
           pattern = "(vp_).+(feather|log)$", full.names = TRUE)
 
         fs::file_delete(file_paths)
       },
       silent = TRUE)
 
-    if (fs::dir_exists(path_temp) && length(fs::dir_ls(path_temp)) == 0) {
+    if (fs::dir_exists(temp_dir) && length(fs::dir_ls(temp_dir)) == 0) {
       try({
         ecokit::system_command(
-          paste0("rm -rf ", path_temp),
+          paste0("rm -rf ", temp_dir),
           ignore.stderr = TRUE, ignore.stdout = TRUE)
       },
       silent = TRUE)

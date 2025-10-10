@@ -17,6 +17,9 @@
 #'   selected model.
 #' @param use_trees Character. Whether a phylogenetic tree was used in the
 #'   selected model. Accepts "tree" (default) or "no_tree".
+#' @param temp_dir Character. Path to a temporary directory to store temporary
+#'   files of model predictions. If `NULL`, a directory named `temp_pred` is
+#'   created in the `model_dir`.
 #' @param mcmc_thin,mcmc_n_samples Integer. Thinning value and the number of
 #'   MCMC samples of the selected model.
 #' @param strategy Character. The parallel processing strategy to use. Valid
@@ -59,9 +62,9 @@
 #'   or not (`FALSE`) and whether to plot latent factors for spatial models as
 #'   JPEG files (using [plot_latent_factor]). Defaults to `TRUE`.
 #' @param rc_prepare,rc_plot Logical. Whether to prepare the data for response
-#'   curve prediction (using [rc_prepare_data]) and plot the response
-#'   curves as JPEG files. (using [rc_plot_sr], [rc_plot_species],
-#'   and [rc_plot_species_all]). Defaults to `TRUE`.
+#'   curve prediction (using [rc_prepare_data]) and plot the response curves as
+#'   JPEG files. (using [rc_plot_sr], [rc_plot_species], and
+#'   [rc_plot_species_all]). Defaults to `TRUE`.
 #' @param vp_prepare,vp_plot Logical. Whether to prepare the data for variance
 #'   partitioning (using [variance_partitioning_compute]) and plot its results
 #'   (using [variance_partitioning_plot]). Defaults to `TRUE`.
@@ -195,7 +198,7 @@ mod_postprocess_1_cpu <- function(
     future_max_size = 1500L, n_cores = 8L, n_cores_pred = n_cores,
     n_cores_lf = n_cores, n_cores_vp = n_cores, env_file = ".env",
     path_hmsc = NULL, memory_per_cpu = "64G", job_runtime = "01:00:00",
-    from_json = FALSE, gpp_dist = NULL, use_trees = "tree",
+    from_json = FALSE, gpp_dist = NULL, use_trees = "tree", temp_dir = NULL,
     mcmc_n_samples = 1000L, mcmc_thin = NULL, n_omega = 1000L,
     cv_name = c("cv_dist", "cv_large"), n_grid = 50L, use_tf = TRUE,
     tf_use_single = FALSE,  lf_temp_cleanup = TRUE, lf_check = FALSE,
@@ -382,7 +385,10 @@ mod_postprocess_1_cpu <- function(
       path_model = path_model, path_coda = path_coda, include_backtrace = TRUE)
   }
 
-  temp_dir <- fs::path(model_dir, "temp_pred")
+  if (is.null(temp_dir)) {
+    temp_dir <- fs::path(model_dir, "temp_pred")
+  }
+  fs::dir_create(temp_dir)
 
   # ****************************************************************
 
@@ -636,7 +642,7 @@ mod_postprocess_1_cpu <- function(
     path_model = path_model, n_cores = n_cores_vp, use_tf = use_tf,
     tf_environ = tf_environ, tf_use_single = tf_use_single,
     temp_cleanup = temp_cleanup, chunk_size = 50L, verbose = TRUE,
-    vp_file = "varpar", vp_commands_only = TRUE)
+    vp_file = "varpar", vp_commands_only = TRUE, temp_dir = temp_dir)
 
   # ****************************************************************
 
@@ -1133,7 +1139,7 @@ mod_postprocess_2_cpu <- function(
     model_dir = NULL, hab_abb = NULL, strategy = "multisession",
     future_max_size = 1500L, n_cores = 8L, n_cores_pred = n_cores,
     n_cores_lf = n_cores, n_cores_rc = n_cores, n_cores_vp = n_cores,
-    env_file = ".env", gpp_dist = NULL, use_trees = "tree",
+    env_file = ".env", gpp_dist = NULL, use_trees = "tree", temp_dir = NULL,
     mcmc_n_samples = 1000L, mcmc_thin = NULL, use_tf = TRUE, tf_environ = NULL,
     tf_use_single = FALSE, lf_check = FALSE, lf_temp_cleanup = TRUE,
     temp_cleanup = TRUE, n_grid = 50L,
@@ -1253,7 +1259,10 @@ mod_postprocess_2_cpu <- function(
 
   # ****************************************************************
 
-  temp_dir <- fs::path(model_dir, "temp_pred")
+  if (is.null(temp_dir)) {
+    temp_dir <- fs::path(model_dir, "temp_pred")
+  }
+  fs::dir_create(temp_dir)
 
   model_data <- fs::path(model_dir, "model_data_subset.RData")
   if (!ecokit::check_data(model_data)) {
@@ -1464,7 +1473,7 @@ mod_postprocess_2_cpu <- function(
       path_model = path_model, n_cores = n_cores_vp, use_tf = use_tf,
       tf_environ = tf_environ, tf_use_single = tf_use_single,
       temp_cleanup = temp_cleanup, chunk_size = 50L, verbose = TRUE,
-      vp_file = "varpar", vp_commands_only = FALSE)
+      vp_file = "varpar", vp_commands_only = FALSE, temp_dir = temp_dir)
   }
 
   # ****************************************************************
@@ -1481,7 +1490,7 @@ mod_postprocess_2_cpu <- function(
       path_model = path_model, env_file = env_file, vp_file = "varpar",
       use_tf = use_tf, tf_environ = tf_environ, n_cores = n_cores_vp,
       width = 30, height = 15, spatial_model = spatial_model,
-      is_cv_model = is_cv_model)
+      is_cv_model = is_cv_model, temp_dir = temp_dir)
 
   }
 

@@ -1537,11 +1537,6 @@ predict_maps <- function(
     "\tPrepare overall summary", n_separators = 1L, line_char = "-",
     line_char_rep = 70L, cat_red = TRUE, cat_bold = TRUE, cat_timestamp = FALSE)
 
-  prediction_summary <- dplyr::rename(
-    prediction_summary,
-    time_period = time_period, climate_model = climate_model,
-    climate_scenario = climate_scenario)
-
   if (length(climate_models) > 1 && !is.null(climate_scenario)) {
     prediction_summary <- dplyr::bind_rows(
       prediction_summary, prediction_ensemble_summary)

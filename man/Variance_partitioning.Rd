@@ -21,7 +21,8 @@ variance_partitioning_compute(
   chunk_size = 50L,
   verbose = TRUE,
   vp_file = "varpar",
-  vp_commands_only = FALSE
+  vp_commands_only = FALSE,
+  temp_dir = NULL
 )
 
 variance_partitioning_plot(
@@ -35,7 +36,8 @@ variance_partitioning_plot(
   height = 15,
   axis_text = 4,
   spatial_model = TRUE,
-  is_cv_model = FALSE
+  is_cv_model = FALSE,
+  temp_dir = NULL
 )
 }
 \arguments{
@@ -81,6 +83,10 @@ Default: \code{varpar}.}
 
 \item{vp_commands_only}{Logical. If \code{TRUE}, returns the commands to run the
 Python script. Default is \code{FALSE}. Only relevant when \code{use_tf} is \code{TRUE}.}
+
+\item{temp_dir}{Character. Path to a temporary directory to store
+intermediate files. Default: \code{NULL}, which creates a temporary directory in
+the same parent directory as the model file.}
 
 \item{env_file}{Character. Path to the environment file containing paths to
 data sources. Defaults to \code{.env}.}

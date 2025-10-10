@@ -26,6 +26,7 @@ mod_postprocess_1_cpu(
   from_json = FALSE,
   gpp_dist = NULL,
   use_trees = "tree",
+  temp_dir = NULL,
   mcmc_n_samples = 1000L,
   mcmc_thin = NULL,
   n_omega = 1000L,
@@ -79,6 +80,7 @@ mod_postprocess_2_cpu(
   env_file = ".env",
   gpp_dist = NULL,
   use_trees = "tree",
+  temp_dir = NULL,
   mcmc_n_samples = 1000L,
   mcmc_thin = NULL,
   use_tf = TRUE,
@@ -189,6 +191,10 @@ selected model.}
 \item{use_trees}{Character. Whether a phylogenetic tree was used in the
 selected model. Accepts "tree" (default) or "no_tree".}
 
+\item{temp_dir}{Character. Path to a temporary directory to store temporary
+files of model predictions. If \code{NULL}, a directory named \code{temp_pred} is
+created in the \code{model_dir}.}
+
 \item{mcmc_thin, mcmc_n_samples}{Integer. Thinning value and the number of
 MCMC samples of the selected model.}
 
@@ -281,9 +287,9 @@ Defaults are \code{01:00:00} and \code{02:00:00} respectively.}
 running commands. Defaults to \code{NULL}. This can not be \code{NULL}.}
 
 \item{rc_prepare, rc_plot}{Logical. Whether to prepare the data for response
-curve prediction (using \link{rc_prepare_data}) and plot the response
-curves as JPEG files. (using \link{rc_plot_sr}, \link{rc_plot_species},
-and \link{rc_plot_species_all}). Defaults to \code{TRUE}.}
+curve prediction (using \link{rc_prepare_data}) and plot the response curves as
+JPEG files. (using \link{rc_plot_sr}, \link{rc_plot_species}, and
+\link{rc_plot_species_all}). Defaults to \code{TRUE}.}
 
 \item{vp_prepare, vp_plot}{Logical. Whether to prepare the data for variance
 partitioning (using \link{variance_partitioning_compute}) and plot its results

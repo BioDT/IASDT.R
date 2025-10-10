@@ -10,7 +10,7 @@
 variance_partitioning_plot <- function(
     path_model = NULL, env_file = ".env", vp_file = "varpar", use_tf = TRUE,
     tf_environ = NULL, n_cores = 1L, width = 30, height = 15, axis_text = 4,
-    spatial_model = TRUE, is_cv_model = FALSE) {
+    spatial_model = TRUE, is_cv_model = FALSE, temp_dir = NULL) {
 
   .start_time <- lubridate::now(tzone = "CET")
 
@@ -173,9 +173,14 @@ variance_partitioning_plot <- function(
         dplyr::if_else(use_tf, "and", "without"), " `TensorFlow`."),
       level = 1L, cat_timestamp = FALSE)
 
+    if (is.null(temp_dir)) {
+      temp_dir <- fs::path(dirname(dirname(path_model)), "temp_vp")
+    }
+
     varpar <- IASDT.R::variance_partitioning_compute(
       path_model = path_model, n_cores = n_cores, use_tf = use_tf,
-      tf_environ = tf_environ, verbose = TRUE, vp_file = vp_file)
+      tf_environ = tf_environ, verbose = TRUE, vp_file = vp_file,
+      temp_dir = temp_dir)
 
   }
 

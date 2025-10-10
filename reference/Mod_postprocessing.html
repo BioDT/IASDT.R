@@ -80,6 +80,7 @@ cross-validated models. See details for more information.</p>
 <span>  from_json <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  gpp_dist <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  use_trees <span class="op">=</span> <span class="st">"tree"</span>,</span>
+<span>  temp_dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  mcmc_n_samples <span class="op">=</span> <span class="fl">1000L</span>,</span>
 <span>  mcmc_thin <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  n_omega <span class="op">=</span> <span class="fl">1000L</span>,</span>
@@ -133,6 +134,7 @@ cross-validated models. See details for more information.</p>
 <span>  env_file <span class="op">=</span> <span class="st">".env"</span>,</span>
 <span>  gpp_dist <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  use_trees <span class="op">=</span> <span class="st">"tree"</span>,</span>
+<span>  temp_dir <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  mcmc_n_samples <span class="op">=</span> <span class="fl">1000L</span>,</span>
 <span>  mcmc_thin <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  use_tf <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -269,6 +271,12 @@ selected model.</p></dd>
 <dt id="arg-use-trees">use_trees<a class="anchor" aria-label="anchor" href="#arg-use-trees"></a></dt>
 <dd><p>Character. Whether a phylogenetic tree was used in the
 selected model. Accepts "tree" (default) or "no_tree".</p></dd>
+
+
+<dt id="arg-temp-dir">temp_dir<a class="anchor" aria-label="anchor" href="#arg-temp-dir"></a></dt>
+<dd><p>Character. Path to a temporary directory to store temporary
+files of model predictions. If <code>NULL</code>, a directory named <code>temp_pred</code> is
+created in the <code>model_dir</code>.</p></dd>
 
 
 <dt id="arg-mcmc-thin-mcmc-n-samples">mcmc_thin, mcmc_n_samples<a class="anchor" aria-label="anchor" href="#arg-mcmc-thin-mcmc-n-samples"></a></dt>
@@ -412,9 +420,9 @@ running commands. Defaults to <code>NULL</code>. This can not be <code>NULL</cod
 
 <dt id="arg-rc-prepare-rc-plot">rc_prepare, rc_plot<a class="anchor" aria-label="anchor" href="#arg-rc-prepare-rc-plot"></a></dt>
 <dd><p>Logical. Whether to prepare the data for response
-curve prediction (using <a href="Response_curves.html">rc_prepare_data</a>) and plot the response
-curves as JPEG files. (using <a href="Response_curves.html">rc_plot_sr</a>, <a href="Response_curves.html">rc_plot_species</a>,
-and <a href="Response_curves.html">rc_plot_species_all</a>). Defaults to <code>TRUE</code>.</p></dd>
+curve prediction (using <a href="Response_curves.html">rc_prepare_data</a>) and plot the response curves as
+JPEG files. (using <a href="Response_curves.html">rc_plot_sr</a>, <a href="Response_curves.html">rc_plot_species</a>, and
+<a href="Response_curves.html">rc_plot_species_all</a>). Defaults to <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-vp-prepare-vp-plot">vp_prepare, vp_plot<a class="anchor" aria-label="anchor" href="#arg-vp-prepare-vp-plot"></a></dt>

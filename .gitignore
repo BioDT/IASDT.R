@@ -19,3 +19,4 @@ inst/VarPar2.py
 IASDT.R.Rcheck
 cspell.json
 *.code-workspace
+*.html

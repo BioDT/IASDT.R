@@ -88,7 +88,7 @@ DT %>%
 ## -----------------------------------------------------------------------------
 DT <- tibble::tribble(
   ~Argument, ~Description,
-  "GPP", "whether to incorporate spatial random effects using the Gaussian Predictive Process (GPP)",
+  "gpp", "whether to incorporate spatial random effects using the Gaussian Predictive Process (GPP)",
   "gpp_dists", "distance (in kilometres; controlled by the `min_distance` argument of `prepare_knots()`) specifying both the spacing between knots and the minimum distance between a knot and the nearest sampling point",
   "gpp_plot", "whether to plot the coordinates of sampling units and knots",
   "min_lf / max_lf", "minimum and maximum number of latent factors to be include",

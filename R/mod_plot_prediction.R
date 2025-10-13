@@ -173,21 +173,25 @@ plot_prediction <- function(
   # # ..................................................................... ###
   # # ..................................................................... ###
 
-  # Load habitat map ----
+  if (hab_abb != "0") {
 
-  ecokit::cat_time("Load habitat map")
+    # Load habitat map ----
+    ecokit::cat_time("Load habitat map")
 
-  path_hab <- fs::path(
-    path_clc, "summary_rdata", "perc_cover_synhab_crop.RData")
-  if (!file.exists(path_hab)) {
-    ecokit::stop_ctx(
-      "path_hab file does not exist", path_hab = path_hab,
-      include_backtrace = TRUE)
+    path_hab <- fs::path(
+      path_clc, "summary_rdata", "perc_cover_synhab_crop.RData")
+    if (!file.exists(path_hab)) {
+      ecokit::stop_ctx(
+        "path_hab file does not exist", path_hab = path_hab,
+        include_backtrace = TRUE)
+    }
+    r_habitat <- ecokit::load_as(path_hab, unwrap_r = TRUE) %>%
+      terra::classify(rcl = cbind(0, NA)) %>%
+      terra::subset(paste0("synhab_", hab_abb)) %>%
+      terra::wrap()
+  } else {
+    r_habitat <- NULL
   }
-  r_habitat <- ecokit::load_as(path_hab, unwrap_r = TRUE) %>%
-    terra::classify(rcl = cbind(0, NA)) %>%
-    terra::subset(paste0("synhab_", hab_abb)) %>%
-    terra::wrap()
 
   invisible(gc())
 
@@ -442,14 +446,20 @@ plot_prediction <- function(
             color = "black", linewidth = 0.25, fill = NA,
             linetype = "dashed"))
 
-      # Percentage habitat coverage
-      plot_final <- prepare_plots(
-        map = terra::unwrap(r_habitat), breaks = seq(0, 100, 20),
-        limits = c(0, 100), show_legend = TRUE, plot_title = "% Habitat cover",
-        legend_title = "%") +
-        ggplot2::theme(
-          panel.border = ggplot2::element_rect(
-            color = "black", linewidth = 0.25, fill = NA, linetype = "dashed"))
+      if (hab_abb == "0") {
+        # use empty plot when no habitat is selected
+        plot_final <- cowplot::ggdraw()
+      } else {
+        # Percentage habitat coverage
+        plot_final <- prepare_plots(
+          map = terra::unwrap(r_habitat), breaks = seq(0, 100, 20),
+          limits = c(0, 100), show_legend = TRUE,
+          plot_title = "% Habitat cover", legend_title = "%") +
+          ggplot2::theme(
+            panel.border = ggplot2::element_rect(
+              color = "black", linewidth = 0.25, fill = NA,
+              linetype = "dashed"))
+      }
 
     } else {
 

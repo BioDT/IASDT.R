@@ -646,6 +646,12 @@ convergence_plot <- function(
 
   ecokit::cat_time("Preparing plotting data", level = 2L)
 
+  # untar the tar file containing data (if exists) to the beta_data directory
+  beta_data_tar <- fs::path(dir_beta_data, "beta_data.tar")
+  if (file.exists(beta_data_tar)) {
+    utils::untar(beta_data_tar, exdir = dir_beta_data)
+  }
+
   beta_data <- beta_data %>%
     dplyr::left_join(vars_ranges, by = "variable") %>%
     dplyr::left_join(species_taxonomy, by = "ias_id") %>%
@@ -1097,6 +1103,29 @@ convergence_plot <- function(
     ecokit::set_parallel(stop_cluster = TRUE, level = 2L)
     future::plan("sequential", gc = TRUE)
   }
+
+  # # ..................................................................... ###
+
+  # tar all qs2 files in the `dir_beta_data` directory
+  ecokit::cat_time("Tar all .qs2 files", level = 1L)
+
+  qs2_files <- list.files(path = dir_beta_data, pattern = "\\.qs2$")
+  qs2_files_2 <- paste(qs2_files, collapse = " ")
+
+  # Command to create the tar file
+  tar_command <- stringr::str_glue(
+    "cd {fs::path_abs(dir_beta_data)}; tar -cf {basename(beta_data_tar)} \\
+    -b 2048 {qs2_files_2}")
+
+  # Create tar file
+  system(tar_command)
+
+  # Change the permission of the tar file
+  Sys.chmod(beta_data_tar, "755", use_umask = FALSE)
+
+  # Delete all .qs2 files
+  try(fs::file_delete(fs::path(dir_beta_data, qs2_files)), silent = TRUE)
+  rm(qs2_files_2, envir = environment())
 
   # # ..................................................................... ###
 

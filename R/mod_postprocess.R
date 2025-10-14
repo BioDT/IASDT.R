@@ -1019,6 +1019,7 @@ mod_prepare_tf <- function(
               format(lubridate::now(tzone = "CET"), "%Y-%m-%d %H:%M:%S")),
             paste0("#", strrep("_", 60))),
           file = file, append = TRUE)
+          Sys.chmod(file, mode = "755")
 
         return(invisible(NULL))
       })

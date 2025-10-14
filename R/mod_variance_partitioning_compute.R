@@ -499,6 +499,7 @@ variance_partitioning_compute <- function(
           readr::write_lines(
             x = cmd_a,
             file = fs::path(temp_dir, "vp_a_command.txt"), append = FALSE)
+          Sys.chmod(fs::path(temp_dir, "vp_a_command.txt"), mode = "755")
 
         } else {
 
@@ -558,6 +559,7 @@ variance_partitioning_compute <- function(
             x = cmd_f,
             file = fs::path(temp_dir, "vp_f_command.txt"),
             append = FALSE)
+          Sys.chmod(fs::path(temp_dir, "vp_f_command.txt"), mode = "755")
 
         } else {
 
@@ -618,6 +620,7 @@ variance_partitioning_compute <- function(
             x = cmd_mu,
             file = fs::path(temp_dir, "vp_mu_command.txt"),
             append = FALSE)
+          Sys.chmod(fs::path(temp_dir, "vp_mu_command.txt"), mode = "755")
 
         } else {
 

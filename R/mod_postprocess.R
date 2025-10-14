@@ -17,9 +17,6 @@
 #'   selected model.
 #' @param use_trees Character. Whether a phylogenetic tree was used in the
 #'   selected model. Accepts "tree" (default) or "no_tree".
-#' @param temp_dir Character. Path to a temporary directory to store temporary
-#'   files of model predictions. If `NULL`, a directory named `temp_pred` is
-#'   created in the `model_dir`.
 #' @param mcmc_thin,mcmc_n_samples Integer. Thinning value and the number of
 #'   MCMC samples of the selected model.
 #' @param strategy Character. The parallel processing strategy to use. Valid
@@ -198,7 +195,7 @@ mod_postprocess_1_cpu <- function(
     future_max_size = 1500L, n_cores = 8L, n_cores_pred = n_cores,
     n_cores_lf = n_cores, n_cores_vp = n_cores, env_file = ".env",
     path_hmsc = NULL, memory_per_cpu = "64G", job_runtime = "01:00:00",
-    from_json = FALSE, gpp_dist = NULL, use_trees = "tree", temp_dir = NULL,
+    from_json = FALSE, gpp_dist = NULL, use_trees = "tree",
     mcmc_n_samples = 1000L, mcmc_thin = NULL, n_omega = 1000L,
     cv_name = c("cv_dist", "cv_large"), n_grid = 50L, use_tf = TRUE,
     tf_use_single = FALSE,  lf_temp_cleanup = TRUE, lf_check = FALSE,
@@ -385,10 +382,9 @@ mod_postprocess_1_cpu <- function(
       path_model = path_model, path_coda = path_coda, include_backtrace = TRUE)
   }
 
-  if (is.null(temp_dir)) {
-    temp_dir <- fs::path(model_dir, "temp_pred")
-  }
-  fs::dir_create(temp_dir)
+  temp_dir_pred <- fs::path(model_dir, "temp_pred")
+  temp_dir_vp <- fs::path(model_dir, "temp_vp")
+  fs::dir_create(c(temp_dir_pred, temp_dir_vp))
 
   # ****************************************************************
 
@@ -492,11 +488,10 @@ mod_postprocess_1_cpu <- function(
       strategy = strategy, future_max_size = future_max_size, use_tf = use_tf,
       tf_environ = tf_environ, tf_use_single = tf_use_single,
       n_cores_lf = n_cores_lf, lf_temp_cleanup = lf_temp_cleanup,
-      lf_check = lf_check, temp_dir = temp_dir, temp_cleanup = temp_cleanup,
-      verbose = TRUE, lf_commands_only = TRUE)
+      lf_check = lf_check, temp_dir = temp_dir_pred,
+      temp_cleanup = temp_cleanup, verbose = TRUE, lf_commands_only = TRUE)
 
     invisible(gc())
-
 
   } else {
 
@@ -642,7 +637,7 @@ mod_postprocess_1_cpu <- function(
     path_model = path_model, n_cores = n_cores_vp, use_tf = use_tf,
     tf_environ = tf_environ, tf_use_single = tf_use_single,
     temp_cleanup = temp_cleanup, chunk_size = 50L, verbose = TRUE,
-    vp_file = "varpar", vp_commands_only = TRUE, temp_dir = temp_dir)
+    vp_file = "varpar", vp_commands_only = TRUE, temp_dir = temp_dir_vp)
 
   # ****************************************************************
 
@@ -668,7 +663,7 @@ mod_postprocess_1_cpu <- function(
     clamp_pred = dplyr::if_else(spatial_model, FALSE, clamp_pred),
     fix_efforts = fix_efforts, fix_rivers = fix_rivers,
     pred_new_sites = pred_new_sites, use_tf = use_tf, tf_environ = tf_environ,
-    temp_dir = temp_dir, temp_cleanup = temp_cleanup,
+    temp_dir = temp_dir_pred, temp_cleanup = temp_cleanup,
     tf_use_single = tf_use_single, n_cores_lf = n_cores_lf,
     lf_check = lf_check, lf_temp_cleanup = lf_temp_cleanup,
     lf_only = spatial_model, lf_commands_only = spatial_model,
@@ -688,6 +683,8 @@ mod_postprocess_1_cpu <- function(
         is_cv_model = is_cv_model)
     }
 
+    # ************************************
+
     # Evaluate cross-validated models -----
     if (is_cv_model) {
       ecokit::info_chunk(
@@ -697,6 +694,34 @@ mod_postprocess_1_cpu <- function(
 
       IASDT.R::mod_cv_evaluate(model_dir = model_dir, cv_type = "cv_dist")
     }
+
+    # ************************************
+
+    # Tar prediction directories and delete TIFF files -----
+    ecokit::cat_time(
+      "Create tar file for each prediction option and delete TIFF files",
+      level = 1L)
+
+    path_prediction <- fs::path(model_dir, "model_prediction")
+    path_prediction_clamp <- fs::path(path_prediction, "clamp")
+    path_prediction_no_clamp <- fs::path(path_prediction, "no_clamp")
+    l_dirs_preds <- c(
+      list.dirs(path_prediction_clamp, recursive = FALSE),
+      list.dirs(path_prediction_no_clamp, recursive = FALSE))
+
+    if (length(l_dirs_preds) > 0L) {
+      ecokit::set_parallel(
+        n_cores = n_cores, show_log = FALSE, strategy = strategy,
+        future_max_size = future_max_size)
+      tar_pred_tiffs0 <- future.apply::future_lapply(
+        X = l_dirs_preds, FUN = tar_pred_tiffs, delete_tiff = TRUE,
+        overwrite_tar = TRUE, future.scheduling = Inf, future.seed = TRUE,
+        future.packages = c("stringr", "fs"),
+        future.globals = c("l_dirs_preds", "tar_pred_tiffs"))
+      rm(tar_pred_tiffs0, l_dirs_preds, envir = environment())
+      ecokit::set_parallel(stop_cluster = TRUE, show_log = FALSE)
+    }
+
   }
 
   # ****************************************************************
@@ -1019,7 +1044,7 @@ mod_prepare_tf <- function(
               format(lubridate::now(tzone = "CET"), "%Y-%m-%d %H:%M:%S")),
             paste0("#", strrep("_", 60))),
           file = file, append = TRUE)
-          Sys.chmod(file, mode = "755")
+        Sys.chmod(file, mode = "755")
 
         return(invisible(NULL))
       })
@@ -1140,7 +1165,7 @@ mod_postprocess_2_cpu <- function(
     model_dir = NULL, hab_abb = NULL, strategy = "multisession",
     future_max_size = 1500L, n_cores = 8L, n_cores_pred = n_cores,
     n_cores_lf = n_cores, n_cores_rc = n_cores, n_cores_vp = n_cores,
-    env_file = ".env", gpp_dist = NULL, use_trees = "tree", temp_dir = NULL,
+    env_file = ".env", gpp_dist = NULL, use_trees = "tree",
     mcmc_n_samples = 1000L, mcmc_thin = NULL, use_tf = TRUE, tf_environ = NULL,
     tf_use_single = FALSE, lf_check = FALSE, lf_temp_cleanup = TRUE,
     temp_cleanup = TRUE, n_grid = 50L,
@@ -1260,10 +1285,9 @@ mod_postprocess_2_cpu <- function(
 
   # ****************************************************************
 
-  if (is.null(temp_dir)) {
-    temp_dir <- fs::path(model_dir, "temp_pred")
-  }
-  fs::dir_create(temp_dir)
+  temp_dir_pred <- fs::path(model_dir, "temp_pred")
+  temp_dir_vp <- fs::path(model_dir, "temp_vp")
+  fs::dir_create(c(temp_dir_pred, temp_dir_vp))
 
   model_data <- fs::path(model_dir, "model_data_subset.RData")
   if (!ecokit::check_data(model_data)) {
@@ -1330,7 +1354,7 @@ mod_postprocess_2_cpu <- function(
         use_tf = use_tf, tf_environ = tf_environ,
         tf_use_single = tf_use_single, n_cores_lf = n_cores_lf,
         lf_temp_cleanup = lf_temp_cleanup, lf_check = lf_check,
-        temp_dir = temp_dir, temp_cleanup = temp_cleanup, verbose = TRUE,
+        temp_dir = temp_dir_pred, temp_cleanup = temp_cleanup, verbose = TRUE,
         lf_commands_only = FALSE, return_data = FALSE,
         probabilities = c(0.025, 0.5, 0.975))
 
@@ -1393,6 +1417,8 @@ mod_postprocess_2_cpu <- function(
         line_char = "+", line_char_rep = 60L, cat_red = TRUE, cat_bold = TRUE,
         cat_timestamp = FALSE, level = 1L)
 
+      # ************************************
+
       IASDT.R::predict_maps(
         path_model = path_model, hab_abb = hab_abb, env_file = env_file,
         n_cores = n_cores, n_cores_pred = n_cores_pred, strategy = strategy,
@@ -1402,12 +1428,14 @@ mod_postprocess_2_cpu <- function(
         tf_environ = tf_environ, tf_use_single = tf_use_single,
         n_cores_lf = n_cores_lf, lf_check = lf_check,
         lf_temp_cleanup = lf_temp_cleanup, lf_only = FALSE,
-        lf_commands_only = FALSE, temp_dir = temp_dir,
+        lf_commands_only = FALSE, temp_dir = temp_dir_pred,
         temp_cleanup = temp_cleanup, tar_predictions = tar_predictions,
         climate_models = climate_models, climate_scenario = climate_scenario,
         spatial_model = spatial_model)
 
       invisible(gc())
+
+      # ************************************
 
       # Plot species & SR predictions as JPEG ------
 
@@ -1429,6 +1457,34 @@ mod_postprocess_2_cpu <- function(
           level = 1L, line_char = "+", line_char_rep = 60L, cat_red = TRUE,
           cat_bold = TRUE, cat_timestamp = FALSE)
         IASDT.R::mod_cv_evaluate(model_dir = model_dir, cv_type = "cv_dist")
+      }
+      invisible(gc())
+      # ************************************
+
+      # Tar prediction directories and delete TIFF files -----
+
+      ecokit::cat_time(
+        "Create tar file for each prediction option and delete TIFF files",
+        level = 1L)
+
+      path_prediction <- fs::path(model_dir, "model_prediction")
+      path_prediction_clamp <- fs::path(path_prediction, "clamp")
+      path_prediction_no_clamp <- fs::path(path_prediction, "no_clamp")
+      l_dirs_preds <- c(
+        list.dirs(path_prediction_clamp, recursive = FALSE),
+        list.dirs(path_prediction_no_clamp, recursive = FALSE))
+
+      if (length(l_dirs_preds) > 0L) {
+        ecokit::set_parallel(
+          n_cores = n_cores, show_log = FALSE, strategy = strategy,
+          future_max_size = future_max_size)
+        tar_pred_tiffs0 <- future.apply::future_lapply(
+          X = l_dirs_preds, FUN = tar_pred_tiffs, delete_tiff = TRUE,
+          overwrite_tar = TRUE, future.scheduling = Inf, future.seed = TRUE,
+          future.packages = c("stringr", "fs"),
+          future.globals = c("l_dirs_preds", "tar_pred_tiffs"))
+        rm(tar_pred_tiffs0, l_dirs_preds, envir = environment())
+        ecokit::set_parallel(stop_cluster = TRUE, show_log = FALSE)
       }
     }
 
@@ -1474,7 +1530,7 @@ mod_postprocess_2_cpu <- function(
       path_model = path_model, n_cores = n_cores_vp, use_tf = use_tf,
       tf_environ = tf_environ, tf_use_single = tf_use_single,
       temp_cleanup = temp_cleanup, chunk_size = 50L, verbose = TRUE,
-      vp_file = "varpar", vp_commands_only = FALSE, temp_dir = temp_dir)
+      vp_file = "varpar", vp_commands_only = FALSE, temp_dir = temp_dir_vp)
   }
 
   # ****************************************************************
@@ -1491,7 +1547,7 @@ mod_postprocess_2_cpu <- function(
       path_model = path_model, env_file = env_file, vp_file = "varpar",
       use_tf = use_tf, tf_environ = tf_environ, n_cores = n_cores_vp,
       width = 30, height = 15, spatial_model = spatial_model,
-      is_cv_model = is_cv_model, temp_dir = temp_dir)
+      is_cv_model = is_cv_model, temp_dir = temp_dir_vp)
 
   }
 
@@ -1500,4 +1556,82 @@ mod_postprocess_2_cpu <- function(
   ecokit::cat_diff(init_time = .start_time, prefix = "\nPost-processing took ")
 
   return(invisible(NULL))
+}
+
+
+
+
+
+#' Create a tar archive of .tif files in a directory and optionally delete
+#' originals
+#'
+#' This function creates a tar archive containing all `.tif` files in the
+#' specified directory. The archive is named after the last part of the
+#' directory path. Optionally, the original `.tif` files can be deleted after
+#' archiving. The function also allows control over whether to overwrite an
+#' existing tar file.
+#'
+#' @param pred_dir Character. Path to the directory containing `.tif` files to
+#'   be archived.
+#' @param delete_tiff Logical. If `TRUE` (default), deletes the original `.tif`
+#'   files after archiving.
+#' @param overwrite_tar Logical. If `TRUE` (default), overwrites the existing
+#'   tar file if it exists.
+#'
+#' @return Invisibly returns `NULL`. Used for its side effects of creating a tar
+#'   archive and optionally deleting files.
+#'
+#' @details
+#' - The tar archive is created in the same directory as `pred_dir` and is
+#'   named after the last part of the directory.
+#' - If no `.tif` files are found, the function exits with a message.
+#' - File permissions for the tar archive are set to `755`.
+#'
+#' @examples
+#' \dontrun{
+#' tar_pred_tiffs(
+#'   pred_dir = "path/to/predictions",
+#'   delete_tiff = TRUE, overwrite_tar = FALSE)
+#' }
+#'
+#' @noRd
+#' @author Ahmed El-Gabbas
+
+tar_pred_tiffs <- function(
+    pred_dir = NULL, delete_tiff = TRUE, overwrite_tar = TRUE) {
+
+  # get last directory of the path
+  last_part <- stringr::str_extract(
+    stringr::str_replace(pred_dir, "/+$", ""), "[^/]+$")
+  pred_tar <- fs::path(pred_dir, paste0(last_part, ".tar"))
+
+  if (fs::file_exists(pred_tar) && !overwrite_tar) {
+    message(
+      "The tar file already exists and `overwrite_tar` is `FALSE`: \n",
+      "  >>>  ", pred_tar)
+    return(invisible(NULL))
+  }
+
+  files <- list.files(path = pred_dir, pattern = "\\.tif$")
+  if (length(files) == 0) {
+    message("No .tif files found in the specified directory:\n", pred_dir)
+    return(invisible(NULL))
+  }
+
+  # Command to create the tar file
+  tar_command <- stringr::str_glue(
+    'cd {fs::path_abs(pred_dir)}; tar -cf {basename(pred_tar)} \\
+    -b 2048 {paste(files, collapse = " ")}')
+
+  # Create tar file
+  system(tar_command)
+
+  # Change the permission of the tar file
+  Sys.chmod(pred_tar, "755", use_umask = FALSE)
+
+  # Delete all tiff files
+  if (delete_tiff) {
+    try(fs::file_delete(fs::path(pred_dir, files)), silent = TRUE)
+  }
+  invisible(NULL)
 }

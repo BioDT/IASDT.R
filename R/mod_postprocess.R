@@ -1463,9 +1463,10 @@ mod_postprocess_2_cpu <- function(
 
       # Tar prediction directories and delete TIFF files -----
 
-      ecokit::cat_time(
-        "Create tar file for each prediction option and delete TIFF files",
-        level = 1L)
+      ecokit::info_chunk(
+        "Tar prediction directories and delete TIFF files",
+        level = 1L, line_char = "+", line_char_rep = 60L, cat_red = TRUE,
+        cat_bold = TRUE, cat_timestamp = FALSE)
 
       path_prediction <- fs::path(model_dir, "model_prediction")
       path_prediction_clamp <- fs::path(path_prediction, "clamp")

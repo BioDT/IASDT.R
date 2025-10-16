@@ -212,10 +212,10 @@ fit_sdm_models <- function(
 
   # model_dir
 
-  model_dir_valid <- any(
+  model_dir_invalid <- any(
     !inherits(model_dir, "character"),
     length(model_dir) != 1L, !nzchar(model_dir))
-  if (model_dir_valid) {
+  if (model_dir_invalid) {
     ecokit::stop_ctx(
       "model_dir must be a character string",
       model_dir = model_dir, class_model_dir = class(model_dir))
@@ -319,7 +319,7 @@ fit_sdm_models <- function(
 
     ecokit::cat_time("Loading modelling data")
     model_data <- ecokit::load_as(input_data$path_species_data)
-    cv_folds <- ecokit::load_as(model_data$data_path[[1]]) %>%
+    cv_folds <- ecokit::load_as(model_data$species_data[[1]]) %>%
       dplyr::pull(cv) %>%
       unique()
     model_data <- tidyr::expand_grid(model_data, cv = cv_folds)
@@ -510,7 +510,7 @@ fit_sdm_models <- function(
       dplyr::mutate(auc_test = purrr::map(evaluation_testing, ~.x$auc_test)) %>%
       dplyr::select(species_name, auc_test)
     model_pred_results <- model_results %>%
-      dplyr::select(-tidyselect::all_of(c("data_path", "cv_fold"))) %>%
+      dplyr::select(-tidyselect::all_of(c("species_data", "cv_fold"))) %>%
       tidyr::nest(pred_paths = output_path) %>%
       dplyr::left_join(dt_auc_test, by = "species_name")
 

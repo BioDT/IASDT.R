@@ -473,7 +473,7 @@ prepare_input_data <- function(
     cv <- CellCode <- file_path <- path_rail <- path_road <- path_clc <-
     path_efforts <- path_rivers <- path_chelsa <- pred_data <-
     quadratic <- cell_num <- variable <- climate_name <- species_name <-
-    valid_species <- data_path <- path_wetness <- path_soil <-
+    valid_species <- species_data <- path_wetness <- path_soil <-
     method_type <- NULL
 
   # |||||||||||||||||||||||||||||||||||||||||||
@@ -906,7 +906,7 @@ prepare_input_data <- function(
 
         tibble::tibble(
           valid_species = all(species_modelling_data$valid_species),
-          data_path = species_data_file)
+          species_data = species_data_file)
       },
       future.scheduling = Inf, future.seed = TRUE,
       future.packages = pkg_to_load, future.globals = future_globals))
@@ -939,7 +939,7 @@ prepare_input_data <- function(
     invalid_species %>%
       dplyr::mutate(
         message = purrr::map2_chr(
-          .x = species_name, .y = data_path,
+          .x = species_name, .y = species_data,
           .f = ~ {
             ecokit::load_as(.y) %>%
               dplyr::distinct(cv, valid_species) %>%
@@ -1609,7 +1609,7 @@ fit_predict_internal <- function(
   species_name <- model_data$species_name[[line_id]]
   cv_fold <- model_data$cv[[line_id]]
 
-  model_data <- ecokit::load_as(model_data$data_path[[line_id]]) %>%
+  model_data <- ecokit::load_as(model_data$species_data[[line_id]]) %>%
     dplyr::filter(cv == cv_fold)
   if (sdm_method == "glm") {
     model_data <- dplyr::filter(model_data, method_type == "glm")
@@ -1773,7 +1773,7 @@ fit_predict_internal <- function(
 #'   `pred_dir`: Metadata columns.
 #'   - `cv_fold`: Cross-validation fold or summary statistic ("mean",
 #'   "weighted_mean", "sd", "cov").
-#'   - `data_path`, `tif_path`: Paths to RData and TIFF files for
+#'   - `species_data`, `tif_path`: Paths to RData and TIFF files for
 #'   predictions/statistics.
 #'   - `data_okay`, `tif_okay`: Logical flags indicating file validity.
 #'

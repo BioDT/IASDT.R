@@ -1445,12 +1445,12 @@ prepare_input_data <- function(
 
 sdm_model_settings <- function() {
   list(
-    glm = list(control = list(maxit = 50L)),
+    glm = list(control = list(maxit = 200L)),
     glmpoly = list(degree = 2L),
     gam = list(method = "REML", select = TRUE, gamma = 1.2),
-    glmnet = list(maxit = 200000L),
-    mars = list(pmethod = "backward"),
-    gbm = list(n.trees = 3000L, interaction.depth = 2L),
+    glmnet = list(maxit = 100000L),
+    mars = list(pmethod = "backward", glm = list(maxit = 200L)),
+    gbm = list(n.trees = 2000L, interaction.depth = 2L),
     rf = list(ntree = 1000L, nodesize = 5L),
     ranger = list(
       num.trees = 1000L, importance = "impurity", min.node.size = 5L),

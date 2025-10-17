@@ -598,11 +598,10 @@ fit_sdm_models <- function(
       stringr::str_replace_all(" ", " ") %>%
       paste(collapse = "\n  >>>  ") %>%
       ecokit::cat_time(cat_timestamp = FALSE, level = 1L, ... = "\n")
-    paste(collapse = "\n") %>%
-
-      ecokit::cat_sep(
-        line_char_rep = 60L, sep_lines_before = 1L, sep_lines_after = 2L,
-        line_char = "=", cat_bold = TRUE, cat_red = TRUE)
+    
+    ecokit::cat_sep(
+      line_char_rep = 60L, sep_lines_before = 1L, sep_lines_after = 2L,
+      line_char = "=", cat_bold = TRUE, cat_red = TRUE)
   }
 
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||

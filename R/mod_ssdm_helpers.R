@@ -613,13 +613,13 @@ prepare_input_data <- function(
 
   # Loading model data ----
 
-  modelling_data <- fs::path(model_dir, "model_data.RData")
+  file_modelling_data <- fs::path(model_dir, "model_data.RData")
   data_cv <- fs::path(model_dir, "cv_data.RData")
   data_subset <- fs::path(model_dir, "model_data_subset.RData")
   data_training <- fs::path(model_dir, "model_data_training.RData")
   data_testing <- fs::path(model_dir, "model_data_testing.RData")
 
-  if (!ecokit::check_data(modelling_data, warning = FALSE)) {
+  if (!ecokit::check_data(file_modelling_data, warning = FALSE)) {
     ecokit::stop_ctx(
       "Model data at the full extent file does not exist or is invalid",
       modelling_data = modelling_data, include_backtrace = TRUE)
@@ -646,8 +646,9 @@ prepare_input_data <- function(
       ecokit::load_as(data_training), ecokit::load_as(data_testing))
     model_cell_numbers <- dplyr::pull(train_test_data, "cell_num")
     model_cv_folds <- dplyr::select(
-      train_test_data, cell_num, CellCode,
-      cv_fold = tidyselect::all_of(cv_type))
+      train_test_data,
+      tidyselect::all_of(c("cell_num", "CellCode", cv_type))) %>%
+      dplyr::rename(cv_fold = tidyselect::all_of(cv_type))
     rm(train_test_data, envir = environment())
   } else {
     model_cell_numbers <- dplyr::pull(data_subset$data_all, "cell_num")
@@ -656,7 +657,7 @@ prepare_input_data <- function(
       cell_num, CellCode, cv_fold = tidyselect::all_of(cv_type))
   }
 
-  modelling_data <- ecokit::load_as(modelling_data) %>%
+  modelling_data <- ecokit::load_as(file_modelling_data) %>%
     dplyr::filter(cell_num %in% model_cell_numbers) %>%
     dplyr::left_join(model_cv_folds, by = c("cell_num", "CellCode"))
 

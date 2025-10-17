@@ -166,14 +166,16 @@ fit_sdm_models <- function(
     pred_type <- cv <- preds_summ <- NULL
 
   stringr::str_glue(
-    "Fitting models using `{sdm_method}` method and `{cv_type}` ",
+    "Fitting models using `{sdm_method}` and `{cv_type}` ",
     "cross-validation type") %>%
     ecokit::info_chunk(
       cat_bold = TRUE, cat_red = TRUE, line_char_rep = 80L,
       info_lines_before = 2L)
 
   # Ensure that svm2 method is registered
-  copy_svm2()
+  if (sdm_method == "svm2") {
+    copy_svm2()
+  }
 
   # |||||||||||||||||||||||||||||||||||||||||||
 

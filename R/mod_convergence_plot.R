@@ -521,8 +521,7 @@ convergence_plot <- function(
     ecokit::cat_time("Arrange plots", level = 1L)
     n_rc_omega <- n_rc$omega
 
-    omega_plot_list <- tibble::tibble(
-      plot_id = seq_len(nrow(plot_obj_omega))) %>%
+    omega_plot_list <- tibble::tibble(plot_id = seq_along(plot_obj_omega)) %>%
       dplyr::mutate(
         file = ceiling(
           plot_id / (pages_per_file * n_rc_omega[2] * n_rc_omega[1])),
@@ -897,7 +896,7 @@ convergence_plot <- function(
         ggplot2::labs(title = plot_title_orig) +
         title_theme
 
-      plot_list <- tibble::tibble(plot_id = seq_len(length(data_list))) %>%
+      plot_list <- tibble::tibble(plot_id = seq_along(data_list)) %>%
         dplyr::mutate(
           page = ceiling(plot_id / (n_rc_beta[2] * n_rc_beta[1]))) %>%
         tidyr::nest(.by = "page", .key = "plot_id") %>%
@@ -945,7 +944,7 @@ convergence_plot <- function(
             ggpubr::as_ggplot()
         })
 
-      plot_list <- tibble::tibble(plot_id = seq_len(length(data_list))) %>%
+      plot_list <- tibble::tibble(plot_id = seq_along(data_list)) %>%
         dplyr::mutate(
           page = ceiling(plot_id / (n_rc_beta[2] * n_rc_beta[1]))) %>%
         tidyr::nest(.by = "page", .key = "plot_id") %>%

@@ -233,7 +233,7 @@ mod_postprocess_cv_1_cpu <- function(
   line_sep <- strrep("-", 60)      # nolint: object_name_linter
 
   purrr::walk(
-    .x = seq_len(length(lf_commands)),
+    .x = seq_along(lf_commands),
     .f = ~ {
 
       chunk_number <- stringr::str_pad(
@@ -496,7 +496,7 @@ mod_postprocess_cv_2_cpu <- function(
                 .cols = tidyselect::everything(),
                 .fns = function(y) {
                   as.vector(y) %>%
-                    stats::setNames(paste0("cv_", seq_len(length(.)))) %>%
+                    stats::setNames(paste0("cv_", seq_along(.))) %>%
                     list()
                 })) %>%
             dplyr::mutate(

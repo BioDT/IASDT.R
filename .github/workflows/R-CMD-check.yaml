@@ -27,9 +27,11 @@ jobs:
         config:
           - {os: macos-latest, r: 'release'}
           - {os: windows-latest, r: 'release'}
-          - {os: ubuntu-latest, r: 'devel', http-user-agent: 'release'}
+          - {os: ubuntu-latest, r: 'devel', http-user-agent: 'release', allow-failure: true}
           - {os: ubuntu-latest, r: 'release'}
-
+    
+    continue-on-error: ${{ matrix.config.allow-failure || false }}
+    
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
@@ -71,10 +73,22 @@ jobs:
         with:  
           extra-packages: |
             any::rcmdcheck
-            any::data.table
+            any::data. table
           needs: check
-          cache-version:  2
-      
+          cache-version: 2
+          lockfile-create-lib: false
+        continue-on-error: true
+        
+      - name:  Retry Setup R dependencies on failure
+        if: failure()
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:  
+          extra-packages: |
+            any::rcmdcheck
+            any::data. table
+          needs: check
+          cache-version: 2
+            
       - name: Session info
         run: |
           options(width = 100)

@@ -219,7 +219,7 @@ rc_prepare_data <- function(
       model_obj <- ecokit::load_as(path_model)
 
       rc_data_prob <- purrr::map_dfr(
-        .x = seq_len(length(preds)),
+        .x = seq_along(preds),
         .f = function(sample) {
           tibble::as_tibble(preds[[sample]]) %>%
             dplyr::mutate(x_vals = x_vals, sample_id = sample)

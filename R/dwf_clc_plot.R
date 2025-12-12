@@ -80,7 +80,7 @@ clc_plot <- function(clc_name, clc_map, eu_map, crosswalk, path_jpeg) {
 
   out_path <- paste0(
     "summary_perc_cover_", file_prefix, "_",
-    seq_len(length(split_vector)), ".jpeg") %>%
+    seq_along(split_vector), ".jpeg") %>%
     fs::path(path_jpeg_2, .)
 
   plot_theme <- ggplot2::theme_bw() +
@@ -121,7 +121,7 @@ clc_plot <- function(clc_name, clc_map, eu_map, crosswalk, path_jpeg) {
       plot.tag = ggplot2::element_text(colour = "grey", size = 10, hjust = 1))
 
   maps <- purrr::map_dfr(
-    .x = seq_len(length(split_vector)),
+    .x = seq_along(split_vector),
     .f = ~ {
 
       plots <- purrr::map_dfr(
@@ -364,7 +364,7 @@ clc_plot <- function(clc_name, clc_map, eu_map, crosswalk, path_jpeg) {
 
   # arrange map tiles together into figures (4 columns * 2 rows)
   purrr::walk(
-    .x = seq_len(length(split_vector)),
+    .x = seq_along(split_vector),
     .f = ~ {
 
       # main title of the figure - {("\u00D7")} prints the multiplication symbol

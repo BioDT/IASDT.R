@@ -573,7 +573,7 @@ easin_process <- function(
     purrr::set_names(
       purrr::map_chr(., ~ ecokit::replace_space(.x$species_file[1])))
 
-  seq_len(length(easin_data_2)) %>%
+  seq_along(easin_data_2) %>%
     purrr::walk(
       .f = ~ {
         # # ||||||||||||||||||||||||||||||||||

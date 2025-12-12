@@ -1020,7 +1020,7 @@ mod_prepare_tf <- function(
     lf_commands <- ecokit::split_vector(lf_commands, n_splits = n_batch_files)
 
     purrr::walk(
-      .x = seq_len(length(lf_commands)),
+      .x = seq_along(lf_commands),
       .f = ~ {
 
         file <- fs::path(

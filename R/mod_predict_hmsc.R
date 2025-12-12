@@ -557,7 +557,7 @@ predict_hmsc <- function(
 
   ecokit::cat_time("Making predictions in parallel", level = 1L)
   pred <- future.apply::future_lapply(
-    X = seq_len(length(chunks)),
+    X = seq_along(chunks),
     FUN = function(chunk) {
 
       chunk_file <- chunks[chunk]
@@ -592,7 +592,7 @@ predict_hmsc <- function(
 
       # species predictions
       chunk_sp <- purrr::map_dfr(
-        .x = seq_len(length(model_obj$spNames)),
+        .x = seq_along(model_obj$spNames),
         .f = function(sp) {
 
           sp_data <- purrr::map(pred_chunk, ~ .x[, sp], ncol = 1) %>%

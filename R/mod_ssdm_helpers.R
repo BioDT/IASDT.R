@@ -2152,7 +2152,7 @@ fit_predict_internal <- function(
                   name_sd <- stringr::str_replace(
                     names(pred_r)[[1]], "_rep\\d+_", "_rep_sd_")
                   pred_r_sd <- stats::setNames(
-                    terra::app(pred_r, "sd"), name_sd) %>%
+                    terra::app(pred_r, stats::sd), name_sd) %>%
                     terra::toMemory()
                   dplyr::bind_rows(
                     pred_sub,

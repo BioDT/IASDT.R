@@ -60,18 +60,16 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           brew install pkg-config gdal proj geos
-        shell: bash
-
+        shell: bash        # shell: Rscript {0}
       - name: Install dependencies
         run: |
           install.packages(c("remotes", "rcmdcheck"))
-          remotes::install_version("ggplot2", version = "3.5.2")
-          remotes::install_github("elgabbas/ecokit")
-          remotes::install_github("hmsc-r/HMSC")
-          remotes::install_local(".", dependencies = TRUE, upgrade = "never", Ncpus = parallel::detectCores())
+          remotes::install_deps(dependencies = TRUE, upgrade = "never")
         shell: Rscript {0}
 
       - name: Manual R CMD check
+        env:
+          _R_CHECK_FORCE_SUGGESTS_: false # skip checking for suggested packages
         run: |
           rcmdcheck::rcmdcheck(
             args = c("--no-manual", "--no-vignettes"), # "--as-cran",

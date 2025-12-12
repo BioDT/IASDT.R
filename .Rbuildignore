@@ -16,3 +16,9 @@
 ^src/.*[.](o|so|dll|dSYM|exp)$
 cspell.json
 ^.*\.code-workspace
+
+^vignettes
+^vignettes/.*\.txt$
+^vignettes/.*\.slurm$
+^vignettes/.*\.css$
+^vignettes/.*\.R$

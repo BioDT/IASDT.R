@@ -1,4 +1,3 @@
-
 # # ========================================================================= #
 # fit_sdm_models ------
 # # ========================================================================= #
@@ -127,6 +126,17 @@ fit_sdm_models <- function(
 
   .start_time <- lubridate::now(tzone = "CET")
 
+  terra::terraOptions(
+    # fraction of RAM terra may use (0-0.9)
+    memfrac = 0.1,
+    # (GB) below which mem is assumed available
+    memmin = 1L,
+    # (GB) cap for terra
+    memmax = 10L,
+    # silence per-worker progress bars
+    progress = 0L,
+    todisk = TRUE)
+
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
   # Check input arguments -------
@@ -159,11 +169,10 @@ fit_sdm_models <- function(
 
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-  summary_data <- packages <- path_grid <- mod_method <- cv_fold <- preds <-
-    pred_mean <- pred_w_mean <- species_name <- output_path <- method_type <-
-    evaluation_testing <- auc_test <- summary_prediction_path <-
-    climate_name <- pred_mean_okay <- pred_w_mean_okay <- richness_map <-
-    pred_type <- cv <- preds_summ <- NULL
+  packages <- path_grid <- mod_method <- cv_fold <- preds <- pred_mean <-
+    pred_w_mean <- species_name <- time_period <- climate_model <- pred <-
+    climate_scenario <- climate_name <- pred_mean_okay <- pred_w_mean_okay <-
+    cv <- preds_summ <- n_rep <- NULL
 
   stringr::str_glue(
     "Fitting models using `{sdm_method}` and `{cv_type}` ",
@@ -188,6 +197,7 @@ fit_sdm_models <- function(
   sdm_method_valid <- any(
     is.null(sdm_method), length(sdm_method) != 1L,
     !is.character(sdm_method), !sdm_method %in% valid_sdm_methods)
+
   if (sdm_method_valid) {
     ecokit::stop_ctx(
       "Invalid model method", sdm_method = sdm_method,
@@ -217,6 +227,7 @@ fit_sdm_models <- function(
   model_dir_invalid <- any(
     !inherits(model_dir, "character"),
     length(model_dir) != 1L, !nzchar(model_dir))
+
   if (model_dir_invalid) {
     ecokit::stop_ctx(
       "model_dir must be a character string",
@@ -295,7 +306,7 @@ fit_sdm_models <- function(
       "mlp", "RSNNS",
       # "rbf", "RSNNS",
       "svm", "kernlab",
-      "svm", "e1071",
+      "svm2", "e1071",
       "mda", "mda",
       "fda", "mda") %>%
       dplyr::filter(mod_method == sdm_method) %>%
@@ -345,9 +356,12 @@ fit_sdm_models <- function(
     ecokit::cat_time(
       "Processing model fitting and predictions in parallel", level = 1L)
 
-    pkgs_to_load <- c(
-      "terra", "stringr", "ecokit", "tibble", "dplyr", "sf",
-      "tidyr", "qs2", "fs", "sdm", "purrr", pkg_to_load)
+    pkgs_to_load <- unique(
+      c(
+        "terra", "stringr", "ecokit", "tibble", "dplyr", "sf", "rlang",
+        "tidyselect", "tidyr", "qs2", "fs", "sdm", "purrr", "methods", "stats",
+        "magrittr", pkg_to_load))
+
     future_globals <- c(
       "sdm_method", "model_data", "model_settings",
       "input_data", "output_directory", "path_grid_r", "reduce_sdm_formulas",
@@ -364,7 +378,8 @@ fit_sdm_models <- function(
             path_grid_r = path_grid_r, copy_maxent_html = copy_maxent_html)
         },
         future.scheduling = Inf, future.seed = TRUE,
-        future.packages = pkgs_to_load, future.globals = future_globals))
+        future.packages = pkgs_to_load, future.globals = future_globals)) %>%
+      dplyr::bind_rows()
 
     ecokit::set_parallel(level = 1L, stop_cluster = TRUE)
     future::plan("sequential", gc = TRUE)
@@ -375,11 +390,13 @@ fit_sdm_models <- function(
     # Merge outputs into a single tibble -----
 
     ecokit::cat_time("Merge outputs into a single tibble", level = 1L)
-    model_results <- dplyr::mutate(model_data, data2 = model_data2) %>%
-      tidyr::unnest("data2") %>%
+
+    model_results <- dplyr::left_join(
+      model_data, model_data2, by = c("species_name", "cv")) %>%
+      dplyr::rename(cv_fold = cv) %>%
       dplyr::select(
-        species_name, sdm_method, cv_fold = cv, tidyselect::everything(),
-        -method_type)
+        tidyselect::all_of(c("species_name", "sdm_method", "cv_fold")),
+        tidyselect::everything())
 
     ecokit::save_as(
       object = model_results, object_name = model_results_name,
@@ -410,149 +427,359 @@ fit_sdm_models <- function(
   } else {
 
     model_summary <- model_results %>%
-      dplyr::select(species_name, sdm_method, cv_fold, output_path) %>%
-      dplyr::mutate(
-        summ_data = purrr::map(
-          .x = output_path,
-          .f = ~ {
-            ecokit::load_as(.x) %>%
-              magrittr::extract(
-                !names(.) %in% c("fitted_model", "prediction_data")) %>%
-              lapply(list) %>%
-              tibble::as_tibble()
-          })
-      ) %>%
-      tidyr::unnest("summ_data") %>%
-      tidyr::nest(summary_data = -"species_name") %>%
-      dplyr::mutate(
-        summary1 = purrr::map(
-          .x = summary_data,
-          .f = ~ {
-
-            ## Evaluation - training ------
-
-            evaluation_training <- dplyr::bind_rows(.x$evaluation_training) %>%
-              dplyr::mutate(cv_fold = as.character(cv_fold))
-            evaluation_training <- evaluation_training %>%
-              dplyr::select(-cv_fold) %>%
-              dplyr::group_by(species_name, sdm_method) %>%
-              dplyr::summarize_all(mean, na.rm = TRUE) %>%
-              dplyr::mutate(cv_fold = "mean") %>%
-              dplyr::ungroup() %>%
-              dplyr::bind_rows(evaluation_training, .) %>%
-              dplyr::arrange(cv_fold)
-
-            # |||||||||||||||||||||||||||||||||||||||||||
-
-            # Evaluation - testing ------
-
-            evaluation_testing <- dplyr::bind_rows(.x$evaluation_testing) %>%
-              dplyr::mutate(cv_fold = as.character(cv_fold))
-            evaluation_testing <- evaluation_testing %>%
-              dplyr::select(-cv_fold) %>%
-              dplyr::group_by(species_name, sdm_method) %>%
-              dplyr::summarize_all(mean, na.rm = TRUE) %>%
-              dplyr::mutate(cv_fold = "mean") %>%
-              dplyr::ungroup() %>%
-              dplyr::bind_rows(evaluation_testing, .) %>%
-              dplyr::arrange(cv_fold)
-
-            # |||||||||||||||||||||||||||||||||||||||||||
-
-            # Variable importance ------
-
-            variable_importance <- dplyr::bind_rows(.x$variable_importance) %>%
-              dplyr::mutate(cv_fold = as.character(cv_fold))
-            variable_importance <- variable_importance %>%
-              dplyr::select(-cv_fold) %>%
-              dplyr::group_by(species_name, sdm_method, variable) %>%
-              dplyr::summarize_all(mean, na.rm = TRUE) %>%
-              dplyr::mutate(cv_fold = "mean") %>%
-              dplyr::ungroup() %>%
-              dplyr::bind_rows(variable_importance, .) %>%
-              dplyr::arrange(cv_fold, variable)
-
-            # |||||||||||||||||||||||||||||||||||||||||||
-
-            # Response curves -------
-            response_curves <- dplyr::bind_rows(.x$response_curves) %>%
-              dplyr::bind_rows() %>%
-              dplyr::mutate(cv_fold = as.character(cv_fold))
-            response_curves <- response_curves %>%
-              dplyr::select(-cv_fold) %>%
-              dplyr::group_by(species_name, sdm_method, variable, x_value) %>%
-              dplyr::summarize_all(mean, na.rm = TRUE) %>%
-              dplyr::mutate(cv_fold = "mean") %>%
-              dplyr::ungroup() %>%
-              dplyr::bind_rows(response_curves, .) %>%
-              dplyr::arrange(cv_fold, variable, x_value)
-
-            # |||||||||||||||||||||||||||||||||||||||||||
-
-            # Merge data ---------
-            tibble::tibble(
-              evaluation_training = list(evaluation_training),
-              evaluation_testing = list(evaluation_testing),
-              variable_importance = list(variable_importance),
-              response_curves = list(response_curves))
-          })
-      ) %>%
-      tidyr::unnest("summary1") %>%
-      dplyr::select(-"summary_data")
-
-    invisible(gc())
-
-    # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-
-    ### Summarizing predictions in parallel -----
-
-    ecokit::cat_time("Summarizing predictions in parallel")
-
-    dt_auc_test <- model_summary %>%
-      dplyr::mutate(auc_test = purrr::map(evaluation_testing, ~.x$auc_test)) %>%
-      dplyr::select(species_name, auc_test)
-    model_pred_results <- model_results %>%
-      dplyr::select(-tidyselect::all_of(c("species_data", "cv_fold"))) %>%
-      tidyr::nest(pred_paths = output_path) %>%
-      dplyr::left_join(dt_auc_test, by = "species_name")
+      dplyr::group_by(species_name, sdm_method, n_rep) %>%
+      dplyr::summarise(model_data = list(model_data), .groups = "drop")
 
     if (n_cores == 1L) {
       future::plan("sequential", gc = TRUE)
     } else {
       ecokit::set_parallel(
-        n_cores = min(n_cores, nrow(model_pred_results)),
+        n_cores = min(n_cores, nrow(model_summary)),
         future_max_size = future_max_size, level = 1L)
       withr::defer(future::plan("sequential", gc = TRUE))
     }
 
     pkgs_to_load <- c(
-      "terra", "stringr", "ecokit", "tibble", "dplyr",
-      "qs2", "tools", "purrr", "tidyr", "fs")
+      "magrittr", "ecokit", "tibble", "dplyr", "qs2", "tidyselect",
+      "stringr", "terra", "purrr", "fs")
 
-    ecokit::cat_time("Calculate summary predictions in parallel", level = 1L)
-
-    pred_summary <- ecokit::quietly(
+    model_summary_0 <- ecokit::quietly(
       future.apply::future_lapply(
-        X = seq_len(nrow(model_pred_results)),
+        X = seq_len(nrow(model_summary)),
         FUN = function(line_id) {
-          summarize_predictions(
-            line_id, model_pred_results, output_directory)
+
+          x_value <- variable <- rep_id <- NULL
+
+          cv_data <- dplyr::slice(model_summary, line_id)
+
+          n_reps <- cv_data$n_rep[[1]]
+          species_name <- cv_data$species_name[[1]]
+          sdm_method <- cv_data$sdm_method[[1]]
+
+          pred_path <- fs::path(
+            output_directory,
+            paste0(sdm_method, "_", species_name, "_summary_pred.qs2"))
+          pred_okay <- ecokit::check_data(pred_path, warning = FALSE)
+
+          cv_data <- purrr::map_dfr(
+            .x = cv_data$model_data[[1]],
+            .f = function(cv_file) {
+              if (pred_okay) {
+                ecokit::load_as(cv_file) %>%
+                  dplyr::select(
+                    -tidyselect::all_of(c("model_fit", "prediction_data")))
+              } else {
+                ecokit::load_as(cv_file) %>%
+                  dplyr::select(-tidyselect::all_of("model_fit"))
+              }
+            })
+          invisible(gc())
+
+          # |||||||||||||||||||||||||||||||||||||||||||
+          ## Evaluation - training ------
+          # |||||||||||||||||||||||||||||||||||||||||||
+
+          evaluation_training <- cv_data$evaluation_training %>%
+            dplyr::bind_rows() %>%
+            dplyr::mutate(cv_fold = as.character(cv_fold))
+          if (n_reps > 1L) {
+            evaluation_training <- dplyr::filter(
+              evaluation_training, rep_id == "mean")
+          }
+          evaluation_training <- dplyr::select(
+            evaluation_training, -tidyselect::all_of("rep_id"))
+
+          evaluation_training_mean <- evaluation_training %>%
+            dplyr::select(-tidyselect::all_of("cv_fold")) %>%
+            dplyr::group_by(species_name, sdm_method) %>%
+            dplyr::summarize_all(mean, na.rm = TRUE) %>%
+            dplyr::mutate(cv_fold = "mean") %>%
+            dplyr::ungroup()
+          evaluation_training_sd <- evaluation_training %>%
+            dplyr::select(-tidyselect::all_of("cv_fold")) %>%
+            dplyr::group_by(species_name, sdm_method) %>%
+            dplyr::summarize_all(stats::sd, na.rm = TRUE) %>%
+            dplyr::mutate(cv_fold = "sd") %>%
+            dplyr::ungroup()
+          evaluation_training <- dplyr::bind_rows(
+            evaluation_training, evaluation_training_mean,
+            evaluation_training_sd) %>%
+            ecokit::arrange_alphanum(cv_fold)
+
+          cv_data$evaluation_training <- NULL
+          rm(
+            evaluation_training_mean, evaluation_training_sd,
+            envir = environment())
+          invisible(gc())
+
+          # |||||||||||||||||||||||||||||||||||||||||||
+          # Evaluation - testing ------
+          # |||||||||||||||||||||||||||||||||||||||||||
+
+          evaluation_testing <- cv_data$evaluation_testing %>%
+            dplyr::bind_rows() %>%
+            dplyr::mutate(cv_fold = as.character(cv_fold))
+          if (n_reps > 1L) {
+            evaluation_testing <- dplyr::filter(
+              evaluation_testing, rep_id == "mean")
+          }
+          evaluation_testing <- dplyr::select(
+            evaluation_testing, -tidyselect::all_of("rep_id"))
+          evaluation_testing_mean <- evaluation_testing %>%
+            dplyr::select(-tidyselect::all_of("cv_fold")) %>%
+            dplyr::group_by(species_name, sdm_method) %>%
+            dplyr::summarize_all(mean, na.rm = TRUE) %>%
+            dplyr::mutate(cv_fold = "mean") %>%
+            dplyr::ungroup()
+          evaluation_testing_sd <- evaluation_testing %>%
+            dplyr::select(-tidyselect::all_of("cv_fold")) %>%
+            dplyr::group_by(species_name, sdm_method) %>%
+            dplyr::summarize_all(stats::sd, na.rm = TRUE) %>%
+            dplyr::mutate(cv_fold = "sd") %>%
+            dplyr::ungroup()
+          evaluation_testing <- dplyr::bind_rows(
+            evaluation_testing, evaluation_testing_mean,
+            evaluation_testing_sd) %>%
+            ecokit::arrange_alphanum(cv_fold)
+
+          cv_data$evaluation_testing <- NULL
+          rm(
+            evaluation_testing_mean, evaluation_testing_sd,
+            envir = environment())
+          invisible(gc())
+
+          # |||||||||||||||||||||||||||||||||||||||||||
+          # Variable importance ------
+          # |||||||||||||||||||||||||||||||||||||||||||
+
+          variable_importance <- cv_data$variable_importance %>%
+            dplyr::bind_rows() %>%
+            dplyr::mutate(cv_fold = as.character(cv_fold))
+          if (n_reps > 1L) {
+            variable_importance <- dplyr::filter(
+              variable_importance, rep_id == "mean")
+          }
+          variable_importance <- dplyr::select(
+            variable_importance, -tidyselect::all_of("rep_id"))
+          variable_importance_mean <- variable_importance %>%
+            dplyr::select(-tidyselect::all_of("cv_fold")) %>%
+            dplyr::group_by(species_name, sdm_method, variable) %>%
+            dplyr::summarize_all(mean, na.rm = TRUE) %>%
+            dplyr::mutate(cv_fold = "mean") %>%
+            dplyr::ungroup()
+          variable_importance_sd <- variable_importance %>%
+            dplyr::select(-tidyselect::all_of("cv_fold")) %>%
+            dplyr::group_by(species_name, sdm_method, variable) %>%
+            dplyr::summarize_all(stats::sd, na.rm = TRUE) %>%
+            dplyr::mutate(cv_fold = "sd") %>%
+            dplyr::ungroup()
+          variable_importance <- dplyr::bind_rows(
+            variable_importance, variable_importance_mean,
+            variable_importance_sd) %>%
+            ecokit::arrange_alphanum(cv_fold, variable)
+
+          cv_data$variable_importance <- NULL
+          rm(
+            variable_importance_mean, variable_importance_sd,
+            envir = environment())
+          invisible(gc())
+
+          # |||||||||||||||||||||||||||||||||||||||||||
+          # Response curves -------
+          # |||||||||||||||||||||||||||||||||||||||||||
+
+          response_curves <- cv_data$response_curves %>%
+            dplyr::bind_rows() %>%
+            dplyr::mutate(cv_fold = as.character(cv_fold))
+          if (n_reps > 1L) {
+            response_curves <- dplyr::filter(
+              response_curves, rep_id == "mean")
+          }
+          response_curves <- dplyr::select(
+            response_curves, -tidyselect::all_of("rep_id"))
+          response_curves_mean <- response_curves %>%
+            dplyr::select(-tidyselect::all_of("cv_fold")) %>%
+            dplyr::group_by(species_name, sdm_method, variable, x_value) %>%
+            dplyr::summarize_all(mean, na.rm = TRUE) %>%
+            dplyr::mutate(cv_fold = "mean") %>%
+            dplyr::ungroup()
+          response_curves_sd <- response_curves %>%
+            dplyr::select(-tidyselect::all_of("cv_fold")) %>%
+            dplyr::group_by(species_name, sdm_method, variable, x_value) %>%
+            dplyr::summarize_all(stats::sd, na.rm = TRUE) %>%
+            dplyr::mutate(cv_fold = "sd") %>%
+            dplyr::ungroup()
+          response_curves <- dplyr::bind_rows(
+            response_curves, response_curves_mean,
+            response_curves_sd) %>%
+            ecokit::arrange_alphanum(cv_fold, variable, x_value)
+
+          cv_data$response_curves <- NULL
+          rm(
+            response_curves_mean, response_curves_sd,
+            envir = environment())
+          invisible(gc())
+
+          # |||||||||||||||||||||||||||||||||||||||||||
+          # Projections -------
+          # |||||||||||||||||||||||||||||||||||||||||||
+
+          if (!pred_okay) {
+
+            terra::terraOptions(
+              # fraction of RAM terra may use (0-0.9)
+              memfrac = 0.1,
+              # (GB) below which mem is assumed available
+              memmin = 1L,
+              # (GB) cap for terra
+              memmax = 10L,
+              # silence per-worker progress bars
+              progress = 0L,
+              todisk = TRUE)
+
+            auc_test <- evaluation_testing %>%
+              dplyr::filter(cv_fold != "mean" & cv_fold != "sd") %>%
+              dplyr::pull(auc_test)
+
+            # If any value of testing AUC is NA, do not calculate weighted mean
+            if (anyNA(auc_test)) {
+              calc_w_mean <- FALSE             # nolint: object_usage_linter
+            } else {
+              calc_w_mean <- TRUE              # nolint: object_usage_linter
+              # avoid extreme cases when any of testing AUC is very small (= 0)
+              n_zeros <- which(auc_test == 0L)
+              if (length(n_zeros) > 0L) {
+                mean_auc[n_zeros] <- 0.001
+              }
+            }
+
+            group_by_cols <- c(
+              "time_period", "climate_model",
+              "climate_scenario", "climate_name")
+
+            pred_summ <- dplyr::bind_rows(cv_data$prediction_data) %>%
+              dplyr::arrange(time_period, climate_model, climate_scenario) %>%
+              dplyr::summarise(
+                preds = list(pred),
+                .by = tidyselect::all_of(group_by_cols)) %>%
+              dplyr::mutate(
+                pred_summary = purrr::map(
+                  .x = preds,
+                  .f = ~ {
+
+                    cv_maps <- purrr::map(
+                      .x,
+                      function(cv_maps) {
+                        if (inherits(cv_maps, "PackedSpatRaster")) {
+                          terra::unwrap(cv_maps)
+                        } else {
+                          dplyr::filter(cv_maps, rep_id == "mean") %>%
+                            dplyr::pull(pred) %>%
+                            purrr::pluck(1) %>%
+                            terra::unwrap()
+                        }
+                      }) %>%
+                      terra::rast()
+
+                    # |||||||||||||||||||||||||||||||||||||||||||
+
+                    # mean -------
+                    name_mean <- stringr::str_replace(
+                      names(cv_maps)[1], "cv[0-9]_", "mean_") %>%
+                      stringr::str_replace("_rep.+_", "_")
+                    pred_mean <- terra::app(cv_maps, mean, na.rm = TRUE) %>%
+                      stats::setNames(name_mean) %>%
+                      terra::toMemory() %>%
+                      terra::wrap()
+
+                    # |||||||||||||||||||||||||||||||||||||||||||
+
+                    # weighted mean -----
+                    if (calc_w_mean) {
+                      name_w_mean <- stringr::str_replace(
+                        name_mean, "mean", "w_mean")
+                      pred_w_mean <- terra::weighted.mean(
+                        x = cv_maps, w = auc_test, na.rm = TRUE) %>%
+                        stats::setNames(name_w_mean) %>%
+                        terra::toMemory() %>%
+                        terra::wrap()
+                    } else {
+                      pred_w_mean <- list()
+                    }
+
+                    # |||||||||||||||||||||||||||||||||||||||||||
+
+                    # sd ------
+                    name_sd <- stringr::str_replace(name_mean, "mean", "sd")
+                    pred_sd <- terra::app(cv_maps, stats::sd, na.rm = TRUE) %>%
+                      stats::setNames(name_sd) %>%
+                      terra::toMemory() %>%
+                      terra::wrap()
+
+                    # |||||||||||||||||||||||||||||||||||||||||||
+
+                    # cov ------
+                    name_cov <- stringr::str_replace(name_mean, "mean", "cov")
+                    # Avoid division by zero
+                    pred_mean2 <- terra::clamp(
+                      terra::unwrap(pred_mean), lower = 1e-8)
+                    pred_cov <- (terra::unwrap(pred_sd) / pred_mean2) %>%
+                      stats::setNames(name_cov) %>%
+                      terra::toMemory() %>%
+                      terra::wrap()
+
+                    # |||||||||||||||||||||||||||||||||||||||||||
+
+                    tibble::tibble(
+                      pred_mean = list(pred_mean),
+                      pred_w_mean = list(pred_w_mean),
+                      pred_sd = list(pred_sd),
+                      pred_cov = list(pred_cov))
+
+                  })
+              ) %>%
+              dplyr::select(-tidyselect::all_of("preds")) %>%
+              tidyr::unnest("pred_summary")
+
+            ecokit::save_as(object = pred_summ, out_path = pred_path)
+
+            rm(pred_summ, envir = environment())
+
+          }
+
+          rm(cv_data, envir = environment())
+          invisible(gc())
+
+          # |||||||||||||||||||||||||||||||||||||||||||
+          # Merge data ---------
+          # |||||||||||||||||||||||||||||||||||||||||||
+
+          tibble::tibble(
+            evaluation_training = list(evaluation_training),
+            evaluation_testing = list(evaluation_testing),
+            variable_importance = list(variable_importance),
+            response_curves = list(response_curves),
+            pred = pred_path)
+
         },
         future.scheduling = Inf, future.seed = TRUE,
         future.packages = pkgs_to_load,
-        future.globals = c(
-          "model_pred_results", "summarize_predictions", "output_directory")))
+        future.globals = c("model_summary", "output_directory"))) %>%
+      dplyr::bind_rows()
 
     ecokit::set_parallel(level = 1L, stop_cluster = TRUE)
     future::plan("sequential", gc = TRUE)
+
+    model_summary <- dplyr::bind_cols(model_summary, model_summary_0) %>%
+      dplyr::select(-tidyselect::all_of("model_data"))
+
+    rm(model_summary_0, envir = environment())
+    invisible(gc())
 
     # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
     # Prepare and save summary data ----------
     ecokit::cat_time("Prepare and save summary data", level = 1L)
-    model_summary <- dplyr::left_join(
-      model_summary, dplyr::bind_rows(pred_summary), by = "species_name")
-
     ecokit::save_as(object = model_summary, out_path = model_summary_path)
     invisible(gc())
 
@@ -564,12 +791,13 @@ fit_sdm_models <- function(
   ecokit::cat_time("Check for issues in summary maps", level = 1L)
 
   summ_issues <- model_summary %>%
-    dplyr::select(species_name, summary_prediction_path) %>%
+    dplyr::select(tidyselect::all_of(c("species_name", "pred"))) %>%
     dplyr::mutate(
-      preds_summ = purrr::map(
-        .x = summary_prediction_path, .f = ecokit::load_as)) %>%
+      preds_summ = purrr::map(.x = pred, .f = ecokit::load_as)) %>%
     tidyr::unnest(preds_summ) %>%
-    dplyr::select(species_name, climate_name, pred_mean, pred_w_mean) %>%
+    dplyr::select(
+      tidyselect::all_of(
+        c("species_name", "climate_name", "pred_mean", "pred_w_mean"))) %>%
     dplyr::mutate(
       pred_mean_okay = purrr::map_lgl(
         pred_mean, inherits, "PackedSpatRaster"),
@@ -578,6 +806,7 @@ fit_sdm_models <- function(
     dplyr::filter(!pred_mean_okay | !pred_w_mean_okay)
 
   if (nrow(summ_issues) > 0L) {
+
     summ_issues_species <- unique(summ_issues$species_name)
 
     ecokit::cat_sep(
@@ -592,13 +821,14 @@ fit_sdm_models <- function(
 
     ecokit::cat_time(
       "Affected species: ", cat_timestamp = FALSE, cat_bold = TRUE)
+
     paste(summ_issues_species, collapse = "; ") %>%
       stringr::str_wrap(width = 65L) %>%
       stringr::str_split("\n", simplify = TRUE) %>%
       stringr::str_replace_all(" ", " ") %>%
       paste(collapse = "\n  >>>  ") %>%
       ecokit::cat_time(cat_timestamp = FALSE, level = 1L, ... = "\n")
-    
+
     ecokit::cat_sep(
       line_char_rep = 60L, sep_lines_before = 1L, sep_lines_after = 2L,
       line_char = "=", cat_bold = TRUE, cat_red = TRUE)
@@ -630,35 +860,46 @@ fit_sdm_models <- function(
     sr_options <- c("mean", "w_mean")
   }
 
-
   if (length(sr_options) > 0L) {
 
-    exclude_cols <- c(
-      "pred_sd", "pred_cov", "time_period", "climate_model", "climate_scenario")
-
-    species_richness_r <- model_summary$summary_prediction_path %>%
-      purrr::map_dfr(ecokit::load_as) %>%
-      dplyr::select(-tidyselect::all_of(exclude_cols)) %>%
-      tidyr::pivot_longer(
-        cols = c("pred_mean", "pred_w_mean"), names_to = "pred_type",
-        values_to = "pred_value") %>%
-      dplyr::filter(pred_type %in% paste0("pred_", sr_options)) %>%
-      tidyr::nest(
-        preds = "pred_value", .by = c("climate_name", "pred_type")) %>%
+    species_richness_r <- model_summary$pred %>%
+      purrr::map_dfr(
+        .f = ~ {
+          ecokit::load_as(.x) %>%
+            dplyr::select(-tidyselect::all_of(c("pred_sd", "pred_cov"))) %>%
+            dplyr::mutate(
+              pred_mean = purrr::map(pred_mean, terra::unwrap),
+              pred_w_mean = purrr::map(pred_w_mean, terra::unwrap))
+        }) %>%
+      dplyr::arrange(time_period, climate_name) %>%
+      dplyr::group_by(
+        time_period, climate_model, climate_scenario, climate_name)  %>%
+      dplyr::summarize(
+        dplyr::across(
+          .cols = tidyselect::everything(), .fns = ~list(terra::rast(.))),
+        .groups = "drop") %>%
       dplyr::mutate(
-        richness_map = purrr::map2(
-          .x = preds, .y = climate_name,
-          .f = ~{
-            purrr::map(unlist(.x), terra::unwrap) %>%
-              terra::rast() %>%
-              terra::app(sum, na.rm = TRUE) %>%
-              stats::setNames(paste0("richness_", .y)) %>%
+        pred_mean = purrr::map2(
+          .x = climate_name, .y = pred_mean,
+          .f = ~ {
+            terra::app(.y, sum, na.rm = TRUE) %>%
+              stats::setNames(paste0("richness_", sdm_method, "_", .x)) %>%
+              terra::toMemory() %>%
               terra::wrap()
-          })) %>%
-      dplyr::select(-preds) %>%
-      tidyr::pivot_wider(names_from = "pred_type", values_from = richness_map)
+          }),
+        pred_w_mean = purrr::map2(
+          .x = climate_name, .y = pred_w_mean,
+          .f = ~ {
+            terra::app(.y, sum, na.rm = TRUE) %>%
+              stats::setNames(paste0("richness_", sdm_method, "_", .x)) %>%
+              terra::toMemory() %>%
+              terra::wrap()
+          }))
 
     ecokit::save_as(object = species_richness_r, out_path = model_richness_path)
+
+    rm(species_richness_r, envir = environment())
+    invisible(gc())
 
   }
 

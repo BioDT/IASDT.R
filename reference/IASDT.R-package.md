@@ -1,4 +1,4 @@
-# IASDT.R: Modelling the distribution of invasive alien plant species in Europe
+# IASDT.R: Modelling the Distribution of Invasive Alien Plant Species in Europe
 
 Helper R functions for the Invasive Alien Species (IAS) Digital Twin
 (IASDT), as part of the EU-funded Biodiversity Digital Twin (BioDT)

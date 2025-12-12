@@ -51,7 +51,7 @@ Ahmed El-Gabbas
 ## Examples
 
 ``` r
-ecokit::load_packages(Hmsc, coda, dplyr)
+ecokit::load_packages(Hmsc, coda, dplyr, data.table)
 
 coda_object <- Hmsc::convertToCodaObject(Hmsc::TD$m)
 ecokit::ht(

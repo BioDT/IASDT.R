@@ -4,7 +4,7 @@
 
 - [`IASDT.R`](https://biodt.github.io/IASDT.R/reference/IASDT.R-package.md)
   [`IASDT.R-package`](https://biodt.github.io/IASDT.R/reference/IASDT.R-package.md)
-  : IASDT.R: Modelling the distribution of invasive alien plant species
+  : IASDT.R: Modelling the Distribution of Invasive Alien Plant Species
   in Europe
 
 ## Prepare species distribution data

@@ -36,7 +36,7 @@ transformation for specific parameter types: \code{rho}, \code{alpha}, \code{ome
 \code{beta}.
 }
 \examples{
-ecokit::load_packages(Hmsc, coda, dplyr)
+ecokit::load_packages(Hmsc, coda, dplyr, data.table)
 
 coda_object <- Hmsc::convertToCodaObject(Hmsc::TD$m)
 ecokit::ht(

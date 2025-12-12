@@ -1743,6 +1743,7 @@ reduce_sdm_formulas <- function(obj) {
 #' - Makes predictions for each prediction dataset, saves rasters and data,
 #' and checks their validity.
 #' @author Ahmed El-Gabbas
+#' @importFrom stats sd
 #' @noRd
 #' @keywords internal
 

@@ -27,6 +27,12 @@ jobs:
       group: pkgdown-${{ github.event_name != 'pull_request' || github.run_id }}
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+      _R_CHECK_FORCE_SUGGESTS_: false
+      _R_CHECK_CRAN_INCOMING_REMOTE_:  false
+      MAKEFLAGS: -j4
+      R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+
     permissions:
       contents: write
     steps:
@@ -46,11 +52,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgdal-dev libproj-dev libgeos-dev libudunits2-dev
 
-      - name: Install dependencies
-        run: |
-          install.packages(c("remotes", "rcmdcheck"))
-          remotes::install_deps(dependencies = TRUE, upgrade = "never", Ncpus = parallel::detectCores())
-        shell: Rscript {0}
+      - name: Setup R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with: 
+          extra-packages: |
+            any::pkgdown
+            any::data.table
+          needs: website
+          cache-version: 2
+      
+      - name: Install package
+        run: R CMD INSTALL . 
+        shell: bash
 
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)

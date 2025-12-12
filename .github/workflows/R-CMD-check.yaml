@@ -64,7 +64,7 @@ jobs:
       - name: Install dependencies
         run: |
           install.packages(c("remotes", "rcmdcheck"))
-          remotes::install_deps(dependencies = TRUE, upgrade = "never")
+          remotes::install_deps(dependencies = TRUE, upgrade = "never", Ncpus = parallel::detectCores())
         shell: Rscript {0}
 
       - name: Manual R CMD check

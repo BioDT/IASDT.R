@@ -1750,6 +1750,14 @@ fit_predict_internal <- function(
     line_id, sdm_method, model_data, model_settings,
     input_data, output_directory, path_grid_r, copy_maxent_html = TRUE) {
 
+  terra_temp <- fs::path_temp(
+    paste0("terra_temp_", format(Sys.time(), "%H%M%S")))
+  fs::dir_create(terra_temp)
+  withr::defer(try({
+    fs::dir_delete(terra_temp)
+    terra::tmpFiles(current = TRUE, remove = TRUE)
+  }, silent = TRUE))
+
   terra::terraOptions(
     # fraction of RAM terra may use (0-0.9)
     memfrac = 0.1,
@@ -1759,7 +1767,8 @@ fit_predict_internal <- function(
     memmax = 10L,
     # silence per-worker progress bars
     progress = 0L,
-    todisk = TRUE)
+    todisk = TRUE,
+    tempdir = terra_temp)
 
   method_type <- pred_nest <- rep_id <- variable <- x_value <- rep_data <-
     prediction <- x <- y <- x_max <- x_min <- n <- cv <- NULL

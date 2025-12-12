@@ -126,6 +126,14 @@ fit_sdm_models <- function(
 
   .start_time <- lubridate::now(tzone = "CET")
 
+  terra_temp <- fs::path_temp(
+    paste0("terra_temp_", format(Sys.time(), "%H%M%S")))
+  fs::dir_create(terra_temp)
+  withr::defer(try({
+    fs::dir_delete(terra_temp)
+    terra::tmpFiles(current = TRUE, remove = TRUE)
+  }, silent = TRUE))
+
   terra::terraOptions(
     # fraction of RAM terra may use (0-0.9)
     memfrac = 0.1,
@@ -135,7 +143,8 @@ fit_sdm_models <- function(
     memmax = 10L,
     # silence per-worker progress bars
     progress = 0L,
-    todisk = TRUE)
+    todisk = TRUE,
+    tempdir = terra_temp)
 
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -626,6 +635,14 @@ fit_sdm_models <- function(
 
           if (!pred_okay) {
 
+            terra_temp <- fs::path_temp(
+              paste0("terra_temp_", format(Sys.time(), "%H%M%S")))
+            fs::dir_create(terra_temp)
+            withr::defer(try({
+              fs::dir_delete(terra_temp)
+              terra::tmpFiles(current = TRUE, remove = TRUE)
+            }, silent = TRUE))
+
             terra::terraOptions(
               # fraction of RAM terra may use (0-0.9)
               memfrac = 0.1,
@@ -635,7 +652,8 @@ fit_sdm_models <- function(
               memmax = 10L,
               # silence per-worker progress bars
               progress = 0L,
-              todisk = TRUE)
+              todisk = TRUE,
+              tempdir = terra_temp)
 
             auc_test <- evaluation_testing %>%
               dplyr::filter(cv_fold != "mean" & cv_fold != "sd") %>%

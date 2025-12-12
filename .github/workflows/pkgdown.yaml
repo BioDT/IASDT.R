@@ -48,11 +48,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          install.packages(c("remotes", "pkgdown"))
-          remotes::install_version("ggplot2", version = "3.5.2")
-          remotes::install_github("elgabbas/ecokit")
-          remotes::install_github("hmsc-r/HMSC")
-          remotes::install_local(".", dependencies = TRUE, upgrade = "never", Ncpus = parallel::detectCores())
+          install.packages(c("remotes", "rcmdcheck"))
+          remotes::install_deps(dependencies = TRUE, upgrade = "never", Ncpus = parallel::detectCores())
         shell: Rscript {0}
 
       - name: Build site

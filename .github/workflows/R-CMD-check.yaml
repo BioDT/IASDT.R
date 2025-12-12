@@ -62,12 +62,24 @@ jobs:
           sudo apt-get install -y libgdal-dev libgeos-dev libproj-dev libudunits2-dev libnlopt-dev cmake
         shell: bash
 
-      - name: Install system dependencies for macOS
+      - name: Cache Homebrew packages (macOS)
         if: runner.os == 'macOS'
+        uses: actions/cache@v4
+        with: 
+          path: |
+            /usr/local/Cellar
+            /usr/local/opt
+            ~/Library/Caches/Homebrew
+          key: ${{ runner.os }}-brew-${{ hashFiles('. github/workflows/R-CMD-check.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-brew-
+
+      - name: Install system dependencies for macOS
+        if: runner. os == 'macOS'
         run: |
           brew install pkg-config gdal proj geos nlopt
         shell: bash
-
+      
       - name: Setup R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:  
@@ -89,13 +101,6 @@ jobs:
           needs: check
           cache-version: 2
             
-      - name: Session info
-        run: |
-          options(width = 100)
-          pkgs <- installed.packages()[, "Package"]
-          sessioninfo::session_info(pkgs, include_base = TRUE)
-        shell: Rscript {0}
-      
       - name: Check package
         run: |
           rcmdcheck::rcmdcheck(
@@ -104,10 +109,3 @@ jobs:
             error_on = "warning",
             check_dir = "check")
         shell: Rscript {0}
-
-      - name: Upload check results
-        if:  failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ runner.os }}-r${{ matrix.config.r }}-results
-          path: check

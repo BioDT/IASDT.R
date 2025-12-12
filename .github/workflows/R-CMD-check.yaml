@@ -27,10 +27,7 @@ jobs:
         config:
           - {os: macos-latest, r: 'release'}
           - {os: windows-latest, r: 'release'}
-          - {os: ubuntu-latest, r: 'devel', http-user-agent: 'release', allow-failure: true}
           - {os: ubuntu-latest, r: 'release'}
-    
-    continue-on-error: ${{ matrix.config.allow-failure || false }}
     
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -70,12 +67,12 @@ jobs:
             /usr/local/Cellar
             /usr/local/opt
             ~/Library/Caches/Homebrew
-          key: ${{ runner.os }}-brew-${{ hashFiles('. github/workflows/R-CMD-check.yaml') }}
+          key: ${{ runner.os }}-brew-${{ hashFiles('.github/workflows/R-CMD-check.yaml') }}
           restore-keys: |
             ${{ runner.os }}-brew-
 
       - name: Install system dependencies for macOS
-        if: runner. os == 'macOS'
+        if: runner.os == 'macOS'
         run: |
           brew install pkg-config gdal proj geos nlopt
         shell: bash
@@ -85,21 +82,10 @@ jobs:
         with:  
           extra-packages: |
             any::rcmdcheck
-            any::data. table
+            any::data.table
           needs: check
           cache-version: 2
           lockfile-create-lib: false
-        continue-on-error: true
-        
-      - name:  Retry Setup R dependencies on failure
-        if: failure()
-        uses: r-lib/actions/setup-r-dependencies@v2
-        with:  
-          extra-packages: |
-            any::rcmdcheck
-            any::data. table
-          needs: check
-          cache-version: 2
             
       - name: Check package
         run: |

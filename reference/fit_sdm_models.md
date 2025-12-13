@@ -18,6 +18,7 @@ fit_sdm_models(
   hab_abb = NULL,
   cv_type = "cv_dist",
   n_cores = 8L,
+  n_cores_check = 8L,
   n_cores_summary = 8L,
   strategy = "multisession",
   future_max_size = 2000L,
@@ -73,14 +74,10 @@ fit_sdm_models(
   [`mod_cv_fit()`](https://biodt.github.io/IASDT.R/reference/Mod_CV_Fit.md)
   for more details.
 
-- n_cores:
+- n_cores, n_cores_check, n_cores_summary:
 
-  Integer. Number of CPU cores for parallel processing. Default is 8.
-
-- n_cores_summary:
-
-  Integer. Number of CPU cores for parallel processing when summarizing
-  model results. Default is 8.
+  Integer. Number of CPU cores for parallel processing of model fitting,
+  model checking, and summarising model outputs. Default is 8.
 
 - strategy:
 

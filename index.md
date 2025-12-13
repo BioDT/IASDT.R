@@ -71,4 +71,4 @@ If you use the `IASDT.R` package, please cite it as: [![DOI:
 > [https://github.com/BioDT/IASDT.R](https://github.com/BioDT/IASDT.R);
 > [https://biodt.eu](https://biodt.eu).
 
-Last update: 2025-12-12
+Last update: 2025-12-13

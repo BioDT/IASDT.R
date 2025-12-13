@@ -463,7 +463,7 @@ fit_sdm_models <- function(
 
     pkgs_to_load <- c(
       "magrittr", "ecokit", "tibble", "dplyr", "qs2", "tidyselect",
-      "stringr", "terra", "purrr", "fs")
+      "stringr", "terra", "purrr", "fs", "withr", "tidyr")
 
     model_summary_0 <- ecokit::quietly(
       future.apply::future_lapply(
@@ -680,7 +680,7 @@ fit_sdm_models <- function(
               # avoid extreme cases when any of testing AUC is very small (= 0)
               n_zeros <- which(auc_test == 0L)
               if (length(n_zeros) > 0L) {
-                mean_auc[n_zeros] <- 0.001
+                auc_test[n_zeros] <- 0.001
               }
             }
 

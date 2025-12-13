@@ -2713,17 +2713,17 @@ copy_svm2 <- function() {
 
 summarise_ssdms <- function(line_id, output_directory, model_summary) {
 
-  x_value <- variable <- rep_id <- NULL
-
   cv_data <- dplyr::slice(model_summary, line_id)
+  rm(line_id, model_summary, envir = environment())
+  invisible(gc())
 
   n_reps <- cv_data$n_rep[[1]]
-  species_name <- cv_data$species_name[[1]]
-  sdm_method <- cv_data$sdm_method[[1]]
 
   pred_path <- fs::path(
     output_directory,
-    paste0(sdm_method, "_", species_name, "_summary_pred.qs2"))
+    paste0(
+      cv_data$sdm_method[[1]], "_",
+      cv_data$species_name[[1]], "_summary_pred.qs2"))
   pred_okay <- ecokit::check_data(pred_path, warning = FALSE)
 
   cv_data <- purrr::map_dfr(

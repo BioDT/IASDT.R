@@ -11,6 +11,8 @@ fit_sdm_models(
   hab_abb = NULL,
   cv_type = "cv_dist",
   n_cores = 8L,
+  n_cores_summary = 8L,
+  strategy = "multisession",
   future_max_size = 2000L,
   selected_species = NULL,
   excluded_species = NULL,
@@ -47,6 +49,13 @@ or \code{cv_large}. See \code{\link[=mod_cv_fit]{mod_cv_fit()}} for more details
 
 \item{n_cores}{Integer. Number of CPU cores for parallel processing. Default
 is 8.}
+
+\item{n_cores_summary}{Integer. Number of CPU cores for parallel processing
+when summarizing model results. Default is 8.}
+
+\item{strategy}{Character. The parallel processing strategy to use. Valid
+options are "sequential", "multisession" (default), "multicore", and
+"cluster". See \code{\link[future:plan]{future::plan()}} and \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} for details.}
 
 \item{future_max_size}{Numeric. Maximum allowed total size (in megabytes) of
 global variables identified. See \code{\link[ecokit:set_parallel]{ecokit::set_parallel()}} and

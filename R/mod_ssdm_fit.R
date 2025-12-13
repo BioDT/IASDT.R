@@ -29,6 +29,11 @@
 #'   or `cv_large`. See [mod_cv_fit()] for more details.
 #' @param n_cores Integer. Number of CPU cores for parallel processing. Default
 #'   is 8.
+#' @param n_cores_summary Integer. Number of CPU cores for parallel processing
+#'   when summarizing model results. Default is 8.
+#' @param strategy Character. The parallel processing strategy to use. Valid
+#'   options are "sequential", "multisession" (default), "multicore", and
+#'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #' @param future_max_size Numeric. Maximum allowed total size (in megabytes) of
 #'   global variables identified. See [ecokit::set_parallel()] and
 #'   `future.globals.maxSize` argument of [future::future.options()] for more
@@ -118,10 +123,11 @@
 
 fit_sdm_models <- function(
     sdm_method = NULL, model_settings = NULL, model_dir = NULL,
-    hab_abb = NULL, cv_type = "cv_dist", n_cores = 8L, future_max_size = 2000L,
-    selected_species = NULL, excluded_species = NULL, env_file = ".env",
-    clamp_pred = TRUE, fix_efforts = "q90", fix_rivers = "q90",
-    climate_models = "all", climate_scenarios = "all", climate_periods = "all",
+    hab_abb = NULL, cv_type = "cv_dist", n_cores = 8L, n_cores_summary = 8L,
+    strategy = "multisession", future_max_size = 2000L, selected_species = NULL,
+    excluded_species = NULL, env_file = ".env", clamp_pred = TRUE,
+    fix_efforts = "q90", fix_rivers = "q90", climate_models = "all",
+    climate_scenarios = "all", climate_periods = "all",
     copy_maxent_html = TRUE) {
 
   .start_time <- lubridate::now(tzone = "CET")
@@ -160,6 +166,12 @@ fit_sdm_models <- function(
 
   hab_abb <- .validate_hab_abb(as.character(hab_abb))
   n_cores <- .validate_n_cores(n_cores)
+  n_cores_summary <- .validate_n_cores(n_cores_summary)
+  strategy <- .validate_strategy(strategy)
+
+  if (strategy == "sequential") {
+    n_cores <- n_cores_summary <- 1L
+  }
 
   if (future_max_size <= 0) {
     ecokit::stop_ctx(
@@ -356,7 +368,7 @@ fit_sdm_models <- function(
       future::plan("sequential", gc = TRUE)
     } else {
       ecokit::set_parallel(
-        n_cores = min(n_cores, nrow(model_data)),
+        n_cores = min(n_cores, nrow(model_data)), strategy = strategy,
         future_max_size = future_max_size, level = 1L)
       withr::defer(future::plan("sequential", gc = TRUE))
     }
@@ -376,18 +388,19 @@ fit_sdm_models <- function(
       "input_data", "output_directory", "path_grid_r", "reduce_sdm_formulas",
       "fit_predict_internal", "extract_sdm_info", "copy_maxent_html")
 
-    model_data2 <- ecokit::quietly(
-      future.apply::future_lapply(
-        X = seq_len(nrow(model_data)),
-        FUN = function(line_id) {
+    model_data2 <- future.apply::future_lapply(
+      X = seq_len(nrow(model_data)),
+      FUN = function(line_id) {
+        ecokit::quietly(
           fit_predict_internal(
             line_id = line_id, sdm_method = sdm_method,
             model_data = model_data, model_settings = model_settings,
             input_data = input_data, output_directory = output_directory,
-            path_grid_r = path_grid_r, copy_maxent_html = copy_maxent_html)
-        },
-        future.scheduling = Inf, future.seed = TRUE,
-        future.packages = pkgs_to_load, future.globals = future_globals)) %>%
+            path_grid_r = path_grid_r, copy_maxent_html = copy_maxent_html),
+          "fitted probabilities numerically")
+      },
+      future.scheduling = Inf, future.seed = TRUE,
+      future.packages = pkgs_to_load, future.globals = future_globals) %>%
       dplyr::bind_rows()
 
     ecokit::set_parallel(level = 1L, stop_cluster = TRUE)
@@ -416,7 +429,7 @@ fit_sdm_models <- function(
     # Check model results -----
     ecokit::cat_time("Check model results", level = 1L)
     check_model_results(
-      model_results = model_results, n_cores = n_cores,
+      model_results = model_results, n_cores = n_cores, strategy = strategy,
       future_max_size = future_max_size)
 
   }
@@ -439,12 +452,12 @@ fit_sdm_models <- function(
       dplyr::group_by(species_name, sdm_method, n_rep) %>%
       dplyr::summarise(model_data = list(model_data), .groups = "drop")
 
-    if (n_cores == 1L) {
+    if (n_cores_summary == 1L) {
       future::plan("sequential", gc = TRUE)
     } else {
       ecokit::set_parallel(
-        n_cores = min(n_cores, nrow(model_summary)),
-        future_max_size = future_max_size, level = 1L)
+        n_cores_summary = min(n_cores_summary, nrow(model_summary)),
+        strategy = strategy, future_max_size = future_max_size, level = 1L)
       withr::defer(future::plan("sequential", gc = TRUE))
     }
 

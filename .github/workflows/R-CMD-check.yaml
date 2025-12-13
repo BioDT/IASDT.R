@@ -77,6 +77,12 @@ jobs:
           brew install pkg-config gdal proj geos nlopt
         shell: bash
       
+      - name: Install pak for macOS
+        if: runner.os == 'macOS'
+        run: |
+          install.packages("pak", Ncpus = 4L)
+        shell: Rscript {0}
+
       - name: Setup R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:  

@@ -874,6 +874,7 @@ prepare_input_data <- function(
               }),
             testing_n = purrr::map_int(.x = testing_data, .f = nrow))
 
+
         sp_mod_data <- tibble::tibble(cv = seq_len(n_cv_folds)) %>%
           dplyr::mutate(
             n_rep = n_rep,
@@ -923,6 +924,7 @@ prepare_input_data <- function(
             model_formula = purrr::map2(
               .x = cv, .y = method_type,
               .f = ~ {
+
                 # model formula
                 if (.y == "glm") {
                   if (length(q_preds) == 0L) {
@@ -968,21 +970,15 @@ prepare_input_data <- function(
                   bg_sample
                 }
               }),
-            n_bg = purrr::map2(
+            n_bg = purrr::map2_int(
               n_bg, method_type,
-              function(bg_sample, method_type) {
-                if (method_type == "maxent") {
-                  NA_integer_
-                } else {
-                  n_bg
-                }
-              })
-          ) %>%
+              ~ dplyr::if_else(.y == "maxent", NA_integer_, .x))) %>%
           tidyr::unnest(model_formula)
 
         rm(
           modelling_data2, abs_prevalence, abs_pres_ratio,
           envir = environment())
+
 
         model_data <- purrr::map_dfr(
           .x = seq_len(nrow(sp_mod_data)),
@@ -1005,12 +1001,13 @@ prepare_input_data <- function(
                 row_data$training_pres[[1]], row_data$bg_sample[[1]])
             }
 
-            training_data <- training_data %>%
-              dplyr::select(-tidyselect::all_of(c("cv", "x", "y")))
+            training_data <- dplyr::select(
+              training_data, -tidyselect::all_of(c("cv", "x", "y")))
 
             testing_data <- sp_mod_data_0 %>%
+              dplyr::filter(cv == row_data$cv) %>%
               dplyr::pull(testing_data) %>%
-              magrittr::extract2(row_data$cv) %>%
+              magrittr::extract2(1L) %>%
               dplyr::select(-tidyselect::all_of(c("cv", "x", "y")))
 
             valid_training <- training_data %>%
@@ -1793,8 +1790,8 @@ fit_predict_internal <- function(
 
   selected_cols <- c(
     "species_name", "cv", "n_rep", "rep_id", "model_formula", "sdm_data")
-  model_data_sub <- model_data_sub %>%
-    dplyr::select(tidyselect::all_of(selected_cols))
+  model_data_sub <- dplyr::select(
+    model_data_sub, tidyselect::all_of(selected_cols))
   invisible(gc())
 
   model_data_files <- purrr::map_chr(
@@ -2220,6 +2217,9 @@ fit_predict_internal <- function(
 #' @param n_cores Integer. Number of CPU cores for parallel processing.
 #' @param future_max_size Numeric or character. Maximum allowed size for future
 #'   package globals (see future documentation).
+#' @param strategy Character. The parallel processing strategy to use. Valid
+#'   options are "sequential", "multisession" (default), "multicore", and
+#'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
 #'
 #' @details
 #' - The function outputs information about any identified issues to the
@@ -2235,7 +2235,8 @@ fit_predict_internal <- function(
 #' @noRd
 #' @keywords internal
 
-check_model_results <- function(model_results, n_cores, future_max_size) {
+check_model_results <- function(
+    model_results, n_cores, future_max_size, strategy) {
 
   climate_name <- x_value <- na_count <- prediction <- cor_test <- auc_test <-
     species_name <- . <- variable <- prediction_data <- times <-
@@ -2257,7 +2258,7 @@ check_model_results <- function(model_results, n_cores, future_max_size) {
     future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
-      n_cores = min(n_cores, nrow(model_results)),
+      n_cores = min(n_cores, nrow(model_results)), strategy = strategy,
       future_max_size = future_max_size, show_log = FALSE)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
@@ -2278,7 +2279,7 @@ check_model_results <- function(model_results, n_cores, future_max_size) {
       future.packages = c("tibble", "sdm", "magrittr"),
       future.globals = "model_results"))
 
-  ecokit::set_parallel(level = 1L, show_log = FALSE)
+  ecokit::set_parallel(level = 1L, show_log = FALSE, stop_cluster = TRUE)
   future::plan("sequential", gc = TRUE)
 
 

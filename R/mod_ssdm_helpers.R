@@ -1591,7 +1591,7 @@ sdm_model_settings <- function() {
     glmpoly = list(degree = 2L),
     gam = list(method = "REML", select = TRUE, gamma = 1.2),
     glmnet = list(maxit = 100000L),
-    mars = list(pmethod = "backward", glm = list(maxit = 200L)),
+    mars = list(),
     gbm = list(n.trees = 2000L, interaction.depth = 2L),
     rf = list(ntree = 1000L, nodesize = 5L),
     ranger = list(
@@ -2214,7 +2214,7 @@ fit_predict_internal <- function(
 #'   - `variable_importance`: List of tibbles with variable importance values
 #'   - `response_curves`: List of tibbles with response curve data
 #'   - `prediction_info`: List of tibbles with prediction file information
-#' @param n_cores Integer. Number of CPU cores for parallel processing.
+#' @param n_cores_check Integer. Number of CPU cores for parallel processing.
 #' @param future_max_size Numeric or character. Maximum allowed size for future
 #'   package globals (see future documentation).
 #' @param strategy Character. The parallel processing strategy to use. Valid
@@ -2236,7 +2236,7 @@ fit_predict_internal <- function(
 #' @keywords internal
 
 check_model_results <- function(
-    model_results, n_cores, future_max_size, strategy) {
+    model_results, n_cores_check, future_max_size, strategy) {
 
   climate_name <- x_value <- na_count <- prediction <- cor_test <- auc_test <-
     species_name <- . <- variable <- prediction_data <- times <-
@@ -2254,12 +2254,12 @@ check_model_results <- function(
 
   issue_detected <- FALSE
 
-  if (n_cores == 1L) {
+  if (n_cores_check == 1L) {
     future::plan("sequential", gc = TRUE)
   } else {
     ecokit::set_parallel(
-      n_cores = min(n_cores, nrow(model_results)), strategy = strategy,
-      future_max_size = future_max_size, show_log = FALSE)
+      n_cores = min(n_cores_check, nrow(model_results)),
+      strategy = strategy, future_max_size = future_max_size, show_log = FALSE)
     withr::defer(future::plan("sequential", gc = TRUE))
   }
 
@@ -2713,6 +2713,9 @@ copy_svm2 <- function() {
 
 summarise_ssdms <- function(line_id, output_directory, model_summary) {
 
+  climate_model <- climate_scenario <- cv_fold <- pred <- preds <- rep_id <-
+    sdm_method <- species_name <- time_period <- variable<- x_value <- NULL
+
   cv_data <- dplyr::slice(model_summary, line_id)
   rm(line_id, model_summary, envir = environment())
   invisible(gc())
@@ -2773,8 +2776,7 @@ summarise_ssdms <- function(line_id, output_directory, model_summary) {
 
   cv_data$evaluation_training <- NULL
   rm(
-    evaluation_training_mean, evaluation_training_sd,
-    envir = environment())
+    evaluation_training_mean, evaluation_training_sd, envir = environment())
   invisible(gc())
 
   # |||||||||||||||||||||||||||||||||||||||||||
@@ -2809,8 +2811,7 @@ summarise_ssdms <- function(line_id, output_directory, model_summary) {
 
   cv_data$evaluation_testing <- NULL
   rm(
-    evaluation_testing_mean, evaluation_testing_sd,
-    envir = environment())
+    evaluation_testing_mean, evaluation_testing_sd, envir = environment())
   invisible(gc())
 
   # |||||||||||||||||||||||||||||||||||||||||||
@@ -2845,8 +2846,7 @@ summarise_ssdms <- function(line_id, output_directory, model_summary) {
 
   cv_data$variable_importance <- NULL
   rm(
-    variable_importance_mean, variable_importance_sd,
-    envir = environment())
+    variable_importance_mean, variable_importance_sd, envir = environment())
   invisible(gc())
 
   # |||||||||||||||||||||||||||||||||||||||||||
@@ -2881,8 +2881,7 @@ summarise_ssdms <- function(line_id, output_directory, model_summary) {
 
   cv_data$response_curves <- NULL
   rm(
-    response_curves_mean, response_curves_sd,
-    envir = environment())
+    response_curves_mean, response_curves_sd, envir = environment())
   invisible(gc())
 
   # |||||||||||||||||||||||||||||||||||||||||||

@@ -27,10 +27,9 @@
 #'   [mod_prepare_hpc()] for more details.
 #' @param cv_type Character. Cross-validation type. One of `cv_dist` (default)
 #'   or `cv_large`. See [mod_cv_fit()] for more details.
-#' @param n_cores Integer. Number of CPU cores for parallel processing. Default
-#'   is 8.
-#' @param n_cores_summary Integer. Number of CPU cores for parallel processing
-#'   when summarizing model results. Default is 8.
+#' @param n_cores,n_cores_check,n_cores_summary Integer. Number of CPU cores for
+#'   parallel processing of model fitting, model checking, and summarising model
+#'   outputs. Default is 8.
 #' @param strategy Character. The parallel processing strategy to use. Valid
 #'   options are "sequential", "multisession" (default), "multicore", and
 #'   "cluster". See [future::plan()] and [ecokit::set_parallel()] for details.
@@ -123,11 +122,11 @@
 
 fit_sdm_models <- function(
     sdm_method = NULL, model_settings = NULL, model_dir = NULL,
-    hab_abb = NULL, cv_type = "cv_dist", n_cores = 8L, n_cores_summary = 8L,
-    strategy = "multisession", future_max_size = 2000L, selected_species = NULL,
-    excluded_species = NULL, env_file = ".env", clamp_pred = TRUE,
-    fix_efforts = "q90", fix_rivers = "q90", climate_models = "all",
-    climate_scenarios = "all", climate_periods = "all",
+    hab_abb = NULL, cv_type = "cv_dist", n_cores = 8L, n_cores_check = 8L,
+    n_cores_summary = 8L, strategy = "multisession", future_max_size = 2000L,
+    selected_species = NULL, excluded_species = NULL, env_file = ".env",
+    clamp_pred = TRUE, fix_efforts = "q90", fix_rivers = "q90",
+    climate_models = "all", climate_scenarios = "all", climate_periods = "all",
     copy_maxent_html = TRUE) {
 
   .start_time <- lubridate::now(tzone = "CET")
@@ -156,7 +155,6 @@ fit_sdm_models <- function(
 
   # Check input arguments -------
 
-  ecokit::cat_time("Check input arguments")
   ecokit::check_args(
     args_to_check = c("sdm_method", "model_dir", "cv_type"),
     args_type = "character")
@@ -166,11 +164,12 @@ fit_sdm_models <- function(
 
   hab_abb <- .validate_hab_abb(as.character(hab_abb))
   n_cores <- .validate_n_cores(n_cores)
+  n_cores_check <- .validate_n_cores(n_cores_check)
   n_cores_summary <- .validate_n_cores(n_cores_summary)
   strategy <- .validate_strategy(strategy)
 
   if (strategy == "sequential") {
-    n_cores <- n_cores_summary <- 1L
+    n_cores <- n_cores_check <- n_cores_summary <- 1L
   }
 
   if (future_max_size <= 0) {
@@ -198,9 +197,7 @@ fit_sdm_models <- function(
   stringr::str_glue(
     "Fitting models using `{sdm_method}` and `{cv_type}` ",
     "cross-validation type") %>%
-    ecokit::info_chunk(
-      cat_bold = TRUE, cat_red = TRUE, line_char_rep = 80L,
-      info_lines_before = 2L)
+    ecokit::info_chunk(cat_bold = TRUE, cat_red = TRUE, line_char_rep = 80L)
 
   # Ensure that svm2 method is registered
   if (sdm_method == "svm2") {
@@ -432,8 +429,8 @@ fit_sdm_models <- function(
     # Check model results -----
     ecokit::cat_time("Check model results", level = 1L)
     check_model_results(
-      model_results = model_results, n_cores = n_cores, strategy = strategy,
-      future_max_size = future_max_size)
+      model_results = model_results, n_cores_check = n_cores_check,
+      strategy = strategy, future_max_size = future_max_size)
 
   }
 
@@ -459,7 +456,7 @@ fit_sdm_models <- function(
       future::plan("sequential", gc = TRUE)
     } else {
       ecokit::set_parallel(
-        n_cores_summary = min(n_cores_summary, nrow(model_summary)),
+        n_cores = min(n_cores_summary, nrow(model_summary)),
         strategy = strategy, future_max_size = future_max_size, level = 1L)
       withr::defer(future::plan("sequential", gc = TRUE))
     }
@@ -591,13 +588,15 @@ fit_sdm_models <- function(
         time_period, climate_model, climate_scenario, climate_name)  %>%
       dplyr::summarize(
         dplyr::across(
-          .cols = tidyselect::everything(), .fns = ~list(terra::rast(.))),
+          .cols = tidyselect::everything(),
+          .fns = ~terra::wrap(terra::toMemory(terra::rast(.)))),
         .groups = "drop") %>%
       dplyr::mutate(
         pred_mean = purrr::map2(
           .x = climate_name, .y = pred_mean,
           .f = ~ {
-            terra::app(.y, sum, na.rm = TRUE) %>%
+            terra::unwrap(.y) %>%
+              terra::app(sum, na.rm = TRUE) %>%
               stats::setNames(paste0("richness_", sdm_method, "_", .x)) %>%
               terra::toMemory() %>%
               terra::wrap()
@@ -605,7 +604,8 @@ fit_sdm_models <- function(
         pred_w_mean = purrr::map2(
           .x = climate_name, .y = pred_w_mean,
           .f = ~ {
-            terra::app(.y, sum, na.rm = TRUE) %>%
+            terra::unwrap(.y) %>%
+              terra::app(sum, na.rm = TRUE) %>%
               stats::setNames(paste0("richness_", sdm_method, "_", .x)) %>%
               terra::toMemory() %>%
               terra::wrap()

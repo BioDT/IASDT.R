@@ -11,6 +11,7 @@ fit_sdm_models(
   hab_abb = NULL,
   cv_type = "cv_dist",
   n_cores = 8L,
+  n_cores_check = 8L,
   n_cores_summary = 8L,
   strategy = "multisession",
   future_max_size = 2000L,
@@ -47,11 +48,9 @@ Valid values: "0", "1", "2", "3", "4a", "4b", "10", "12a", "12b". See
 \item{cv_type}{Character. Cross-validation type. One of \code{cv_dist} (default)
 or \code{cv_large}. See \code{\link[=mod_cv_fit]{mod_cv_fit()}} for more details.}
 
-\item{n_cores}{Integer. Number of CPU cores for parallel processing. Default
-is 8.}
-
-\item{n_cores_summary}{Integer. Number of CPU cores for parallel processing
-when summarizing model results. Default is 8.}
+\item{n_cores, n_cores_check, n_cores_summary}{Integer. Number of CPU cores for
+parallel processing of model fitting, model checking, and summarising model
+outputs. Default is 8.}
 
 \item{strategy}{Character. The parallel processing strategy to use. Valid
 options are "sequential", "multisession" (default), "multicore", and

@@ -463,7 +463,7 @@ fit_sdm_models <- function(
 
     pkgs_to_load <- c(
       "magrittr", "ecokit", "tibble", "dplyr", "qs2", "tidyselect",
-      "stringr", "terra", "purrr", "fs", "withr", "tidyr")
+      "stringr", "terra", "purrr", "fs", "withr", "tidyr", "stats")
 
     model_summary_0 <- ecokit::quietly(
       future.apply::future_lapply(

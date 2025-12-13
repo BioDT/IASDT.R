@@ -18,6 +18,8 @@ fit_sdm_models(
   hab_abb = NULL,
   cv_type = "cv_dist",
   n_cores = 8L,
+  n_cores_summary = 8L,
+  strategy = "multisession",
   future_max_size = 2000L,
   selected_species = NULL,
   excluded_species = NULL,
@@ -74,6 +76,21 @@ fit_sdm_models(
 - n_cores:
 
   Integer. Number of CPU cores for parallel processing. Default is 8.
+
+- n_cores_summary:
+
+  Integer. Number of CPU cores for parallel processing when summarizing
+  model results. Default is 8.
+
+- strategy:
+
+  Character. The parallel processing strategy to use. Valid options are
+  "sequential", "multisession" (default), "multicore", and "cluster".
+  See
+  [`future::plan()`](https://future.futureverse.org/reference/plan.html)
+  and
+  [`ecokit::set_parallel()`](https://elgabbas.github.io/ecokit/reference/set_parallel.html)
+  for details.
 
 - future_max_size:
 

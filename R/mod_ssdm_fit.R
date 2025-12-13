@@ -468,13 +468,18 @@ fit_sdm_models <- function(
       "magrittr", "ecokit", "tibble", "dplyr", "qs2", "tidyselect",
       "stringr", "terra", "purrr", "fs", "withr", "tidyr", "stats")
 
-    model_summary_0 <- ecokit::quietly(
-      future.apply::future_lapply(
-        X = seq_len(nrow(model_summary)), FUN = summarise_ssdms,
-        output_directory = output_directory, model_summary = model_summary,
-        future.scheduling = Inf, future.seed = TRUE,
-        future.packages = pkgs_to_load,
-        future.globals = c("model_summary", "output_directory"))) %>%
+    model_summary_0 <- future.apply::future_lapply(
+      X = seq_len(nrow(model_summary)),
+      FUN = function(line_id) {
+        ecokit::quietly(
+          summarise_ssdms(
+            line_id = line_id, output_directory = output_directory,
+            model_summary = model_summary))
+      },
+      future.scheduling = Inf, future.seed = TRUE,
+      future.packages = pkgs_to_load,
+      future.globals = c(
+        "model_summary", "output_directory", "summarise_ssdms")) %>%
       dplyr::bind_rows()
 
     ecokit::set_parallel(level = 1L, stop_cluster = TRUE)

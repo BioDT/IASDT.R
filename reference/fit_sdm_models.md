@@ -40,10 +40,10 @@ fit_sdm_models(
 - sdm_method:
 
   Character. A single SDM algorithm to use for fitting models. Valid
-  values: "glm", "glmpoly", "gam", "glmnet", "mars", "gbm", "rf",
-  "ranger", "cart", "rpart", "maxent", "mlp", "rbf", "svm", "mda", and
-  "fda". These correspond to selected methods supported by the `sdm`
-  package. For details and supported options, see
+  values: "glm", "glmpoly", "gam", "glmnet", "mars", "mars2", "gbm",
+  "rf", "ranger", "cart", "rpart", "maxent", "mlp", "rbf", "svm",
+  "svm2", "mda", and "fda". These correspond to selected methods
+  supported by the `sdm` package. For details and supported options, see
   [`sdm::getmethodNames()`](https://rdrr.io/pkg/sdm/man/add.html).
 
 - model_settings:

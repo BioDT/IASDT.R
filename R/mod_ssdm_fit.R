@@ -13,10 +13,11 @@
 #' predictors.
 #'
 #' @param sdm_method Character. A single SDM algorithm to use for fitting
-#'   models. Valid values: "glm", "glmpoly", "gam", "glmnet", "mars", "gbm",
-#'   "rf", "ranger", "cart", "rpart", "maxent", "mlp", "rbf", "svm", "mda", and
-#'   "fda". These correspond to selected methods supported by the `sdm` package.
-#'   For details and supported options, see [sdm::getmethodNames()].
+#'   models. Valid values: "glm", "glmpoly", "gam", "glmnet", "mars", "mars2",
+#'   "gbm", "rf", "ranger", "cart", "rpart", "maxent", "mlp", "rbf", "svm",
+#'   "svm2", "mda", and "fda". These correspond to selected methods supported by
+#'   the `sdm` package. For details and supported options, see
+#'   [sdm::getmethodNames()].
 #' @param model_settings List or NULL. List of model-specific settings. If
 #'   `NULL`, defaults to custom settings defined within the workflow.
 #' @param model_dir Character. Path to the directory containing model data and
@@ -204,13 +205,18 @@ fit_sdm_models <- function(
     copy_svm2()
   }
 
+  # Ensure that mars2 method is registered
+  if (sdm_method == "mars") {
+    copy_mars2()
+  }
+
   # |||||||||||||||||||||||||||||||||||||||||||
 
   # model method / model_setting
 
   # rbf is not bounded; see https://github.com/babaknaimi/sdm/issues/42
   valid_sdm_methods <- c(
-    "glm", "glmpoly", "gam", "glmnet", "mars", "gbm", "rf", "ranger",
+    "glm", "glmpoly", "gam", "glmnet", "mars", "mars2", "gbm", "rf", "ranger",
     "cart", "rpart", "maxent", "mlp", "svm", "svm2", "mda", "fda")
   sdm_method_valid <- any(
     is.null(sdm_method), length(sdm_method) != 1L,
@@ -315,6 +321,7 @@ fit_sdm_models <- function(
       "gam", "mgcv",
       "glmnet", "glmnet",
       "mars", "earth",
+      "mars2", "earth",
       "gbm", "gbm",
       "rf", "randomForest",
       "ranger", "ranger",
@@ -395,9 +402,7 @@ fit_sdm_models <- function(
             input_data = input_data, output_directory = output_directory,
             path_grid_r = path_grid_r, copy_maxent_html = copy_maxent_html),
           "fitted probabilities numerically",
-          "Couldn't flush user prefs",
-          "java.util.prefs.BackingStoreException",
-          "java.util.prefs.FileSystemPreferences")
+          "Using formula(x) is deprecated when", "Consider formula")
       },
       future.scheduling = Inf, future.seed = TRUE,
       future.packages = pkgs_to_load, future.globals = future_globals) %>%
@@ -574,42 +579,64 @@ fit_sdm_models <- function(
 
   if (length(sr_options) > 0L) {
 
-    species_richness_r <- model_summary$pred %>%
-      purrr::map_dfr(
-        .f = ~ {
-          ecokit::load_as(.x) %>%
-            dplyr::select(-tidyselect::all_of(c("pred_sd", "pred_cov"))) %>%
-            dplyr::mutate(
-              pred_mean = purrr::map(pred_mean, terra::unwrap),
-              pred_w_mean = purrr::map(pred_w_mean, terra::unwrap))
-        }) %>%
+    model_summary_proj <- model_summary$pred
+    rm(model_summary, envir = environment())
+    invisible(gc())
+
+    if (n_cores == 1L) {
+      future::plan("sequential", gc = TRUE)
+    } else {
+      ecokit::set_parallel(
+        n_cores = min(n_cores, length(model_summary_proj)),
+        strategy = strategy, future_max_size = future_max_size, level = 1L)
+      withr::defer(future::plan("sequential", gc = TRUE))
+    }
+
+    pkgs_to_load <- c(
+      "magrittr", "ecokit", "dplyr", "qs2", "tidyselect", "terra", "fs")
+
+    species_richness_r <- future.apply::future_lapply(
+      X = model_summary_proj,
+      FUN = function(pred) {
+        dplyr::select(
+          ecokit::load_as(pred), -tidyselect::all_of(c("pred_sd", "pred_cov")))
+      },
+      future.scheduling = Inf, future.seed = TRUE,
+      future.packages = pkgs_to_load)
+
+    ecokit::set_parallel(level = 1L, stop_cluster = TRUE)
+    future::plan("sequential", gc = TRUE)
+    invisible(gc())
+
+    calc_sr <- function(preds, climate_name, sdm_method) {
+      map_name <- paste0("richness_", sdm_method, "_", climate_name)
+      purrr::map(preds, terra::unwrap) %>%
+        terra::rast() %>%
+        terra::app(sum, na.rm = TRUE) %>%
+        stats::setNames(map_name) %>%
+        terra::toMemory() %>%
+        terra::wrap()
+    }
+
+    species_richness_r <- dplyr::bind_rows(species_richness_r) %>%
       dplyr::arrange(time_period, climate_name) %>%
       dplyr::group_by(
-        time_period, climate_model, climate_scenario, climate_name)  %>%
+        time_period, climate_model, climate_scenario, climate_name) %>%
       dplyr::summarize(
-        dplyr::across(
-          .cols = tidyselect::everything(),
-          .fns = ~terra::wrap(terra::toMemory(terra::rast(.)))),
+        pred_mean = list(pred_mean), pred_w_mean = list(pred_w_mean),
         .groups = "drop") %>%
       dplyr::mutate(
         pred_mean = purrr::map2(
-          .x = climate_name, .y = pred_mean,
-          .f = ~ {
-            terra::unwrap(.y) %>%
-              terra::app(sum, na.rm = TRUE) %>%
-              stats::setNames(paste0("richness_", sdm_method, "_", .x)) %>%
-              terra::toMemory() %>%
-              terra::wrap()
-          }),
-        pred_w_mean = purrr::map2(
-          .x = climate_name, .y = pred_w_mean,
-          .f = ~ {
-            terra::unwrap(.y) %>%
-              terra::app(sum, na.rm = TRUE) %>%
-              stats::setNames(paste0("richness_", sdm_method, "_", .x)) %>%
-              terra::toMemory() %>%
-              terra::wrap()
-          }))
+          .x = pred_mean, .y = climate_name,
+          .f = calc_sr, sdm_method = sdm_method))
+    invisible(gc())
+
+    species_richness_r <- dplyr::mutate(
+      species_richness_r,
+      pred_w_mean = purrr::map2(
+        .x = pred_w_mean, .y = climate_name,
+        .f = calc_sr, sdm_method = sdm_method))
+    invisible(gc())
 
     ecokit::save_as(object = species_richness_r, out_path = model_richness_path)
 

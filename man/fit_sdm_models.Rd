@@ -29,10 +29,11 @@ fit_sdm_models(
 }
 \arguments{
 \item{sdm_method}{Character. A single SDM algorithm to use for fitting
-models. Valid values: "glm", "glmpoly", "gam", "glmnet", "mars", "gbm",
-"rf", "ranger", "cart", "rpart", "maxent", "mlp", "rbf", "svm", "mda", and
-"fda". These correspond to selected methods supported by the \code{sdm} package.
-For details and supported options, see \code{\link[sdm:add]{sdm::getmethodNames()}}.}
+models. Valid values: "glm", "glmpoly", "gam", "glmnet", "mars", "mars2",
+"gbm", "rf", "ranger", "cart", "rpart", "maxent", "mlp", "rbf", "svm",
+"svm2", "mda", and "fda". These correspond to selected methods supported by
+the \code{sdm} package. For details and supported options, see
+\code{\link[sdm:add]{sdm::getmethodNames()}}.}
 
 \item{model_settings}{List or NULL. List of model-specific settings. If
 \code{NULL}, defaults to custom settings defined within the workflow.}

@@ -1592,6 +1592,7 @@ sdm_model_settings <- function() {
     gam = list(method = "REML", select = TRUE, gamma = 1.2),
     glmnet = list(maxit = 100000L),
     mars = list(),
+    mars2 = list(),
     gbm = list(n.trees = 2000L, interaction.depth = 2L),
     rf = list(ntree = 1000L, nodesize = 5L),
     ranger = list(
@@ -1713,10 +1714,10 @@ reduce_sdm_formulas <- function(obj) {
 #'   cross-validation fold.
 #' @param sdm_method Character. A single species distribution modelling
 #'   algorithm to use for fitting models. Valid values: "glm", "glmpoly", "gam",
-#'   "glmnet", "mars", "gbm", "rf", "ranger", "cart", "rpart", "maxent", "mlp",
-#'   "rbf", "svm", "mda", and "fda". These correspond to selected methods
-#'   supported by the `sdm` package. For details and supported options, see
-#'   [sdm::getmethodNames()].
+#'   "glmnet", "mars", "mars2", "gbm", "rf", "ranger", "cart", "rpart",
+#'   "maxent", "mlp", "rbf", "svm", "mda", and "fda". These correspond to
+#'   selected methods supported by the `sdm` package. For details and supported
+#'   options, see [sdm::getmethodNames()].
 #' @param model_data Data frame with model formulas, SDM data, species names,
 #'   and cross-validation folds.
 #' @param model_settings List. Model-specific settings passed to the SDM fitting
@@ -1819,7 +1820,10 @@ fit_predict_internal <- function(
       fitted_m <- ecokit::quietly(
         sdm::sdm(
           formula = model_formula, data = sdm_data,
-          methods = sdm_method, modelSettings = model_settings))
+          methods = sdm_method, modelSettings = model_settings),
+        "fitted probabilities numerically",
+        "Using formula(x) is deprecated when", "Consider formula")
+
       rm(sdm_data, model_formula, envir = environment())
 
       # # ||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
@@ -2704,6 +2708,58 @@ copy_svm2 <- function() {
 # +++++++++++++++++++++++++++++++++++++++++++++++++++ ------
 
 # # ========================================================================= #
+# copy_mars2 -------
+# # ========================================================================= #
+
+#' Copy the mars2 methodInfo to the sdm package methods/sdm directory
+#'
+#' This function checks if the file `mars2.R` exists in the `methods/sdm`
+#' subdirectory of the installed sdm package. If not, it writes a new file
+#' containing the methodInfo list for registering the `mars2` method in sdm. The
+#' content is identical to the provided mars methodInfo, increased the `maxit`
+#' parameter to 300 and with the method name changed to "mars2".
+#'
+#' @return Returns `invisible(NULL)`. The function is called for its side effect
+#'   of writing a file.
+#' @noRd
+
+copy_mars2 <- function() {
+
+  target_dir <- system.file("methods/sdm", package = "sdm")
+  target_file <- fs::path(target_dir, "mars2.R")
+
+  if (fs::file_exists(target_file)) {
+    return(invisible(NULL))
+  }
+
+  method_text <- "
+methodInfo <- list(
+  name = c('mars2', 'MARS2', 'earth2'),
+  packages = 'earth',
+  modelTypes = c('pa', 'pb', 'ab', 'n'),
+  fitParams = list(formula = 'standard.formula', data = 'sdmDataFrame'),
+  fitSettings = list(
+    weights = NULL, pmethod = 'none',trace = 0,
+    glm = list(family = binomial, control = list(maxit = 300)
+
+               )),
+  fitFunction = 'earth',
+  settingRules = function(x = 'sdmVariables',f = 'fitSettings') {
+    if (x@distribution == 'poisson') f[['glm']] <- list(family = poisson)
+    list(fitSettings = f)
+  },
+  tuneParams = list(glm = c(NULL,'default')),
+  predictParams = list(object = 'model',newdata = 'sdmDataFrame'),
+  predictSettings = list(type = 'response'),
+  predictFunction = 'predict'
+)"
+  writeLines(method_text, target_file)
+  invisible(NULL)
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++ ------
+
+# # ========================================================================= #
 # summarise_ssdms -------
 # # ========================================================================= #
 
@@ -2714,7 +2770,7 @@ copy_svm2 <- function() {
 summarise_ssdms <- function(line_id, output_directory, model_summary) {
 
   climate_model <- climate_scenario <- cv_fold <- pred <- preds <- rep_id <-
-    sdm_method <- species_name <- time_period <- variable<- x_value <- NULL
+    sdm_method <- species_name <- time_period <- variable <- x_value <- NULL
 
   cv_data <- dplyr::slice(model_summary, line_id)
   rm(line_id, model_summary, envir = environment())

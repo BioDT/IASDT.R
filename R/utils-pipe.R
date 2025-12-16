@@ -29,7 +29,7 @@ NULL
   # Display the startup message
   packageStartupMessage(
     "IASDT.R v", package_version_info,
-    " - Last updated on ", package_date_info)
+    " - Last updated on ", package_date_info, "\n")
 }
 
 

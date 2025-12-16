@@ -105,5 +105,7 @@ exclusions: list(
 	"R/mod_prepare_hpc.R" = list(line_length_linter = Inf),
 	"R/mod_postprocess.R" = list(line_length_linter = 1011:1100),
 	"R/dwf_wetness_index.R" = list(line_length_linter = Inf),
-	"R/dwf_soil.R" = list(line_length_linter = Inf)
+	"R/dwf_soil.R" = list(line_length_linter = Inf),
+	"inst/glmnet2.R" = list(undesirable_operator_linter = Inf),
+	"inst/svm2.R" = list(undesirable_operator_linter = Inf)
 	)

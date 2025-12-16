@@ -13,11 +13,14 @@
 #' predictors.
 #'
 #' @param sdm_method Character. A single SDM algorithm to use for fitting
-#'   models. Valid values: "glm", "glmpoly", "gam", "glmnet", "mars", "mars2",
-#'   "gbm", "rf", "ranger", "cart", "rpart", "maxent", "mlp", "rbf", "svm",
-#'   "svm2", "mda", and "fda". These correspond to selected methods supported by
-#'   the `sdm` package. For details and supported options, see
-#'   [sdm::getmethodNames()].
+#'   models. Valid values: "glm", "glmpoly", "gam", "glmnet/glmnet2",
+#'   "mars/mars2", "gbm", "rf/rf2", "ranger/ranger2", "cart", "rpart", "maxent",
+#'   "mlp", "rbf", "svm/svm2", "mda/mda2", and "fda/fda2". These correspond to
+#'   selected methods supported by the `sdm` package. For details and supported
+#'   options, see [sdm::getmethodNames()]. Note that some methods have
+#'   custom implementations (e.g., "glmnet2", "mars2", "ranger2", "rf2",
+#'   "svm2", "mda2", "fda2") to ensure consistent parameterization and
+#'   performance across models.
 #' @param model_settings List or NULL. List of model-specific settings. If
 #'   `NULL`, defaults to custom settings defined within the workflow.
 #' @param model_dir Character. Path to the directory containing model data and
@@ -200,14 +203,25 @@ fit_sdm_models <- function(
     "cross-validation type") %>%
     ecokit::info_chunk(cat_bold = TRUE, cat_red = TRUE, line_char_rep = 80L)
 
-  # Ensure that svm2 method is registered
-  if (sdm_method == "svm2") {
-    copy_svm2()
-  }
+  # Ensure that all methods are registered
+  methods_to_copy <- c(
+    "fda2", "mda2", "glmnet2", "mars2", "ranger2", "rf2", "svm2")
 
-  # Ensure that mars2 method is registered
-  if (sdm_method == "mars") {
-    copy_mars2()
+  if (sdm_method %in% methods_to_copy) {
+    sdm_path <- system.file("methods/sdm", package = "sdm")
+    method_file <- system.file(paste0(sdm_method, ".R"), package = "IASDT.R")
+
+    if (!nzchar(method_file)) {
+      ecokit::stop_ctx(
+        paste0("`", method_file, "` method file not found in IASDT.R package"))
+    }
+    if (!fs::file_exists(method_file)) {
+      ecokit::stop_ctx(
+        paste0("`", method_file, "` method file does not exist"),
+        method_file = method_file)
+    }
+
+    fs::file_copy(path = method_file, new_path = sdm_path, overwrite = TRUE)
   }
 
   # |||||||||||||||||||||||||||||||||||||||||||
@@ -216,8 +230,9 @@ fit_sdm_models <- function(
 
   # rbf is not bounded; see https://github.com/babaknaimi/sdm/issues/42
   valid_sdm_methods <- c(
-    "glm", "glmpoly", "gam", "glmnet", "mars", "mars2", "gbm", "rf", "ranger",
-    "cart", "rpart", "maxent", "mlp", "svm", "svm2", "mda", "fda")
+    "glm", "glmpoly", "gam", "glmnet", "glmnet2", "mars", "mars2", "gbm", "rf",
+    "rf2", "ranger", "ranger2", "cart", "rpart", "maxent", "mlp", "svm",
+    "svm2", "mda", "mda2", "fda", "fda2")
   sdm_method_valid <- any(
     is.null(sdm_method), length(sdm_method) != 1L,
     !is.character(sdm_method), !sdm_method %in% valid_sdm_methods)
@@ -300,6 +315,11 @@ fit_sdm_models <- function(
   rm(env_vars_to_read, envir = environment())
 
   path_grid_r <- fs::path(path_grid, "grid_10_land_crop.RData")
+  if (!fs::file_exists(path_grid_r)) {
+    ecokit::stop_ctx(
+      "Path for the Europe boundaries does not exist",
+      path_grid_r = path_grid_r)
+  }
 
   # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
@@ -320,11 +340,14 @@ fit_sdm_models <- function(
       "glmpoly", NA_character_,
       "gam", "mgcv",
       "glmnet", "glmnet",
+      "glmnet2", "glmnet",
       "mars", "earth",
       "mars2", "earth",
       "gbm", "gbm",
       "rf", "randomForest",
+      "rf2", "randomForest",
       "ranger", "ranger",
+      "ranger2", "ranger",
       "cart", "tree",
       "rpart", "rpart",
       "maxent", c("dismo", "rJava"),
@@ -333,7 +356,9 @@ fit_sdm_models <- function(
       "svm", "kernlab",
       "svm2", "e1071",
       "mda", "mda",
-      "fda", "mda") %>%
+      "mda2", "mda",
+      "fda", "mda",
+      "fda2", "mda") %>%
       dplyr::filter(mod_method == sdm_method) %>%
       dplyr::pull(packages) %>%
       unlist()
@@ -402,7 +427,7 @@ fit_sdm_models <- function(
             input_data = input_data, output_directory = output_directory,
             path_grid_r = path_grid_r, copy_maxent_html = copy_maxent_html),
           "fitted probabilities numerically",
-          "Using formula(x) is deprecated when", "Consider formula")
+          "Using formula.+ is deprecated when")
       },
       future.scheduling = Inf, future.seed = TRUE,
       future.packages = pkgs_to_load, future.globals = future_globals) %>%

@@ -42,6 +42,10 @@ jobs:
 
       - name: Setup R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
+        with: 
+          extra-packages: any::lintr
+          needs: check
+          cache-version: 2
 
       - name: Install some R packages
         run: |
@@ -49,11 +53,6 @@ jobs:
             c("mda", "glmnet", "mda", "ranger", "randomForest"),
             Ncpus = 4L)
         shell: Rscript {0}
-
-        with: 
-          extra-packages: any::lintr
-          needs: check
-          cache-version: 2
 
       - name: Install IASDT.R package
         run: R CMD INSTALL --no-multiarch --with-keep.source . 

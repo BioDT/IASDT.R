@@ -42,6 +42,14 @@ jobs:
 
       - name: Setup R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
+
+      - name: Install some R packages
+        run: |
+          install.packages(
+            c("mda", "glmnet", "mda", "ranger", "randomForest"),
+            Ncpus = 4L)
+        shell: Rscript {0}
+
         with: 
           extra-packages: any::lintr
           needs: check

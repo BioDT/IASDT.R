@@ -1062,14 +1062,17 @@ prepare_input_data <- function(
           ecokit::save_as(
             object = sp_mod_data_base, out_path = species_data_base_file)
 
+          out_tibble <- tibble::tibble(
+            valid_species = all(sp_mod_data$valid_species),
+            species_data = species_data_file,
+            species_data_base = species_data_base_file)
+
           rm(
             sp_mod_data, model_data, sp_mod_data_base, envir = environment())
           invisible(gc())
 
-          tibble::tibble(
-            valid_species = all(sp_mod_data$valid_species),
-            species_data = species_data_file,
-            species_data_base = species_data_base_file)
+          out_tibble
+
         },
         future.scheduling = Inf, future.seed = TRUE,
         future.packages = pkg_to_load, future.globals = future_globals)) %>%

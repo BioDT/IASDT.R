@@ -14,10 +14,9 @@ methodInfo <- list(
     quantreg = FALSE, keep.inbag = FALSE, num.threads = 1, verbose = FALSE),
 
   fitFunction = function(formula, data, ...) {
-    df <- as.data.frame(data)
     resp <- all.vars(formula)[1]
-    df[[resp]] <- factor(df[[resp]], levels = c(0, 1))
-    ranger::ranger(formula = as.formula(formula), data = df, ...)
+    data[, resp] <- factor(data[, resp], levels = c(0L, 1L))
+    ranger::ranger(formula = formula, data = data, ...)
   },
   settingRules = NULL,
   tuneParams = NULL,

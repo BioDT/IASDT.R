@@ -17,7 +17,7 @@ methodInfo <- list(
     df <- as.data.frame(data)
     resp <- all.vars(formula)[1]
     df[[resp]] <- factor(df[[resp]], levels = c(0, 1))
-    randomForest::randomForest(formula = formula, data = df, ...)
+    randomForest::randomForest(formula = as.formula(formula), data = df, ...)
   },
 
   settingRules = NULL,

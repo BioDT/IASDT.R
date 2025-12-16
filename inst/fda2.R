@@ -16,7 +16,7 @@ methodInfo <- list(
     df <- as.data.frame(data)
     resp <- all.vars(formula)[1]
     df[[resp]] <- factor(df[[resp]], levels = c(0, 1))
-    mda::fda(formula = formula, data = df, ...)
+    mda::fda(formula = as.formula(formula), data = df, ...)
   },
   settingRules = NULL,
   tuneParams = list(method = substitute(c(polyreg, mars, gen.ridge, bruto))),

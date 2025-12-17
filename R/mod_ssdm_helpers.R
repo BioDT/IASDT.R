@@ -1691,6 +1691,7 @@ reduce_sdm_formulas <- function(obj) {
         if (
           !isS4(model@object) &&
           !is.null(model@object$call$formula) &&
+          model@object$call$formula != "formula" &&
           deparse1(model@object$call$formula) != ".f") {
 
           # Replace formula in the model call (if it exists and is not ".f")

@@ -14,6 +14,7 @@ methodInfo <- list(
   fitParams = list(formula = "standard.formula", data = "sdmDataFrame"),
   fitSettings = list(ntree = 1000, replace = TRUE, importance = TRUE),
   fitFunction = function(formula, data, ...) {
+    formula <- as.formula(deparse(formula), env = environment())
     resp <- all.vars(formula)[1]
     data[, resp] <- factor(data[, resp], levels = c(0L, 1L))
     randomForest::randomForest(formula = formula, data = data, ...)

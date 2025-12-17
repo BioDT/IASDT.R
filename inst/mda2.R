@@ -12,6 +12,7 @@ methodInfo <- list(
   fitParams = list(formula = "standard.formula", data = "sdmDataFrame"),
   fitSettings = list(method = substitute(polyreg), keep.fitted = FALSE),
   fitFunction = function(formula, data, ...) {
+    formula <- as.formula(deparse(formula), env = environment())
     resp <- all.vars(formula)[1]
     data[, resp] <- factor(data[, resp], levels = c(0L, 1L))
     mda::mda(formula = formula, data = data, ...)

@@ -12,8 +12,8 @@ methodInfo <- list(
   fitSettings = list(
     num.trees = 1000, mtry = NULL, importance = "none", probability = TRUE,
     quantreg = FALSE, keep.inbag = FALSE, num.threads = 1, verbose = FALSE),
-
   fitFunction = function(formula, data, ...) {
+    formula <- as.formula(deparse(formula), env = environment())
     resp <- all.vars(formula)[1]
     data[, resp] <- factor(data[, resp], levels = c(0L, 1L))
     ranger::ranger(formula = formula, data = data, ...)

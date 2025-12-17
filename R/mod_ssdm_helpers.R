@@ -549,10 +549,9 @@ prepare_input_data <- function(
     species_data_dir, "prediction_data_options.qs2")
 
   ## Check if data already exist and valid -----
-  model_data_exist <- all(
-    ecokit::check_data(path_species_data, warning = FALSE),
-    ecokit::check_data(path_prediction_data, warning = FALSE),
-    ecokit::check_data(path_prediction_options, warning = FALSE))
+  model_data_exist <- ecokit::check_data(
+    c(path_species_data, path_prediction_data, path_prediction_options),
+    warning = FALSE)
 
   if (model_data_exist) {
     outputs <- list(
@@ -793,345 +792,341 @@ prepare_input_data <- function(
           .names = "{.col}_sq"))
   }
 
-  if (!ecokit::check_data(path_species_data, warning = FALSE)) {
-
-    if (n_cores == 1L) {
-      future::plan("sequential", gc = TRUE)
-    } else {
-      ecokit::set_parallel(
-        n_cores = min(n_cores, length(species_names)), show_log = FALSE)
-      withr::defer(future::plan("sequential", gc = TRUE))
-    }
-
-    pkg_to_load <- c(
-      "dplyr", "ecokit", "fs", "qs2", "stringr", "purrr",
-      "sdm", "tibble", "tidyselect", "rlang", "tidyr")
-    future_globals <- c(
-      "species_data_dir", "q_preds", "l_preds", "predictor_names",
-      "modelling_data", "n_cv_folds", "model_form", "grid_file")
-
-    species_modelling_data2 <- ecokit::quietly(
-      future.apply::future_lapply(
-        X = species_names,
-        FUN = function(species_name) {
-
-          rep_id <- bg_sample <- n_bg <- training_pres <- cv_fold <-
-            testing_data <- model_formula <- training_data <- training_abs <-
-            training_pres_n <- training_abs_n <- NULL
-
-          species_data_file <- fs::path(
-            species_data_dir, paste0("data_", species_name, ".qs2"))
-          species_data_base_file <- fs::path(
-            species_data_dir, paste0("data_", species_name, "_base.qs2"))
-
-          if (ecokit::check_data(
-            c(species_data_file, species_data_base_file), warning = FALSE)) {
-            return(
-              tibble::tibble(
-                valid_species = TRUE, species_data = species_data_file,
-                species_data_base = species_data_base_file))
-          }
-
-          predictor_names_wz_sq <- c(predictor_names, paste0(q_preds, "_sq"))
-
-          # Total number of absences and presences in modelling data
-          n_abs <- sum(modelling_data[, species_name, drop = TRUE] == 0L)
-          n_pres <- sum(modelling_data[, species_name, drop = TRUE] == 1L)
 
 
-          # number of pseudo-absence repetition to be sampled per presence.
-
-          # If the ratio of absences to presences >=100, do 20 model repetitions
-          # per cv fold; 10 repetitions if between 50-100; 5 repetitions if
-          # between 20-50; 3 repetitions if between 10-20; otherwise 1
-          # repetition.
-          #
-          # Convergence of glmnet/glmnet2 was very poor when fitted using high
-          # prevalence data (e.g., 25), thus a fixed prevalence of 10 is used
-          # for glmnet/glmnet2 models and 25 for other methods. This requires
-          # more repetitions to adapt to different pseudo-absence samples. A
-          # minimum of 5 repetitions is used for glmnet/glmnet2 methods.
-          #
-          # For Maxent, only one model is fitted per cv fold using a
-          # representative background sample
-
-          abs_pres_ratio <- (n_abs / n_pres)
-          n_rep <- dplyr::case_when(
-            abs_pres_ratio >= 100L ~ 20L,
-            abs_pres_ratio >= 50L ~ 10L,
-            abs_pres_ratio >= 20L ~ 5L,
-            .default = 1L)
-
-          selected_cols <- c(
-            "cv_fold", species_name, "x", "y", predictor_names_wz_sq)
-          modelling_data2 <- dplyr::select(
-            modelling_data, tidyselect::all_of(selected_cols)) %>%
-            dplyr::rename(cv = cv_fold)
-
-          sp_mod_data_base <- tibble::tibble(cv = seq_len(n_cv_folds)) %>%
-            dplyr::mutate(
-              species_name = species_name,
-              training_data = purrr::map(
-                .x = cv, .f = ~ dplyr::filter(modelling_data2, cv != .x)),
-              training_n = purrr::map_int(.x = training_data, .f = nrow),
-              training_r = purrr::map(
-                .x = training_data,
-                .f = ~ {
-                  dplyr::select(
-                    .x, tidyselect::all_of(
-                      c("x", "y", predictor_names_wz_sq))) %>%
-                    terra::vect(geom = c("x", "y"), crs = "EPSG:3035") %>%
-                    terra::rasterize(
-                      ecokit::load_as(grid_file, unwrap_r = TRUE),
-                      field = predictor_names_wz_sq) %>%
-                    terra::toMemory() %>%
-                    terra::wrap()
-                }),
-              testing_data = purrr::map(
-                .x = cv, .f = ~ dplyr::filter(modelling_data2, cv == .x)),
-              testing_n = purrr::map_int(.x = testing_data, .f = nrow),
-              training_pres = purrr::map(
-                .x = training_data, .f = dplyr::filter,
-                !!rlang::sym(species_name) == 1L),
-              training_pres_n = purrr::map_int(.x = training_pres, .f = nrow),
-              training_abs = purrr::map(
-                .x = training_data, .f = dplyr::filter,
-                !!rlang::sym(species_name) == 0L),
-              training_abs_n = purrr::map_int(.x = training_abs, .f = nrow))
-
-          sp_mod_data <- sp_mod_data_base %>%
-            tidyr::expand_grid(
-              tibble::tibble(
-                abs_prevalence = c(25L, 10L, 25L, 25L),
-                method_type = c("glm", "glmnet", "maxent", "others"),
-                n_rep = c(n_rep, max(n_rep, 5L), 1L, n_rep))) %>%
-            dplyr::mutate(rep_id = purrr::map(n_rep, seq_len)) %>%
-            tidyr::unnest_longer(rep_id) %>%
-            dplyr::mutate(
-              n_bg = purrr::pmap_int(
-                .l = list(training_pres_n, abs_prevalence,
-                          method_type, training_abs_n),
-                .f = function(training_pres_n, abs_prevalence,
-                              method_type, training_abs_n) {
-                  if (method_type == "maxent") {
-                    return(NA_integer_)
-                  }
-                  min(training_pres_n * abs_prevalence, training_abs_n)
-                }),
-              model_formula = purrr::map2(
-                .x = method_type, .y = species_name,
-                .f = ~ {
-
-                  if (.x == "glm") {
-                    # Use quadratic terms as separate columns if used
-                    if (length(q_preds) == 0L) {
-                      # No quadratic terms, use linear predictors only
-                      model_formula <- paste(
-                        .y, " ~ ", paste(l_preds, collapse = " + "))
-                      predictor_names_local <- predictor_names
-                    } else {
-                      # Add quadratic terms as columns to the modelling data
-                      predictor_names_local <- c(
-                        predictor_names, paste0(q_preds, "_sq"))
-                      # Update model formula
-                      model_formula <- c(
-                        l_preds, q_preds, paste0(q_preds, "_sq")) %>%
-                        paste(collapse = " + ") %>%
-                        paste(.y, " ~ ", .)
-                    }
-                  } else {
-                    # Use linear terms only for other model types
-                    predictor_names_local <- predictor_names
-                    str_rem_1 <- "stats::poly\\(|, degree = 2, raw = TRUE\\)"
-                    model_formula <- deparse1(model_form) %>%
-                      stringr::str_remove_all(str_rem_1) %>%
-                      paste(.y, .)
-                  }
-
-                  if (length(model_formula) > 1) {
-                    model_formula <- paste(model_formula, collapse = " ")
-                  }
-
-                  model_formula <- stats::as.formula(
-                    model_formula, env = baseenv())
-                  tibble::tibble(
-                    model_formula = list(model_formula),
-                    predictor_names = list(predictor_names_local))
-                })) %>%
-            tidyr::unnest(model_formula) %>%
-            dplyr::mutate(
-              bg_sample = purrr::pmap(
-                .l = list(
-                  training_r, n_bg, training_pres,
-                  predictor_names, method_type),
-                .f = function(training_r, n_bg, training_pres,
-                              predictor_names, method_type) {
-
-                  if (method_type == "maxent") {
-                    return(tibble::tibble())
-                  }
-
-                  terra::unwrap(training_r) %>%
-                    terra::subset(predictor_names) %>%
-                    sdm::background(
-                      n = n_bg, method = "eDist",
-                      sp = training_pres[, c("x", "y")]) %>%
-                    tibble::tibble() %>%
-                    dplyr::mutate(!!species_name := 0L, .before = 1)
-                }
-              )) %>%
-            dplyr::select(
-              -tidyselect::all_of(c(
-                "training_data", "training_n", "training_r", "testing_data",
-                "testing_n", "training_pres", "training_pres_n",
-                "training_abs", "training_abs_n")))
-          invisible(gc())
-
-          model_data <- purrr::map_dfr(
-            .x = seq_len(nrow(sp_mod_data)),
-            .f = ~ {
-
-              row_data <- sp_mod_data[.x, ]
-
-              training_pres <- sp_mod_data_base %>%
-                dplyr::filter(cv == row_data$cv[[1]]) %>%
-                dplyr::pull(training_pres) %>%
-                purrr::pluck(1)
-              training_abs <- sp_mod_data_base %>%
-                dplyr::filter(cv == row_data$cv[[1]]) %>%
-                dplyr::pull(training_abs) %>%
-                purrr::pluck(1)
-
-              if (row_data$method_type == "maxent") {
-                pres_as_backgrounds <- training_pres %>%
-                  dplyr::filter(!!rlang::sym(species_name) == 1) %>%
-                  dplyr::mutate(!!species_name := 0)
-
-                training_data <- dplyr::bind_rows(
-                  training_pres, training_abs, pres_as_backgrounds)
-
-              } else {
-                training_data <- dplyr::bind_rows(
-                  training_pres, row_data$bg_sample[[1]])
-              }
-
-              keep_cols <- c(species_name, row_data$predictor_names[[1]])
-              training_data <- dplyr::select(
-                training_data, tidyselect::all_of(keep_cols))
-
-              testing_data <- sp_mod_data_base %>%
-                dplyr::filter(cv == row_data$cv[[1]]) %>%
-                dplyr::pull(testing_data) %>%
-                purrr::pluck(1) %>%
-                dplyr::select(tidyselect::all_of(keep_cols))
-
-              valid_training <- training_data %>%
-                dplyr::distinct(.data[[species_name]]) %>%
-                unlist() %>%
-                sort() %>%
-                as.integer() %>%
-                identical(c(0L, 1L))
-              valid_testing <- testing_data %>%
-                dplyr::distinct(.data[[species_name]]) %>%
-                unlist() %>%
-                sort() %>%
-                as.integer() %>%
-                identical(c(0L, 1L))
-
-              if (valid_training && valid_testing) {
-                valid_species <- TRUE
-                sdm_data <- sdm::sdmData(
-                  formula = row_data$model_formula[[1]],
-                  train = as.data.frame(training_data),
-                  test = as.data.frame(testing_data))
-              } else {
-                sdm_data <- NULL
-                valid_species <- FALSE
-              }
-
-              tibble::tibble(
-                sdm_data = list(sdm_data), valid_species = valid_species)
-
-            }) %>%
-            dplyr::bind_rows()
-
-
-          sp_mod_data <- dplyr::bind_cols(sp_mod_data, model_data)
-          ecokit::save_as(object = sp_mod_data, out_path = species_data_file)
-
-          ecokit::save_as(
-            object = sp_mod_data_base, out_path = species_data_base_file)
-
-          out_tibble <- tibble::tibble(
-            valid_species = all(sp_mod_data$valid_species),
-            species_data = species_data_file,
-            species_data_base = species_data_base_file)
-
-          rm(
-            sp_mod_data, model_data, sp_mod_data_base, envir = environment())
-          invisible(gc())
-
-          out_tibble
-
-        },
-        future.scheduling = Inf, future.seed = TRUE,
-        future.packages = pkg_to_load, future.globals = future_globals)) %>%
-      dplyr::bind_rows()
-
-    ecokit::set_parallel(stop_cluster = TRUE, show_log = FALSE)
+  if (n_cores == 1L) {
     future::plan("sequential", gc = TRUE)
-    invisible(gc())
-
-    species_modelling_data <- dplyr::tibble(
-      species_name = species_names, species_data = species_modelling_data2) %>%
-      tidyr::unnest("species_data")
-    rm(species_modelling_data2, envir = environment())
-    invisible(gc())
-
-    ## Check invalid species ------
-    invalid_species <- dplyr::filter(species_modelling_data, !valid_species)
-
-    if (nrow(invalid_species) > 0) {
-
-      excluded_species <- unique(invalid_species$species_name)
-      excluded_species_n <- length(excluded_species)
-
-      paste0(
-        "\n!! There are ", excluded_species_n,
-        " invalid species that will be excluded in all model types !!") %>%
-        crayon::blue() %>%
-        ecokit::cat_time(cat_timestamp = FALSE, cat_bold = TRUE, ... = "\n")
-
-      invalid_species %>%
-        dplyr::mutate(
-          message = purrr::map2_chr(
-            .x = species_name, .y = species_data,
-            .f = ~ {
-              ecokit::load_as(.y) %>%
-                dplyr::distinct(cv, valid_species) %>%
-                dplyr::filter(!valid_species) %>%
-                dplyr::pull(cv) %>%
-                paste(collapse = "; ") %>%
-                paste0(crayon::bold(.x), " (cv: ", ., ")")
-            })) %>%
-        dplyr::pull(message) %>%
-        paste(collapse = " + ") %>%
-        ecokit::cat_time(cat_timestamp = FALSE, level = 1, ... = "\n")
-
-      species_modelling_data <- species_modelling_data %>%
-        dplyr::filter(!species_name %in% excluded_species) %>%
-        dplyr::select(-tidyselect::all_of("valid_species"))
-
-    } else {
-      excluded_species <- NA_character_
-    }
-
-    ecokit::save_as(
-      object = species_modelling_data, out_path = path_species_data)
-    rm(species_modelling_data, envir = environment())
-    invisible(gc())
-
+  } else {
+    ecokit::set_parallel(
+      n_cores = min(n_cores, length(species_names)), show_log = FALSE)
+    withr::defer(future::plan("sequential", gc = TRUE))
   }
+
+  pkg_to_load <- c(
+    "dplyr", "ecokit", "fs", "qs2", "stringr", "purrr",
+    "sdm", "tibble", "tidyselect", "rlang", "tidyr")
+  future_globals <- c(
+    "species_data_dir", "q_preds", "l_preds", "predictor_names",
+    "modelling_data", "n_cv_folds", "model_form", "grid_file")
+
+  species_modelling_data2 <- ecokit::quietly(
+    future.apply::future_lapply(
+      X = species_names,
+      FUN = function(species_name) {
+
+        rep_id <- bg_sample <- n_bg <- training_pres <- cv_fold <-
+          testing_data <- model_formula <- training_data <- training_abs <-
+          training_pres_n <- training_abs_n <- NULL
+
+        species_data_file <- fs::path(
+          species_data_dir, paste0("data_", species_name, ".qs2"))
+        species_data_base_file <- fs::path(
+          species_data_dir, paste0("data_", species_name, "_base.qs2"))
+
+        if (ecokit::check_data(
+          c(species_data_file, species_data_base_file), warning = FALSE)) {
+          return(
+            tibble::tibble(
+              valid_species = TRUE, species_data = species_data_file,
+              species_data_base = species_data_base_file))
+        }
+
+        predictor_names_wz_sq <- c(predictor_names, paste0(q_preds, "_sq"))
+
+        # Total number of absences and presences in modelling data
+        n_abs <- sum(modelling_data[, species_name, drop = TRUE] == 0L)
+        n_pres <- sum(modelling_data[, species_name, drop = TRUE] == 1L)
+
+        # number of pseudo-absence repetition to be sampled per presence.
+
+        # If the ratio of absences to presences >=100, do 20 model repetitions
+        # per cv fold; 10 repetitions if between 50-100; 5 repetitions if
+        # between 20-50; 3 repetitions if between 10-20; otherwise 1 repetition.
+        #
+        # Convergence of glmnet/glmnet2 was very poor when fitted using high
+        # prevalence data (e.g., 25), thus a fixed prevalence of 10 is used for
+        # glmnet/glmnet2 models and 25 for other methods. This requires more
+        # repetitions to adapt to different pseudo-absence samples. A minimum of
+        # 5 repetitions is used for glmnet/glmnet2 methods.
+        #
+        # For Maxent, only one model is fitted per cv fold using a
+        # representative background sample
+
+        abs_pres_ratio <- (n_abs / n_pres)
+        n_rep <- dplyr::case_when(
+          abs_pres_ratio >= 100L ~ 20L,
+          abs_pres_ratio >= 50L ~ 10L,
+          abs_pres_ratio >= 20L ~ 5L,
+          .default = 1L)
+
+        selected_cols <- c(
+          "cv_fold", species_name, "x", "y", predictor_names_wz_sq)
+        modelling_data2 <- dplyr::select(
+          modelling_data, tidyselect::all_of(selected_cols)) %>%
+          dplyr::rename(cv = cv_fold)
+
+        sp_mod_data_base <- tibble::tibble(cv = seq_len(n_cv_folds)) %>%
+          dplyr::mutate(
+            species_name = species_name,
+            training_data = purrr::map(
+              .x = cv, .f = ~ dplyr::filter(modelling_data2, cv != .x)),
+            training_n = purrr::map_int(.x = training_data, .f = nrow),
+            training_r = purrr::map(
+              .x = training_data,
+              .f = ~ {
+                dplyr::select(
+                  .x, tidyselect::all_of(
+                    c("x", "y", predictor_names_wz_sq))) %>%
+                  terra::vect(geom = c("x", "y"), crs = "EPSG:3035") %>%
+                  terra::rasterize(
+                    ecokit::load_as(grid_file, unwrap_r = TRUE),
+                    field = predictor_names_wz_sq) %>%
+                  terra::toMemory() %>%
+                  terra::wrap()
+              }),
+            testing_data = purrr::map(
+              .x = cv, .f = ~ dplyr::filter(modelling_data2, cv == .x)),
+            testing_n = purrr::map_int(.x = testing_data, .f = nrow),
+            training_pres = purrr::map(
+              .x = training_data, .f = dplyr::filter,
+              !!rlang::sym(species_name) == 1L),
+            training_pres_n = purrr::map_int(.x = training_pres, .f = nrow),
+            training_abs = purrr::map(
+              .x = training_data, .f = dplyr::filter,
+              !!rlang::sym(species_name) == 0L),
+            training_abs_n = purrr::map_int(.x = training_abs, .f = nrow))
+
+        sp_mod_data <- sp_mod_data_base %>%
+          tidyr::expand_grid(
+            tibble::tibble(
+              abs_prevalence = c(25L, 10L, 25L, 25L),
+              method_type = c("glm", "glmnet", "maxent", "others"),
+              n_rep = c(n_rep, max(n_rep, 5L), 1L, n_rep))) %>%
+          dplyr::mutate(rep_id = purrr::map(n_rep, seq_len)) %>%
+          tidyr::unnest_longer(rep_id) %>%
+          dplyr::mutate(
+            n_bg = purrr::pmap_int(
+              .l = list(training_pres_n, abs_prevalence,
+                        method_type, training_abs_n),
+              .f = function(training_pres_n, abs_prevalence,
+                            method_type, training_abs_n) {
+                if (method_type == "maxent") {
+                  return(NA_integer_)
+                }
+                min(training_pres_n * abs_prevalence, training_abs_n)
+              }),
+            model_formula = purrr::map2(
+              .x = method_type, .y = species_name,
+              .f = ~ {
+
+                if (.x == "glm") {
+                  # Use quadratic terms as separate columns if used
+                  if (length(q_preds) == 0L) {
+                    # No quadratic terms, use linear predictors only
+                    model_formula <- paste(
+                      .y, " ~ ", paste(l_preds, collapse = " + "))
+                    predictor_names_local <- predictor_names
+                  } else {
+                    # Add quadratic terms as columns to the modelling data
+                    predictor_names_local <- c(
+                      predictor_names, paste0(q_preds, "_sq"))
+                    # Update model formula
+                    model_formula <- c(
+                      l_preds, q_preds, paste0(q_preds, "_sq")) %>%
+                      paste(collapse = " + ") %>%
+                      paste(.y, " ~ ", .)
+                  }
+                } else {
+                  # Use linear terms only for other model types
+                  predictor_names_local <- predictor_names
+                  str_rem_1 <- "stats::poly\\(|, degree = 2, raw = TRUE\\)"
+                  model_formula <- deparse1(model_form) %>%
+                    stringr::str_remove_all(str_rem_1) %>%
+                    paste(.y, .)
+                }
+
+                if (length(model_formula) > 1) {
+                  model_formula <- paste(model_formula, collapse = " ")
+                }
+
+                model_formula <- stats::as.formula(
+                  model_formula, env = baseenv())
+                tibble::tibble(
+                  model_formula = list(model_formula),
+                  predictor_names = list(predictor_names_local))
+              })) %>%
+          tidyr::unnest(model_formula) %>%
+          dplyr::mutate(
+            bg_sample = purrr::pmap(
+              .l = list(
+                training_r, n_bg, training_pres,
+                predictor_names, method_type),
+              .f = function(training_r, n_bg, training_pres,
+                            predictor_names, method_type) {
+
+                if (method_type == "maxent") {
+                  return(tibble::tibble())
+                }
+
+                terra::unwrap(training_r) %>%
+                  terra::subset(predictor_names) %>%
+                  sdm::background(
+                    n = n_bg, method = "eDist",
+                    sp = training_pres[, c("x", "y")]) %>%
+                  tibble::tibble() %>%
+                  dplyr::mutate(!!species_name := 0L, .before = 1)
+              }
+            )) %>%
+          dplyr::select(
+            -tidyselect::all_of(c(
+              "training_data", "training_n", "training_r", "testing_data",
+              "testing_n", "training_pres", "training_pres_n",
+              "training_abs", "training_abs_n")))
+        invisible(gc())
+
+        model_data <- purrr::map_dfr(
+          .x = seq_len(nrow(sp_mod_data)),
+          .f = ~ {
+
+            row_data <- sp_mod_data[.x, ]
+
+            training_pres <- sp_mod_data_base %>%
+              dplyr::filter(cv == row_data$cv[[1]]) %>%
+              dplyr::pull(training_pres) %>%
+              purrr::pluck(1)
+            training_abs <- sp_mod_data_base %>%
+              dplyr::filter(cv == row_data$cv[[1]]) %>%
+              dplyr::pull(training_abs) %>%
+              purrr::pluck(1)
+
+            if (row_data$method_type == "maxent") {
+              pres_as_backgrounds <- training_pres %>%
+                dplyr::filter(!!rlang::sym(species_name) == 1) %>%
+                dplyr::mutate(!!species_name := 0)
+
+              training_data <- dplyr::bind_rows(
+                training_pres, training_abs, pres_as_backgrounds)
+
+            } else {
+              training_data <- dplyr::bind_rows(
+                training_pres, row_data$bg_sample[[1]])
+            }
+
+            keep_cols <- c(species_name, row_data$predictor_names[[1]])
+            training_data <- dplyr::select(
+              training_data, tidyselect::all_of(keep_cols))
+
+            testing_data <- sp_mod_data_base %>%
+              dplyr::filter(cv == row_data$cv[[1]]) %>%
+              dplyr::pull(testing_data) %>%
+              purrr::pluck(1) %>%
+              dplyr::select(tidyselect::all_of(keep_cols))
+
+            valid_training <- training_data %>%
+              dplyr::distinct(.data[[species_name]]) %>%
+              unlist() %>%
+              sort() %>%
+              as.integer() %>%
+              identical(c(0L, 1L))
+            valid_testing <- testing_data %>%
+              dplyr::distinct(.data[[species_name]]) %>%
+              unlist() %>%
+              sort() %>%
+              as.integer() %>%
+              identical(c(0L, 1L))
+
+            if (valid_training && valid_testing) {
+              valid_species <- TRUE
+              sdm_data <- sdm::sdmData(
+                formula = row_data$model_formula[[1]],
+                train = as.data.frame(training_data),
+                test = as.data.frame(testing_data))
+            } else {
+              sdm_data <- NULL
+              valid_species <- FALSE
+            }
+
+            tibble::tibble(
+              sdm_data = list(sdm_data), valid_species = valid_species)
+
+          }) %>%
+          dplyr::bind_rows()
+
+
+        sp_mod_data <- dplyr::bind_cols(sp_mod_data, model_data)
+        ecokit::save_as(object = sp_mod_data, out_path = species_data_file)
+
+        ecokit::save_as(
+          object = sp_mod_data_base, out_path = species_data_base_file)
+
+        out_tibble <- tibble::tibble(
+          valid_species = all(sp_mod_data$valid_species),
+          species_data = species_data_file,
+          species_data_base = species_data_base_file)
+
+        rm(
+          sp_mod_data, model_data, sp_mod_data_base, envir = environment())
+        invisible(gc())
+
+        out_tibble
+
+      },
+      future.scheduling = Inf, future.seed = TRUE,
+      future.packages = pkg_to_load, future.globals = future_globals)) %>%
+    dplyr::bind_rows()
+
+  ecokit::set_parallel(stop_cluster = TRUE, show_log = FALSE)
+  future::plan("sequential", gc = TRUE)
+  invisible(gc())
+
+  species_modelling_data <- dplyr::tibble(
+    species_name = species_names, species_data = species_modelling_data2) %>%
+    tidyr::unnest("species_data")
+  rm(species_modelling_data2, envir = environment())
+  invisible(gc())
+
+  ## Check invalid species ------
+  invalid_species <- dplyr::filter(species_modelling_data, !valid_species)
+
+  if (nrow(invalid_species) > 0) {
+
+    excluded_species <- unique(invalid_species$species_name)
+    excluded_species_n <- length(excluded_species)
+
+    paste0(
+      "\n!! There are ", excluded_species_n,
+      " invalid species that will be excluded in all model types !!") %>%
+      crayon::blue() %>%
+      ecokit::cat_time(cat_timestamp = FALSE, cat_bold = TRUE, ... = "\n")
+
+    invalid_species %>%
+      dplyr::mutate(
+        message = purrr::map2_chr(
+          .x = species_name, .y = species_data,
+          .f = ~ {
+            ecokit::load_as(.y) %>%
+              dplyr::distinct(cv, valid_species) %>%
+              dplyr::filter(!valid_species) %>%
+              dplyr::pull(cv) %>%
+              paste(collapse = "; ") %>%
+              paste0(crayon::bold(.x), " (cv: ", ., ")")
+          })) %>%
+      dplyr::pull(message) %>%
+      paste(collapse = " + ") %>%
+      ecokit::cat_time(cat_timestamp = FALSE, level = 1, ... = "\n")
+
+    species_modelling_data <- species_modelling_data %>%
+      dplyr::filter(!species_name %in% excluded_species)
+
+  } else {
+    excluded_species <- NA_character_
+  }
+
+  ecokit::save_as(
+    object = species_modelling_data, out_path = path_species_data)
+  rm(species_modelling_data, envir = environment())
+  invisible(gc())
+
 
   # # ..................................................................... ###
 
@@ -1208,14 +1203,9 @@ prepare_input_data <- function(
     }
 
     r_hab <- ecokit::load_as(r_hab, unwrap_r = TRUE) %>%
-      magrittr::extract2(paste0("synhab_", hab_abb))
-
-    # Models are trained and predictions are made only at grid cells with > 0 %
-    # coverage. Mask layer to exclude grid cells with zero % coverage from
-    # predictions.
-    r_hab_mask <- terra::classify(r_hab, cbind(0L, NA), others = 1L)
-
-    r_hab <- log10(r_hab + 0.1) %>%
+      magrittr::extract2(paste0("synhab_", hab_abb)) %>%
+      magrittr::add(0.1) %>%
+      log10() %>%
       stats::setNames("habitat_log")
 
     static_predictors <- c(static_predictors, r_hab)
@@ -1500,14 +1490,6 @@ prepare_input_data <- function(
   ## Merge static predictors -----
   static_predictors <- terra::rast(static_predictors)
 
-  # If Habitat predictor is used and r_hab_mask exists, grid cells with zero %
-  # coverage are excluded from predictions
-  if (hab_predictor && exists("r_hab_mask", inherits = FALSE)) {
-    static_predictors <- terra::mask(static_predictors, r_hab_mask)
-  }
-
-  # # |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| #
-
   if (clamp_pred) {
 
     if ("efforts_log" %in% names(static_predictors)) {
@@ -1563,8 +1545,7 @@ prepare_input_data <- function(
     dplyr::select(-tidyselect::any_of(c("clamp", "processed_name"))) %>%
     tidyr::nest(
       pred_data = -c(
-        "time_period", "climate_model",
-        "climate_scenario", "climate_name")) %>%
+        "time_period", "climate_model", "climate_scenario", "climate_name")) %>%
     dplyr::mutate(climate_name = stringr::str_to_lower(climate_name))
 
   ecokit::save_as(object = prediction_data, out_path = path_prediction_data)

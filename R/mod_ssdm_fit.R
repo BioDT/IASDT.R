@@ -14,12 +14,12 @@
 #'
 #' @param sdm_method Character. A single SDM algorithm to use for fitting
 #'   models. Valid values: "glm", "glmpoly", "gam", "glmnet/glmnet2",
-#'   "mars/mars2", "gbm", "rf/rf2", "ranger/ranger2", "cart", "rpart", "maxent",
-#'   "mlp", "rbf", "svm/svm2", "mda/mda2", and "fda/fda2". These correspond to
-#'   selected methods supported by the `sdm` package. For details and supported
-#'   options, see [sdm::getmethodNames()]. Note that some methods have
-#'   custom implementations (e.g., "glmnet2", "mars2", "ranger2", "rf2",
-#'   "svm2", "mda2", "fda2") to ensure consistent parameterization and
+#'   "mars/mars2", "gbm/gbm2", "rf/rf2", "ranger/ranger2", "cart", "rpart",
+#'   "maxent", "mlp", "rbf", "svm/svm2", "mda/mda2", and "fda/fda2". These
+#'   correspond to selected methods supported by the `sdm` package. For details
+#'   and supported options, see [sdm::getmethodNames()]. Note that some methods
+#'   have custom implementations (e.g., "glmnet2", "gbm2", "mars2", "ranger2",
+#'   "rf2", "svm2", "mda2", "fda2") to ensure consistent parameterisation and
 #'   performance across models.
 #' @param model_settings List or NULL. List of model-specific settings. If
 #'   `NULL`, defaults to custom settings defined within the workflow.
@@ -230,9 +230,9 @@ fit_sdm_models <- function(
 
   # rbf is not bounded; see https://github.com/babaknaimi/sdm/issues/42
   valid_sdm_methods <- c(
-    "glm", "glmpoly", "gam", "glmnet", "glmnet2", "mars", "mars2", "gbm", "rf",
-    "rf2", "ranger", "ranger2", "cart", "rpart", "maxent", "mlp", "svm",
-    "svm2", "mda", "mda2", "fda", "fda2")
+    "glm", "glmpoly", "gam", "glmnet", "glmnet2", "mars", "mars2", "gbm",
+    "gbm2", "rf", "rf2", "ranger", "ranger2", "cart", "rpart", "maxent", "mlp",
+    "svm", "svm2", "mda", "mda2", "fda", "fda2")
   sdm_method_valid <- any(
     is.null(sdm_method), length(sdm_method) != 1L,
     !is.character(sdm_method), !sdm_method %in% valid_sdm_methods)
@@ -344,6 +344,8 @@ fit_sdm_models <- function(
       "mars", "earth",
       "mars2", "earth",
       "gbm", "gbm",
+      "gbm2", "gbm",
+      "gbm2", "dismo",
       "rf", "randomForest",
       "rf2", "randomForest",
       "ranger", "ranger",

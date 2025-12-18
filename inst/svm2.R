@@ -1,70 +1,67 @@
 # Author: Ahmed El-Gabbas
-# Date: 2025-12-15
-# Based on: `babaknaimi/sdm/inst/methods/sdm/svm.R`
+# Date: 2025-12-18
 #
-# - New method using e1071::svm backend with minimal changes.
-# - Enable probability outputs for classification by setting
-# `probability = TRUE` when not provided by the user. This matches original
-# svm's probability behavior.
-#  - Predict function returns positive-class probability when available.
-#  - All other arguments are passed via ... without overriding defaults.
+# - Binary classification for PA/PB using e1071::svm with probability outputs.
+# - Tuning: Parsimonious grid with 5-fold CV via e1071::tune:
+#     kernel = "radial"
+#     cost  ∈ {1, 5, 10}
+#     gamma ∈ {0.01, 0.05, 0.1}
+#   Best model (tune.out$best.model) is returned for prediction.
+# - Class weights: Inverse-prevalence weighting (capped at 20) to handle
+# imbalance:
+#     n0 = count of class "0", n1 = count of class "1"
+#     weights = c("0" = 1, "1" = min(n0/n1, 20)) if n0 >= n1
+#               c("0" = min(n1/n0, 20), "1" = 1) otherwise
+# - Prediction: predict(..., probability = TRUE); returns positive-class
+# probability:
+#   * Assumes response encoded as 0/1 and present as the left-hand side of the formula.
+#   * Predictors and their names in new data must match those used at training.
+#   * Grid is intentionally small to remain fast and robust models
 
 methodInfo <- list(
-  name = c("svm2", "SVM2", "svm_e1071"),
+  name = c("svm3", "SVM3", "svm_e1071_3"),
   packages = "e1071",
   modelTypes = c("pa", "pb", "ab", "n"),
   fitParams = list(
     formula = "standard.formula", data = "sdmDataFrame", v = "sdmVariables"),
-  fitSettings = list(kernel = "radial", probability = TRUE),
-
+  fitSettings = list(kernel = "radial"),
   fitFunction = function(formula, data, v, ...) {
-    x <- sdm:::.getData.sdmMatrix(
-      formula, data, normalize = TRUE, frame = v@varInfo$numeric, scale = FALSE)
-    y <- sdm:::.getData.sdmY(formula, data)
 
-    # class.weights is used to counter severe class imbalance in PA/PB data.
-    #
-    # In presence–absence SDMs, absences (0) often vastly outnumber presences
-    # (1). Without weighting, the SVM’s loss is dominated by the majority class,
-    # leading to poor discrimination (e.g., predicting almost all 0s).
+    formula <- as.formula(deparse(formula), env = environment())
+    resp <- all.vars(formula)[1]
+    data[, resp] <- factor(data[, resp], levels = c(0L, 1L))
 
-    # Compute counts of absences (n0) and presences (n1)
-    n0 <- sum(y == 0, na.rm = TRUE)
-    n1 <- sum(y == 1, na.rm = TRUE)
-
-    # Upper bound for weight
+    # Upweight the minority class
+    n0 <- sum(data[, resp] == "0")
+    n1 <- sum(data[, resp] == "1")
     max_weight <- 20
-
-    # - Upweight the minority class so its misclassification cost is comparable
-    # to the majority class, using a simple inverse-prevalence rule:
-    # minority_weight = n_majority / n_minority
-    # - Cap the weight by max_weight (here 20) to avoid numeric instability and
-    # overly aggressive rebalancing on extremely imbalanced folds.
-    # - If absences are the majority (n0 >= n1), set weight for class "1"
-    # (presence) to min(n0 / n1, max_weight), keep class "0" at 1. Otherwise,
-    # upweight class "0" similarly when presences are the majority.
-    # - Pass class.weights to e1071::svm so the optimization accounts for
-    # imbalance while leaving all other defaults unchanged.
     if (n0 >= n1) {
-      # More absences
-      class.weights <- c("0" = 1, "1" = min(n0 / n1, max_weight))
+      class.weights <- setNames(
+        c(1, min(n0 / max(1, n1), max_weight)),
+        c("0", "1"))
     } else {
-      # More presences
-      class.weights <- c("0" = min(n1 / n0, max_weight), "1" = 1)
+      class.weights <- setNames(
+        c(min(n1 / max(1, n0), max_weight), 1),
+        c("0", "1"))
     }
 
-    e1071::svm(x = x, y = y, scale = TRUE, class.weights = class.weights, ...)
+    tune.out <- e1071::tune(
+      e1071::svm, train.x = formula, data = data, kernel = "radial",
+      ranges = list(cost = c(1, 5, 10), gamma = c(0.01, 0.05, 0.1)),
+      class.weights = class.weights, probability = TRUE,
+      tunecontrol = e1071::tune.control(cross = 5))
+
+    tune.out$best.model
   },
   settingRules = NULL,
   tuneParams = NULL,
   predictParams = list(
     object = "model", formula = "standard.formula", newx = "sdmDataFrame",
     v = "sdmVariables"),
-  predictSettings = list(probability = TRUE),
+  predictSettings = list(),
   predictFunction = function(object, formula, newx, v, ...) {
-    newx <- sdm:::.getData.sdmMatrix(
-      formula, newx, normalize = TRUE,
-      frame = v@varInfo$numeric, scale = FALSE)
-    predict(object, newx, ...)
+    pred_probs <- predict(
+      object = object, newdata = newx, probability = TRUE, ...)
+    attr(pred_probs, "probabilities")[, "1"]
   }
 )

@@ -1115,8 +1115,8 @@ prepare_input_data <- function(
       paste(collapse = " + ") %>%
       ecokit::cat_time(cat_timestamp = FALSE, level = 1, ... = "\n")
 
-    species_modelling_data <- species_modelling_data %>%
-      dplyr::filter(!species_name %in% excluded_species)
+    species_modelling_data <- dplyr::filter(
+      species_modelling_data, !species_name %in% excluded_species)
 
   } else {
     excluded_species <- NA_character_
@@ -1596,7 +1596,8 @@ sdm_model_settings <- function() {
     glmnet2 = list(maxit = 100000L),
     mars = list(),
     mars2 = list(),
-    gbm = list(n.trees = 2000L, interaction.depth = 2L),
+    gbm = list(n.trees = 2000L, interaction.depth = 4L),
+    gbm2 = list(n.trees = 2000L, interaction.depth = 4L)),
     rf = list(ntree = 1000L, nodesize = 5L),
     rf2 = list(ntree = 1000L, nodesize = 5L),
     ranger = list(

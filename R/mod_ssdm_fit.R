@@ -205,7 +205,7 @@ fit_sdm_models <- function(
 
   # Ensure that all methods are registered
   methods_to_copy <- c(
-    "fda2", "mda2", "glmnet2", "mars2", "ranger2", "rf2", "svm2")
+    "fda2", "mda2", "glmnet2", "mars2", "ranger2", "rf2", "svm2", "gbm2")
 
   if (sdm_method %in% methods_to_copy) {
     sdm_path <- system.file("methods/sdm", package = "sdm")

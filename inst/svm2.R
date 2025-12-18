@@ -20,7 +20,7 @@
 #   * Grid is intentionally small to remain fast and robust models
 
 methodInfo <- list(
-  name = c("svm3", "SVM3", "svm_e1071_3"),
+  name = c("svm2", "SVM2", "svm_e1071"),
   packages = "e1071",
   modelTypes = c("pa", "pb", "ab", "n"),
   fitParams = list(

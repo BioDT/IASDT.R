@@ -1597,7 +1597,7 @@ sdm_model_settings <- function() {
     mars = list(),
     mars2 = list(),
     gbm = list(n.trees = 2000L, interaction.depth = 4L),
-    gbm2 = list(n.trees = 2000L, interaction.depth = 4L)),
+    gbm2 = list(n.trees = 2000L, interaction.depth = 4L),
     rf = list(ntree = 1000L, nodesize = 5L),
     rf2 = list(ntree = 1000L, nodesize = 5L),
     ranger = list(

@@ -14,7 +14,8 @@
 #               c("0" = min(n1/n0, 20), "1" = 1) otherwise
 # - Prediction: predict(..., probability = TRUE); returns positive-class
 # probability:
-#   * Assumes response encoded as 0/1 and present as the left-hand side of the formula.
+#   * Assumes response encoded as 0/1 and present as the left-hand side of the
+# formula.
 #   * Predictors and their names in new data must match those used at training.
 #   * Grid is intentionally small to remain fast and robust models
 

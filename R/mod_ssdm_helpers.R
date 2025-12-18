@@ -1593,7 +1593,7 @@ sdm_model_settings <- function() {
     glmpoly = list(degree = 2L),
     gam = list(method = "REML", select = TRUE, gamma = 1.2),
     glmnet = list(maxit = 100000L),
-    glmnet2 = list(maxit = 100000L),
+    glmnet2 = list(maxit = 100000L, alpha = 0.5),
     mars = list(),
     mars2 = list(),
     gbm = list(n.trees = 4000L, interaction.depth = 4L),

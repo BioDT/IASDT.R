@@ -16,8 +16,8 @@
   if (n_cores > max_cores) {
     warning(
       stringr::str_glue(
-        "`n_cores` exceeds available cores: {n_cores}. Using all available",
-        " cores: {max_cores}"),
+        "`n_cores` ({n_cores}) exceeds available cores. Using all available",
+        " cores ({max_cores})"),
       call. = FALSE)
     n_cores <- max_cores
   }

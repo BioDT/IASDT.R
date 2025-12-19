@@ -22,13 +22,12 @@ methodInfo <- list(
     y <- sdm:::.getData.sdmY(formula, data)
 
     if (family == "binomial") {
-      m <- glmnet::cv.glmnet(
+      glmnet::cv.glmnet(
         x, y, family = "binomial", type.measure = "auc", ...)
     } else {
-      m <- glmnet::cv.glmnet(x, y, family = family, ...)
+      glmnet::cv.glmnet(x, y, family = family, ...)
     }
 
-    glmnet::glmnet(x = x, y = y, family = family, lambda = m$lambda.1se, ...)
   },
   settingRules = function(x = "sdmVariables", f = "fitSettings") {
     if (x@distribution %in% c("poisson", "multinomial")) {
@@ -45,8 +44,8 @@ methodInfo <- list(
     newx <- sdm:::.getData.sdmMatrix(
       formula, newx, normalize = TRUE, frame = v@varInfo$numeric)
     # Predict at the fitted lambda for safety (minimal change).
-    p <- predict(object, newx, type = type, s = object$lambda, ...)
+    p <- predict(object, newx, type = type, s = "lambda.1se", ...)
     if (is.matrix(p)) p <- p[, 1, drop = TRUE]
-    p
+    as.vector(p)
   }
 )
